@@ -7,8 +7,14 @@ use App\Models\Linea_investigacion;
 
 class Linea_investigacionController extends Controller {
 
+  //  Gets
   public function getAll() {
     $lineas_investigacion = Linea_investigacion::all();
+    return $lineas_investigacion;
+  }
+
+  public function getAllOfFacultad($id) {
+    $lineas_investigacion = Linea_investigacion::where('facultad_id', $id);
     return $lineas_investigacion;
   }
 
