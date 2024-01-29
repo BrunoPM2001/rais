@@ -9,13 +9,17 @@ class Linea_investigacionController extends Controller {
 
   //  Gets
   public function getAll() {
-    $lineas_investigacion = Linea_investigacion::with('hijos')->whereNull('parent_id')
+    $lineas_investigacion = Linea_investigacion::with('hijos')
+      ->whereNull('parent_id')
       ->get();
     return $lineas_investigacion;
   }
 
   public function getAllOfFacultad($id) {
-    $lineas_investigacion = Linea_investigacion::where('facultad_id', $id);
+    $lineas_investigacion = Linea_investigacion::with('hijos')
+      ->whereNull('parent_id')
+      ->where('facultad_id', $id)
+      ->get();
     return $lineas_investigacion;
   }
 
