@@ -9,7 +9,8 @@ class Linea_investigacionController extends Controller {
 
   //  Gets
   public function getAll() {
-    $lineas_investigacion = Linea_investigacion::all();
+    $lineas_investigacion = Linea_investigacion::with('hijos')->whereNull('parent_id')
+      ->get();
     return $lineas_investigacion;
   }
 
@@ -21,12 +22,11 @@ class Linea_investigacionController extends Controller {
   public function create(Request $request) {
     //  Validar la data
     $request->validate([
-      'facultad_id' => 'required|exists:Facultad,id',
+      'facultad_id' => 'nullable|exists:Facultad,id',
       'parent_id' => 'nullable|exists:Linea_investigacion,id',
       'codigo' => 'required|string|unique:Linea_investigacion,codigo|max:255',
       'nombre' => 'required|string|unique:Linea_investigacion,nombre|max:255',
-      'resolucion' => 'string|max:255',
-      'estado' => 'required|boolean'
+      'resolucion' => 'nullable|string|max:255'
     ]);
 
     //  Insertar en la DB
@@ -35,8 +35,7 @@ class Linea_investigacionController extends Controller {
       'parent_id' => $request->parent_id,
       'codigo' => $request->codigo,
       'nombre' => $request->nombre,
-      'resolucion' => $request->resolucion,
-      'estado' => $request->estado
+      'resolucion' => $request->resolucion
     ]);
     return $linea_investigacion;
   }
@@ -55,14 +54,12 @@ class Linea_investigacionController extends Controller {
     //  Encontrar y actualizar data
     $linea_investigacion = Linea_investigacion::findOrFail($id);
     $linea_investigacion->update($request->all());
-
     return $linea_investigacion;
   }
 
   public function delete($id) {
     $linea_investigacion = Linea_investigacion::findOrFail($id);
     $linea_investigacion->delete();
-
     return $linea_investigacion;
   }
 }

@@ -11,11 +11,11 @@ return new class extends Migration {
   public function up(): void {
     Schema::create('Linea_investigacion', function (Blueprint $table) {
       $table->id();
-      $table->unsignedBigInteger('facultad_id');
+      $table->unsignedBigInteger('facultad_id')->nullable();
       $table->unsignedBigInteger('parent_id')->nullable();
       $table->string('codigo')->unique()->nullable(false);
       $table->string('nombre')->unique()->nullable(false);
-      $table->string('resolucion');
+      $table->string('resolucion')->nullable();
       $table->boolean('estado')->default(true)->nullable(false);
       $table->timestamps();
       //  Fks

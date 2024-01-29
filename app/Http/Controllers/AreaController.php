@@ -37,14 +37,12 @@ class AreaController extends Controller {
     //  Encontrar y actualizar data
     $area = Area::findOrFail($id);
     $area->update($request->all());
-
     return $area;
   }
 
   public function delete($id) {
     $area = Area::findOrFail($id);
     $area->delete();
-
     return $area;
   }
 }

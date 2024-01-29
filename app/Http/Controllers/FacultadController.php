@@ -37,14 +37,12 @@ class FacultadController extends Controller {
     //  Encontrar y actualizar data
     $facultad = Facultad::findOrFail($id);
     $facultad->update($request->all());
-
     return $facultad;
   }
 
   public function delete($id) {
     $facultad = Facultad::findOrFail($id);
     $facultad->delete();
-
     return $facultad;
   }
 }
