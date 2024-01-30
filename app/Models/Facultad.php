@@ -8,4 +8,9 @@ class Facultad extends Model {
 
   protected $table = 'Facultad';
   protected $fillable = ['area_id', 'nombre'];
+
+  //  Queries
+  public function listar() {
+    return $this->select('id', 'nombre')->get();
+  }
 }

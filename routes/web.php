@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Linea_investigacionController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -17,6 +18,8 @@ Route::get('/', function () {
   return view('welcome');
 });
 
-Route::get('/lineas', function () {
-  return view('lineas_investigacion');
-});
+//  ADMIN VIEWS
+Route::get('/lineas', [Linea_investigacionController::class, 'main']);
+
+//  AJAX
+Route::get('/ajaxGetLineasInvestigacionFacultad/{id}', [Linea_investigacionController::class, 'getAllOfFacultad']);

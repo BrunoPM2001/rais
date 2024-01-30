@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\Facultad;
 use App\Models\Linea_investigacion;
 
 class Linea_investigacionController extends Controller {
@@ -15,6 +16,7 @@ class Linea_investigacionController extends Controller {
     return $lineas_investigacion;
   }
 
+  //  AJAX
   public function getAllOfFacultad($id) {
     $lineas_investigacion = Linea_investigacion::with('hijos')
       ->whereNull('parent_id')
@@ -65,5 +67,14 @@ class Linea_investigacionController extends Controller {
     $linea_investigacion = Linea_investigacion::findOrFail($id);
     $linea_investigacion->delete();
     return $linea_investigacion;
+  }
+
+  //  Views
+  public function main() {
+    $facultad = new Facultad();
+    $facultades = $facultad->listar();
+    return view('admin.lineas_investigacion', [
+      'facultades' => $facultades
+    ]);
   }
 }
