@@ -38,133 +38,173 @@
           </div>
         </form>
         <!--  Tabla de lineas de investigación  -->
-        <div role="status" class="relative overflow-x-auto shadow-md sm:rounded-lg animate-pulse">
-          <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
-            <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+        <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
+          <table id="lineas_table" class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+            <thead class="text-xs text-gray-700 uppercase dark:text-gray-400">
               <tr>
-                <th scope="col" class="px-6 py-3">
-                  <div class="h-2.5 bg-gray-200 rounded-full dark:bg-gray-700 w-48 mb-4"></div>
+                <th scope="col" class="px-6 py-3 bg-gray-50 dark:bg-gray-800">
+                  Código
                 </th>
                 <th scope="col" class="px-6 py-3">
-                  <div class="h-2.5 bg-gray-200 rounded-full dark:bg-gray-700 w-48 mb-4"></div>
+                  Linea de investigación
+                </th>
+                <th scope="col" class="px-6 py-3 bg-gray-50 dark:bg-gray-800">
+                  Resolución
                 </th>
                 <th scope="col" class="px-6 py-3">
-                  <div class="h-2.5 bg-gray-200 rounded-full dark:bg-gray-700 w-48 mb-4"></div>
-                </th>
-                <th scope="col" class="px-6 py-3">
-                  <div class="h-2.5 bg-gray-200 rounded-full dark:bg-gray-700 w-48 mb-4"></div>
+                  Expandir
                 </th>
               </tr>
             </thead>
             <tbody>
+              @foreach($lineas as $linea)
               <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
-                <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                  <div class="h-2.5 bg-gray-200 rounded-full dark:bg-gray-700 w-48 mb-4"></div>
+                <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white bg-gray-50 dark:bg-gray-800">
+                  {{ $linea->codigo }}
                 </th>
                 <td class="px-6 py-4">
-                  <div class="h-2.5 bg-gray-200 rounded-full dark:bg-gray-700 w-48 mb-4"></div>
+                  {{ $linea->nombre }}
                 </td>
-                <td class="px-6 py-4">
-                  <div class="h-2.5 bg-gray-200 rounded-full dark:bg-gray-700 w-48 mb-4"></div>
+                <td class="px-6 py-4 bg-gray-50 dark:bg-gray-800">
+                  {{ $linea->resolucion }}
                 </td>
-                <td class="px-6 py-4">
-                  <div class="h-2.5 bg-gray-200 rounded-full dark:bg-gray-700 w-48 mb-4"></div>
-                </td>
-              </tr>
-              <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
-                <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                  <div class="h-2.5 bg-gray-200 rounded-full dark:bg-gray-700 w-48 mb-4"></div>
-                </th>
-                <td class="px-6 py-4">
-                  <div class="h-2.5 bg-gray-200 rounded-full dark:bg-gray-700 w-48 mb-4"></div>
-                </td>
-                <td class="px-6 py-4">
-                  <div class="h-2.5 bg-gray-200 rounded-full dark:bg-gray-700 w-48 mb-4"></div>
-                </td>
-                <td class="px-6 py-4">
-                  <div class="h-2.5 bg-gray-200 rounded-full dark:bg-gray-700 w-48 mb-4"></div>
+                <td class="px-6 py-4 text-center">
+                  Expandir
                 </td>
               </tr>
-              <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
-                <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                  <div class="h-2.5 bg-gray-200 rounded-full dark:bg-gray-700 w-48 mb-4"></div>
-                </th>
-                <td class="px-6 py-4">
-                  <div class="h-2.5 bg-gray-200 rounded-full dark:bg-gray-700 w-48 mb-4"></div>
-                </td>
-                <td class="px-6 py-4">
-                  <div class="h-2.5 bg-gray-200 rounded-full dark:bg-gray-700 w-48 mb-4"></div>
-                </td>
-                <td class="px-6 py-4">
-                  <div class="h-2.5 bg-gray-200 rounded-full dark:bg-gray-700 w-48 mb-4"></div>
-                </td>
-              </tr>
-              <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
-                <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                  <div class="h-2.5 bg-gray-200 rounded-full dark:bg-gray-700 w-48 mb-4"></div>
-                </th>
-                <td class="px-6 py-4">
-                  <div class="h-2.5 bg-gray-200 rounded-full dark:bg-gray-700 w-48 mb-4"></div>
-                </td>
-                <td class="px-6 py-4">
-                  <div class="h-2.5 bg-gray-200 rounded-full dark:bg-gray-700 w-48 mb-4"></div>
-                </td>
-                <td class="px-6 py-4">
-                  <div class="h-2.5 bg-gray-200 rounded-full dark:bg-gray-700 w-48 mb-4"></div>
-                </td>
-              </tr>
-              <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
-                <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                  <div class="h-2.5 bg-gray-200 rounded-full dark:bg-gray-700 w-48 mb-4"></div>
-                </th>
-                <td class="px-6 py-4">
-                  <div class="h-2.5 bg-gray-200 rounded-full dark:bg-gray-700 w-48 mb-4"></div>
-                </td>
-                <td class="px-6 py-4">
-                  <div class="h-2.5 bg-gray-200 rounded-full dark:bg-gray-700 w-48 mb-4"></div>
-                </td>
-                <td class="px-6 py-4">
-                  <div class="h-2.5 bg-gray-200 rounded-full dark:bg-gray-700 w-48 mb-4"></div>
-                </td>
-              </tr>
+              @endforeach
             </tbody>
           </table>
+          <nav aria-label="Page navigation example">
+            <ul class="inline-flex -space-x-px text-base h-10">
+              <li>
+                <a href="#" class="flex items-center justify-center px-4 h-10 ms-0 leading-tight text-gray-500 bg-white border border-e-0 border-gray-300 rounded-s-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white">Previous</a>
+              </li>
+              <li>
+                <a href="#" class="flex items-center justify-center px-4 h-10 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white">1</a>
+              </li>
+              <li>
+                <a href="#" class="flex items-center justify-center px-4 h-10 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white">2</a>
+              </li>
+              <li>
+                <a href="#" aria-current="page" class="flex items-center justify-center px-4 h-10 text-blue-600 border border-gray-300 bg-blue-50 hover:bg-blue-100 hover:text-blue-700 dark:border-gray-700 dark:bg-gray-700 dark:text-white">3</a>
+              </li>
+              <li>
+                <a href="#" class="flex items-center justify-center px-4 h-10 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white">4</a>
+              </li>
+              <li>
+                <a href="#" class="flex items-center justify-center px-4 h-10 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white">5</a>
+              </li>
+              <li>
+                <a href="#" class="flex items-center justify-center px-4 h-10 leading-tight text-gray-500 bg-white border border-gray-300 rounded-e-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white">Next</a>
+              </li>
+            </ul>
+          </nav>
         </div>
       </div>
       <div class="hidden p-4 rounded-lg bg-gray-50 dark:bg-gray-800" id="tab_crear" role="tabpanel" aria-labelledby="dashboard-tab">
         <!--  Crear nueva linea de investigación  -->
-        <form class="max-w-md mx-auto">
+        <form action="{{ route('create_linea') }}" method="post" class="max-w-md mx-auto">
+          @csrf
           <div class="mb-5">
-            <label for="facultad" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Facultad:</label>
-            <select id="facultad" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-              <option>Ninguna</option>
-              <option>Medicina</option>
-              <option>France</option>
-              <option>Germany</option>
+            <label for="create_facultad" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Facultad:</label>
+            <select id="create_facultad" name="facultad_id" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+              <option value="">Ninguna</option>
+              @foreach($facultades as $facultad)
+              <option value="{{ $facultad->id }}">{{ $facultad->nombre }}</option>
+              @endforeach
             </select>
           </div>
           <div class="mb-5">
-            <label for="padre" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Padre:</label>
-            <select id="padre" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-              <option>Ninguno</option>
-              <option>Medicina</option>
-              <option>France</option>
-              <option>Germany</option>
+            <label for="create_padre" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Padre:</label>
+            <select id="create_padre" name="parent_id" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+              <option value="">Cargando...</option>
             </select>
           </div>
           <div class="mb-5">
             <label for="codigo" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Código:</label>
-            <input type="text" id="codigo" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+            <input type="text" id="codigo" name="codigo" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
           </div>
           <div class="mb-5">
             <label for="linea" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Linea:</label>
-            <input type="text" id="linea" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+            <input type="text" id="nombre" name="nombre" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+          </div>
+          <div class="mb-5">
+            <label for="resolucion" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Resolución:</label>
+            <input type="text" id="resolucion" name="resolucion" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
           </div>
           <button type="submit" class="text-white w-full bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">Guardar</button>
         </form>
       </div>
     </div>
   </div>
+  <script type="module">
+    $(document).ready(function() {
+      let state = false;
+      $("#tab_crear").on('click', function() {
+        if (!state) {
+          $.ajax({
+            url: "http://localhost:8000/ajaxGetLineasInvestigacion/",
+            method: "GET",
+            success: (data) => {
+              let select = $("#create_padre");
+              select.html("");
+              select.append(
+                $("<option>", {
+                  value: "",
+                  text: "Ninguno",
+                  selected: true,
+                })
+              );
+              $.each(data, (index, item) => {
+                let option = $("<option>", {
+                  value: item.id,
+                  text: item.codigo + " " + item.nombre,
+                });
+                select.append(option);
+              });
+            },
+          });
+          state = true;
+        }
+      });
+
+      // $('#create_facultad').change(() => {
+      //   //  Indicar carga
+      //   $("#create_padre").html("").append(
+      //     $("<option>", {
+      //       value: "null",
+      //       text: "Cargando...",
+      //       selected: true,
+      //     })
+      //   ).prop('disabled', true);
+      //   //  Petición al servidor
+      //   $.ajax({
+      //     url: "http://localhost:8000/ajaxGetLineasInvestigacionFacultad/" + $("#create_facultad").val(),
+      //     method: "GET",
+      //     success: (data) => {
+      //       let select = $("#create_padre");
+      //       select.prop('disabled', false);
+      //       select.html("");
+      //       select.append(
+      //         $("<option>", {
+      //           value: "null",
+      //           text: "Ninguno",
+      //           selected: true,
+      //         })
+      //       );
+      //       $.each(data, (index, item) => {
+      //         let option = $("<option>", {
+      //           value: item.id,
+      //           text: item.nombre,
+      //         });
+      //         select.append(option);
+      //       });
+      //     },
+      //   });
+      // });
+    })
+  </script>
 </body>
 
 </html>

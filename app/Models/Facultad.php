@@ -11,6 +11,6 @@ class Facultad extends Model {
 
   //  Queries
   public function listar() {
-    return $this->select('id', 'nombre')->get();
+    return $this->select('id', 'nombre')->orderBy('id')->get();
   }
 }

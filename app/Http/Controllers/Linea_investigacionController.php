@@ -9,19 +9,36 @@ use App\Models\Linea_investigacion;
 class Linea_investigacionController extends Controller {
 
   //  Gets
+
+  //  AJAX
   public function getAll() {
-    $lineas_investigacion = Linea_investigacion::with('hijos')
-      ->whereNull('parent_id')
+    $lineas_investigacion = Linea_investigacion::select('id', 'codigo', 'nombre')
       ->get();
     return $lineas_investigacion;
   }
 
-  //  AJAX
+  public function getAllOfFacultadPaginate($id, $page) {
+    $query = Linea_investigacion::with('hijos')
+      ->whereNull('parent_id');
+    if ($id == 'null') {
+      $query->whereNull('facultad_id');
+    } else {
+      $query->where('facultad_id', $id);
+    }
+    $query->get();
+    $lineas_investigacion = $query->paginate(1, ['*'], 'page', $page);
+    return $lineas_investigacion;
+  }
+
   public function getAllOfFacultad($id) {
-    $lineas_investigacion = Linea_investigacion::with('hijos')
-      ->whereNull('parent_id')
-      ->where('facultad_id', $id)
-      ->get();
+    $query = Linea_investigacion::with('hijos')
+      ->whereNull('parent_id');
+    if ($id == 'null') {
+      $query->whereNull('facultad_id');
+    } else {
+      $query->where('facultad_id', $id);
+    }
+    $lineas_investigacion = $query->get();
     return $lineas_investigacion;
   }
 
@@ -36,14 +53,14 @@ class Linea_investigacionController extends Controller {
     ]);
 
     //  Insertar en la DB
-    $linea_investigacion = Linea_investigacion::create([
+    Linea_investigacion::create([
       'facultad_id' => $request->facultad_id,
       'parent_id' => $request->parent_id,
       'codigo' => $request->codigo,
       'nombre' => $request->nombre,
       'resolucion' => $request->resolucion
     ]);
-    return $linea_investigacion;
+    return redirect()->route('view_lineas');
   }
 
   public function update(Request $request, $id) {
@@ -71,10 +88,20 @@ class Linea_investigacionController extends Controller {
 
   //  Views
   public function main() {
+    //  Lista de facultades
     $facultad = new Facultad();
     $facultades = $facultad->listar();
+
+    //  Lista de lineas
+    $query = Linea_investigacion::with('hijos')
+      ->whereNull('parent_id')
+      ->whereNull('facultad_id');
+
+    $query->get();
+    $lineas_investigacion = $query->paginate(10, ['*'], 'page', 1);
     return view('admin.lineas_investigacion', [
-      'facultades' => $facultades
+      'facultades' => $facultades,
+      'lineas' => $lineas_investigacion
     ]);
   }
 }

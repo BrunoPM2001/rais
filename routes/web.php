@@ -19,7 +19,11 @@ Route::get('/', function () {
 });
 
 //  ADMIN VIEWS
-Route::get('/lineas', [Linea_investigacionController::class, 'main']);
+Route::get('/lineas', [Linea_investigacionController::class, 'main'])->name('view_lineas');
 
 //  AJAX
+Route::get('/ajaxGetLineasInvestigacion', [Linea_investigacionController::class, 'getAll']);
 Route::get('/ajaxGetLineasInvestigacionFacultad/{id}', [Linea_investigacionController::class, 'getAllOfFacultad']);
+Route::get('/ajaxGetLineasInvestigacionFacultadPag/{id}/{page}', [Linea_investigacionController::class, 'getAllOfFacultadPaginate']);
+
+Route::post('/createLinea', [Linea_investigacionController::class, 'create'])->name('create_linea');
