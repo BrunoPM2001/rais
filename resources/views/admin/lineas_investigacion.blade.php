@@ -75,7 +75,7 @@
               @endforeach
             </tbody>
           </table>
-          <nav class="flex personalizado">
+          <nav class="flex justify-between items-center">
             <div>
               Mostrando 1 de 1 elementos
             </div>
@@ -172,9 +172,28 @@
 
       //  Actualizar tabla
       $('#facultad').change(() => {
-        console.log("Cargando")
+        updateData(1)
+      });
+
+      const changePage = () => {
+        $('#pagination li a').click((e) => {
+          let goTo;
+          e.preventDefault();
+          if (e.target.text == 'Anterior') {
+            goTo = actualPage - 1;
+          } else if (e.target.text == 'Siguiente') {
+            goTo = actualPage + 1;
+          } else {
+            goTo = e.target.text;
+          }
+          updateData(goTo);
+        });
+      }
+      changePage();
+
+      const updateData = (page) => {
         $.ajax({
-          url: "http://localhost:8000/ajaxGetLineasInvestigacionFacultadPag/" + $("#facultad").val() + "/1",
+          url: "http://localhost:8000/ajaxGetLineasInvestigacionFacultadPag/" + $("#facultad").val() + "/" + page,
           method: "GET",
           success: (data) => {
             //  Paginación
@@ -182,8 +201,8 @@
             ul.empty();
             ul.append($('<li>').html('<a href="#" aria-current="page" class="flex items-center justify-center px-4 h-10 text-blue-600 rounded-s-lg border border-gray-300 bg-blue-50 hover:bg-blue-100 hover:text-blue-700 dark:border-gray-700 dark:bg-gray-700 dark:text-white">Anterior</a>'));
             for (let i = 1; i <= data.last_page; i++) {
-              var listItem = $('<li>');
-              if (i == 1) {
+              let listItem = $('<li>');
+              if (i == data.current_page) {
                 listItem.html('<a href="#" aria-current="page" class="flex items-center justify-center px-4 h-10 text-blue-600 border border-gray-300 bg-blue-50 hover:bg-blue-100 hover:text-blue-700 dark:border-gray-700 dark:bg-gray-700 dark:text-white">' + i + '</a>')
               } else {
                 listItem.html('<a href="#" class="flex items-center justify-center px-4 h-10 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white">' + i + '</a>')
@@ -191,10 +210,32 @@
               ul.append(listItem);
             }
             ul.append($('<li>').html('<a href="#" aria-current="page" class="flex items-center justify-center px-4 h-10 text-blue-600 rounded-e-lg border border-gray-300 bg-blue-50 hover:bg-blue-100 hover:text-blue-700 dark:border-gray-700 dark:bg-gray-700 dark:text-white">Siguiente</a>'));
+            changePage();
             //  Tabla
+            $('#lineas_table tbody').empty();
+            $.each(data.data, function(index, linea) {
+              let row = '<tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">' +
+                '<th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white bg-gray-50 dark:bg-gray-800">' +
+                linea.codigo +
+                '</th>' +
+                '<td class="px-6 py-4">' +
+                linea.nombre +
+                '</td>' +
+                '<td class="px-6 py-4 bg-gray-50 dark:bg-gray-800">' +
+                linea.resolucion +
+                '</td>' +
+                '<td class="px-6 py-4 text-center">' +
+                'Expandir' +
+                '</td>' +
+                '</tr>';
+              // Agregar la fila a la tabla
+              $('#lineas_table tbody').append(row);
+            });
+            //  Asignación final de valores
+            actualPage = data.current_page;
           },
         });
-      });
+      }
     })
   </script>
 </body>

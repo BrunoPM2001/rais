@@ -26,7 +26,7 @@ class Linea_investigacionController extends Controller {
       $query->where('facultad_id', $id);
     }
     $query->get();
-    $lineas_investigacion = $query->paginate(1, ['*'], 'page', $page);
+    $lineas_investigacion = $query->paginate(4, ['*'], 'page', $page);
     return $lineas_investigacion;
   }
 
