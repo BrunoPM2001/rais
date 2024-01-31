@@ -38,7 +38,7 @@
           </div>
         </form>
         <!--  Tabla de lineas de investigación  -->
-        <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
+        <div class="relative p-4 overflow-x-auto shadow-md sm:rounded-lg">
           <table id="lineas_table" class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
             <thead class="text-xs text-gray-700 uppercase dark:text-gray-400">
               <tr>
@@ -75,13 +75,13 @@
               @endforeach
             </tbody>
           </table>
-          <nav aria-label="Page navigation example">
-            <ul class="inline-flex -space-x-px text-base h-10">
+          <nav class="flex personalizado">
+            <div>
+              Mostrando 1 de 1 elementos
+            </div>
+            <ul id="pagination" class="inline-flex -space-x-px text-base h-10 my-4">
               <li>
                 <a href="#" class="flex items-center justify-center px-4 h-10 ms-0 leading-tight text-gray-500 bg-white border border-e-0 border-gray-300 rounded-s-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white">Previous</a>
-              </li>
-              <li>
-                <a href="#" class="flex items-center justify-center px-4 h-10 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white">1</a>
               </li>
               <li>
                 <a href="#" class="flex items-center justify-center px-4 h-10 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white">2</a>
@@ -91,9 +91,6 @@
               </li>
               <li>
                 <a href="#" class="flex items-center justify-center px-4 h-10 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white">4</a>
-              </li>
-              <li>
-                <a href="#" class="flex items-center justify-center px-4 h-10 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white">5</a>
               </li>
               <li>
                 <a href="#" class="flex items-center justify-center px-4 h-10 leading-tight text-gray-500 bg-white border border-gray-300 rounded-e-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white">Next</a>
@@ -140,7 +137,11 @@
   </div>
   <script type="module">
     $(document).ready(function() {
+      //  Vars
       let state = false;
+      let actualPage = 1;
+      let lastPage = 1;
+      //  Formulario de creación de línea
       $("#tab_crear").on('click', function() {
         if (!state) {
           $.ajax({
@@ -169,40 +170,31 @@
         }
       });
 
-      // $('#create_facultad').change(() => {
-      //   //  Indicar carga
-      //   $("#create_padre").html("").append(
-      //     $("<option>", {
-      //       value: "null",
-      //       text: "Cargando...",
-      //       selected: true,
-      //     })
-      //   ).prop('disabled', true);
-      //   //  Petición al servidor
-      //   $.ajax({
-      //     url: "http://localhost:8000/ajaxGetLineasInvestigacionFacultad/" + $("#create_facultad").val(),
-      //     method: "GET",
-      //     success: (data) => {
-      //       let select = $("#create_padre");
-      //       select.prop('disabled', false);
-      //       select.html("");
-      //       select.append(
-      //         $("<option>", {
-      //           value: "null",
-      //           text: "Ninguno",
-      //           selected: true,
-      //         })
-      //       );
-      //       $.each(data, (index, item) => {
-      //         let option = $("<option>", {
-      //           value: item.id,
-      //           text: item.nombre,
-      //         });
-      //         select.append(option);
-      //       });
-      //     },
-      //   });
-      // });
+      //  Actualizar tabla
+      $('#facultad').change(() => {
+        console.log("Cargando")
+        $.ajax({
+          url: "http://localhost:8000/ajaxGetLineasInvestigacionFacultadPag/" + $("#facultad").val() + "/1",
+          method: "GET",
+          success: (data) => {
+            //  Paginación
+            let ul = $('#pagination');
+            ul.empty();
+            ul.append($('<li>').html('<a href="#" aria-current="page" class="flex items-center justify-center px-4 h-10 text-blue-600 rounded-s-lg border border-gray-300 bg-blue-50 hover:bg-blue-100 hover:text-blue-700 dark:border-gray-700 dark:bg-gray-700 dark:text-white">Anterior</a>'));
+            for (let i = 1; i <= data.last_page; i++) {
+              var listItem = $('<li>');
+              if (i == 1) {
+                listItem.html('<a href="#" aria-current="page" class="flex items-center justify-center px-4 h-10 text-blue-600 border border-gray-300 bg-blue-50 hover:bg-blue-100 hover:text-blue-700 dark:border-gray-700 dark:bg-gray-700 dark:text-white">' + i + '</a>')
+              } else {
+                listItem.html('<a href="#" class="flex items-center justify-center px-4 h-10 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white">' + i + '</a>')
+              }
+              ul.append(listItem);
+            }
+            ul.append($('<li>').html('<a href="#" aria-current="page" class="flex items-center justify-center px-4 h-10 text-blue-600 rounded-e-lg border border-gray-300 bg-blue-50 hover:bg-blue-100 hover:text-blue-700 dark:border-gray-700 dark:bg-gray-700 dark:text-white">Siguiente</a>'));
+            //  Tabla
+          },
+        });
+      });
     })
   </script>
 </body>
