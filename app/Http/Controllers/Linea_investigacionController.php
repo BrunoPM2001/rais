@@ -96,7 +96,6 @@ class Linea_investigacionController extends Controller {
     $query = Linea_investigacion::with('hijos')
       ->whereNull('parent_id')
       ->whereNull('facultad_id');
-
     $query->get();
     $lineas_investigacion = $query->paginate(10, ['*'], 'page', 1);
     return view('admin.lineas_investigacion', [
