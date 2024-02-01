@@ -43,6 +43,8 @@
             <thead>
               <tr>
                 <th>
+                </th>
+                <th>
                   Código
                 </th>
                 <th>
@@ -103,8 +105,14 @@
         processing: true,
         lengthChange: false,
         scrollX: true,
-        ajax: 'http://localhost:8000/ajaxGetLineasInvestigacion',
+        ajax: 'http://localhost:8000/ajaxGetLineasInvestigacionFacultadPag/1/1',
         columns: [{
+            className: 'dt-control',
+            orderable: false,
+            data: null,
+            defaultContent: ''
+          },
+          {
             data: 'id'
           },
           {
@@ -128,6 +136,38 @@
             sNext: "Siguiente",
             sPrevious: "Anterior"
           },
+        }
+      });
+      //  Imprimir contenido de hijos como filas
+      function format(d) {
+        let content = "";
+        d.map((item) => {
+          content = content + (
+            '<tr>' +
+            '<td></td>' +
+            '<td>' +
+            item.codigo +
+            '</td>' +
+            '<td>' +
+            item.nombre +
+            '</td>' +
+            '<td>' +
+            item.resolucion +
+            '</td>' +
+            '</tr>'
+          );
+        })
+        return content
+      }
+      //  Mostrar hijos
+      table.on('click', 'td.dt-control', function(e) {
+        let tr = e.target.closest('tr');
+        let row = table.row(tr);
+
+        if (row.child.isShown()) {
+          row.child.hide();
+        } else {
+          row.child(format(row.data().hijos)).show();
         }
       });
     });
