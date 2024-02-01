@@ -14,7 +14,7 @@ class Linea_investigacionController extends Controller {
   public function getAll() {
     $lineas_investigacion = Linea_investigacion::select('id', 'codigo', 'nombre')
       ->get();
-    return $lineas_investigacion;
+    return ["data" => $lineas_investigacion];
   }
 
   public function getAllOfFacultadPaginate($id, $page) {
