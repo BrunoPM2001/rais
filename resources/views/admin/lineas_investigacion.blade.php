@@ -99,13 +99,15 @@
   </div>
   <script type="module">
     $(document).ready(function() {
+      let ajax_url = 'http://localhost:8000/ajaxGetLineasInvestigacionFacultad/' + $('#facultad').val();
       let table = new DataTable('#lineas_table', {
         paging: true,
+        pagingType: 'full_numbers',
         deferRender: true,
         processing: true,
         lengthChange: false,
         scrollX: true,
-        ajax: 'http://localhost:8000/ajaxGetLineasInvestigacionFacultadPag/1/1',
+        ajax: ajax_url,
         columns: [{
             className: 'dt-control',
             orderable: false,
@@ -113,13 +115,13 @@
             defaultContent: ''
           },
           {
-            data: 'id'
-          },
-          {
             data: 'codigo'
           },
           {
             data: 'nombre'
+          },
+          {
+            data: 'resolucion'
           },
         ],
         //  Idioma dela información mostrada
@@ -140,7 +142,12 @@
       });
       //  Imprimir contenido de hijos como filas
       function format(d) {
-        let content = "";
+        let content = '<tr>' +
+          '<td></td>' +
+          '<td class="text-sm font-medium text-gray-900">Código</td>' +
+          '<td class="text-sm font-medium text-gray-900">Nombre</td>' +
+          '<td class="text-sm font-medium text-gray-900">Resolución</td>' +
+          '</tr>';
         d.map((item) => {
           content = content + (
             '<tr>' +
@@ -152,7 +159,7 @@
             item.nombre +
             '</td>' +
             '<td>' +
-            item.resolucion +
+            (item.resolucion == null ? "" : item.resolucion) +
             '</td>' +
             '</tr>'
           );
@@ -169,6 +176,11 @@
         } else {
           row.child(format(row.data().hijos)).show();
         }
+      });
+      /* Actualizar al cambiar */
+      $('#facultad').on('change', function() {
+        ajax_url = 'http://localhost:8000/ajaxGetLineasInvestigacionFacultad/' + $('#facultad').val();
+        table.ajax.url(ajax_url).load();
       });
     });
   </script>

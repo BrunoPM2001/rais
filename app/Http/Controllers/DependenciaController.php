@@ -4,12 +4,17 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Dependencia;
+use App\Models\Facultad;
 
 class DependenciaController extends Controller {
 
   public function getAll() {
-    $dependencias = Dependencia::all();
-    return $dependencias;
+    $dependencias = Dependencia::with([
+      'facultad' => function ($query) {
+        $query->select('id', 'nombre');
+      }
+    ])->get();
+    return ['data' => $dependencias];
   }
 
   public function create(Request $request) {
@@ -20,11 +25,11 @@ class DependenciaController extends Controller {
     ]);
 
     //  Insertar en la DB
-    $dependencia = Dependencia::create([
+    Dependencia::create([
       'facultad_id' => $request->facultad_id,
       'dependencia' => $request->dependencia
     ]);
-    return $dependencia;
+    return redirect()->route('view_dependencias');
   }
 
   public function update(Request $request, $id) {
@@ -44,5 +49,16 @@ class DependenciaController extends Controller {
     $dependencia = Dependencia::findOrFail($id);
     $dependencia->delete();
     return $dependencia;
+  }
+
+  //  Views
+  public function main() {
+    //  Lista de facultades
+    $facultad = new Facultad();
+    $facultades = $facultad->listar();
+
+    return view('admin.dependencias', [
+      'facultades' => $facultades
+    ]);
   }
 }

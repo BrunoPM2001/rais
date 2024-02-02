@@ -30,10 +30,10 @@
 .dataTables_paginate a {
   @apply border flex items-center justify-center p-2 h-full;
 }
-[data-dt-idx="previous"] {
+[data-dt-idx="first"] {
   @apply rounded-l-lg;
 }
-[data-dt-idx="next"] {
+[data-dt-idx="last"] {
   @apply rounded-r-lg;
 }
 .dataTables_paginate span .current {
@@ -537,12 +537,10 @@ table.dataTable.compact tbody td {
   text-align: right;
 }
 .dataTables_wrapper .dataTables_filter input {
-  border: 1px solid #aaa;
-  border-radius: 3px;
-  padding: 5px;
-  background-color: transparent;
-  color: inherit;
-  margin-left: 3px;
+  @apply bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg ml-2 p-2.5;
+}
+.dataTables_wrapper .dataTables_filter input:focus {
+  @apply ring-blue-500 border-blue-500;
 }
 .dataTables_wrapper .dataTables_info {
   clear: both;

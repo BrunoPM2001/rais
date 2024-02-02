@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\DependenciaController;
 use App\Http\Controllers\Linea_investigacionController;
 use Illuminate\Support\Facades\Route;
 
@@ -20,10 +21,16 @@ Route::get('/', function () {
 
 //  ADMIN VIEWS
 Route::get('/lineas', [Linea_investigacionController::class, 'main'])->name('view_lineas');
+Route::get('/dependencias', [DependenciaController::class, 'main'])->name('view_dependencias');
 
 //  AJAX
 Route::get('/ajaxGetLineasInvestigacion', [Linea_investigacionController::class, 'getAll']);
 Route::get('/ajaxGetLineasInvestigacionFacultad/{id}', [Linea_investigacionController::class, 'getAllOfFacultad']);
-Route::get('/ajaxGetLineasInvestigacionFacultadPag/{id}/{page}', [Linea_investigacionController::class, 'getAllOfFacultadPaginate']);
 
 Route::post('/createLinea', [Linea_investigacionController::class, 'create'])->name('create_linea');
+
+
+//  Dependencias
+Route::get('/ajaxGetDependencias', [DependenciaController::class, 'getAll']);
+
+Route::post('/createDependencia', [DependenciaController::class, 'create'])->name('create_dependencia');
