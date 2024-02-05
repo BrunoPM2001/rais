@@ -23,7 +23,7 @@ Route::get('/', function () {
 Route::get('/lineas', [Linea_investigacionController::class, 'main'])->name('view_lineas');
 Route::get('/dependencias', [DependenciaController::class, 'main'])->name('view_dependencias');
 
-//  AJAX
+//  Líneas de investigación
 Route::get('/ajaxGetLineasInvestigacion', [Linea_investigacionController::class, 'getAll']);
 Route::get('/ajaxGetLineasInvestigacionFacultad/{id}', [Linea_investigacionController::class, 'getAllOfFacultad']);
 
@@ -32,5 +32,7 @@ Route::post('/createLinea', [Linea_investigacionController::class, 'create'])->n
 
 //  Dependencias
 Route::get('/ajaxGetDependencias', [DependenciaController::class, 'getAll']);
+Route::get('/ajaxGetDependencia/{id}', [DependenciaController::class, 'getOne']);
 
 Route::post('/createDependencia', [DependenciaController::class, 'create'])->name('create_dependencia');
+Route::post('/editDependencia', [DependenciaController::class, 'edit'])->name('edit_dependencia');

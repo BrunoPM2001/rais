@@ -17,6 +17,15 @@ class DependenciaController extends Controller {
     return ['data' => $dependencias];
   }
 
+  public function getOne($id) {
+    $dependencia = Dependencia::with([
+      'facultad' => function ($query) {
+        $query->select('id', 'nombre');
+      }
+    ])->where('id', '=', $id)->get();
+    return $dependencia[0];
+  }
+
   public function create(Request $request) {
     //  Validar data
     $request->validate([

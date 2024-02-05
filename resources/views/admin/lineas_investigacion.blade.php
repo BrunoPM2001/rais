@@ -37,7 +37,7 @@
         </form>
         <!--  Tabla de lineas de investigación  -->
         <div class="overflow-x-hidden">
-          <table id="lineas_table" class="table table-hover" style="width:100%">
+          <table id="table" class="table table-hover align-middle" style="width:100%">
             <thead>
               <tr>
                 <th>
@@ -78,9 +78,9 @@
         <form action="{{ route('create_linea') }}" method="post" class="p-4">
           @csrf
           <div class="row mb-4">
-            <label for="create_facultad" class="col-sm-2 col-form-label">Facultad:</label>
+            <label for="facultad_id" class="col-sm-2 col-form-label">Facultad:</label>
             <div class="col-sm-10">
-              <select id="create_facultad" name="facultad_id" class="form-select">
+              <select id="facultad_id" name="facultad_id" class="form-select">
                 <option value="" selected>Ninguna</option>
                 @foreach($facultades as $facultad)
                 <option value="{{ $facultad->id }}">{{ $facultad->nombre }}</option>
@@ -89,9 +89,9 @@
             </div>
           </div>
           <div class="row mb-4">
-            <label for="create_padre" class="col-sm-2 col-form-label">Padre:</label>
+            <label for="parent_id" class="col-sm-2 col-form-label">Padre:</label>
             <div class="col-sm-10">
-              <select id="create_padre" name="parent_id" class="form-select">
+              <select id="parent_id" name="parent_id" class="form-select">
                 <option value="">Cargando...</option>
               </select>
             </div>
@@ -103,7 +103,7 @@
             </div>
           </div>
           <div class="row mb-4">
-            <label for="linea" class="col-sm-2 col-form-label">Linea:</label>
+            <label for="nombre" class="col-sm-2 col-form-label">Linea:</label>
             <div class="col-sm-10">
               <input type="text" id="nombre" name="nombre" class="form-control">
             </div>
@@ -124,7 +124,7 @@
   <script type="module">
     $(document).ready(function() {
       let ajax_url = 'http://localhost:8000/ajaxGetLineasInvestigacionFacultad/' + $('#facultad').val();
-      let table = new DataTable('#lineas_table', {
+      let table = new DataTable('#table', {
         paging: true,
         pagingType: 'full_numbers',
         deferRender: true,
