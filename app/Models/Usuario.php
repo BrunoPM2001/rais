@@ -24,9 +24,9 @@ class Usuario extends Model implements Authenticatable {
     return $this->belongsTo(Usuario_admin::class);
   }
 
-  //  Auth
+  //  En caso de problemas aquí quitar la columna de email.
   public function getAuthIdentifierName() {
-    return ['username', 'email'];
+    return 'username' ?? 'email';
   }
 
   public function getAuthPassword() {

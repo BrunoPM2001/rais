@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\DependenciaController;
 use App\Http\Controllers\Linea_investigacionController;
+use App\Http\Controllers\Usuario_adminController;
 use App\Http\Controllers\UsuarioController;
 use Illuminate\Support\Facades\Route;
 
@@ -25,8 +26,11 @@ Route::get('/login', function () {
 })->name('login');
 
 //  ADMIN VIEWS
-Route::get('/lineas', [Linea_investigacionController::class, 'main'])->name('view_lineas');
-Route::get('/dependencias', [DependenciaController::class, 'main'])->name('view_dependencias');
+Route::prefix('admin')->middleware('checkRole:Administrador')->group(function () {
+  Route::get('/lineas', [Linea_investigacionController::class, 'main'])->name('view_lineas');
+  Route::get('/dependencias', [DependenciaController::class, 'main'])->name('view_dependencias');
+  Route::get('/usuariosAdmin', [Usuario_adminController::class, 'main'])->name('view_usuariosAdmin');
+});
 
 //  Líneas de investigación
 Route::get('/ajaxGetLineasInvestigacion', [Linea_investigacionController::class, 'getAll']);
@@ -47,3 +51,6 @@ Route::post('/editDependencia', [DependenciaController::class, 'edit'])->name('e
 Route::post('/reqlogin', [UsuarioController::class, 'login'])->name('login_form');
 Route::get('/getUsuarios', [UsuarioController::class, 'getAll']);
 Route::post('/createUsuario', [UsuarioController::class, 'create']);
+
+//  Usuarios administradores
+Route::get('/getUsuariosAdmin', [Usuario_adminController::class, 'getAll']);

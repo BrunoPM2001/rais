@@ -99,11 +99,12 @@
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Administrador</a>
           <ul class="dropdown-menu">
-            <li><a class="dropdown-item" href="#">Lineas de investigación</a></li>
+            <li><a class="dropdown-item" href="{{ route('view_lineas') }}">Lineas de investigación</a></li>
+            <li><a class="dropdown-item" href="{{ route('view_dependencias') }}">Dependencias</a></li>
             <li>
               <hr class="dropdown-dividir">
             </li>
-            <li><a class="dropdown-item" href="#">Usuarios administrativos</a></li>
+            <li><a class="dropdown-item" href="{{ route('view_usuariosAdmin') }}">Usuarios administrativos</a></li>
             <li><a class="dropdown-item" href="#">Usuarios investigadores</a></li>
             <li><a class="dropdown-item" href="#">Usuarios evaluadores</a></li>
             <li><a class="dropdown-item" href="#">Usuarios docentes</a></li>
