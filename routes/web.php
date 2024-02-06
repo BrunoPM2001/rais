@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\DependenciaController;
 use App\Http\Controllers\Linea_investigacionController;
+use App\Http\Controllers\UsuarioController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -18,6 +19,10 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
   return view('welcome');
 });
+
+Route::get('/login', function () {
+  return view('login');
+})->name('login');
 
 //  ADMIN VIEWS
 Route::get('/lineas', [Linea_investigacionController::class, 'main'])->name('view_lineas');
@@ -36,3 +41,9 @@ Route::get('/ajaxGetDependencia/{id}', [DependenciaController::class, 'getOne'])
 
 Route::post('/createDependencia', [DependenciaController::class, 'create'])->name('create_dependencia');
 Route::post('/editDependencia', [DependenciaController::class, 'edit'])->name('edit_dependencia');
+
+
+//  Usuarios
+Route::post('/reqlogin', [UsuarioController::class, 'login'])->name('login_form');
+Route::get('/getUsuarios', [UsuarioController::class, 'getAll']);
+Route::post('/createUsuario', [UsuarioController::class, 'create']);

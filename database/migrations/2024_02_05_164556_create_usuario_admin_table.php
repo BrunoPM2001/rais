@@ -26,6 +26,9 @@ return new class extends Migration {
       $table->string("cargo")->nullable();
       $table->date("fecha_baja")->nullable();
       $table->timestamps();
+
+      //  Fks
+      $table->foreign("facultad_id")->references("id")->on("Facultad");
     });
   }
 
