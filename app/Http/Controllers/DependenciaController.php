@@ -41,7 +41,8 @@ class DependenciaController extends Controller {
     return redirect()->route('view_dependencias');
   }
 
-  public function update(Request $request, $id) {
+  public function update(Request $request) {
+    $id = $request->input('id');
     //  Validar la data
     $request->validate([
       'facultad_id' => 'required|exists:Facultad,id',
@@ -51,7 +52,10 @@ class DependenciaController extends Controller {
     //  Encontrar y actualizar data
     $dependencia = Dependencia::findOrFail($id);
     $dependencia->update($request->all());
-    return $dependencia;
+    return [
+      'result' => 'Success',
+      'data' => $dependencia
+    ];
   }
 
   public function delete($id) {
@@ -66,7 +70,7 @@ class DependenciaController extends Controller {
     $facultad = new Facultad();
     $facultades = $facultad->listar();
 
-    return view('admin.dependencias', [
+    return view('admin.admin.dependencias', [
       'facultades' => $facultades
     ]);
   }

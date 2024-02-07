@@ -6,6 +6,7 @@ window.$ = window.jQuery = jQuery;
 
 //  Bootstrap
 import * as bootstrap from "bootstrap";
+window.bootstrap = bootstrap;
 
 //  Datatables
 import DataTable from "datatables.net-bs5";

@@ -21,7 +21,7 @@ class Usuario extends Model implements Authenticatable {
 
   //  Relaciones
   public function user_admin(): BelongsTo {
-    return $this->belongsTo(Usuario_admin::class);
+    return $this->belongsTo(Usuario_admin::class, 'tabla_id');
   }
 
   //  En caso de problemas aquí quitar la columna de email.

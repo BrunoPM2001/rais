@@ -4,14 +4,15 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Lineas de investigación</title>
+  <meta name="csrf_token" content="{{ csrf_token() }}" />
+  <title>Dependencias</title>
   @vite(['resources/scss/app.scss', 'resources/js/app.js'])
 </head>
 
 <body>
   @include('admin.components.navbar')
   <div class="container">
-    <h4 class="my-4">Líneas de investigación</h4>
+    <h4 class="my-4">Dependencias</h4>
     <!--  Tab list  -->
     <ul class="nav nav-tabs" id="myTab" role="tablist">
       <li class="nav-item" role="presentation">
@@ -23,7 +24,7 @@
     </ul>
     <div class="tab-content border border-top-0 rounded-bottom" id="myTabContent">
       <div class="tab-pane fade show active p-4" id="listar-tab-pane" role="tabpanel" aria-labelledby="listar-tab" tabindex="0">
-        <!--  Tabla de lineas de investigación  -->
+        <!--  Tabla  -->
         <div class="overflow-x-hidden">
           <table id="table" class="table table-hover align-middle" style="width:100%">
             <thead>
@@ -58,7 +59,7 @@
         </div>
       </div>
       <div class="tab-pane fade" id="crear-tab-pane" role="tabpanel" aria-labelledby="crear-tab" tabindex="0">
-        <!--  Crear nueva linea de investigación  -->
+        <!--  Crear nuev@  -->
         <form action="{{ route('create_dependencia') }}" method="post" class="p-4">
           @csrf
           <div class="row mb-4">
@@ -89,7 +90,7 @@
   <!-- Modal para editar -->
   @extends('admin.components.modal')
   @section('form')
-  <form action="{{ route('edit_dependencia') }}" method="post">
+  <form id="updateForm">
     @endsection
 
     @section('titulo')
@@ -98,6 +99,7 @@
 
     @section('contenido')
     <div class="mb-3">
+      <input type="text" hidden id="edit_id" name="edit_id">
       <label for="edit_facultad" class="form-label">Facultad:</label>
       <select id="edit_facultad" name="edit_facultad" class="form-select">
         <option value="" selected>Ninguna</option>
@@ -116,10 +118,16 @@
   </form>
   @endsection
 
+  <!--  Toast para notificaciones -->
+  @extends('admin.components.toast')
 
   <script type="module">
     $(document).ready(function() {
-      let ajax_url = 'http://localhost:8000/ajaxGetDependencias'
+      //  Iniciar modal y toast
+      let modal = new bootstrap.Modal(document.getElementById('myModal'), {});
+      let toast = new bootstrap.Toast(document.getElementById('myToast'));
+      //  Datatable
+      let ajax_url = 'http://localhost:8000/api/dependencias/getAll'
       let table = new DataTable('#table', {
         paging: true,
         pagingType: 'full_numbers',
@@ -138,7 +146,7 @@
           },
           {
             render: function(data, type, row) {
-              return `<button id="s_${row.id}" data-bs-toggle="modal" data-bs-target="#exampleModal" class="btn btn-warning edit">Editar</button>`;
+              return `<button id="s_${row.id}" class="btn btn-warning edit">Editar</button>`;
             }
           }
         ],
@@ -162,16 +170,43 @@
       $('#table').on('click', '.edit', (e) => {
         let item = e.currentTarget.getAttribute('id');
         let [_, id] = item.split('_');
-        const getData = $.ajax({
-          url: 'http://localhost:8000/ajaxGetDependencia/' + id,
+        $.ajax({
+          url: 'http://localhost:8000/api/dependencias/getOne/' + id,
           type: 'GET',
           success: (data) => {
             //  Actualizar la data a editar
-            $("#edit_facultad").val(data.facultad.nombre);
+            $("#edit_id").val(data.id)
+            $("#edit_facultad").val(data.facultad.id);
             $("#edit_dependencia").val(data.dependencia);
+            modal.show();
           }
         });
       });
+      //  Actualizar data
+      $('#updateForm').on('submit', (e) => {
+        e.preventDefault();
+        $.ajax({
+          url: 'http://localhost:8000/api/dependencias/update',
+          type: 'POST',
+          data: {
+            id: $('#edit_id').val(),
+            facultad_id: $('#edit_facultad').val(),
+            dependencia: $('#edit_dependencia').val(),
+          },
+          headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf_token"]').attr('content')
+          },
+          success: (data) => {
+            modal.hide();
+            toast.show();
+            $('#myToast .toast-body').html("Dependencia actualizada con éxito.")
+            $("#table").DataTable().ajax.reload();
+            setTimeout(() => {
+              toast.hide();
+            }, 10000)
+          }
+        })
+      })
     });
   </script>
 </body>

@@ -4,6 +4,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="csrf_token" content="{{ csrf_token() }}" />
   <title>Lineas de investigación</title>
   @vite(['resources/scss/app.scss', 'resources/js/app.js'])
 </head>
@@ -35,7 +36,7 @@
             </select>
           </div>
         </form>
-        <!--  Tabla de lineas de investigación  -->
+        <!--  Tabla  -->
         <div class="overflow-x-hidden">
           <table id="table" class="table table-hover align-middle" style="width:100%">
             <thead>
@@ -74,7 +75,7 @@
         </div>
       </div>
       <div class="tab-pane fade" id="crear-tab-pane" role="tabpanel" aria-labelledby="crear-tab" tabindex="0">
-        <!--  Crear nueva linea de investigación  -->
+        <!--  Crear nuev@  -->
         <form action="{{ route('create_linea') }}" method="post" class="p-4">
           @csrf
           <div class="row mb-4">
@@ -123,7 +124,7 @@
   </div>
   <script type="module">
     $(document).ready(function() {
-      let ajax_url = 'http://localhost:8000/ajaxGetLineasInvestigacionFacultad/' + $('#facultad').val();
+      let ajax_url = 'http://localhost:8000/api/lineasInvestigacion/getAllFacultad/' + $('#facultad').val();
       let table = new DataTable('#table', {
         paging: true,
         pagingType: 'full_numbers',
@@ -198,7 +199,7 @@
       });
       /* Actualizar al cambiar */
       $('#facultad').on('change', function() {
-        ajax_url = 'http://localhost:8000/ajaxGetLineasInvestigacionFacultad/' + $('#facultad').val();
+        ajax_url = 'http://localhost:8000/api/lineasInvestigacion/getAllFacultad/' + $('#facultad').val();
         table.ajax.url(ajax_url).load();
       });
     });

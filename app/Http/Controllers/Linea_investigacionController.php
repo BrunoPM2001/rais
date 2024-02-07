@@ -78,7 +78,7 @@ class Linea_investigacionController extends Controller {
     $facultades = $facultad->listar();
 
     //  Lista de lineas
-    return view('admin.lineas_investigacion', [
+    return view('admin.admin.lineas_investigacion', [
       'facultades' => $facultades
     ]);
   }
