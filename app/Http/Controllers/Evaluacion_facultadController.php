@@ -13,7 +13,9 @@ class Evaluacion_facultadController extends Controller {
       Evaluacion_facultad::raw('COUNT(*) AS facultades'),
       Evaluacion_facultad::raw('SUM(cupos) AS cupos'),
       Evaluacion_facultad::raw('MIN(fecha_inicio) AS fecha_inicio'),
-      Evaluacion_facultad::raw('MAX(fecha_fin) AS fecha_fin')
+      Evaluacion_facultad::raw('MAX(fecha_fin) AS fecha_fin'),
+      Evaluacion_facultad::raw('MIN(evaluacion_fecha_inicio) AS fecha_inicio_evaluacion'),
+      Evaluacion_facultad::raw('MAX(evaluacion_fecha_fin) AS fecha_fin_evaluacion')
     )
       ->groupBy('tipo_proyecto', 'periodo')
       ->get();

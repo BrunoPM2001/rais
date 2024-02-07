@@ -9,9 +9,9 @@ return new class extends Migration {
    * Run the migrations.
    */
   public function up(): void {
-    Schema::create('Evaluador_usuario', function (Blueprint $table) {
+    Schema::create('Usuario_evaluador', function (Blueprint $table) {
       $table->id();
-      $table->unsignedBigInteger('investigador_id')->nullable();
+      $table->unsignedBigInteger('usuario_investigador_id')->nullable();
       $table->string('tipo');
       $table->string('apellidos');
       $table->string('nombres');
@@ -19,7 +19,7 @@ return new class extends Migration {
       $table->string('cargo')->nullable();
       $table->string('codigo_regina')->nullable();
       //  Fks
-      $table->foreign('investigador_id')->references('id')->on('Investigador')
+      $table->foreign('usuario_investigador_id')->references('id')->on('Usuario_investigador')
         ->cascadeOnUpdate()
         ->cascadeOnDelete();
     });
@@ -29,6 +29,6 @@ return new class extends Migration {
    * Reverse the migrations.
    */
   public function down(): void {
-    Schema::drop('Evaluador_usuario');
+    Schema::drop('Usuario_evaluador');
   }
 };

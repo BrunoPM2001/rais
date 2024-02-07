@@ -9,7 +9,7 @@ return new class extends Migration {
    * Run the migrations.
    */
   public function up(): void {
-    Schema::create('Investigador', function (Blueprint $table) {
+    Schema::create('Usuario_investigador', function (Blueprint $table) {
       $table->id();
       $table->unsignedBigInteger('dependencia_id')->nullable();
       $table->unsignedBigInteger('facultad_id')->nullable();
@@ -67,6 +67,7 @@ return new class extends Migration {
       $table->string('cti_vitae')->nullable();
       $table->boolean('rrhh_status')->nullable();
       $table->string('dep_academico')->nullable();
+      $table->timestamps();
       //  Fks
       $table->foreign('dependencia_id')->references('id')->on('Dependencia')
         ->cascadeOnUpdate()
@@ -84,6 +85,6 @@ return new class extends Migration {
    * Reverse the migrations.
    */
   public function down(): void {
-    Schema::drop('Investigador');
+    Schema::drop('Usuario_investigador');
   }
 };

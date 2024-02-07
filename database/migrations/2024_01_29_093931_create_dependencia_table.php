@@ -11,7 +11,7 @@ return new class extends Migration {
   public function up(): void {
     Schema::create('Dependencia', function (Blueprint $table) {
       $table->id();
-      $table->unsignedBigInteger('facultad_id');
+      $table->unsignedBigInteger('facultad_id')->nullable();
       $table->string('dependencia')->nullable(false);
       //  Fks
       $table->foreign('facultad_id')->references('id')->on('Facultad')

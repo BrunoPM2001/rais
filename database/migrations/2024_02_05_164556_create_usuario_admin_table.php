@@ -36,8 +36,6 @@ return new class extends Migration {
    * Reverse the migrations.
    */
   public function down(): void {
-    Schema::drop('Usuario_admin', function (Blueprint $table) {
-      //
-    });
+    Schema::drop('Usuario_admin');
   }
 };
