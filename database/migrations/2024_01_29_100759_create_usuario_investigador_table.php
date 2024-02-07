@@ -56,7 +56,7 @@ return new class extends Migration {
       $table->text('biografia')->nullable();
       $table->integer('estado')->nullable();
       $table->string('tmp_facultad')->nullable();
-      $table->string('tmp_id')->nullable();
+      $table->text('tmp_id')->nullable();
       $table->string('enlace_cti')->nullable();
       $table->string('tipo_investigador')->nullable();
       $table->string('tipo_investigador_categoria')->nullable();
