@@ -38,7 +38,7 @@
         </form>
         <!--  Tabla  -->
         <div class="overflow-x-hidden">
-          <table id="table" class="table table-hover align-middle" style="width:100%">
+          <table id="table" class="table table-striped table-hover align-middle" style="width:100%">
             <thead>
               <tr>
                 <th>

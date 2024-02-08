@@ -30,7 +30,7 @@ Route::get('/login', function () {
 Route::prefix('admin')->middleware('checkRole:Administrador')->group(function () {
   //  FACULTAD
   Route::prefix('facultad')->group(function () {
-    Route::get('convocatorias', [Linea_investigacionController::class, 'main'])->name('view_facultad_convocatorias');
+    Route::get('convocatorias', [Evaluacion_facultadController::class, 'main'])->name('view_facultad_convocatorias');
     // Route::get('asignacionEvaluadores', [DependenciaController::class, 'main'])->name('view_dependencias');
     // Route::get('proyectosEvaluados', [Usuario_adminController::class, 'main'])->name('view_usuariosAdmin');
   });
@@ -50,6 +50,7 @@ Route::prefix('api')->group(function () {
     Route::prefix('facultad')->group(function () {
       Route::get('getConvocatorias', [Evaluacion_facultadController::class, 'getConvocatorias']);
       Route::get('getDetalleConvocatoria/{periodo}/{tipo_proyecto}', [Evaluacion_facultadController::class, 'getDetalleConvocatoria']);
+      Route::get('getEvaluadoresConvocatoria/{id}', [Evaluacion_facultadController::class, 'getEvaluadoresConvocatoria']);
     });
   });
 

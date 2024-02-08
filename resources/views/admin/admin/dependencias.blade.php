@@ -26,7 +26,7 @@
       <div class="tab-pane fade show active p-4" id="listar-tab-pane" role="tabpanel" aria-labelledby="listar-tab" tabindex="0">
         <!--  Tabla  -->
         <div class="overflow-x-hidden">
-          <table id="table" class="table table-hover align-middle" style="width:100%">
+          <table id="table" class="table table-striped table-hover align-middle" style="width:100%">
             <thead>
               <tr>
                 <th>
