@@ -68,26 +68,25 @@ Route::prefix('api')->group(function () {
       //  Investigador
       Route::get('getUsuariosInvestigadores', [Usuario_investigadorController::class, 'getAll']);
       Route::get('getOneInvestigador/{id}', [Usuario_investigadorController::class, 'getOne']);
+      Route::get('searchInvestigadorBy/{input}', [Usuario_investigadorController::class, 'searchInvestigadorBy']);
+    });
+
+    //  Dependencias
+    Route::prefix('dependencias')->group(function () {
+      Route::get('getAll', [DependenciaController::class, 'getAll']);
+      Route::get('getOne/{id}', [DependenciaController::class, 'getOne']);
+      Route::post('create', [DependenciaController::class, 'create'])->name('create_dependencia');
+      Route::post('update', [DependenciaController::class, 'update']);
+    });
+
+    //  Lineas de investigación
+    Route::prefix('lineasInvestigacion')->group(function () {
+      Route::get('getAll', [Linea_investigacionController::class, 'getAll']);
+      Route::get('getAllFacultad/{id}', [Linea_investigacionController::class, 'getAllOfFacultad']);
+      Route::post('create', [Linea_investigacionController::class, 'create'])->name('create_linea');
     });
   });
-
-  //  Dependencias
-  Route::prefix('dependencias')->group(function () {
-    Route::get('getAll', [DependenciaController::class, 'getAll']);
-    Route::get('getOne/{id}', [DependenciaController::class, 'getOne']);
-    Route::post('create', [DependenciaController::class, 'create'])->name('create_dependencia');
-    Route::post('update', [DependenciaController::class, 'update']);
-  });
-
-  //  Lineas de investigación
-  Route::prefix('lineasInvestigacion')->group(function () {
-    Route::get('getAll', [Linea_investigacionController::class, 'getAll']);
-    Route::get('getAllFacultad/{id}', [Linea_investigacionController::class, 'getAllOfFacultad']);
-    Route::post('create', [Linea_investigacionController::class, 'create'])->name('create_linea');
-  });
 });
-
-
 
 //  Login
 Route::post('/reqlogin', [UsuarioController::class, 'login'])->name('login_form');

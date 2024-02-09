@@ -177,9 +177,10 @@
 
   <script type="module">
     $(document).ready(function() {
-      //  Iniciar modal y toast
+      //  Iniciar modal, toast y temporizador
       let modal = new bootstrap.Modal(document.getElementById('myModal'), {});
       let toast = new bootstrap.Toast(document.getElementById('myToast'));
+      let temp;
       //  Datatable
       let ajax_url = 'http://localhost:8000/api/admin/usuarios/getUsuariosInvestigadores'
       let table = new DataTable('#table', {
@@ -281,7 +282,32 @@
             }, 10000)
           }
         })
-      })
+      });
+      //  Buscar investigador
+      $('#investigador_id').on('keyup', () => {
+        clearTimeout(temp);
+        temp = setTimeout(() => {
+          //  Petición ajax y uso de typeahead
+          let input = $('#investigador_id').val();
+          $.ajax({
+            url: 'http://localhost:8000/api/admin/usuarios/searchInvestigadorBy/' + input,
+            method: 'GET',
+            success: (data) => {
+              let sugerencias = [];
+              $.each(data, (index, user) => {
+                sugerencias.push(user.codigo + " | " + user.doc_numero + " | " +
+                  user.apellido1 + " " + user.apellido2 + " " + user.nombre
+                );
+              });
+              console.log(sugerencias)
+              //  Iniciar Typeahead
+              $('#investigador_id').typeahead({
+                source: sugerencias
+              });
+            }
+          });
+        }, 1000);
+      });
     });
   </script>
 </body>

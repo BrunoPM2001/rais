@@ -127,7 +127,7 @@
       let modal = new bootstrap.Modal(document.getElementById('myModal'), {});
       let toast = new bootstrap.Toast(document.getElementById('myToast'));
       //  Datatable
-      let ajax_url = 'http://localhost:8000/api/dependencias/getAll'
+      let ajax_url = 'http://localhost:8000/api/admin/dependencias/getAll'
       let table = new DataTable('#table', {
         paging: true,
         pagingType: 'full_numbers',
@@ -171,7 +171,7 @@
         let item = e.currentTarget.getAttribute('id');
         let [_, id] = item.split('_');
         $.ajax({
-          url: 'http://localhost:8000/api/dependencias/getOne/' + id,
+          url: 'http://localhost:8000/api/admin/dependencias/getOne/' + id,
           type: 'GET',
           success: (data) => {
             //  Actualizar la data a editar
@@ -186,7 +186,7 @@
       $('#updateForm').on('submit', (e) => {
         e.preventDefault();
         $.ajax({
-          url: 'http://localhost:8000/api/dependencias/update',
+          url: 'http://localhost:8000/api/admin/dependencias/update',
           type: 'POST',
           data: {
             id: $('#edit_id').val(),

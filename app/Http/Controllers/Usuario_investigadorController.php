@@ -40,6 +40,26 @@ class Usuario_investigadorController extends Controller {
     return $usuario[0];
   }
 
+  public function searchInvestigadorBy($input) {
+    $investigadores = DB::table('Usuario_investigador AS a')
+      ->select(
+        'id',
+        'codigo',
+        'doc_numero',
+        'apellido1',
+        'apellido2',
+        'nombres'
+      )
+      ->where('codigo', 'LIKE', '%' . $input . '%')
+      ->orWhere('doc_numero', 'LIKE', '%' . $input . '%')
+      ->orWhere('apellido1', 'LIKE', '%' . $input . '%')
+      ->orWhere('apellido2', 'LIKE', '%' . $input . '%')
+      ->orWhere('nombres', 'LIKE', '%' . $input . '%')
+      ->get();
+
+    return $investigadores;
+  }
+
   public function main() {
     return view('admin.admin.usuarios_investigadores');
   }

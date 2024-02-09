@@ -124,7 +124,7 @@
   </div>
   <script type="module">
     $(document).ready(function() {
-      let ajax_url = 'http://localhost:8000/api/lineasInvestigacion/getAllFacultad/' + $('#facultad').val();
+      let ajax_url = 'http://localhost:8000/api/admin/lineasInvestigacion/getAllFacultad/' + $('#facultad').val();
       let table = new DataTable('#table', {
         paging: true,
         pagingType: 'full_numbers',
@@ -199,7 +199,7 @@
       });
       /* Actualizar al cambiar */
       $('#facultad').on('change', function() {
-        ajax_url = 'http://localhost:8000/api/lineasInvestigacion/getAllFacultad/' + $('#facultad').val();
+        ajax_url = 'http://localhost:8000/api/admin/lineasInvestigacion/getAllFacultad/' + $('#facultad').val();
         table.ajax.url(ajax_url).load();
       });
     });
