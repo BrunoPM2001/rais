@@ -17,7 +17,7 @@ class UsuarioController extends Controller {
 
   public function create(Request $request) {
     //  TIPOS DE USUARIOS
-    $tiposUsuarios = ['Usuario_admin', 'Usuario_evaluador'];
+    $tiposUsuarios = ['Usuario_admin', 'Usuario_investigador'];
 
     $tipoUsuario = $request->input('tipo');
     if (!in_array($tipoUsuario, $tiposUsuarios)) {
@@ -71,8 +71,21 @@ class UsuarioController extends Controller {
           return redirect()->route('view_usuariosAdmin');
           break;
         case $tiposUsuarios[1]:
-          //  USUARIOS EVALUADORES
+          //  USUARIOS INVESTIGADORES
+          $request->validate([
+            'id' => 'required|numbrer',
+            'email' => 'required|string|unique:Usuario,email|max:255',
+            'password' => 'required|string|max:255',
+          ]);
 
+          Usuario::create([
+            'email' => $request->email,
+            'password' => $request->password,
+            'tabla' => $tipoUsuario,
+            'tabla_id' => $request->id
+          ]);
+
+          return redirect()->route('view_usuariosInvestigadores');
           break;
         default:
           return redirect()->route('view_usuariosAdmin')->withErrors(['message' => 'Error al crear usuario']);
@@ -83,7 +96,7 @@ class UsuarioController extends Controller {
 
   public function update(Request $request) {
     //  TIPOS DE USUARIOS
-    $tiposUsuarios = ['Usuario_admin', 'Usuario_evaluador'];
+    $tiposUsuarios = ['Usuario_admin', 'Usuario_investigador'];
 
     $id = $request->input('id');
     $tabla_id = $request->input('tabla_id');
@@ -135,11 +148,27 @@ class UsuarioController extends Controller {
           ]);
 
           //  Respuesta
-          return redirect()->route('view_usuariosAdmin');
+          return ['result' => 'Success'];
           break;
         case $tiposUsuarios[1]:
-          //  USUARIOS EVALUADORES
+          //  USUARIOS INVESTIGADORES
+          //  Validar la data
+          $request->validate([
+            'email' => 'required|string|unique:Usuario,email,' . $id . ',id|max:255',
+            'estado' => 'required|bool',
+            'password' => 'nullable|string|max:255',
+          ]);
 
+          $usuario = Usuario::findOrFail($id);
+          $usuario->email = $request->input('email');
+          $usuario->estado = $request->input('estado');
+          if ($request->input('password') != null) {
+            $usuario->password = bcrypt($request->input('password'));
+          }
+          $usuario->save();
+
+          //  Respuesta
+          return ['result' => 'Success'];
           break;
         default:
           return redirect()->route('view_usuariosAdmin')->withErrors(['message' => 'Error al crear usuario']);

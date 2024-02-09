@@ -9,5 +9,5 @@ import * as bootstrap from "bootstrap";
 window.bootstrap = bootstrap;
 
 //  Datatables
-import DataTable from "datatables.net-bs5";
+import DataTable from "datatables.net-select-bs5";
 window.DataTable = DataTable;

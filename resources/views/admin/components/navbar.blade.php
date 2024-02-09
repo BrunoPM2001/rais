@@ -105,7 +105,7 @@
               <hr class="dropdown-dividir">
             </li>
             <li><a class="dropdown-item" href="{{ route('view_usuariosAdmin') }}">Usuarios administrativos</a></li>
-            <li><a class="dropdown-item" href="#">Usuarios investigadores</a></li>
+            <li><a class="dropdown-item" href="{{ route('view_usuariosInvestigadores') }}">Usuarios investigadores</a></li>
             <li><a class="dropdown-item" href="#">Usuarios evaluadores</a></li>
             <li><a class="dropdown-item" href="#">Usuarios docentes</a></li>
           </ul>

@@ -5,11 +5,27 @@ namespace App\Http\Controllers;
 use App\Models\Facultad;
 use App\Models\Usuario;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class Usuario_adminController extends Controller {
 
   public function getAll() {
-    $usuarios = Usuario::with('user_admin')->get(['*']);
+    $usuarios = DB::table('Usuario AS a')
+      ->join('Usuario_admin AS b', 'b.id', '=', 'a.tabla_id')
+      ->select(
+        'a.id',
+        'a.username',
+        'b.apellido1',
+        'b.apellido2',
+        'b.nombres',
+        'b.telefono_movil',
+        'b.cargo',
+        'b.created_at',
+        'a.estado'
+      )
+      ->where('tabla', '=', 'Usuario_admin')
+      ->get();
+
     return ['data' => $usuarios];
   }
 

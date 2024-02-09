@@ -5,24 +5,24 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="csrf_token" content="{{ csrf_token() }}" />
-  <title>Dependencias</title>
+  <title>Usuarios investigadores</title>
   @vite(['resources/scss/app.scss', 'resources/js/app.js'])
 </head>
 
 <body>
   @include('admin.components.navbar')
   <div class="container mb-4">
-    <h4 class="my-4">Dependencias</h4>
+    <h4 class="my-4">Usuarios investigadores</h4>
     <!--  Tab list  -->
     <ul class="nav nav-tabs" id="myTab" role="tablist">
       <li class="nav-item" role="presentation">
-        <button class="nav-link active" id="listar-tab" data-bs-toggle="tab" data-bs-target="#listar-tab-pane" type="button" role="tab" aria-controls="listar-tab-pane" aria-selected="true">Listar dependencias</button>
+        <button class="nav-link active" id="listar-tab" data-bs-toggle="tab" data-bs-target="#listar-tab-pane" type="button" role="tab" aria-controls="listar-tab-pane" aria-selected="true">Listar usuarios investigadores</button>
       </li>
       <li class="nav-item" role="presentation">
-        <button class="nav-link" id="crear-tab" data-bs-toggle="tab" data-bs-target="#crear-tab-pane" type="button" role="tab" aria-controls="crear-tab-pane" aria-selected="false">Crear dependencia</button>
+        <button class="nav-link" id="crear-tab" data-bs-toggle="tab" data-bs-target="#crear-tab-pane" type="button" role="tab" aria-controls="crear-tab-pane" aria-selected="false">Crear usuario investigador</button>
       </li>
     </ul>
-    <div class="tab-content border border-top-0 rounded-bottom" id="myTabContent">
+    <div class="tab-content border border-top-0 rounded-bottom mb-4" id="myTabContent">
       <div class="tab-pane fade show active p-4" id="listar-tab-pane" role="tabpanel" aria-labelledby="listar-tab" tabindex="0">
         <!--  Tabla  -->
         <div class="overflow-x-hidden">
@@ -33,7 +33,28 @@
                   Facultad
                 </th>
                 <th>
-                  Dependencia
+                  Codigo
+                </th>
+                <th>
+                  Ap. Paterno
+                </th>
+                <th>
+                  Ap. Materno
+                </th>
+                <th>
+                  Nombres
+                </th>
+                <th>
+                  Sexo
+                </th>
+                <th>
+                  Email
+                </th>
+                <th>
+                  Dni
+                </th>
+                <th>
+                  Estado
                 </th>
                 <th>
                   Acción
@@ -48,7 +69,28 @@
                   Facultad
                 </th>
                 <th>
-                  Dependencia
+                  Codigo
+                </th>
+                <th>
+                  Ap. Paterno
+                </th>
+                <th>
+                  Ap. Materno
+                </th>
+                <th>
+                  Nombres
+                </th>
+                <th>
+                  Sexo
+                </th>
+                <th>
+                  Email
+                </th>
+                <th>
+                  Dni
+                </th>
+                <th>
+                  Estado
                 </th>
                 <th>
                   Acción
@@ -60,23 +102,25 @@
       </div>
       <div class="tab-pane fade" id="crear-tab-pane" role="tabpanel" aria-labelledby="crear-tab" tabindex="0">
         <!--  Crear nuev@  -->
-        <form action="{{ route('create_dependencia') }}" method="post" class="p-4">
+        <form action="{{ route('create_usuario') }}" method="post" class="p-4">
           @csrf
+          <input type="text" hidden value="Usuario_investigador" name="tipo">
           <div class="row mb-4">
-            <label for="create_facultad" class="col-sm-2 col-form-label">Facultad:</label>
-            <div class="col-sm-10">
-              <select id="create_facultad" name="facultad_id" class="form-select">
-                <option value="" selected>Ninguna</option>
-                @foreach($facultades as $facultad)
-                <option value="{{ $facultad->id }}">{{ $facultad->nombre }}</option>
-                @endforeach
-              </select>
+            <label for="investigador_id" class="col-sm-4 col-form-label">Id:</label>
+            <div class="col-sm-8">
+              <input type="text" id="investigador_id" name="investigador_id" class="form-control">
             </div>
           </div>
           <div class="row mb-4">
-            <label for="dependencia" class="col-sm-2 col-form-label">Dependencia:</label>
-            <div class="col-sm-10">
-              <input type="text" id="dependencia" name="dependencia" class="form-control">
+            <label for="email" class="col-sm-4 col-form-label">Email (para el acceso):</label>
+            <div class="col-sm-8">
+              <input type="text" id="email" name="email" class="form-control">
+            </div>
+          </div>
+          <div class="row mb-4">
+            <label for="password" class="col-sm-4 col-form-label">Contraseña:</label>
+            <div class="col-sm-8">
+              <input type="text" id="password" name="password" class="form-control">
             </div>
           </div>
           <div class="d-grid">
@@ -94,23 +138,31 @@
     @endsection
 
     @section('titulo')
-    Editar dependencia
+    Editar usuario investigador
     @endsection
 
     @section('contenido')
-    <div class="mb-3">
-      <input type="text" hidden id="edit_id" name="edit_id">
-      <label for="edit_facultad" class="form-label">Facultad:</label>
-      <select id="edit_facultad" name="edit_facultad" class="form-select">
-        <option value="" selected>Ninguna</option>
-        @foreach($facultades as $facultad)
-        <option value="{{ $facultad->id }}">{{ $facultad->nombre }}</option>
-        @endforeach
-      </select>
+    <input type="text" hidden id="edit_id" name="edit_id">
+    <div class="row align-items-center mb-3">
+      <label for="edit_email" class="col-sm-4 col-form-label">Email de acceso:</label>
+      <div class="col-sm-8">
+        <input type="text" id="edit_email" name="edit_email" class="form-control">
+      </div>
     </div>
-    <div class="mb-3">
-      <label for="edit_dependencia" class="form-label">Dependencia</label>
-      <input type="text" class="form-control" id="edit_dependencia" name="edit_dependencia">
+    <div class="row align-items-center mb-3">
+      <label for="edit_estado" class="col-sm-4 col-form-label">Estado:</label>
+      <div class="col-sm-8">
+        <select name="edit_estado" id="edit_estado" class="form-select">
+          <option value="1">Activo</option>
+          <option value="0">Inactivo</option>
+        </select>
+      </div>
+    </div>
+    <div class="row align-items-center mb-3">
+      <label for="edit_password" class="col-sm-4 col-form-label">Contraseña:</label>
+      <div class="col-sm-8">
+        <input type="text" id="edit_password" name="edit_password" class="form-control">
+      </div>
     </div>
     @endsection
 
@@ -121,13 +173,15 @@
   <!--  Toast para notificaciones -->
   @extends('admin.components.toast')
 
+  <!--  TODO - AÑADIR TOAST CUANDO OCURRA UN ERROR AL CREAR UN USUARIO  -->
+
   <script type="module">
     $(document).ready(function() {
       //  Iniciar modal y toast
       let modal = new bootstrap.Modal(document.getElementById('myModal'), {});
       let toast = new bootstrap.Toast(document.getElementById('myToast'));
       //  Datatable
-      let ajax_url = 'http://localhost:8000/api/dependencias/getAll'
+      let ajax_url = 'http://localhost:8000/api/admin/usuarios/getUsuariosInvestigadores'
       let table = new DataTable('#table', {
         paging: true,
         pagingType: 'full_numbers',
@@ -137,12 +191,31 @@
         scrollX: true,
         ajax: ajax_url,
         columns: [{
-            render: function(data, type, row) {
-              return row.facultad.nombre;
-            }
+            data: 'facultad'
           },
           {
-            data: 'dependencia'
+            data: 'codigo'
+          },
+          {
+            data: 'apellido1'
+          },
+          {
+            data: 'apellido2'
+          },
+          {
+            data: 'nombres'
+          },
+          {
+            data: 'sexo'
+          },
+          {
+            data: 'email'
+          },
+          {
+            data: 'doc_numero'
+          },
+          {
+            data: 'estado'
           },
           {
             render: function(data, type, row) {
@@ -171,13 +244,13 @@
         let item = e.currentTarget.getAttribute('id');
         let [_, id] = item.split('_');
         $.ajax({
-          url: 'http://localhost:8000/api/dependencias/getOne/' + id,
+          url: 'http://localhost:8000/api/admin/usuarios/getOneInvestigador/' + id,
           type: 'GET',
           success: (data) => {
             //  Actualizar la data a editar
             $("#edit_id").val(data.id)
-            $("#edit_facultad").val(data.facultad.id);
-            $("#edit_dependencia").val(data.dependencia);
+            $("#edit_estado").val(data.estado);
+            $("#edit_email").val(data.email);
             modal.show();
           }
         });
@@ -186,12 +259,14 @@
       $('#updateForm').on('submit', (e) => {
         e.preventDefault();
         $.ajax({
-          url: 'http://localhost:8000/api/dependencias/update',
+          url: 'http://localhost:8000/api/admin/usuarios/update',
           type: 'POST',
           data: {
             id: $('#edit_id').val(),
-            facultad_id: $('#edit_facultad').val(),
-            dependencia: $('#edit_dependencia').val(),
+            email: $('#edit_email').val(),
+            tipo: "Usuario_investigador",
+            estado: $('#edit_estado').val(),
+            password: $('#edit_password').val()
           },
           headers: {
             'X-CSRF-TOKEN': $('meta[name="csrf_token"]').attr('content')
@@ -199,7 +274,7 @@
           success: (data) => {
             modal.hide();
             toast.show();
-            $('#myToast .toast-body').html("Dependencia actualizada con éxito.")
+            $('#myToast .toast-body').html("Usuario actualizado con éxito.")
             $("#table").DataTable().ajax.reload();
             setTimeout(() => {
               toast.hide();

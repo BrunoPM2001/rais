@@ -11,7 +11,7 @@
 
 <body>
   @include('admin.components.navbar')
-  <div class="container">
+  <div class="container mb-4">
     <h4 class="my-4">Líneas de investigación</h4>
     <!--  Tab list  -->
     <ul class="nav nav-tabs" id="myTab" role="tablist">

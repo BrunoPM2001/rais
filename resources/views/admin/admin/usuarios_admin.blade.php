@@ -11,7 +11,7 @@
 
 <body>
   @include('admin.components.navbar')
-  <div class="container">
+  <div class="container mb-4">
     <h4 class="my-4">Usuarios administrativos</h4>
     <!--  Tab list  -->
     <ul class="nav nav-tabs" id="myTab" role="tablist">
@@ -327,7 +327,7 @@
       let modal = new bootstrap.Modal(document.getElementById('myModal'), {});
       let toast = new bootstrap.Toast(document.getElementById('myToast'));
       //  Datatable
-      let ajax_url = 'http://localhost:8000/api/usuarios/getUsuariosAdmin'
+      let ajax_url = 'http://localhost:8000/api/admin/usuarios/getUsuariosAdmin'
       let table = new DataTable('#table', {
         paging: true,
         pagingType: 'full_numbers',
@@ -343,33 +343,23 @@
             data: 'username'
           },
           {
-            render: function(data, type, row) {
-              return row.user_admin.apellido1;
-            }
+            data: 'apellido1'
+          },
+          {
+            data: 'apellido2'
+          },
+          {
+            data: 'nombres'
+          },
+          {
+            data: 'telefono_movil'
+          },
+          {
+            data: 'cargo'
           },
           {
             render: function(data, type, row) {
-              return row.user_admin.apellido2;
-            }
-          },
-          {
-            render: function(data, type, row) {
-              return row.user_admin.nombres;
-            }
-          },
-          {
-            render: function(data, type, row) {
-              return row.user_admin.telefono_movil;
-            }
-          },
-          {
-            render: function(data, type, row) {
-              return row.user_admin.cargo;
-            }
-          },
-          {
-            render: function(data, type, row) {
-              let date = new Date(row.user_admin.created_at)
+              let date = new Date(row.created_at)
               return date.toLocaleDateString('es-ES', {
                 day: "2-digit",
                 month: "2-digit",
@@ -409,7 +399,7 @@
         let item = e.currentTarget.getAttribute('id');
         let [_, id] = item.split('_');
         $.ajax({
-          url: 'http://localhost:8000/api/usuarios/getOneAdmin/' + id,
+          url: 'http://localhost:8000/api/admin/usuarios/getOneAdmin/' + id,
           type: 'GET',
           success: (data) => {
             //  Actualizar la data a editar
@@ -437,7 +427,7 @@
       $('#updateForm').on('submit', (e) => {
         e.preventDefault();
         $.ajax({
-          url: 'http://localhost:8000/api/usuarios/update',
+          url: 'http://localhost:8000/api/admin/usuarios/update',
           type: 'POST',
           data: {
             id: $('#edit_id').val(),

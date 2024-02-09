@@ -11,7 +11,7 @@
 
 <body>
   @include('admin.components.navbar')
-  <div class="container">
+  <div class="container mb-4">
     <h4 class="my-4">Convocatorias pasadas</h4>
     <!--  Tab list  -->
     <ul class="nav nav-tabs" id="myTab" role="tablist">
@@ -229,7 +229,7 @@
   <script type="module">
     $(document).ready(function() {
       //  Iniciar tabla, toast y tab
-      let table2
+      let table2, table3
       let toast = new bootstrap.Toast(document.getElementById('myToast'));
       let tab = new bootstrap.Tab(document.getElementById('detalle-tab'));
       //  Datatable
@@ -302,6 +302,7 @@
           //  Nueva tabla
           table2 = new DataTable('#table_detalles', {
             paging: true,
+            select: true,
             pagingType: 'full_numbers',
             deferRender: true,
             processing: true,
@@ -356,7 +357,60 @@
         }
         table2.on('click', 'tbody tr', function() {
           let data = table2.row(this).data();
-          console.log(data)
+          //  Animación
+          $('html, body').animate({
+            scrollTop: $('#table_evaluadores').offset().top
+          }, 1000);
+          if (!$.fn.DataTable.isDataTable('#table_evaluadores')) {
+            //  Nueva tabla
+            table3 = new DataTable('#table_evaluadores', {
+              paging: false,
+              searching: false,
+              deferRender: true,
+              processing: true,
+              lengthChange: false,
+              scrollX: true,
+              ajax: 'http://localhost:8000/api/admin/facultad/getEvaluadoresConvocatoria/' + data.id,
+              columns: [{
+                  data: 'tipo'
+                },
+                {
+                  data: 'apellidos'
+                },
+                {
+                  data: 'nombres'
+                },
+                {
+                  data: 'institucion'
+                },
+                {
+                  data: 'cargo'
+                },
+                {
+                  data: 'codigo_regina'
+                },
+              ],
+              //  Idioma de la información mostrada
+              language: {
+                zeroRecords: "No se encontraron resultados",
+                info: "Mostrando _START_-_END_ de _TOTAL_ registros.",
+                infoEmpty: "No hay registros ...",
+                infoFiltered: "(filtrado de _MAX_ registros)",
+                sSearch: "Buscar:",
+                sProcessing: "Cargando data...",
+                oPaginate: {
+                  sFirst: "Primero",
+                  sLast: "Último",
+                  sNext: "Siguiente",
+                  sPrevious: "Anterior"
+                },
+              }
+            });
+          } else {
+            let ajax_url = 'http://localhost:8000/api/admin/facultad/getEvaluadoresConvocatoria/' + data.id;
+            table3.clear().draw();
+            table3.ajax.url(ajax_url).load();
+          }
         });
       });
     });
