@@ -406,19 +406,19 @@
             $("#edit_id").val(data.id)
             $("#tabla_id").val(data.tabla_id)
             $("#edit_username").val(data.username);
-            $("#edit_facultad").val(data.user_admin.facultad_id);
-            $("#edit_codigo_trabajador").val(data.user_admin.codigo_trabajador);
-            $("#edit_apellido1").val(data.user_admin.apellido1);
-            $("#edit_apellido2").val(data.user_admin.apellido2);
-            $("#edit_nombres").val(data.user_admin.nombres);
-            $("#edit_sexo").val(data.user_admin.sexo);
-            $("#edit_fecha_nacimiento").val(data.user_admin.fecha_nacimiento);
-            $("#edit_email_admin").val(data.user_admin.email_admin);
-            $("#edit_telefono_casa").val(data.user_admin.telefono_casa);
-            $("#edit_telefono_trabajo").val(data.user_admin.telefono_trabajo);
-            $("#edit_telefono_movil").val(data.user_admin.telefono_movil);
-            $("#edit_direccion1").val(data.user_admin.direccion1);
-            $("#edit_cargo").val(data.user_admin.cargo);
+            $("#edit_facultad").val(data.facultad_id);
+            $("#edit_codigo_trabajador").val(data.codigo_trabajador);
+            $("#edit_apellido1").val(data.apellido1);
+            $("#edit_apellido2").val(data.apellido2);
+            $("#edit_nombres").val(data.nombres);
+            $("#edit_sexo").val(data.sexo);
+            $("#edit_fecha_nacimiento").val(data.fecha_nacimiento);
+            $("#edit_email_admin").val(data.email_admin);
+            $("#edit_telefono_casa").val(data.telefono_casa);
+            $("#edit_telefono_trabajo").val(data.telefono_trabajo);
+            $("#edit_telefono_movil").val(data.telefono_movil);
+            $("#edit_direccion1").val(data.direccion1);
+            $("#edit_cargo").val(data.cargo);
             modal.show();
           }
         });

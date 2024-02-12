@@ -78,8 +78,11 @@ class Linea_investigacionController extends Controller {
     $facultades = $facultad->listar();
 
     //  Lista de lineas
+    $lineas = $this->getAll();
+
     return view('admin.admin.lineas_investigacion', [
-      'facultades' => $facultades
+      'facultades' => $facultades,
+      'lineas' => $lineas["data"]
     ]);
   }
 }

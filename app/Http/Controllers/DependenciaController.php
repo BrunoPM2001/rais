@@ -5,25 +5,36 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Dependencia;
 use App\Models\Facultad;
+use Illuminate\Support\Facades\DB;
 
 class DependenciaController extends Controller {
 
   public function getAll() {
-    $dependencias = Dependencia::with([
-      'facultad' => function ($query) {
-        $query->select('id', 'nombre');
-      }
-    ])->get();
+    $dependencias = DB::table('Dependencia AS a')
+      ->leftJoin('Facultad AS b', 'b.id', '=', 'a.facultad_id')
+      ->select(
+        'a.id',
+        'a.dependencia',
+        'b.nombre AS facultad'
+      )
+      ->get();
+
     return ['data' => $dependencias];
   }
 
   public function getOne($id) {
-    $dependencia = Dependencia::with([
-      'facultad' => function ($query) {
-        $query->select('id', 'nombre');
-      }
-    ])->where('id', '=', $id)->get();
-    return $dependencia[0];
+    $dependencia = DB::table('Dependencia AS a')
+      ->leftJoin('Facultad AS b', 'b.id', '=', 'a.facultad_id')
+      ->select(
+        'a.id',
+        'a.dependencia',
+        'b.id AS facultad_id',
+        'b.nombre AS facultad',
+      )
+      ->where('a.id', '=', $id)
+      ->first();
+
+    return $dependencia;
   }
 
   public function create(Request $request) {

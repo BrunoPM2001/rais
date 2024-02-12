@@ -93,7 +93,10 @@
             <label for="parent_id" class="col-sm-2 col-form-label">Padre:</label>
             <div class="col-sm-10">
               <select id="parent_id" name="parent_id" class="form-select">
-                <option value="">Cargando...</option>
+                <option value="" selected>Ninguno</option>
+                @foreach($lineas as $linea)
+                <option value="{{ $linea->id }}">{{ $linea->codigo }} - {{ $linea->nombre }}</option>
+                @endforeach
               </select>
             </div>
           </div>

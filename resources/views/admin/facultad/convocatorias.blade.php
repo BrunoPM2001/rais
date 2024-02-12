@@ -353,6 +353,7 @@
         } else {
           let ajax_url = 'http://localhost:8000/api/admin/facultad/getDetalleConvocatoria/' + periodo + '/' + tipo_proyecto;
           table2.clear().draw();
+          table3.clear().draw();
           table2.ajax.url(ajax_url).load();
         }
         table2.on('click', 'tbody tr', function() {

@@ -7,11 +7,24 @@
   <meta name="csrf_token" content="{{ csrf_token() }}" />
   <title>Usuarios investigadores</title>
   @vite(['resources/scss/app.scss', 'resources/js/app.js'])
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tarekraafat/autocomplete.js@10.2.7/dist/css/autoComplete.02.min.css">
 </head>
 
 <body>
   @include('admin.components.navbar')
   <div class="container mb-4">
+
+    @if ($errors->any())
+    <!--  Errores enviados por el controlador  -->
+    <div class="alert alert-danger mt-4">
+      <ul class="m-0">
+        @foreach ($errors->all() as $error)
+        <li>{{ $error }}</li>
+        @endforeach
+      </ul>
+    </div>
+    @endif
+
     <h4 class="my-4">Usuarios investigadores</h4>
     <!--  Tab list  -->
     <ul class="nav nav-tabs" id="myTab" role="tablist">
@@ -106,9 +119,13 @@
           @csrf
           <input type="text" hidden value="Usuario_investigador" name="tipo">
           <div class="row mb-4">
-            <label for="investigador_id" class="col-sm-4 col-form-label">Id:</label>
+            <label for="investigador_id" class="col-sm-4 col-form-label">Investigador:</label>
             <div class="col-sm-8">
               <input type="text" id="investigador_id" name="investigador_id" class="form-control">
+              <input type="text" hidden id="id" name="id">
+              <div class="dropdown-menu" id="autocomplete-dropdown" style="display:none">
+                <!-- Aquí se mostrarán los resultados -->
+              </div>
             </div>
           </div>
           <div class="row mb-4">
@@ -177,7 +194,7 @@
 
   <script type="module">
     $(document).ready(function() {
-      //  Iniciar modal, toast y temporizador
+      //  Iniciar modal, toast, temporizador y autocompleteJS
       let modal = new bootstrap.Modal(document.getElementById('myModal'), {});
       let toast = new bootstrap.Toast(document.getElementById('myToast'));
       let temp;
@@ -216,7 +233,9 @@
             data: 'doc_numero'
           },
           {
-            data: 'estado'
+            render: function(data, type, row) {
+              return row.estado == 0 ? "Inactivo" : "Activo";
+            }
           },
           {
             render: function(data, type, row) {
@@ -264,10 +283,10 @@
           type: 'POST',
           data: {
             id: $('#edit_id').val(),
-            email: $('#edit_email').val(),
             tipo: "Usuario_investigador",
+            email: $('#edit_email').val(),
             estado: $('#edit_estado').val(),
-            password: $('#edit_password').val()
+            password: $('#edit_password').val(),
           },
           headers: {
             'X-CSRF-TOKEN': $('meta[name="csrf_token"]').attr('content')
@@ -282,32 +301,64 @@
             }, 10000)
           }
         })
-      });
-      //  Buscar investigador
-      $('#investigador_id').on('keyup', () => {
+      })
+
+      // Función para mostrar las sugerencias
+      function showSuggestions(data) {
+        var dropdownMenu = $('#autocomplete-dropdown');
+        dropdownMenu.empty();
+
+        data.forEach(function(suggestion) {
+          var item = $('<a class="dropdown-item" href="#" myId="' + suggestion.id + '">').text(suggestion.content);
+          dropdownMenu.append(item);
+        });
+
+        dropdownMenu.css('display', 'block');
+      }
+
+      // Evento keyup para el input
+      $('#investigador_id').on('keyup', function() {
+        let input = $('#investigador_id').val();
         clearTimeout(temp);
         temp = setTimeout(() => {
           //  Petición ajax y uso de typeahead
-          let input = $('#investigador_id').val();
           $.ajax({
             url: 'http://localhost:8000/api/admin/usuarios/searchInvestigadorBy/' + input,
             method: 'GET',
             success: (data) => {
               let sugerencias = [];
               $.each(data, (index, user) => {
-                sugerencias.push(user.codigo + " | " + user.doc_numero + " | " +
-                  user.apellido1 + " " + user.apellido2 + " " + user.nombre
-                );
+                sugerencias.push({
+                  id: user.id,
+                  content: user.codigo + " | " + user.doc_numero + " | " +
+                    user.apellido1 + " " + user.apellido2 + " " + user.nombres
+                });
               });
-              console.log(sugerencias)
-              //  Iniciar Typeahead
-              $('#investigador_id').typeahead({
-                source: sugerencias
-              });
+              showSuggestions(sugerencias)
             }
           });
         }, 1000);
+        if (input.length == 0) {
+          $('#autocomplete-dropdown').css('display', 'none');
+        }
       });
+
+      // Evento click para las sugerencias
+      $('#autocomplete-dropdown').on('click', '.dropdown-item', function() {
+        var id = $(this).attr("myId");
+        var text = $(this).text();
+        $('#investigador_id').val(text);
+        $('#id').val(id);
+        $('#autocomplete-dropdown').css('display', 'none');
+      });
+
+      // Evento blur para ocultar las sugerencias cuando se hace clic fuera del input
+      $(document).on('click', function(event) {
+        if (!$(event.target).closest('.input-group').length) {
+          $('#autocomplete-dropdown').css('display', 'none');
+        }
+      });
+
     });
   </script>
 </body>

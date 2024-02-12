@@ -6,6 +6,7 @@ use App\Models\Usuario;
 use App\Models\Usuario_admin;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class UsuarioController extends Controller {
 
@@ -73,19 +74,27 @@ class UsuarioController extends Controller {
         case $tiposUsuarios[1]:
           //  USUARIOS INVESTIGADORES
           $request->validate([
-            'id' => 'required|numbrer',
+            'id' => 'required|exists:Usuario_investigador,id',
             'email' => 'required|string|unique:Usuario,email|max:255',
             'password' => 'required|string|max:255',
           ]);
 
-          Usuario::create([
-            'email' => $request->email,
-            'password' => $request->password,
-            'tabla' => $tipoUsuario,
-            'tabla_id' => $request->id
-          ]);
+          $result = DB::table('Usuario')
+            ->where('tabla_id', '=', $request->id)
+            ->where('tabla', '=', $tipoUsuario)
+            ->count();
 
-          return redirect()->route('view_usuariosInvestigadores');
+          if ($result > 0) {
+            return redirect()->route('view_usuariosInvestigadores')->withErrors(['message' => 'El investigador ya tiene cuenta']);
+          } else {
+            Usuario::create([
+              'email' => $request->email,
+              'password' => bcrypt($request->password),
+              'tabla' => $tipoUsuario,
+              'tabla_id' => $request->id
+            ]);
+            return redirect()->route('view_usuariosInvestigadores');
+          }
           break;
         default:
           return redirect()->route('view_usuariosAdmin')->withErrors(['message' => 'Error al crear usuario']);

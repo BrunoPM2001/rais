@@ -11,7 +11,3 @@ window.bootstrap = bootstrap;
 //  Datatables
 import DataTable from "datatables.net-select-bs5";
 window.DataTable = DataTable;
-
-//  Typeahead
-import typeahead from "typeahead.js";
-window.typeahead = typeahead;

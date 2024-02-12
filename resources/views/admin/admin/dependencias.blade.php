@@ -138,7 +138,7 @@
         ajax: ajax_url,
         columns: [{
             render: function(data, type, row) {
-              return row.facultad.nombre;
+              return row.facultad == null ? "Ninguna" : row.facultad;
             }
           },
           {
@@ -176,7 +176,7 @@
           success: (data) => {
             //  Actualizar la data a editar
             $("#edit_id").val(data.id)
-            $("#edit_facultad").val(data.facultad.id);
+            $("#edit_facultad").val(data.facultad_id);
             $("#edit_dependencia").val(data.dependencia);
             modal.show();
           }
