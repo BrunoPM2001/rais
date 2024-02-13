@@ -18,11 +18,10 @@ return new class extends Migration {
       $table->string("issn_e", 15)->nullable();
       $table->string("doi", 150)->nullable();
       $table->text("uri")->nullable();
-      $table->string("uri")->nullable();
       $table->text("titulo")->nullable();
-      $table->text("resumen")->nullable();
+      $table->binary("resumen")->nullable();
       $table->string("publicacion_nombre", 250)->nullable();
-      $table->string("publicacion_nombre", 250)->nullable();
+      $table->string("evento_nombre", 250)->nullable();
       $table->string("volumen", 20)->nullable();
       $table->string("edicion", 20)->nullable();
       $table->string("editorial", 250)->nullable();
@@ -38,7 +37,7 @@ return new class extends Migration {
       $table->date("fecha_inicio")->nullable();
       $table->date("fecha_fin")->nullable();
       $table->dateTime("fecha_inscripcion")->nullable();
-      //  POR QUITAR
+      //  TODO - POR QUITAR CUANDO LA COLUMNA DE CATEGORIA_ID ESTÉ BIEN
       $table->string("tipo_publicacion", 50);
       $table->string("formato", 50)->nullable();
       $table->text("comentario")->nullable();
@@ -46,7 +45,6 @@ return new class extends Migration {
       $table->boolean("validado")->nullable();
       $table->string("url", 250)->nullable();
       $table->mediumInteger("step")->nullable();
-      $table->timestamps();
       $table->mediumInteger("estado")->nullable();
       $table->string("tipo_tesis")->nullable();
       $table->string("libro_resumen")->nullable();
@@ -63,8 +61,11 @@ return new class extends Migration {
       $table->string("art_tipo")->nullable();
       $table->string("idioma")->nullable();
       $table->string("source")->nullable();
-      //  Revisar para borrar
       $table->string("tipo_doc")->nullable();
+      $table->timestamps();
+
+      //  FKS
+      $table->foreign('categoria_id')->references('id')->on('Publicacion_categoria');
     });
   }
 
