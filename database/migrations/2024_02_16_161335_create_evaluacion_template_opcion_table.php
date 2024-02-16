@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('Proyecto_evaluacion', function (Blueprint $table) {
+        Schema::table('Evaluacion_template_opcion', function (Blueprint $table) {
             //
         });
     }
@@ -21,7 +21,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('Proyecto_evaluacion', function (Blueprint $table) {
+        Schema::table('Evaluacion_template_opcion', function (Blueprint $table) {
             //
         });
     }
