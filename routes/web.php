@@ -3,6 +3,7 @@
 use App\Http\Controllers\DependenciaController;
 use App\Http\Controllers\Evaluacion_facultadController;
 use App\Http\Controllers\Linea_investigacionController;
+use App\Http\Controllers\ProyectoController;
 use App\Http\Controllers\Usuario_adminController;
 use App\Http\Controllers\Usuario_investigadorController;
 use App\Http\Controllers\UsuarioController;
@@ -55,6 +56,8 @@ Route::prefix('api')->group(function () {
       Route::get('getConvocatorias', [Evaluacion_facultadController::class, 'getConvocatorias']);
       Route::get('getDetalleConvocatoria/{periodo}/{tipo_proyecto}', [Evaluacion_facultadController::class, 'getDetalleConvocatoria']);
       Route::get('getEvaluadoresConvocatoria/{id}', [Evaluacion_facultadController::class, 'getEvaluadoresConvocatoria']);
+
+      Route::get('getAllEvaluadores', [ProyectoController::class, 'getAllEvaluadores']);
     });
 
     //  Usuarios

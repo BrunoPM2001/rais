@@ -14,13 +14,13 @@ return new class extends Migration {
       $table->unsignedBigInteger('facultad_id')->nullable();
       $table->unsignedBigInteger('instituto_id')->nullable();
       $table->unsignedBigInteger('grupo_id')->nullable();
-      $table->unsignedBigInteger('linea_id')->nullable();
+      $table->unsignedBigInteger('linea_investigacion_id')->nullable();
       $table->unsignedBigInteger('ocde_id')->nullable();
       $table->string('codigo_proyecto', 20)->nullable();
       $table->boolean('innova_sm')->nullable();
       $table->string('titulo', 500)->nullable();
       $table->string('tipo_proyecto', 20)->nullable();
-      $table->decimal('monto_asignado')->nullable();
+      $table->decimal('monto_asignado', 10)->nullable();
       $table->boolean('dj_aceptada')->nullable();
       $table->date('fecha_inscripcion')->nullable();
       $table->date('fecha_inicio')->nullable();
@@ -45,20 +45,24 @@ return new class extends Migration {
       $table->date('fecha_anulacion')->nullable();
       $table->boolean('autorizacion_grupo')->nullable();
       $table->tinyInteger('tipofin_id')->default(0);
-      $table->decimal('aporte_unmsm')->nullable();
-      $table->decimal('aporte_no_unmsm')->nullable();
-      $table->decimal('financiamiento_fuente_externa')->nullable();
-      $table->decimal('entidad_asociada')->nullable();
+      $table->decimal('aporte_unmsm', 10)->nullable();
+      $table->decimal('aporte_no_unmsm', 10)->nullable();
+      $table->decimal('financiamiento_fuente_externa', 10)->nullable();
+      $table->decimal('entidad_asociada', 10)->nullable();
       $table->longText('carta_renuncia')->nullable();
-      $table->integer('programa_id')->nullable();
       $table->tinyInteger('tesista_por_identificar')->nullable();
       $table->tinyInteger('condicion_aceptada')->nullable();
       $table->string('isbn')->nullable();
-      $table->decimal('porcentaje_antiplagio')->nullable();
       $table->integer('eci_investigador_id')->nullable();
       $table->integer('eci_integrante_id')->nullable();
-
       $table->timestamps();
+
+      //  Fks
+      $table->foreign('facultad_id')->references('id')->on('Facultad');
+      $table->foreign('instituto_id')->references('id')->on('Instituto');
+      $table->foreign('grupo_id')->references('id')->on('Grupo');
+      $table->foreign('linea_investigacion_id')->references('id')->on('Linea_investigacion');
+      $table->foreign('ocde_id')->references('id')->on('Ocde');
     });
   }
 
