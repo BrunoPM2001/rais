@@ -12,6 +12,7 @@ return new class extends Migration {
     Schema::create('Evaluacion_proyecto', function (Blueprint $table) {
       $table->id();
       $table->unsignedBigInteger('evaluacion_opcion_id')->nullable();
+      //  TODO - Quitar proyecto_id y evaluador_id y colocar el id de Proyecto_evaluacion
       $table->unsignedBigInteger('proyecto_id');
       $table->unsignedBigInteger('evaluador_id');
       $table->decimal('puntaje', 3, 1)->nullable();
