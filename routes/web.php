@@ -4,6 +4,7 @@ use App\Http\Controllers\DependenciaController;
 use App\Http\Controllers\Evaluacion_facultadController;
 use App\Http\Controllers\Linea_investigacionController;
 use App\Http\Controllers\ProyectoController;
+use App\Http\Controllers\Publicacion_autorController;
 use App\Http\Controllers\Usuario_adminController;
 use App\Http\Controllers\Usuario_investigadorController;
 use App\Http\Controllers\UsuarioController;
@@ -51,6 +52,12 @@ Route::prefix('admin')->middleware('checkRole:Administrador')->group(function ()
 Route::prefix('api')->group(function () {
   //  ADMIN
   Route::prefix('admin')->group(function () {
+    //  Constancias
+    Route::prefix('constancias')->group(function () {
+      Route::get('getConstanciaPuntajePublicaciones/{investigador_id}', [Publicacion_autorController::class, 'getConstanciaPuntajePublicaciones']);
+      Route::get('getConstanciaPublicacionesCientificas/{investigador_id}', [Publicacion_autorController::class, 'getConstanciaPublicacionesCientificas']);
+    });
+
     //  Facultad
     Route::prefix('facultad')->group(function () {
       Route::get('getConvocatorias', [Evaluacion_facultadController::class, 'getConvocatorias']);
@@ -58,7 +65,7 @@ Route::prefix('api')->group(function () {
       Route::get('getEvaluadoresConvocatoria/{id}', [Evaluacion_facultadController::class, 'getEvaluadoresConvocatoria']);
 
       Route::get('getAllEvaluadores', [ProyectoController::class, 'getAllEvaluadores']);
-      Route::get('getAllProyectosEvaluados', [ProyectoController::class, 'getAllProyectosEvaluados']);
+      Route::get('getAllProyectosEvaluados/{periodo}/{tipo_proyecto}', [ProyectoController::class, 'getAllProyectosEvaluados']);
     });
 
     //  Usuarios
