@@ -1,0 +1,9 @@
+{
+    "poppins": {
+        "300": "\/app\/storage\/fonts\/poppins_300_d3d6cecef8905a9c68de90f530fcb2d8",
+        "normal": "\/app\/storage\/fonts\/poppins_normal_7658783d5ea9b3a948dd75bc3d069291",
+        "500": "\/app\/storage\/fonts\/poppins_500_86b31de148d8d5e45ba57c74bd681c1e",
+        "600": "\/app\/storage\/fonts\/poppins_600_954509463be7e27ec4cfaadd1dc32ea0",
+        "bold": "poppins_bold_420d542b75649240c4285bf50dc020ce"
+    }
+}

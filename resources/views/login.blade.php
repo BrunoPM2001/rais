@@ -32,13 +32,13 @@
             <button type="submit" class="btn btn-primary">Ingresar</button>
           </div>
           @if ($errors->any())
-          <div class="alert alert-danger mt-4">
-            <ul class="m-0">
-              @foreach ($errors->all() as $error)
-              <li>{{ $error }}</li>
-              @endforeach
-            </ul>
-          </div>
+            <div class="alert alert-danger mt-4">
+              <ul class="m-0">
+                @foreach ($errors->all() as $error)
+                  <li>{{ $error }}</li>
+                @endforeach
+              </ul>
+            </div>
           @endif
         </form>
       </div>

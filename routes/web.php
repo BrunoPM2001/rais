@@ -56,6 +56,7 @@ Route::prefix('api')->group(function () {
     Route::prefix('constancias')->group(function () {
       Route::get('getConstanciaPuntajePublicaciones/{investigador_id}', [Publicacion_autorController::class, 'getConstanciaPuntajePublicaciones']);
       Route::get('getConstanciaPublicacionesCientificas/{investigador_id}', [Publicacion_autorController::class, 'getConstanciaPublicacionesCientificas']);
+      Route::get('getConstanciaGrupoInvestigacion/{investigador_id}', [Usuario_investigadorController::class, 'getConstanciaGrupoInvestigacion']);
     });
 
     //  Facultad

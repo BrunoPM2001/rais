@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Support\Facades\DB;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class Usuario_investigadorController extends Controller {
   public function getAll() {
@@ -58,6 +59,30 @@ class Usuario_investigadorController extends Controller {
       ->get();
 
     return $investigadores;
+  }
+
+  public function getConstanciaGrupoInvestigacion($investigador_id) {
+    $grupo = DB::table('Usuario_investigador AS a')
+      ->join('Grupo_integrante AS b', 'b.investigador_id', '=', 'a.id')
+      ->join('Grupo AS c', 'c.id', '=', 'b.grupo_id')
+      ->join('Facultad AS d', 'd.id', '=', 'a.facultad_id')
+      ->select(
+        DB::raw('CONCAT(a.apellido1, " ", a.apellido2, " ", a.nombres) AS nombre'),
+        'd.nombre AS facultad',
+        'b.cargo',
+        'b.condicion',
+        'c.grupo_nombre_corto',
+        'c.grupo_nombre',
+        'c.resolucion_rectoral',
+        'c.resolucion_creacion_fecha'
+      )
+      ->where('a.id', '=', $investigador_id)
+      ->where('b.estado', '=', 1)
+      ->get();
+
+    $pdf = Pdf::loadView('admin.constancias.grupoInvestigacionPDF');
+    return $pdf->stream();
+    // return ['data' => $grupo];
   }
 
   public function main() {
