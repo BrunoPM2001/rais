@@ -25,14 +25,19 @@
       margin: 20px 10px;
     }
 
-    .top {
+    .table {
       border-top: 1.5px solid #000;
       width: 100%;
     }
 
-    .head-table {
+    .table>thead {
       font-size: 14px;
       font-weight: bold;
+    }
+
+    .table>tbody th {
+      font-size: 13px;
+      font-weight: 400;
     }
   </style>
 </head>
@@ -44,15 +49,15 @@
     El Vicerrector de Investigación y Posgrado de la Universidad Nacional Mayor de
     San Marcos hace constar que:
     <br>
-    El Profesor(a):<strong>MACAZANA FERNANDEZ DANTE MANUEL</strong>
+    El Profesor(a): <strong>MACAZANA FERNANDEZ DANTE MANUEL</strong>
     <br>
-    de la facultad de:<strong>Educación</strong>
+    de la facultad de: <strong>Educación</strong>
     <br>
     registra participación en el(los) siguiente(s) Grupo(s) de Investigación:
   </p>
 
-  <table class="top">
-    <thead class="head-table">
+  <table class="table">
+    <thead>
       <tr>
         <th>Nombre corto GI</th>
         <th>Nombre de Grupo</th>
@@ -61,6 +66,15 @@
         <th>Fecha de Creación GI</th>
       </tr>
     </thead>
+    <tbody>
+      <tr>
+        <th>IPE</th>
+        <th>INVESTIGANDO PARA EDUCAR</th>
+        <th>Coordinador</th>
+        <th>01199-R-19</th>
+        <th>08-08-2017</th>
+      </tr>
+    </tbody>
   </table>
 </body>
 
