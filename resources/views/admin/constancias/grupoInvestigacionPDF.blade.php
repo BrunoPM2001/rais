@@ -21,23 +21,49 @@
     }
 
     .texto {
-      font-size: 14px;
+      font-size: 13px;
       margin: 20px 10px;
     }
 
     .table {
-      border-top: 1.5px solid #000;
       width: 100%;
+      border-top: 1.5px solid #000;
+      border-collapse: separate;
+      margin-bottom: 60px;
+    }
+
+    .table>tbody {
+      border-top: 1.5px solid #000;
+      border-bottom: 1.5px solid #000;
     }
 
     .table>thead {
-      font-size: 14px;
+      font-size: 12px;
       font-weight: bold;
     }
 
-    .table>tbody th {
-      font-size: 13px;
-      font-weight: 400;
+    .table>tbody td {
+      font-size: 12px;
+      text-align: center;
+      padding-top: 40px;
+    }
+
+    .extra-1 {
+      font-size: 11px;
+      text-align: left;
+      width: 100%;
+    }
+
+    .extra-2 {
+      font-size: 11px;
+      text-align: right;
+      width: 100%;
+    }
+
+    .extra-firma {
+      font-size: 11px;
+      text-align: center;
+      width: 100%;
     }
   </style>
 </head>
@@ -59,23 +85,225 @@
   <table class="table">
     <thead>
       <tr>
-        <th>Nombre corto GI</th>
+        <th>Nombre<br>corto GI</th>
         <th>Nombre de Grupo</th>
         <th>Condición</th>
-        <th>Resolución Rectoral</th>
-        <th>Fecha de Creación GI</th>
+        <th>Resolución<br>Rectoral</th>
+        <th>Fecha de<br>Creación GI</th>
       </tr>
     </thead>
     <tbody>
       <tr>
-        <th>IPE</th>
-        <th>INVESTIGANDO PARA EDUCAR</th>
-        <th>Coordinador</th>
-        <th>01199-R-19</th>
-        <th>08-08-2017</th>
+        <td>IPE</td>
+        <td>INVESTIGANDO PARA EDUCAR</td>
+        <td>Coordinador</td>
+        <td>01199-R-19</td>
+        <td>08-08-2017</td>
+      </tr>
+      <tr>
+        <td>IPE</td>
+        <td>INVESTIGANDO PARA EDUCAR</td>
+        <td>Coordinador</td>
+        <td>01199-R-19</td>
+        <td>08-08-2017</td>
+      </tr>
+      <tr>
+        <td>IPE</td>
+        <td>INVESTIGANDO PARA EDUCAR</td>
+        <td>Coordinador</td>
+        <td>01199-R-19</td>
+        <td>08-08-2017</td>
+      </tr>
+      <tr>
+        <td>IPE</td>
+        <td>INVESTIGANDO PARA EDUCAR</td>
+        <td>Coordinador</td>
+        <td>01199-R-19</td>
+        <td>08-08-2017</td>
+      </tr>
+      <tr>
+        <td>IPE</td>
+        <td>INVESTIGANDO PARA EDUCAR</td>
+        <td>Coordinador</td>
+        <td>01199-R-19</td>
+        <td>08-08-2017</td>
+      </tr>
+      <tr>
+        <td>IPE</td>
+        <td>INVESTIGANDO PARA EDUCAR</td>
+        <td>Coordinador</td>
+        <td>01199-R-19</td>
+        <td>08-08-2017</td>
+      </tr>
+      <tr>
+        <td>IPE</td>
+        <td>INVESTIGANDO PARA EDUCAR</td>
+        <td>Coordinador</td>
+        <td>01199-R-19</td>
+        <td>08-08-2017</td>
+      </tr>
+      <tr>
+        <td>IPE</td>
+        <td>INVESTIGANDO PARA EDUCAR</td>
+        <td>Coordinador</td>
+        <td>01199-R-19</td>
+        <td>08-08-2017</td>
+      </tr>
+      <tr>
+        <td>IPE</td>
+        <td>INVESTIGANDO PARA EDUCAR</td>
+        <td>Coordinador</td>
+        <td>01199-R-19</td>
+        <td>08-08-2017</td>
+      </tr>
+      <tr>
+        <td>IPE</td>
+        <td>INVESTIGANDO PARA EDUCAR</td>
+        <td>Coordinador</td>
+        <td>01199-R-19</td>
+        <td>08-08-2017</td>
+      </tr>
+      <tr>
+        <td>IPE</td>
+        <td>INVESTIGANDO PARA EDUCAR</td>
+        <td>Coordinador</td>
+        <td>01199-R-19</td>
+        <td>08-08-2017</td>
+      </tr>
+      <tr>
+        <td>IPE</td>
+        <td>INVESTIGANDO PARA EDUCAR</td>
+        <td>Coordinador</td>
+        <td>01199-R-19</td>
+        <td>08-08-2017</td>
+      </tr>
+      <tr>
+        <td>IPE</td>
+        <td>INVESTIGANDO PARA EDUCAR</td>
+        <td>Coordinador</td>
+        <td>01199-R-19</td>
+        <td>08-08-2017</td>
+      </tr>
+      <tr>
+        <td>IPE</td>
+        <td>INVESTIGANDO PARA EDUCAR</td>
+        <td>Coordinador</td>
+        <td>01199-R-19</td>
+        <td>08-08-2017</td>
+      </tr>
+      <tr>
+        <td>IPE</td>
+        <td>INVESTIGANDO PARA EDUCAR</td>
+        <td>Coordinador</td>
+        <td>01199-R-19</td>
+        <td>08-08-2017</td>
+      </tr>
+      <tr>
+        <td>IPE</td>
+        <td>INVESTIGANDO PARA EDUCAR</td>
+        <td>Coordinador</td>
+        <td>01199-R-19</td>
+        <td>08-08-2017</td>
+      </tr>
+      <tr>
+        <td>IPE</td>
+        <td>INVESTIGANDO PARA EDUCAR</td>
+        <td>Coordinador</td>
+        <td>01199-R-19</td>
+        <td>08-08-2017</td>
+      </tr>
+      <tr>
+        <td>IPE</td>
+        <td>INVESTIGANDO PARA EDUCAR</td>
+        <td>Coordinador</td>
+        <td>01199-R-19</td>
+        <td>08-08-2017</td>
+      </tr>
+      <tr>
+        <td>IPE</td>
+        <td>INVESTIGANDO PARA EDUCAR</td>
+        <td>Coordinador</td>
+        <td>01199-R-19</td>
+        <td>08-08-2017</td>
+      </tr>
+      <tr>
+        <td>IPE</td>
+        <td>INVESTIGANDO PARA EDUCAR</td>
+        <td>Coordinador</td>
+        <td>01199-R-19</td>
+        <td>08-08-2017</td>
+      </tr>
+      <tr>
+        <td>IPE</td>
+        <td>INVESTIGANDO PARA EDUCAR</td>
+        <td>Coordinador</td>
+        <td>01199-R-19</td>
+        <td>08-08-2017</td>
+      </tr>
+      <tr>
+        <td>IPE</td>
+        <td>INVESTIGANDO PARA EDUCAR</td>
+        <td>Coordinador</td>
+        <td>01199-R-19</td>
+        <td>08-08-2017</td>
+      </tr>
+      <tr>
+        <td>IPE</td>
+        <td>INVESTIGANDO PARA EDUCAR</td>
+        <td>Coordinador</td>
+        <td>01199-R-19</td>
+        <td>08-08-2017</td>
+      </tr>
+      <tr>
+        <td>IPE</td>
+        <td>INVESTIGANDO PARA EDUCAR</td>
+        <td>Coordinador</td>
+        <td>01199-R-19</td>
+        <td>08-08-2017</td>
+      </tr>
+      <tr>
+        <td>IPE</td>
+        <td>INVESTIGANDO PARA EDUCAR</td>
+        <td>Coordinador</td>
+        <td>01199-R-19</td>
+        <td>08-08-2017</td>
+      </tr>
+      <tr>
+        <td>IPE</td>
+        <td>INVESTIGANDO PARA EDUCAR</td>
+        <td>Coordinador</td>
+        <td>01199-R-19</td>
+        <td>08-08-2017</td>
+      </tr>
+      <tr>
+        <td>IPE</td>
+        <td>INVESTIGANDO PARA EDUCAR</td>
+        <td>Coordinador</td>
+        <td>01199-R-19</td>
+        <td>08-08-2017</td>
+      </tr>
+      <tr>
+        <td>IPE</td>
+        <td>INVESTIGANDO PARA EDUCAR</td>
+        <td>Coordinador</td>
+        <td>01199-R-19</td>
+        <td>08-08-2017</td>
       </tr>
     </tbody>
   </table>
+
+  <p class="extra-1"><strong>Se expide la presente constancia a solicitud de interesado(a).</strong></p>
+  <br>
+  <p class="extra-2"><strong>Lima 29 de Febrero de 2024</strong></p>
+  <br>
+  <p class="extra-firma">
+    <strong>
+      Dr. José Segundo Niño Montero
+      <br>
+      Vicerrector
+    </strong>
+  </p>
+
 </body>
 
 </html>
