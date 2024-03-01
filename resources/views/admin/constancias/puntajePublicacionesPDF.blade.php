@@ -91,6 +91,7 @@
     .subhead {
       width: 100%;
       text-align: center;
+      font-weight: 400;
     }
 
     .table {
