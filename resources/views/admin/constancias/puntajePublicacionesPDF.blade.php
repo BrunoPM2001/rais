@@ -90,8 +90,10 @@
 
     .subhead {
       width: 100%;
+      margin-top: 0;
+      margin-bottom: 0;
+      font-size: 14px;
       text-align: center;
-      font-weight: 400;
     }
 
     .table {
@@ -185,7 +187,7 @@
       ha registrado las siguiente publicaciones:
     </p>
 
-    <p class="subhead">Puntaje de publicaciones registradas a partir del 1ro de abril de 2008</p>
+    <p class="subhead"><strong>Puntaje de publicaciones registradas a partir del 1ro de abril de 2008</strong></p>
 
     <table class="table">
       <thead>
