@@ -2,6 +2,9 @@
   use Carbon\Carbon;
 
   $fecha = Carbon::now();
+  $currentTipo = "";
+  $subtotal = 0;
+  $puntajetotal = 0.00;
 @endphp
 <!DOCTYPE html>
 <html lang="es">
@@ -85,6 +88,11 @@
       margin: 20px 10px;
     }
 
+    .subhead {
+      width: 100%;
+      text-align: center;
+    }
+
     .table {
       width: 100%;
       border-collapse: separate;
@@ -104,8 +112,24 @@
 
     .table>tbody td {
       font-size: 12px;
-      text-align: center;
       padding-top: 2px;
+    }
+
+    .table>tfoot td {
+      font-size: 12px;
+      padding-top: 2px;
+    }
+
+    .row-left {
+      text-align: left;
+    }
+
+    .row-center {
+      text-align: center;
+    }
+    .row-right {
+      text-align: right;
+      padding-right: 10px;
     }
 
     .extra-1 {
@@ -148,39 +172,67 @@
   <div class="foot-1">RAIS - Registro de Actividades de Investigación de San Marcos</div>
 
   <div class="cuerpo">
-    <p class="titulo">Constancia de Grupos de Investigación de la Universidad Nacional Mayor de San Marcos</p>
+    <p class="titulo">Constancia de Puntaje de Publicaciones</p>
     <p class="texto">
       El Vicerrector de Investigación y Posgrado de la Universidad Nacional Mayor de
       San Marcos hace constar que:
       <br>
-      El Profesor(a): <strong>{{ $grupo[0]->nombre }}</strong>
+      El Profesor(a): <strong>{{ $docente->nombre }}</strong>
       <br>
-      de la facultad de: <strong>{{ $grupo[0]->facultad }}</strong>
+      de la facultad de: <strong>{{ $docente->facultad }}</strong>
       <br>
-      registra participación en el(los) siguiente(s) Grupo(s) de Investigación:
+      ha registrado las siguiente publicaciones:
     </p>
+
+    <p class="subhead">Puntaje de publicaciones registradas a partir del 1ro de abril de 2008</p>
 
     <table class="table">
       <thead>
         <tr>
-          <th>Nombre<br>corto GI</th>
-          <th>Nombre de Grupo</th>
-          <th>Condición</th>
-          <th>Resolución<br>Rectoral</th>
-          <th>Fecha de<br>Creación GI</th>
+          <th>Tipo</th>
+          <th>Categoria</th>
+          <th>Número</th>
+          <th>Puntaje</th>
         </tr>
       </thead>
       <tbody>
-        @foreach ($grupo as $item)
-          <tr>
-            <td>{{ $item->grupo_nombre_corto }}</td>
-            <td>{{ $item->grupo_nombre }}</td>
-            <td>{{ $item->cargo }}</td>
-            <td>{{ $item->resolucion_rectoral }}</td>
-            <td>{{ $item->resolucion_creacion_fecha }}</td>
-          </tr>
+        @foreach ($publicaciones as $item)
+          @php if ($currentTipo != $item->titulo) { @endphp
+            <tr>
+              <td class="row-left">{{ $item->titulo }}</td>
+              <td></td>
+              <td></td>
+              <td></td>
+            </tr>
+            <tr>
+              <td></td>
+              <td class="row-left">{{ $item->categoria }}</td>
+              <td class="row-center">{{ $item->cantidad }}</td>
+              <td class="row-right">{{ $item->puntaje }}</td>
+            </tr>
+          @php } else { @endphp
+            <tr>
+              <td></td>
+              <td class="row-left">{{ $item->categoria }}</td>
+              <td class="row-center">{{ $item->cantidad }}</td>
+              <td class="row-right">{{ $item->puntaje }}</td>
+            </tr>
+          @php
+            }
+            $currentTipo = $item->titulo;
+            $subtotal += $item->cantidad;
+            $puntajetotal += $item->puntaje;
+          @endphp
         @endforeach
       </tbody>
+      <tfoot>
+        <tr>
+          <td></td>
+          <td class="row-right">Sub-Total</td>
+          <td class="row-center">{{ $subtotal }}</td>
+          <td class="row-right">{{ $puntajetotal }}</td>
+        </tr>
+      </tfoot>
     </table>
 
     <p class="extra-1"><strong>Se expide la presente constancia a solicitud de interesado(a).</strong></p>

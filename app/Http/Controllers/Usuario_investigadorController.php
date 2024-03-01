@@ -78,11 +78,11 @@ class Usuario_investigadorController extends Controller {
       )
       ->where('a.id', '=', $investigador_id)
       ->where('b.estado', '=', 1)
-      ->get();
+      ->get()
+      ->toArray();
 
-    $pdf = Pdf::loadView('admin.constancias.grupoInvestigacionPDF');
+    $pdf = Pdf::loadView('admin.constancias.grupoInvestigacionPDF', ['grupo' => $grupo]);
     return $pdf->stream();
-    // return ['data' => $grupo];
   }
 
   public function main() {
