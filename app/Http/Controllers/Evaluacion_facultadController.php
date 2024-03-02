@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\DB;
 
 class Evaluacion_facultadController extends Controller {
   public function getConvocatorias() {
-    $convocatorias = DB::table('Evaluacion_facultad AS a')
+    $convocatorias = DB::table('Evaluacion_facultad_H AS a')
       ->select(
         'tipo_proyecto',
         'periodo',
@@ -24,8 +24,8 @@ class Evaluacion_facultadController extends Controller {
   }
 
   public function getDetalleConvocatoria($periodo, $tipo_proyecto) {
-    $convocatorias = DB::table('Evaluacion_evaluador AS a')
-      ->join('Evaluacion_facultad AS b', 'b.id', '=', 'a.evaluacion_facultad_id')
+    $convocatorias = DB::table('Evaluacion_evaluador_H AS a')
+      ->join('Evaluacion_facultad_H AS b', 'b.id', '=', 'a.evaluacion_facultad_id')
       ->join('Facultad AS c', 'c.id', '=', 'b.facultad_id')
       ->select(
         'b.id',
@@ -47,7 +47,7 @@ class Evaluacion_facultadController extends Controller {
   }
 
   public function getEvaluadoresConvocatoria($id) {
-    $evaluadores = DB::table('Evaluacion_evaluador AS a')
+    $evaluadores = DB::table('Evaluacion_evaluador_H AS a')
       ->join('Usuario_evaluador AS b', 'b.id', '=', 'a.usuario_evaluador_id')
       ->select(
         'b.tipo',
