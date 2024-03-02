@@ -39,12 +39,6 @@
                   Facultad del grupo
                 </th>
                 <th>
-                  Facultad del proyecto
-                </th>
-                <th>
-                  Programa
-                </th>
-                <th>
                   Título
                 </th>
                 <th>
@@ -69,12 +63,6 @@
                   Facultad del grupo
                 </th>
                 <th>
-                  Facultad del proyecto
-                </th>
-                <th>
-                  Programa
-                </th>
-                <th>
                   Título
                 </th>
                 <th>
@@ -95,9 +83,8 @@
     $(document).ready(function() {
       //  Iniciar tabla, toast y modal
       let toast = new bootstrap.Toast(document.getElementById('myToast'));
-      let modal1 = new bootstrap.Modal(document.getElementById('myModal'));
       //  Datatable
-      let ajax_url = 'http://localhost:8000/api/admin/facultad/getProyectosYEvaluadores'
+      let ajax_url = 'http://localhost:8000/api/admin/facultad/getAllEvaluadores'
       let table = new DataTable('#table', {
         paging: true,
         pagingType: 'full_numbers',
@@ -110,19 +97,13 @@
             data: 'id'
           },
           {
-            data: 'tipo'
+            data: 'tipo_proyecto'
           },
           {
             data: 'linea'
           },
           {
-            data: 'facultad_grupo'
-          },
-          {
-            data: 'facultad_proyecto'
-          },
-          {
-            data: 'programa'
+            data: 'facultad'
           },
           {
             data: 'titulo'

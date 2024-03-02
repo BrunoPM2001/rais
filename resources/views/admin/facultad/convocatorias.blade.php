@@ -302,7 +302,7 @@
           //  Nueva tabla
           table2 = new DataTable('#table_detalles', {
             paging: true,
-            select: true,
+            // select: true,
             pagingType: 'full_numbers',
             deferRender: true,
             processing: true,
@@ -356,6 +356,15 @@
           table3.clear().draw();
           table2.ajax.url(ajax_url).load();
         }
+        table2.on('click', 'tbody tr', (e) => {
+          let classList = e.currentTarget.classList;
+          if (classList.contains('selected')) {
+            classList.remove('selected');
+          } else {
+            table2.rows('.selected').nodes().each((row) => row.classList.remove('selected'));
+            classList.add('selected');
+          }
+        });
         table2.on('click', 'tbody tr', function() {
           let data = table2.row(this).data();
           //  Animación

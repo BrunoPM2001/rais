@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Admin\Facultad\AsignacionEvaluadorController as FacultadAsignacionEvaluadorController;
+use App\Http\Controllers\AsignacionEvaluadorController;
 use App\Http\Controllers\DependenciaController;
 use App\Http\Controllers\Evaluacion_facultadController;
 use App\Http\Controllers\Linea_investigacionController;
@@ -34,6 +36,7 @@ Route::prefix('admin')->middleware('checkRole:Administrador')->group(function ()
   //  FACULTAD
   Route::prefix('facultad')->group(function () {
     Route::get('convocatorias', [Evaluacion_facultadController::class, 'main'])->name('view_facultad_convocatorias');
+    Route::get('asignacionEvaluadores', [FacultadAsignacionEvaluadorController::class, 'main'])->name('view_facultad_asignacionEvaluadores');
   });
 
   //  ADMIN
