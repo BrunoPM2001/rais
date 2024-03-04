@@ -3,12 +3,15 @@
 
   $fecha = Carbon::now();
   $currentTipo = '';
-  $subtotal = 0;
   $puntajetotal = 0.0;
   $titulo = '';
   $subtitulo = '';
-  $newTable = 0;
   $firstEl = 0;
+
+  //  Calcular el puntaje total
+  foreach ($publicaciones as $item) {
+      $puntajetotal += $item->puntaje;
+  }
 @endphp
 <!DOCTYPE html>
 <html lang="es">
@@ -109,7 +112,7 @@
     .table {
       width: 100%;
       border-collapse: separate;
-      margin-bottom: 60px;
+      margin-bottom: 30px;
     }
 
     .table>thead {
@@ -121,13 +124,8 @@
 
     .table>tbody td {
       font-size: 12px;
-      padding-top: 2px;
+      padding: 5px 3px 6px 3px;
       border-bottom: 1px dashed #000;
-    }
-
-    .table>tfoot td {
-      font-size: 12px;
-      padding-top: 2px;
     }
 
     .row-left {
@@ -241,9 +239,9 @@
       </p>
       <p class="resumen-2">
         <strong>
-          30
+          {{ sizeof($publicaciones) }}
           <br>
-          75.75
+          {{ $puntajetotal }}
         </strong>
       </p>
     </div>
@@ -271,34 +269,34 @@
             <tr>
               @switch($publicacion->tipo)
                 @case('Artículo en Revista')
-                  <th>Año</th>
-                  <th>Título</th>
-                  <th>Publicación</th>
-                  <th>ISSN</th>
-                  <th>Obs</th>
+                  <th style="width: 5%;">Año</th>
+                  <th style="width: 45%;">Título</th>
+                  <th style="width: 25%;">Publicación</th>
+                  <th style="width: 10%;">ISSN</th>
+                  <th style="width: 15%;">Obs</th>
                 @break
 
                 @case('Libro')
-                  <th>Año</th>
-                  <th>Título</th>
-                  <th>ISBN</th>
-                  <th>Obs</th>
+                  <th style="width: 5%;">Año</th>
+                  <th style="width: 55%;">Título</th>
+                  <th style="width: 20%;">ISBN</th>
+                  <th style="width: 20%;">Obs</th>
                 @break
 
                 @case('Tesis')
-                  <th>Año</th>
-                  <th>Título</th>
-                  <th>Universidad</th>
-                  <th>País</th>
-                  <th>Obs</th>
+                  <th style="width: 5%;">Año</th>
+                  <th style="width: 45%;">Título</th>
+                  <th style="width: 25%;">Universidad</th>
+                  <th style="width: 15%; text-align: left;">País</th>
+                  <th style="width: 10%;">Obs</th>
                 @break
 
                 @case('Tesis asesoria')
-                  <th>Año</th>
-                  <th>Título</th>
-                  <th>Universidad</th>
-                  <th>País</th>
-                  <th>Obs</th>
+                  <th style="width: 5%;">Año</th>
+                  <th style="width: 45%;">Título</th>
+                  <th style="width: 25%;">Universidad</th>
+                  <th style="width: 15%; text-align: left;">País</th>
+                  <th style="width: 10%;">Obs</th>
                 @break
               @endswitch
             </tr>
@@ -309,22 +307,22 @@
       <tr>
         @switch($publicacion->tipo)
           @case('Artículo en Revista')
-            <td>{{ $publicacion->año }}</td>
+            <td style="text-align: center;">{{ $publicacion->año }}</td>
             <td>{{ $publicacion->titulo }}</td>
             <td>{{ $publicacion->publicacion_nombre }}</td>
-            <td>{{ $publicacion->issn }}</td>
+            <td style="text-align: center;">{{ $publicacion->issn }}</td>
             <td>{{ $publicacion->observaciones_usuario }}</td>
           @break
 
           @case('Libro')
-            <td>{{ $publicacion->año }}</td>
+            <td style="text-align: center;">{{ $publicacion->año }}</td>
             <td>{{ $publicacion->titulo }}</td>
-            <td>{{ $publicacion->isbn }}</td>
+            <td style="text-align: center;">{{ $publicacion->isbn }}</td>
             <td>{{ $publicacion->observaciones_usuario }}</td>
           @break
 
           @case('Tesis')
-            <td>{{ $publicacion->año }}</td>
+            <td style="text-align: center;">{{ $publicacion->año }}</td>
             <td>{{ $publicacion->titulo }}</td>
             <td>{{ $publicacion->universidad }}</td>
             <td>{{ $publicacion->pais }}</td>
@@ -332,7 +330,7 @@
           @break
 
           @case('Tesis asesoria')
-            <td>{{ $publicacion->año }}</td>
+            <td style="text-align: center;">{{ $publicacion->año }}</td>
             <td>{{ $publicacion->titulo }}</td>
             <td>{{ $publicacion->universidad }}</td>
             <td>{{ $publicacion->pais }}</td>
@@ -347,4 +345,32 @@
       @endphp
     @endforeach
   </div>
+
+  <p class="extra-1"><strong>Se expide la presente constancia a solicitud de interesado(a).</strong></p>
+  <br>
+  <p class="extra-2"><strong>Lima {{ $fecha->isoFormat('DD') }} de {{ ucfirst($fecha->monthName) }} de
+      {{ $fecha->year }}</strong></p>
+  <br>
+  <p class="extra-firma">
+    <strong>
+      Dr. José Segundo Niño Montero
+      <br>
+      Vicerrector
+    </strong>
+  </p>
+
+  <script type="text/php">
+    if (isset($pdf)) {
+      $x = 530;
+      $y = 818;
+      $text = "Página {PAGE_NUM} de {PAGE_COUNT}";
+      $font = $fontMetrics->get_font("Helvetica", "Italic");
+      $size = 8;
+      $color = array(0,0,0);
+      $word_space = 0.0;  //  default
+      $char_space = 0.0;  //  default
+      $angle = 0.0;   //  default
+      $pdf->page_text($x, $y, $text, $font, $size, $color, $word_space, $char_space, $angle);
+    }
+  </script>
 </body>

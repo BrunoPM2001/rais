@@ -60,7 +60,9 @@ class ReporteController extends Controller {
       ->select(
         'c.tipo',
         'c.categoria',
+        'c.puntaje',
         DB::raw('YEAR(b.fecha_publicacion) AS año'),
+        'b.step',
         'b.titulo',
         'b.publicacion_nombre',
         'b.issn',
@@ -76,9 +78,9 @@ class ReporteController extends Controller {
       ->orderByDesc('año')
       ->get();
 
-    $pdf = Pdf::loadView('admin.constancias.publicacionesCientificasPDF', ['docente' => $docente[0], 'publicaciones' => $publicaciones]);
-    return $pdf->stream();
-    // return ['data' => $publicaciones];
+    // $pdf = Pdf::loadView('admin.constancias.publicacionesCientificasPDF', ['docente' => $docente[0], 'publicaciones' => $publicaciones]);
+    // return $pdf->stream();
+    return ['data' => $publicaciones];
   }
 
   public function getConstanciaGrupoInvestigacion($investigador_id) {
