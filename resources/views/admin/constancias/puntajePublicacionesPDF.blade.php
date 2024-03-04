@@ -155,7 +155,6 @@
   </style>
 </head>
 
-
 <body>
   <div class="head-1">
     <img src="{{ public_path('head-pdf.jpg') }}" alt="Header">
@@ -175,7 +174,7 @@
   <div class="foot-1">RAIS - Registro de Actividades de Investigación de San Marcos</div>
 
   <div class="cuerpo">
-    <p class="titulo">Constancia de Puntaje de Publicaciones</p>
+    <p class="titulo"><strong>Constancia de Puntaje de Publicaciones</strong></p>
     <p class="texto">
       El Vicerrector de Investigación y Posgrado de la Universidad Nacional Mayor de
       San Marcos hace constar que:
