@@ -56,6 +56,7 @@ class Usuario_investigadorController extends Controller {
       ->orWhere('apellido1', 'LIKE', '%' . $input . '%')
       ->orWhere('apellido2', 'LIKE', '%' . $input . '%')
       ->orWhere('nombres', 'LIKE', '%' . $input . '%')
+      ->limit(10)
       ->get();
 
     return $investigadores;

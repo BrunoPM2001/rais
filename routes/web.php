@@ -69,6 +69,7 @@ Route::prefix('api')->group(function () {
       Route::get('getEvaluadoresConvocatoria/{id}', [Evaluacion_facultadController::class, 'getEvaluadoresConvocatoria']);
 
       Route::get('getAllEvaluadores', [ProyectoController::class, 'getAllEvaluadores']);
+      Route::get('searchEvaluadorBy/{input}', [FacultadAsignacionEvaluadorController::class, 'searchEvaluadorBy']);
       Route::get('getAllProyectosEvaluados/{periodo}/{tipo_proyecto}', [ProyectoController::class, 'getAllProyectosEvaluados']);
     });
 
