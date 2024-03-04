@@ -104,37 +104,70 @@
     </div>
   </div>
 
-  <!-- Modal para editar -->
+  <!-- Modal para Asignar -->
   @extends('admin.components.modal')
   @section('form')
   <form id="updateForm">
     @endsection
 
     @section('titulo')
-    Editar evaluador
+    Evaluadores
     @endsection
 
     @section('contenido')
     <input type="text" hidden id="edit_id" name="edit_id">
     <input type="text" hidden id="tabla_id" name="tabla_id">
     <div class="row align-items-center mb-3">
-      <label for="edit_evaluador1" class="col-sm-4 col-form-label">Evaluador 1</label>
+      <label for="asignar_evaluador1" class="col-sm-4 col-form-label">Evaluador 1</label>
       <div class="col-sm-8">
-        <input type="text" id="edit_evaluador1" name="edit_evaluador1" class="form-control">
+          <div class="row">
+            <div class="col">
+              <div class="d-flex justify-content-start">
+                <input type="text" id="asignar_evaluador1" name="asignar_evaluador1" class="form-control">
+                <input type="text" hidden id="id1" name="id1">
+                <div class="dropdown-menu" id="autocomplete-dropdown1" style="display:none">
+                  <!-- Aquí se mostrarán los resultados -->
+                </div>
+                <button class="btn btn-dark ml-1">icono</button>
+              </div>
+            </div>
+          </div>
       </div>
     </div>
 
-   <div class="row align-items-center mb-3">
-      <label for="edit_evaluador2" class="col-sm-4 col-form-label">Evaluador 2</label>
+    <div class="row align-items-center mb-3">
+      <label for="asignar_evaluador2" class="col-sm-4 col-form-label">Evaluador 2</label>
       <div class="col-sm-8">
-        <input type="text" id="edit_evaluador2" name="edit_evaluador2" class="form-control">
+          <div class="row">
+            <div class="col">
+              <div class="d-flex justify-content-start">
+                <input type="text" id="asignar_evaluador2" name="asignar_evaluador2" class="form-control">
+                <input type="text" hidden id="id2" name="id2">
+                <div class="dropdown-menu" id="autocomplete-dropdown2" style="display:none">
+                  <!-- Aquí se mostrarán los resultados -->
+                </div>
+                <button class="btn btn-dark ml-1">icono</button>
+              </div>
+            </div>
+          </div>
       </div>
     </div>
 
-   <div class="row align-items-center mb-3">
-      <label for="edit_evaluador3" class="col-sm-4 col-form-label">Evaluador 3</label>
+    <div class="row align-items-center mb-3">
+      <label for="asignar_evaluador3" class="col-sm-4 col-form-label">Evaluador 3</label>
       <div class="col-sm-8">
-        <input type="text" id="edit_evaluador3" name="edit_evaluador3" class="form-control">
+          <div class="row">
+            <div class="col">
+              <div class="d-flex justify-content-start">
+                <input type="text" id="asignar_evaluador3" name="asignar_evaluador3" class="form-control">
+                <input type="text" hidden id="id3" name="id3">
+                <div class="dropdown-menu" id="autocomplete-dropdown3" style="display:none">
+                  <!-- Aquí se mostrarán los resultados -->
+                </div>
+                <button class="btn btn-dark ml-1">icono</button>
+              </div>
+            </div>
+          </div>
       </div>
     </div>
     
@@ -152,6 +185,7 @@
     //  Iniciar modal y toast
     let modal = new bootstrap.Modal(document.getElementById('myModal'), {});
     let toast = new bootstrap.Toast(document.getElementById('myToast'));
+    let temp;
 
     function mostrarBotones() {
         var opciones = $("#opciones");
@@ -186,7 +220,6 @@
         if (selectedRows === 1) {
           // Aquí colocas la lógica para editar evaluador
           console.log("Editar evaluador para una fila seleccionada.");
-          modal.show()
         } else {
           alert("Por favor, seleccione solo un proyecto con evaluadores asigandos.");
         }
@@ -202,12 +235,85 @@
         } else {
           // Aquí colocas la lógica para asignar evaluador
           console.log("Asignar evaluador para una fila seleccionada.");
+          modal.show()
         }
     }
 
     $("#botonA").on("click",asignarEvaluador)
     $("#botonB").on("click",editarEvaluador)
 
+      // ********Función para mostrar las sugerencias*******
+      function showSuggestions(data,p_autocomplete) {
+        var dropdownMenu = $(p_autocomplete);
+        dropdownMenu.empty();
+
+        data.forEach(function(suggestion) {
+          var item = $('<a class="dropdown-item" href="#" myId="' + suggestion.id + '">').text(suggestion.content);
+          dropdownMenu.append(item);
+        });
+
+        dropdownMenu.css('display', 'block');
+      }
+
+      // Evento keyup para el input
+      function SugerenciaTexto(p_asignarEvaluador,p_autocomplete) {
+        let input = $(p_asignarEvaluador).val();
+        clearTimeout(temp);
+        temp = setTimeout(() => {
+          //  Petición ajax y uso de typeahead
+          $.ajax({
+            url: 'http://localhost:8000/api/admin/facultad/searchEvaluadorBy/' + input,
+            method: 'GET',
+            success: (data) => {
+              let sugerencias = [];
+              $.each(data, (index, user) => {
+                sugerencias.push({
+                  id: user.id,
+                  content: user.apellidos + " "  + user.nombres
+                });
+              });
+              showSuggestions(sugerencias,p_autocomplete)
+            }
+          });
+        }, 1000);
+        if (input.length == 0) {
+          $(p_autocomplete).css('display', 'none');
+        }
+      }
+
+      $('#asignar_evaluador1').on('keyup',()=>SugerenciaTexto("#asignar_evaluador1","#autocomplete-dropdown1"));
+      $('#asignar_evaluador2').on('keyup',()=>SugerenciaTexto("#asignar_evaluador2","#autocomplete-dropdown2"));
+      $('#asignar_evaluador3').on('keyup',()=>SugerenciaTexto("#asignar_evaluador3","#autocomplete-dropdown3"));
+
+      function AutocompleteTexto(p_asignarEvaluador,p_id,p_autocomplete,contexto) {
+        var id = $(contexto).attr("myId");
+        var text = $(contexto).text();
+        console.log(text)
+        $(p_asignarEvaluador).val(text);
+        $(p_id).val(id);
+        $(p_autocomplete).css('display', 'none');
+      }
+
+      // Evento click para las sugerencias
+      $('#autocomplete-dropdown1').on('click', '.dropdown-item', function(e){
+        AutocompleteTexto("#asignar_evaluador1","#id1","#autocomplete-dropdown1",this)
+      });
+      $('#autocomplete-dropdown2').on('click', '.dropdown-item', function(e){
+        AutocompleteTexto("#asignar_evaluador2","#id2","#autocomplete-dropdown2",this)
+      });
+      $('#autocomplete-dropdown3').on('click', '.dropdown-item', function(e){
+        AutocompleteTexto("#asignar_evaluador3","#id3","#autocomplete-dropdown3",this)
+      });
+
+      // Evento blur para ocultar las sugerencias cuando se hace clic fuera del input
+      $(document).on('click', function(event) {
+        if (!$(event.target).closest('.input-group').length) {
+          $('#autocomplete-dropdown1').css('display', 'none');
+          $('#autocomplete-dropdown2').css('display', 'none');
+          $('#autocomplete-dropdown3').css('display', 'none');
+        }
+      });
+      //***********************************
 
     });
   </script>
