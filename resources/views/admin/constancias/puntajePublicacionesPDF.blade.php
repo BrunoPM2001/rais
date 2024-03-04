@@ -85,7 +85,7 @@
 
     .texto {
       font-size: 13px;
-      margin: 20px 10px;
+      margin: 20px 0;
     }
 
     .subhead {

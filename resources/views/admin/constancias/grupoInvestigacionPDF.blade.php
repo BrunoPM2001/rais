@@ -82,7 +82,7 @@
 
     .texto {
       font-size: 13px;
-      margin: 20px 10px;
+      margin: 20px 0;
     }
 
     .table {
@@ -148,8 +148,11 @@
   <div class="foot-1">RAIS - Registro de Actividades de Investigación de San Marcos</div>
 
   <div class="cuerpo">
-    <p class="titulo"><strong>Constancia de Grupos de Investigación de la Universidad Nacional Mayor de San
-        Marcos</strong></p>
+    <p class="titulo">
+      <strong>
+        Constancia de Grupos de Investigación de la Universidad Nacional Mayor de San Marcos
+      </strong>
+    </p>
     <p class="texto">
       El Vicerrector de Investigación y Posgrado de la Universidad Nacional Mayor de
       San Marcos hace constar que:

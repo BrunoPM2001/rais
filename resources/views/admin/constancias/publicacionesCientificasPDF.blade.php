@@ -5,6 +5,10 @@
   $currentTipo = '';
   $subtotal = 0;
   $puntajetotal = 0.0;
+  $titulo = '';
+  $subtitulo = '';
+  $newTable = 0;
+  $firstEl = 0;
 @endphp
 <!DOCTYPE html>
 <html lang="es">
@@ -83,9 +87,15 @@
       text-align: center;
     }
 
-    .texto {
+    .texto-1 {
       font-size: 13px;
-      margin: 20px 10px;
+      margin: 20px 0 0 0;
+    }
+
+    .texto-2 {
+      display: inline-block;
+      font-size: 13px;
+      margin: 0 0 20px 0;
     }
 
     .subhead {
@@ -102,10 +112,6 @@
       margin-bottom: 60px;
     }
 
-    .table>tbody {
-      border-bottom: 1.5px solid #000;
-    }
-
     .table>thead {
       font-size: 12px;
       font-weight: bold;
@@ -116,6 +122,7 @@
     .table>tbody td {
       font-size: 12px;
       padding-top: 2px;
+      border-bottom: 1px dashed #000;
     }
 
     .table>tfoot td {
@@ -153,6 +160,45 @@
       text-align: center;
       width: 100%;
     }
+
+    .caja-resumen {
+      float: right;
+      border: 1px solid black;
+      margin: 5px 0 5px 0;
+      padding: 10px 10px 0 10px;
+    }
+
+    .resumen-1 {
+      font-size: 13px;
+      display: inline-block;
+      text-align: right;
+      margin: 0;
+      padding: 0;
+    }
+
+    .resumen-2 {
+      font-size: 13px;
+      display: inline-block;
+      text-align: left;
+      margin: 0;
+      padding: 0;
+    }
+
+    .cuerpo {
+      border-bottom: 2px solid black;
+    }
+
+    .tab-titulo {
+      font-size: 13px;
+      font-weight: bold;
+      text-align: left;
+    }
+
+    .tab-subtitulo {
+      font-size: 13px;
+      font-weight: bold;
+      text-align: right;
+    }
   </style>
 </head>
 
@@ -176,13 +222,129 @@
 
   <div class="cuerpo">
     <p class="titulo"><strong>Constancia de Registro de Publicaciones Científicas</strong></p>
-    <p class="texto">
+    <p class="texto-1">
       El Vicerrector de Investigación y Posgrado de la Universidad Nacional Mayor de
       San Marcos hace constar que:
-      <br>
+    </p>
+    <p class="texto-2">
       El Profesor(a): <strong>{{ $docente->nombre }}</strong>
       <br>
       de la facultad de: <strong>{{ $docente->facultad }}</strong>
       <br>
       ha registrado las siguiente publicaciones:
     </p>
+    <div class="caja-resumen">
+      <p class="resumen-1">
+        N° de publicaciones:
+        <br>
+        Puntaje total:
+      </p>
+      <p class="resumen-2">
+        <strong>
+          30
+          <br>
+          75.75
+        </strong>
+      </p>
+    </div>
+  </div>
+  <div>
+    @foreach ($publicaciones as $publicacion)
+      @if ($publicacion->categoria != $subtitulo)
+        @if ($firstEl == 1)
+          </tbody>
+          </table>
+        @endif
+        @php
+          $firstEl = 1;
+        @endphp
+      @endif
+
+      @if ($publicacion->tipo != $titulo)
+        <p class="tab-titulo">{{ $publicacion->tipo }}</p>
+      @endif
+
+      @if ($publicacion->categoria != $subtitulo)
+        <p class="tab-subtitulo">{{ $publicacion->categoria }}</p>
+        <table class="table">
+          <thead>
+            <tr>
+              @switch($publicacion->tipo)
+                @case('Artículo en Revista')
+                  <th>Año</th>
+                  <th>Título</th>
+                  <th>Publicación</th>
+                  <th>ISSN</th>
+                  <th>Obs</th>
+                @break
+
+                @case('Libro')
+                  <th>Año</th>
+                  <th>Título</th>
+                  <th>ISBN</th>
+                  <th>Obs</th>
+                @break
+
+                @case('Tesis')
+                  <th>Año</th>
+                  <th>Título</th>
+                  <th>Universidad</th>
+                  <th>País</th>
+                  <th>Obs</th>
+                @break
+
+                @case('Tesis asesoria')
+                  <th>Año</th>
+                  <th>Título</th>
+                  <th>Universidad</th>
+                  <th>País</th>
+                  <th>Obs</th>
+                @break
+              @endswitch
+            </tr>
+          </thead>
+          <tbody>
+      @endif
+
+      <tr>
+        @switch($publicacion->tipo)
+          @case('Artículo en Revista')
+            <td>{{ $publicacion->año }}</td>
+            <td>{{ $publicacion->titulo }}</td>
+            <td>{{ $publicacion->publicacion_nombre }}</td>
+            <td>{{ $publicacion->issn }}</td>
+            <td>{{ $publicacion->observaciones_usuario }}</td>
+          @break
+
+          @case('Libro')
+            <td>{{ $publicacion->año }}</td>
+            <td>{{ $publicacion->titulo }}</td>
+            <td>{{ $publicacion->isbn }}</td>
+            <td>{{ $publicacion->observaciones_usuario }}</td>
+          @break
+
+          @case('Tesis')
+            <td>{{ $publicacion->año }}</td>
+            <td>{{ $publicacion->titulo }}</td>
+            <td>{{ $publicacion->universidad }}</td>
+            <td>{{ $publicacion->pais }}</td>
+            <td>{{ $publicacion->observaciones_usuario }}</td>
+          @break
+
+          @case('Tesis asesoria')
+            <td>{{ $publicacion->año }}</td>
+            <td>{{ $publicacion->titulo }}</td>
+            <td>{{ $publicacion->universidad }}</td>
+            <td>{{ $publicacion->pais }}</td>
+            <td>{{ $publicacion->observaciones_usuario }}</td>
+          @break
+        @endswitch
+      </tr>
+
+      @php
+        $titulo = $publicacion->tipo;
+        $subtitulo = $publicacion->categoria;
+      @endphp
+    @endforeach
+  </div>
+</body>

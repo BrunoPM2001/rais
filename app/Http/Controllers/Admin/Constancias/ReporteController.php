@@ -44,6 +44,16 @@ class ReporteController extends Controller {
 
   //  TODO - Verificar que las observaciones sean de esa columna
   public function getConstanciaPublicacionesCientificas($investigador_id) {
+    $docente = DB::table('Usuario_investigador AS a')
+      ->join('Facultad AS b', 'b.id', '=', 'a.facultad_id')
+      ->select(
+        DB::raw('CONCAT(a.apellido1, " ", a.apellido2, " ", a.nombres) AS nombre'),
+        'b.nombre AS facultad'
+      )
+      ->where('a.id', '=', $investigador_id)
+      ->get()
+      ->toArray();
+
     $publicaciones = DB::table('Publicacion_autor AS a')
       ->join('Publicacion AS b', 'b.id', '=', 'a.publicacion_id')
       ->join('Publicacion_categoria AS c', 'c.id', '=', 'b.categoria_id')
@@ -66,7 +76,9 @@ class ReporteController extends Controller {
       ->orderByDesc('año')
       ->get();
 
-    return ['data' => $publicaciones];
+    $pdf = Pdf::loadView('admin.constancias.publicacionesCientificasPDF', ['docente' => $docente[0], 'publicaciones' => $publicaciones]);
+    return $pdf->stream();
+    // return ['data' => $publicaciones];
   }
 
   public function getConstanciaGrupoInvestigacion($investigador_id) {
