@@ -186,6 +186,7 @@
     let modal = new bootstrap.Modal(document.getElementById('myModal'), {});
     let toast = new bootstrap.Toast(document.getElementById('myToast'));
     let temp;
+    let tipoModal;
 
     function mostrarBotones() {
         var opciones = $("#opciones");
@@ -220,6 +221,20 @@
         if (selectedRows === 1) {
           // Aquí colocas la lógica para editar evaluador
           console.log("Editar evaluador para una fila seleccionada.");
+          tipoModal = "Editar";
+          modal.show()
+          $.ajax({
+            url: 'http://localhost:8000/api/admin/facultad/getEvaluadoresProyecto/' + '10295',
+            type: 'GET',
+            success: (data) => {
+              //  Actualizar la data a editar
+              data.data.forEach((item,index)=>{
+                $("#asignar_evaluador" + Number(index+1)).val(item.evaluador)
+                console.log(Number(index+1))
+                console.log(item)
+              })
+            }
+          });
         } else {
           alert("Por favor, seleccione solo un proyecto con evaluadores asigandos.");
         }
