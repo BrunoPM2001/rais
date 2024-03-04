@@ -70,6 +70,7 @@ Route::prefix('api')->group(function () {
 
       Route::get('getAllEvaluadores', [ProyectoController::class, 'getAllEvaluadores']);
       Route::get('searchEvaluadorBy/{input}', [FacultadAsignacionEvaluadorController::class, 'searchEvaluadorBy']);
+      Route::get('getEvaluadoresProyecto/{id}', [FacultadAsignacionEvaluadorController::class, 'getEvaluadoresProyecto']);
       Route::get('getAllProyectosEvaluados/{periodo}/{tipo_proyecto}', [ProyectoController::class, 'getAllProyectosEvaluados']);
     });
 
