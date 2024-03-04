@@ -92,7 +92,7 @@
             </li>
             <li><a class="dropdown-item" href="#">Usuarios facultad</a></li>
             <li><a class="dropdown-item" href="#">Usuarios evaluadores</a></li>
-            <li><a class="dropdown-item" href="#">Asignación de evaluadores</a></li>
+            <li><a class="dropdown-item" href="{{ route('view_facultad_asignacionEvaluadores') }}">Asignación de evaluadores</a></li>
             <li><a class="dropdown-item" href="#">Proyectos evaluados</a></li>
           </ul>
         </li>
