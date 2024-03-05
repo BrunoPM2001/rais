@@ -4,11 +4,11 @@ use App\Http\Controllers\Admin\Constancias\ReporteController;
 use App\Http\Controllers\Admin\Facultad\AsignacionEvaluadorController;
 use App\Http\Controllers\Admin\Admin\Linea_investigacionController;
 use App\Http\Controllers\Admin\Admin\DependenciaController;
+use App\Http\Controllers\Admin\Admin\Usuario_adminController;
+use App\Http\Controllers\Admin\Admin\Usuario_investigadorController;
+use App\Http\Controllers\Admin\Admin\UsuarioController;
 use App\Http\Controllers\Evaluacion_facultadController;
 use App\Http\Controllers\ProyectoController;
-use App\Http\Controllers\Usuario_adminController;
-use App\Http\Controllers\Usuario_investigadorController;
-use App\Http\Controllers\UsuarioController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -89,16 +89,16 @@ Route::prefix('api')->group(function () {
 
     //  Dependencias
     Route::prefix('dependencias')->group(function () {
-      Route::get('getAll', [DependenciaController::class, 'getAll']);
       Route::get('getOne/{id}', [DependenciaController::class, 'getOne']);
+      Route::get('getAll', [DependenciaController::class, 'getAll']);
       Route::post('create', [DependenciaController::class, 'create'])->name('create_dependencia');
       Route::post('update', [DependenciaController::class, 'update']);
     });
 
     //  Lineas de investigación
     Route::prefix('lineasInvestigacion')->group(function () {
-      Route::get('getAll', [Linea_investigacionController::class, 'getAll']);
       Route::get('getAllFacultad/{id}', [Linea_investigacionController::class, 'getAllOfFacultad']);
+      Route::get('getAll', [Linea_investigacionController::class, 'getAll']);
       Route::post('create', [Linea_investigacionController::class, 'create'])->name('create_linea');
     });
   });
