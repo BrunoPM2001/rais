@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\DB;
 
 class ReporteController extends Controller {
 
+  //  TODO - Ver por qué la suma de puntos no coincide
   public function getConstanciaPuntajePublicaciones($investigador_id) {
     $docente = DB::table('Usuario_investigador AS a')
       ->join('Facultad AS b', 'b.id', '=', 'a.facultad_id')
@@ -78,9 +79,8 @@ class ReporteController extends Controller {
       ->orderByDesc('año')
       ->get();
 
-    // $pdf = Pdf::loadView('admin.constancias.publicacionesCientificasPDF', ['docente' => $docente[0], 'publicaciones' => $publicaciones]);
-    // return $pdf->stream();
-    return ['data' => $publicaciones];
+    $pdf = Pdf::loadView('admin.constancias.publicacionesCientificasPDF', ['docente' => $docente[0], 'publicaciones' => $publicaciones]);
+    return $pdf->stream();
   }
 
   public function getConstanciaGrupoInvestigacion($investigador_id) {
