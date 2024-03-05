@@ -128,7 +128,8 @@
               <div class="dropdown-menu" id="autocomplete-dropdown1" style="display:none">
                 <!-- Aquí se mostrarán los resultados -->
               </div>
-              <button class="btn btn-dark ml-1">icono</button>
+              <button type="button" class="btn btn-dark ml-1" id="icono_buscar1">icono</button>
+              <button type="button" class="btn btn-danger ml-1" id="icono_borrar1"><strong>X</strong></button>
             </div>
           </div>
         </div>
@@ -146,7 +147,8 @@
               <div class="dropdown-menu" id="autocomplete-dropdown2" style="display:none">
                 <!-- Aquí se mostrarán los resultados -->
               </div>
-              <button class="btn btn-dark ml-1">icono</button>
+              <button type="button" class="btn btn-dark ml-1" id="icono_buscar2">icono</button>
+              <button type="button" class="btn btn-danger ml-1" id="icono_borrar2"><strong>X</strong></button>
             </div>
           </div>
         </div>
@@ -164,7 +166,8 @@
               <div class="dropdown-menu" id="autocomplete-dropdown3" style="display:none">
                 <!-- Aquí se mostrarán los resultados -->
               </div>
-              <button class="btn btn-dark ml-1">icono</button>
+              <button type="button" class="btn btn-dark ml-1" id="icono_buscar3">icono</button>
+              <button type="button" class="btn btn-danger ml-1" id="icono_borrar3"><strong>X</strong></button>
             </div>
           </div>
         </div>
@@ -213,20 +216,60 @@
       //window.onload = mostrarBotones;
       $("#opciones").on("change", mostrarBotones)
 
+      function MostrarIconoParaAsignar(p_buscar,p_borrar){
+        $(p_buscar).show()
+        $(p_borrar).hide()
+      }
+      function MostrarIconoParaEditar(p_buscar,p_borrar){
+        $(p_buscar).hide()
+        $(p_borrar).show()
+      }
+      function LimpiarImputEnEditar(p_imput){
+        $(p_imput).val('')
+      }
+
+      // Función de validación al hacer clic en "Asignar evaluador"
+      function asignarEvaluador() {
+        var table = $('#table').DataTable();
+        var selectedRows = table.rows({selected: true}).count();
+
+        if (selectedRows === 0) {
+          alert("Seleccione al menos un proyecto.");
+        } else {
+          // Aquí colocas la lógica para asignar evaluador
+          console.log("Asignar evaluador para una fila seleccionada.");
+          //Mostramos vacios los imputs
+          $("#asignar_evaluador1").val('') 
+          $("#asignar_evaluador2").val('')
+          $("#asignar_evaluador3").val('')
+          modal.show()
+          MostrarIconoParaAsignar("#icono_buscar1","#icono_borrar1")
+          MostrarIconoParaAsignar("#icono_buscar2","#icono_borrar2")
+          MostrarIconoParaAsignar("#icono_buscar3","#icono_borrar3")
+        }
+      }
+
       // Función de validación al hacer clic en "Editar evaluador"
       function editarEvaluador() {
         var table = $('#table').DataTable();
-        var selectedRows = table.rows({
-          selected: true
-        }).count();
+        var selectedRows = table.rows({ selected: true }).count();
+        var selectedRow = table.row({ selected: true });
+        var rowId = selectedRow.data().id; 
 
         if (selectedRows === 1) {
           // Aquí colocas la lógica para editar evaluador
           console.log("Editar evaluador para una fila seleccionada.");
           tipoModal = "Editar";
+          //Mostramos vacios los imputs
+          $("#asignar_evaluador1").val('')
+          $("#asignar_evaluador2").val('')
+          $("#asignar_evaluador3").val('')
           modal.show()
+          MostrarIconoParaEditar("#icono_buscar1","#icono_borrar1")
+          MostrarIconoParaEditar("#icono_buscar2","#icono_borrar2")
+          MostrarIconoParaEditar("#icono_buscar3","#icono_borrar3")
           $.ajax({
-            url: 'http://localhost:8000/api/admin/facultad/getEvaluadoresProyecto/' + '10295',
+            url: 'http://localhost:8000/api/admin/facultad/getEvaluadoresProyecto/' + rowId,
             type: 'GET',
             success: (data) => {
               //  Actualizar la data a editar
@@ -241,24 +284,11 @@
         }
       }
 
-      // Función de validación al hacer clic en "Asignar evaluador"
-      function asignarEvaluador() {
-        var table = $('#table').DataTable();
-        var selectedRows = table.rows({
-          selected: true
-        }).count();
-
-        if (selectedRows === 0) {
-          alert("Seleccione al menos un proyecto.");
-        } else {
-          // Aquí colocas la lógica para asignar evaluador
-          console.log("Asignar evaluador para una fila seleccionada.");
-          modal.show()
-        }
-      }
-
       $("#botonA").on("click", asignarEvaluador)
       $("#botonB").on("click", editarEvaluador)
+      $("#icono_borrar1").on("click",() => LimpiarImputEnEditar("#asignar_evaluador1"))
+      $("#icono_borrar2").on("click",() => LimpiarImputEnEditar("#asignar_evaluador2"))
+      $("#icono_borrar3").on("click",() => LimpiarImputEnEditar("#asignar_evaluador3"))
 
       // ********Función para mostrar las sugerencias*******
       function showSuggestions(data, p_autocomplete) {
