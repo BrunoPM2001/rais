@@ -2,11 +2,10 @@
 
 use App\Http\Controllers\Admin\Constancias\ReporteController;
 use App\Http\Controllers\Admin\Facultad\AsignacionEvaluadorController;
-use App\Http\Controllers\DependenciaController;
+use App\Http\Controllers\Admin\Admin\Linea_investigacionController;
+use App\Http\Controllers\Admin\Admin\DependenciaController;
 use App\Http\Controllers\Evaluacion_facultadController;
-use App\Http\Controllers\Linea_investigacionController;
 use App\Http\Controllers\ProyectoController;
-use App\Http\Controllers\Publicacion_autorController;
 use App\Http\Controllers\Usuario_adminController;
 use App\Http\Controllers\Usuario_investigadorController;
 use App\Http\Controllers\UsuarioController;

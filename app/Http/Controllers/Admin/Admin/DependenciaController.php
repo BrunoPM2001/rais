@@ -1,13 +1,24 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Admin\Admin;
 
+use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Dependencia;
 use App\Models\Facultad;
 use Illuminate\Support\Facades\DB;
 
 class DependenciaController extends Controller {
+
+  public function main() {
+    //  Lista de facultades
+    $facultad = new Facultad();
+    $facultades = $facultad->listar();
+
+    return view('admin.admin.dependencias', [
+      'facultades' => $facultades
+    ]);
+  }
 
   public function getAll() {
     $dependencias = DB::table('Dependencia AS a')
@@ -73,16 +84,5 @@ class DependenciaController extends Controller {
     $dependencia = Dependencia::findOrFail($id);
     $dependencia->delete();
     return $dependencia;
-  }
-
-  //  Views
-  public function main() {
-    //  Lista de facultades
-    $facultad = new Facultad();
-    $facultades = $facultad->listar();
-
-    return view('admin.admin.dependencias', [
-      'facultades' => $facultades
-    ]);
   }
 }
