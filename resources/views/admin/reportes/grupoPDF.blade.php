@@ -173,20 +173,6 @@
         @endforeach
       </tbody>
     </table>
-
-    <p class="extra-1"><strong>Se expide la presente constancia a solicitud de interesado(a).</strong></p>
-    <br>
-    <p class="extra-2"><strong>Lima {{ $fecha->isoFormat('DD') }} de {{ ucfirst($fecha->monthName) }} de
-        {{ $fecha->year }}</strong></p>
-    <br>
-    <p class="extra-firma">
-      <strong>
-        Dr. José Segundo Niño Montero
-        <br>
-        Vicerrector
-      </strong>
-    </p>
-
   </div>
 
   <script type="text/php">
