@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\Admin\DependenciaController;
 use App\Http\Controllers\Admin\Admin\Usuario_adminController;
 use App\Http\Controllers\Admin\Admin\Usuario_investigadorController;
 use App\Http\Controllers\Admin\Admin\UsuarioController;
+use App\Http\Controllers\Admin\Reportes\GrupoController;
 use App\Http\Controllers\Evaluacion_facultadController;
 use App\Http\Controllers\ProyectoController;
 use Illuminate\Support\Facades\Route;
@@ -54,6 +55,11 @@ Route::prefix('admin')->middleware('checkRole:Administrador')->group(function ()
 Route::prefix('api')->group(function () {
   //  ADMIN
   Route::prefix('admin')->group(function () {
+    //  Reportes
+    Route::prefix('reportes')->group(function () {
+      Route::get('grupo/{estado}/{facultad}/{miembros}', [GrupoController::class, 'reporte']);
+    });
+
     //  Constancias
     Route::prefix('constancias')->group(function () {
       Route::get('getConstanciaPuntajePublicaciones/{investigador_id}', [ReporteController::class, 'getConstanciaPuntajePublicaciones']);
