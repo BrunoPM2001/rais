@@ -14,10 +14,10 @@ class GrupoController extends Controller {
       ->join('Facultad AS d', 'd.id', '=', 'a.facultad_id')
       ->join('Facultad AS e', 'e.id', '=', 'b.facultad_id')
       ->select(
-        'a.estado',
         'a.grupo_nombre_corto',
         'a.grupo_nombre',
         'd.nombre AS facultad_grupo',
+        'a.estado',
         'b.condicion',
         'c.doc_numero',
         DB::raw('CONCAT(c.apellido1, " ", c.apellido2, " ", c.nombres) AS nombre'),
@@ -31,6 +31,8 @@ class GrupoController extends Controller {
       ->orderBy('b.condicion')
       ->get();
 
+    $pdf = Pdf::loadView('admin.reportes.grupoPDF', ['lista' => $lista]);
+    return $pdf->stream();
     return ['data' => $lista];
   }
 }

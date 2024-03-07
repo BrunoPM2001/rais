@@ -1,5 +1,6 @@
 @php
-
+  $grupoActual = '';
+  $numGrupoActual = 1;
 @endphp
 <!DOCTYPE html>
 <html lang="es">
@@ -15,12 +16,12 @@
     }
 
     @page {
-      margin: 145px 20px 20px 20px;
+      margin: 165px 20px 20px 20px;
     }
 
     .head-1 {
       position: fixed;
-      top: -115px;
+      top: -135px;
       left: 0px;
       height: 90px;
     }
@@ -33,7 +34,7 @@
 
     .head-2 {
       position: fixed;
-      top: -115px;
+      top: -135px;
       right: 0;
     }
 
@@ -67,13 +68,14 @@
 
     .div {
       position: fixed;
-      top: -15px;
+      top: -45px;
       width: 100%;
       height: 0.5px;
       background: #000;
     }
 
     .titulo {
+      width: 754px;
       font-size: 16px;
       text-align: center;
     }
@@ -94,14 +96,15 @@
     }
 
     .table>thead {
-      font-size: 12px;
+      margin-top: -1px;
+      font-size: 11px;
       font-weight: bold;
       border-top: 1.5px solid #000;
       border-bottom: 1.5px solid #000;
     }
 
     .table>tbody td {
-      font-size: 12px;
+      font-size: 11px;
       text-align: center;
       padding-top: 2px;
     }
@@ -122,6 +125,10 @@
       font-size: 11px;
       text-align: center;
       width: 100%;
+    }
+
+    .nombre_grupo {
+      font-style: oblique;
     }
   </style>
 </head>
@@ -151,28 +158,64 @@
   <div class="foot-1">RAIS - Registro de Actividades de Investigación de San Marcos</div>
 
   <div class="cuerpo">
-    <table class="table">
-      <thead>
-        <tr>
-          <th>Nombre<br>corto GI</th>
-          <th>Nombre de Grupo</th>
-          <th>Condición</th>
-          <th>Resolución<br>Rectoral</th>
-          <th>Fecha de<br>Creación GI</th>
-        </tr>
-      </thead>
-      <tbody>
-        @foreach ($grupo as $item)
-          <tr>
-            <td>{{ $item->grupo_nombre_corto }}</td>
-            <td>{{ $item->grupo_nombre }}</td>
-            <td>{{ $item->cargo }}</td>
-            <td>{{ $item->resolucion_rectoral }}</td>
-            <td>{{ $item->resolucion_creacion_fecha }}</td>
-          </tr>
-        @endforeach
-      </tbody>
-    </table>
+    @foreach ($lista as $item)
+      @if ($grupoActual != $item->grupo_nombre)
+        <table class="table">
+          <thead>
+            <tr>
+              <th style="width: 5%;">Nro.</th>
+              <th style="width: 15%;">Nombre corto GI</th>
+              <th style="width: 60%;">Nombre de Grupo</th>
+              <th style="width: 10%;">Estado</th>
+              <th style="width: 20%;">Facultad</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>{{ $numGrupoActual }}</td>
+              <td>{{ $item->grupo_nombre_corto }}</td>
+              <td class="nombre_grupo">{{ $item->grupo_nombre }}</td>
+              <td>
+                @switch($item->estado)
+                  @case(1)
+                    Reconocido
+                  @break
+
+                  @case(2)
+                    Observado
+                  @break
+
+                  @case(4)
+                    Registrado
+                  @break
+
+                  @case(5)
+                    Enviado
+                  @break
+
+                  @case(6)
+                    En proceso
+                  @break
+                @endswitch
+              </td>
+              <td>{{ $item->facultad_grupo }}</td>
+            </tr>
+          </tbody>
+        </table>
+        <table>
+          <thead>
+            <tr>
+          </thead>
+        </table>
+        @php
+          $numGrupoActual++;
+        @endphp
+      @endif
+
+      @php
+        $grupoActual = $item->grupo_nombre;
+      @endphp
+    @endforeach
   </div>
 
   <script type="text/php">
