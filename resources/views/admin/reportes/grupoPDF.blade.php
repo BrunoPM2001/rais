@@ -1,6 +1,7 @@
 @php
   $grupoActual = '';
   $numGrupoActual = 1;
+  $firstEl = 0;
 @endphp
 <!DOCTYPE html>
 <html lang="es">
@@ -160,6 +161,13 @@
   <div class="cuerpo">
     @foreach ($lista as $item)
       @if ($grupoActual != $item->grupo_nombre)
+        @if ($firstEl == 1)
+          </tbody>
+          </table>
+        @endif
+        @php
+          $firstEl = 1;
+        @endphp
         <table class="table">
           <thead>
             <tr>
@@ -202,14 +210,35 @@
             </tr>
           </tbody>
         </table>
-        <table>
+        <table class="table">
           <thead>
             <tr>
+              <th>Condición</th>
+              <th>Código</th>
+              <th>Nombre</th>
+              <th>Tipo</th>
+              <th>Facultad</th>
+            </tr>
           </thead>
-        </table>
-        @php
-          $numGrupoActual++;
-        @endphp
+          <tbody>
+            <tr>
+              <td>{{ $item->condicion }}</td>
+              <td>{{ $item->doc_numero }}</td>
+              <td>{{ $item->nombre }}</td>
+              <td>{{ $item->tipo }}</td>
+              <td>{{ $item->facultad_miembro }}</td>
+            </tr>
+            @php
+              $numGrupoActual++;
+            @endphp
+          @else
+            <tr>
+              <td>{{ $item->condicion }}</td>
+              <td>{{ $item->doc_numero }}</td>
+              <td>{{ $item->nombre }}</td>
+              <td>{{ $item->tipo }}</td>
+              <td>{{ $item->facultad_miembro }}</td>
+            </tr>
       @endif
 
       @php

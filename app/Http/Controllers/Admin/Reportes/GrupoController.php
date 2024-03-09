@@ -26,7 +26,7 @@ class GrupoController extends Controller {
       )
       ->where('a.facultad_id', '=', $facultad)
       ->where('a.estado', '=', $estado)
-      ->whereNotNull('b.fecha_exclusion')
+      ->whereNull('b.fecha_exclusion')
       ->orderBy('a.grupo_nombre')
       ->orderBy('b.condicion')
       ->get();
