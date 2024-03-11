@@ -19,7 +19,7 @@ class GrupoController extends Controller {
         'd.nombre AS facultad_grupo',
         'a.estado',
         'b.condicion',
-        'c.doc_numero',
+        'c.codigo',
         DB::raw('CONCAT(c.apellido1, " ", c.apellido2, " ", c.nombres) AS nombre'),
         'b.tipo',
         'e.nombre AS facultad_miembro'
@@ -28,7 +28,7 @@ class GrupoController extends Controller {
       ->where('a.estado', '=', $estado)
       ->whereNull('b.fecha_exclusion')
       ->orderBy('a.grupo_nombre')
-      ->orderBy('b.condicion')
+      ->orderBy('b.condicion', 'desc')
       ->get();
 
     $pdf = Pdf::loadView('admin.reportes.grupoPDF', ['lista' => $lista]);

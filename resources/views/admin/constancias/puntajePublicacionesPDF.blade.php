@@ -2,9 +2,9 @@
   use Carbon\Carbon;
 
   $fecha = Carbon::now();
-  $currentTipo = "";
+  $currentTipo = '';
   $subtotal = 0;
-  $puntajetotal = 0.00;
+  $puntajetotal = 0.0;
 @endphp
 <!DOCTYPE html>
 <html lang="es">
@@ -130,6 +130,7 @@
     .row-center {
       text-align: center;
     }
+
     .row-right {
       text-align: right;
       padding-right: 10px;
@@ -199,28 +200,21 @@
       </thead>
       <tbody>
         @foreach ($publicaciones as $item)
-          @php if ($currentTipo != $item->titulo) { @endphp
+          @if ($currentTipo != $item->titulo)
             <tr>
               <td class="row-left">{{ $item->titulo }}</td>
               <td></td>
               <td></td>
               <td></td>
             </tr>
-            <tr>
-              <td></td>
-              <td class="row-left">{{ $item->categoria }}</td>
-              <td class="row-center">{{ $item->cantidad }}</td>
-              <td class="row-right">{{ $item->puntaje }}</td>
-            </tr>
-          @php } else { @endphp
-            <tr>
-              <td></td>
-              <td class="row-left">{{ $item->categoria }}</td>
-              <td class="row-center">{{ $item->cantidad }}</td>
-              <td class="row-right">{{ $item->puntaje }}</td>
-            </tr>
+          @endif
+          <tr>
+            <td></td>
+            <td class="row-left">{{ $item->categoria }}</td>
+            <td class="row-center">{{ $item->cantidad }}</td>
+            <td class="row-right">{{ $item->puntaje }}</td>
+          </tr>
           @php
-            }
             $currentTipo = $item->titulo;
             $subtotal += $item->cantidad;
             $puntajetotal += $item->puntaje;

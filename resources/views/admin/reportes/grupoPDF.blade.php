@@ -2,6 +2,7 @@
   $grupoActual = '';
   $numGrupoActual = 1;
   $firstEl = 0;
+  $currentTipo = '';
 @endphp
 <!DOCTYPE html>
 <html lang="es">
@@ -86,17 +87,17 @@
       margin: 20px 0;
     }
 
-    .table {
+    .table1 {
       width: 100%;
       border-collapse: separate;
-      margin-bottom: 60px;
+      margin-bottom: 10px;
     }
 
-    .table>tbody {
+    .table1>tbody {
       border-bottom: 1.5px solid #000;
     }
 
-    .table>thead {
+    .table1>thead {
       margin-top: -1px;
       font-size: 11px;
       font-weight: bold;
@@ -104,7 +105,25 @@
       border-bottom: 1.5px solid #000;
     }
 
-    .table>tbody td {
+    .table1>tbody td {
+      font-size: 11px;
+      text-align: center;
+      padding-top: 2px;
+    }
+
+    .table2 {
+      width: 100%;
+      border-collapse: separate;
+      margin-bottom: 60px;
+    }
+
+    .table2>thead {
+      margin-top: -1px;
+      font-size: 11px;
+      font-style: oblique;
+    }
+
+    .table2>tbody td {
       font-size: 11px;
       text-align: center;
       padding-top: 2px;
@@ -168,7 +187,7 @@
         @php
           $firstEl = 1;
         @endphp
-        <table class="table">
+        <table class="table1">
           <thead>
             <tr>
               <th style="width: 5%;">Nro.</th>
@@ -210,7 +229,7 @@
             </tr>
           </tbody>
         </table>
-        <table class="table">
+        <table class="table2">
           <thead>
             <tr>
               <th>Condición</th>
@@ -221,27 +240,28 @@
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td>{{ $item->condicion }}</td>
-              <td>{{ $item->doc_numero }}</td>
-              <td>{{ $item->nombre }}</td>
-              <td>{{ $item->tipo }}</td>
-              <td>{{ $item->facultad_miembro }}</td>
-            </tr>
             @php
               $numGrupoActual++;
             @endphp
-          @else
-            <tr>
-              <td>{{ $item->condicion }}</td>
-              <td>{{ $item->doc_numero }}</td>
-              <td>{{ $item->nombre }}</td>
-              <td>{{ $item->tipo }}</td>
-              <td>{{ $item->facultad_miembro }}</td>
-            </tr>
       @endif
-
+      @if ($currentTipo != $item->condicion)
+        <tr>
+          <td>{{ $item->condicion }}</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+      @endif
+      <tr>
+        <td></td>
+        <td>{{ $item->codigo }}</td>
+        <td>{{ $item->nombre }}</td>
+        <td>{{ $item->tipo }}</td>
+        <td>{{ $item->facultad_miembro }}</td>
+      </tr>
       @php
+        $currentTipo = $item->condicion;
         $grupoActual = $item->grupo_nombre;
       @endphp
     @endforeach
@@ -249,7 +269,7 @@
 
   <script type="text/php">
     if (isset($pdf)) {
-      $x = 530;
+      $x = 527;
       $y = 818;
       $text = "Página {PAGE_NUM} de {PAGE_COUNT}";
       $font = $fontMetrics->get_font("Helvetica", "Italic");
