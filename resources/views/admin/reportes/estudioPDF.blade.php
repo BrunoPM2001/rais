@@ -2,7 +2,6 @@
   $tituloActual = '';
   $numTituloActual = 1;
   $firstEl = 0;
-  $currentTipo = '';
 @endphp
 <!DOCTYPE html>
 <html lang="es">
@@ -184,7 +183,7 @@
     <img src="{{ public_path('head-pdf.jpg') }}" alt="Header">
     <p class="titulo">
       <strong>
-        Proyectos de Grupos de Investigación {{ $periodo }}
+        Proyectos de Grupos de Investigación (pasado) {{ $periodo }}
       </strong>
     </p>
   </div>
@@ -212,10 +211,7 @@
         @php
           $firstEl = 1;
         @endphp
-        <div class="fac_grupo"><strong>Facultad:</strong> {{ $item->facultad_grupo }}</div>
-        <div class="nom_grupo">
-          <p>Nombre del grupo: <strong>{{ $item->grupo_nombre }}</strong></p>
-        </div>
+        <div class="fac_grupo"><strong>Facultad:</strong> {{ $item->facultad_proyecto }}</div>
         <table class="table1">
           <thead>
             <tr>
@@ -230,18 +226,16 @@
               <td>{{ $numTituloActual }}</td>
               <td>{{ $item->codigo_proyecto }}</td>
               <td class="titulo_proyecto">{{ $item->titulo }}</td>
-              <td>{{ $item->presupuesto }}</td>
+              <td>{{ $item->monto }}</td>
             </tr>
           </tbody>
         </table>
         <table class="table2">
           <thead>
             <tr>
-              <th>Condición/Código</th>
+              <th>Condición</th>
+              <th>Código</th>
               <th>Nombre</th>
-              <th>Tipo</th>
-              <th>Facultad</th>
-              <th>Condición en GI</th>
             </tr>
           </thead>
           <tbody>
@@ -249,24 +243,12 @@
               $numTituloActual++;
             @endphp
       @endif
-      @if ($currentTipo != $item->condicion)
-        <tr>
-          <td>{{ $item->condicion }}</td>
-          <td></td>
-          <td></td>
-          <td></td>
-          <td></td>
-        </tr>
-      @endif
       <tr>
-        <td>{{ $item->codigo }}</td>
+        <td>{{ $item->condicion }}</td>
+        <td>{{ $item->codigo_investigador }}</td>
         <td>{{ $item->nombres }}</td>
-        <td>{{ $item->tipo }}</td>
-        <td>{{ $item->facultad_miembro }}</td>
-        <td>{{ $item->condicion_gi }}</td>
       </tr>
       @php
-        $currentTipo = $item->condicion;
         $tituloActual = $item->titulo;
       @endphp
     @endforeach
