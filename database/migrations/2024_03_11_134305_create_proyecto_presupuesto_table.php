@@ -23,6 +23,10 @@ return new class extends Migration {
       $table->integer('estado')->nullable();
       $table->text('justificacion')->nullable();
       $table->timestamps();
+
+      //  Fks
+      $table->foreign('proyecto_id')->references('id')->on('Proyecto');
+      $table->foreign('partida_id')->references('id')->on('Partida');
     });
   }
 
