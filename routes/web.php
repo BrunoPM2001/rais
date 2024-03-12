@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\Admin\Usuario_adminController;
 use App\Http\Controllers\Admin\Admin\Usuario_investigadorController;
 use App\Http\Controllers\Admin\Admin\UsuarioController;
 use App\Http\Controllers\Admin\Reportes\GrupoController;
+use App\Http\Controllers\Admin\Reportes\ProyectoController as ReporteProyectoController;
 use App\Http\Controllers\Evaluacion_facultadController;
 use App\Http\Controllers\ProyectoController;
 use Illuminate\Support\Facades\Route;
@@ -58,6 +59,7 @@ Route::prefix('api')->group(function () {
     //  Reportes
     Route::prefix('reportes')->group(function () {
       Route::get('grupo/{estado}/{facultad}/{miembros}', [GrupoController::class, 'reporte']);
+      Route::get('proyecto/{facultad}/{tipo}/{periodo}', [ReporteProyectoController::class, 'reporte']);
     });
 
     //  Constancias

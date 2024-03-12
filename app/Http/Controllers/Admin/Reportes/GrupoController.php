@@ -33,6 +33,5 @@ class GrupoController extends Controller {
 
     $pdf = Pdf::loadView('admin.reportes.grupoPDF', ['lista' => $lista]);
     return $pdf->stream();
-    return ['data' => $lista];
   }
 }
