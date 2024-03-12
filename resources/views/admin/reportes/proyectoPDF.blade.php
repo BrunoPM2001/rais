@@ -122,7 +122,7 @@
     .table2>thead {
       margin-top: -1px;
       font-size: 10px;
-      border-bottom: 1px solid #000;
+      border-bottom: 1.5px solid #000;
     }
 
     .table2>thead th {
