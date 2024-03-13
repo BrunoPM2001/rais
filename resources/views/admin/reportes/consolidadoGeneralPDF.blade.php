@@ -1,3 +1,6 @@
+@php
+  $currentFacultad = '';
+@endphp
 <!DOCTYPE html>
 <html lang="es">
 
@@ -170,7 +173,7 @@
 
   <div class="cuerpo">
     <!--  Listado  -->
-    @foreach ($proyectos_antiguos as $item)
+    @foreach ($proyectos as $item)
       @if ($loop->first)
         <div class="top">
           <div class="top_left"><strong>Proyectos anteriores al 2017</strong></div>
@@ -179,23 +182,22 @@
         <table class="table1">
           <thead>
             <tr>
-              <th>Nro.</th>
-              <th>Código</th>
-              <th>Título del proyecto</th>
-              <th>Periodo</th>
-              <th>Tipo</th>
-              <th>Condición</th>
+              <th>Facultad</th>
+              @foreach ($tipos as $tipo)
+                <th>{{ $tipo->tipo_proyecto }}</th>
+              @endforeach
             </tr>
           </thead>
           <tbody>
       @endif
       <tr>
-        <td>{{ $loop->iteration }}</td>
-        <td>{{ $item->codigo }}</td>
-        <td>{{ $item->titulo }}</td>
-        <td>{{ $item->periodo }}</td>
-        <td>{{ $item->tipo }}</td>
-        <td>{{ $item->condicion }}</td>
+        @foreach ($tipos as $tipo)
+          @if ($tipo->tipo_proyecto == $item->tipo_proyecto)
+            <td>{{ $item->cuenta }}</td>
+          @else
+            <td>0</td>
+          @endif
+        @endforeach
       </tr>
       @if ($loop->last)
         </tbody>
