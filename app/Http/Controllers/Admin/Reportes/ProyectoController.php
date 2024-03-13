@@ -25,7 +25,7 @@ class ProyectoController extends Controller {
         DB::raw('SUM(e.monto) AS presupuesto'),
         'd.nombre AS condicion',
         'c.codigo',
-        DB::raw('CONCAT(c.apellido1, " ", c.apellido2, " ", c.nombres) AS nombres'),
+        DB::raw('CONCAT(c.apellido1, " ", c.apellido2, ", ", c.nombres) AS nombres'),
         'f.tipo',
         'h.nombre AS facultad_miembro',
         'f.condicion AS condicion_gi'

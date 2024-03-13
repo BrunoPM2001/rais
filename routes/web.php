@@ -7,6 +7,8 @@ use App\Http\Controllers\Admin\Admin\DependenciaController;
 use App\Http\Controllers\Admin\Admin\Usuario_adminController;
 use App\Http\Controllers\Admin\Admin\Usuario_investigadorController;
 use App\Http\Controllers\Admin\Admin\UsuarioController;
+use App\Http\Controllers\Admin\Reportes\ConsolidadoGeneralController;
+use App\Http\Controllers\Admin\Reportes\DocenteController;
 use App\Http\Controllers\Admin\Reportes\EstudioController;
 use App\Http\Controllers\Admin\Reportes\GrupoController;
 use App\Http\Controllers\Admin\Reportes\ProyectoController as ReporteProyectoController;
@@ -62,6 +64,8 @@ Route::prefix('api')->group(function () {
       Route::get('estudio/{tipo}/{periodo}/{facultad}', [EstudioController::class, 'reporte']);
       Route::get('grupo/{estado}/{facultad}/{miembros}', [GrupoController::class, 'reporte']);
       Route::get('proyecto/{facultad}/{tipo}/{periodo}', [ReporteProyectoController::class, 'reporte']);
+      Route::get('docente/{investigador_id}', [DocenteController::class, 'reporte']);
+      Route::get('consolidadoGeneral/{periodo}', [ConsolidadoGeneralController::class, 'reporte']);
     });
 
     //  Constancias

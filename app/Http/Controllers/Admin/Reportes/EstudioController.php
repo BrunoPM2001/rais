@@ -19,13 +19,16 @@ class EstudioController extends Controller {
         'a.monto',
         'b.condicion',
         'b.codigo AS codigo_investigador',
-        DB::raw('CONCAT(c.apellido1, " ", c.apellido2, " ", c.nombres) AS nombres')
+        DB::raw('CONCAT(c.apellido1, " ", c.apellido2, ", ", c.nombres) AS nombres')
       )
       ->where('a.tipo', '=', $tipo)
       ->where('a.periodo', '=', $periodo)
       ->where('a.facultad_id', '=', $facultad)
       ->where('a.status', '=', 1)
       ->where('a.excluido', '=', 0)
+      ->orderBy('a.facultad_id')
+      ->orderBy('a.titulo')
+      ->orderBy('b.condicion', 'desc')
       ->get();
 
     $pdf = Pdf::loadView('admin.reportes.estudioPDF', ['lista' => $proyectos, 'periodo' => $periodo]);

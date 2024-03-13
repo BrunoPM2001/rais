@@ -20,7 +20,7 @@ class GrupoController extends Controller {
         'a.estado',
         'b.condicion',
         'c.codigo',
-        DB::raw('CONCAT(c.apellido1, " ", c.apellido2, " ", c.nombres) AS nombre'),
+        DB::raw('CONCAT(c.apellido1, " ", c.apellido2, ", ", c.nombres) AS nombre'),
         'b.tipo',
         'e.nombre AS facultad_miembro'
       )
