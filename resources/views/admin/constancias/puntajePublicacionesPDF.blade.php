@@ -2,9 +2,9 @@
   use Carbon\Carbon;
 
   $fecha = Carbon::now();
-  $currentTipo = "";
+  $currentTipo = '';
   $subtotal = 0;
-  $puntajetotal = 0.00;
+  $puntajetotal = 0.0;
 @endphp
 <!DOCTYPE html>
 <html lang="es">
@@ -85,7 +85,7 @@
 
     .texto {
       font-size: 13px;
-      margin: 20px 10px;
+      margin: 20px 0;
     }
 
     .subhead {
@@ -130,6 +130,7 @@
     .row-center {
       text-align: center;
     }
+
     .row-right {
       text-align: right;
       padding-right: 10px;
@@ -155,7 +156,6 @@
   </style>
 </head>
 
-
 <body>
   <div class="head-1">
     <img src="{{ public_path('head-pdf.jpg') }}" alt="Header">
@@ -175,7 +175,7 @@
   <div class="foot-1">RAIS - Registro de Actividades de Investigación de San Marcos</div>
 
   <div class="cuerpo">
-    <p class="titulo">Constancia de Puntaje de Publicaciones</p>
+    <p class="titulo"><strong>Constancia de Puntaje de Publicaciones</strong></p>
     <p class="texto">
       El Vicerrector de Investigación y Posgrado de la Universidad Nacional Mayor de
       San Marcos hace constar que:
@@ -200,28 +200,21 @@
       </thead>
       <tbody>
         @foreach ($publicaciones as $item)
-          @php if ($currentTipo != $item->titulo) { @endphp
+          @if ($currentTipo != $item->titulo)
             <tr>
               <td class="row-left">{{ $item->titulo }}</td>
               <td></td>
               <td></td>
               <td></td>
             </tr>
-            <tr>
-              <td></td>
-              <td class="row-left">{{ $item->categoria }}</td>
-              <td class="row-center">{{ $item->cantidad }}</td>
-              <td class="row-right">{{ $item->puntaje }}</td>
-            </tr>
-          @php } else { @endphp
-            <tr>
-              <td></td>
-              <td class="row-left">{{ $item->categoria }}</td>
-              <td class="row-center">{{ $item->cantidad }}</td>
-              <td class="row-right">{{ $item->puntaje }}</td>
-            </tr>
+          @endif
+          <tr>
+            <td></td>
+            <td class="row-left">{{ $item->categoria }}</td>
+            <td class="row-center">{{ $item->cantidad }}</td>
+            <td class="row-right">{{ $item->puntaje }}</td>
+          </tr>
           @php
-            }
             $currentTipo = $item->titulo;
             $subtotal += $item->cantidad;
             $puntajetotal += $item->puntaje;

@@ -1,15 +1,19 @@
 <?php
 
-use App\Http\Controllers\Admin\Facultad\AsignacionEvaluadorController as FacultadAsignacionEvaluadorController;
-use App\Http\Controllers\AsignacionEvaluadorController;
-use App\Http\Controllers\DependenciaController;
+use App\Http\Controllers\Admin\Constancias\ReporteController;
+use App\Http\Controllers\Admin\Facultad\AsignacionEvaluadorController;
+use App\Http\Controllers\Admin\Admin\Linea_investigacionController;
+use App\Http\Controllers\Admin\Admin\DependenciaController;
+use App\Http\Controllers\Admin\Admin\Usuario_adminController;
+use App\Http\Controllers\Admin\Admin\Usuario_investigadorController;
+use App\Http\Controllers\Admin\Admin\UsuarioController;
+use App\Http\Controllers\Admin\Reportes\ConsolidadoGeneralController;
+use App\Http\Controllers\Admin\Reportes\DocenteController;
+use App\Http\Controllers\Admin\Reportes\EstudioController;
+use App\Http\Controllers\Admin\Reportes\GrupoController;
+use App\Http\Controllers\Admin\Reportes\ProyectoController as ReporteProyectoController;
 use App\Http\Controllers\Evaluacion_facultadController;
-use App\Http\Controllers\Linea_investigacionController;
 use App\Http\Controllers\ProyectoController;
-use App\Http\Controllers\Publicacion_autorController;
-use App\Http\Controllers\Usuario_adminController;
-use App\Http\Controllers\Usuario_investigadorController;
-use App\Http\Controllers\UsuarioController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -36,7 +40,7 @@ Route::prefix('admin')->middleware('checkRole:Administrador')->group(function ()
   //  FACULTAD
   Route::prefix('facultad')->group(function () {
     Route::get('convocatorias', [Evaluacion_facultadController::class, 'main'])->name('view_facultad_convocatorias');
-    Route::get('asignacionEvaluadores', [FacultadAsignacionEvaluadorController::class, 'main'])->name('view_facultad_asignacionEvaluadores');
+    Route::get('asignacionEvaluadores', [AsignacionEvaluadorController::class, 'main'])->name('view_facultad_asignacionEvaluadores');
   });
 
   //  ADMIN
@@ -55,11 +59,20 @@ Route::prefix('admin')->middleware('checkRole:Administrador')->group(function ()
 Route::prefix('api')->group(function () {
   //  ADMIN
   Route::prefix('admin')->group(function () {
+    //  Reportes
+    Route::prefix('reportes')->group(function () {
+      Route::get('estudio/{tipo}/{periodo}/{facultad}', [EstudioController::class, 'reporte']);
+      Route::get('grupo/{estado}/{facultad}/{miembros}', [GrupoController::class, 'reporte']);
+      Route::get('proyecto/{facultad}/{tipo}/{periodo}', [ReporteProyectoController::class, 'reporte']);
+      Route::get('docente/{investigador_id}', [DocenteController::class, 'reporte']);
+      Route::get('consolidadoGeneral/{periodo}', [ConsolidadoGeneralController::class, 'reporte']);
+    });
+
     //  Constancias
     Route::prefix('constancias')->group(function () {
-      Route::get('getConstanciaPuntajePublicaciones/{investigador_id}', [Publicacion_autorController::class, 'getConstanciaPuntajePublicaciones']);
-      Route::get('getConstanciaPublicacionesCientificas/{investigador_id}', [Publicacion_autorController::class, 'getConstanciaPublicacionesCientificas']);
-      Route::get('getConstanciaGrupoInvestigacion/{investigador_id}', [Usuario_investigadorController::class, 'getConstanciaGrupoInvestigacion']);
+      Route::get('getConstanciaPuntajePublicaciones/{investigador_id}', [ReporteController::class, 'getConstanciaPuntajePublicaciones']);
+      Route::get('getConstanciaPublicacionesCientificas/{investigador_id}', [ReporteController::class, 'getConstanciaPublicacionesCientificas']);
+      Route::get('getConstanciaGrupoInvestigacion/{investigador_id}', [ReporteController::class, 'getConstanciaGrupoInvestigacion']);
     });
 
     //  Facultad
@@ -69,8 +82,8 @@ Route::prefix('api')->group(function () {
       Route::get('getEvaluadoresConvocatoria/{id}', [Evaluacion_facultadController::class, 'getEvaluadoresConvocatoria']);
 
       Route::get('getAllEvaluadores', [ProyectoController::class, 'getAllEvaluadores']);
-      Route::get('searchEvaluadorBy/{input}', [FacultadAsignacionEvaluadorController::class, 'searchEvaluadorBy']);
-      Route::get('getEvaluadoresProyecto/{id}', [FacultadAsignacionEvaluadorController::class, 'getEvaluadoresProyecto']);
+      Route::get('searchEvaluadorBy/{input}', [AsignacionEvaluadorController::class, 'searchEvaluadorBy']);
+      Route::get('getEvaluadoresProyecto/{id}', [AsignacionEvaluadorController::class, 'getEvaluadoresProyecto']);
       Route::get('getAllProyectosEvaluados/{periodo}/{tipo_proyecto}', [ProyectoController::class, 'getAllProyectosEvaluados']);
     });
 
@@ -90,16 +103,16 @@ Route::prefix('api')->group(function () {
 
     //  Dependencias
     Route::prefix('dependencias')->group(function () {
-      Route::get('getAll', [DependenciaController::class, 'getAll']);
       Route::get('getOne/{id}', [DependenciaController::class, 'getOne']);
+      Route::get('getAll', [DependenciaController::class, 'getAll']);
       Route::post('create', [DependenciaController::class, 'create'])->name('create_dependencia');
       Route::post('update', [DependenciaController::class, 'update']);
     });
 
     //  Lineas de investigación
     Route::prefix('lineasInvestigacion')->group(function () {
-      Route::get('getAll', [Linea_investigacionController::class, 'getAll']);
       Route::get('getAllFacultad/{id}', [Linea_investigacionController::class, 'getAllOfFacultad']);
+      Route::get('getAll', [Linea_investigacionController::class, 'getAll']);
       Route::post('create', [Linea_investigacionController::class, 'create'])->name('create_linea');
     });
   });

@@ -1,7 +1,5 @@
 @php
-  use Carbon\Carbon;
-
-  $fecha = Carbon::now();
+  $currentFacultad = '';
 @endphp
 <!DOCTYPE html>
 <html lang="es">
@@ -17,12 +15,12 @@
     }
 
     @page {
-      margin: 145px 20px 20px 20px;
+      margin: 165px 20px 20px 20px;
     }
 
     .head-1 {
       position: fixed;
-      top: -115px;
+      top: -135px;
       left: 0px;
       height: 90px;
     }
@@ -35,7 +33,7 @@
 
     .head-2 {
       position: fixed;
-      top: -115px;
+      top: -135px;
       right: 0;
     }
 
@@ -69,41 +67,41 @@
 
     .div {
       position: fixed;
-      top: -15px;
+      top: -45px;
       width: 100%;
       height: 0.5px;
       background: #000;
     }
 
     .titulo {
+      width: 754px;
       font-size: 16px;
       text-align: center;
     }
 
-    .texto {
-      font-size: 13px;
-      margin: 20px 0;
-    }
-
-    .table {
+    .table1 {
       width: 100%;
       border-collapse: separate;
-      margin-bottom: 60px;
+      margin-bottom: 30px;
     }
 
-    .table>tbody {
+    .table1>tbody {
       border-bottom: 1.5px solid #000;
     }
 
-    .table>thead {
-      font-size: 12px;
-      font-weight: bold;
+    .table1>thead {
+      margin-top: -1px;
+      font-size: 10px;
       border-top: 1.5px solid #000;
       border-bottom: 1.5px solid #000;
     }
 
-    .table>tbody td {
-      font-size: 12px;
+    .table1>thead th {
+      font-weight: normal;
+    }
+
+    .table1>tbody td {
+      font-size: 10px;
       text-align: center;
       padding-top: 2px;
     }
@@ -125,6 +123,27 @@
       text-align: center;
       width: 100%;
     }
+
+    .top {
+      margin-left: 2px;
+    }
+
+    .top_left {
+      display: inline;
+      width: 40%;
+      font-size: 10px;
+      text-align: right;
+    }
+
+    .top_right {
+      display: inline;
+      width: 40%;
+      font-size: 10px;
+      text-align: right;
+      margin-top: 5px;
+      margin-right: 2px;
+      float: right;
+    }
   </style>
 </head>
 
@@ -132,6 +151,11 @@
 <body>
   <div class="head-1">
     <img src="{{ public_path('head-pdf.jpg') }}" alt="Header">
+    <p class="titulo">
+      <strong>
+        Consolidado general de proyectos - {{ $periodo }}
+      </strong>
+    </p>
   </div>
   <div class="head-2">
     <p class="rais">© RAIS</p>
@@ -148,63 +172,43 @@
   <div class="foot-1">RAIS - Registro de Actividades de Investigación de San Marcos</div>
 
   <div class="cuerpo">
-    <p class="titulo">
-      <strong>
-        Constancia de Grupos de Investigación de la Universidad Nacional Mayor de San Marcos
-      </strong>
-    </p>
-    <p class="texto">
-      El Vicerrector de Investigación y Posgrado de la Universidad Nacional Mayor de
-      San Marcos hace constar que:
-      <br>
-      El Profesor(a): <strong>{{ $grupo[0]->nombre }}</strong>
-      <br>
-      de la facultad de: <strong>{{ $grupo[0]->facultad }}</strong>
-      <br>
-      registra participación en el(los) siguiente(s) Grupo(s) de Investigación:
-    </p>
-
-    <table class="table">
-      <thead>
-        <tr>
-          <th>Nombre<br>corto GI</th>
-          <th>Nombre de Grupo</th>
-          <th>Condición</th>
-          <th>Resolución<br>Rectoral</th>
-          <th>Fecha de<br>Creación GI</th>
-        </tr>
-      </thead>
-      <tbody>
-        @foreach ($grupo as $item)
-          <tr>
-            <td>{{ $item->grupo_nombre_corto }}</td>
-            <td>{{ $item->grupo_nombre }}</td>
-            <td>{{ $item->cargo }}</td>
-            <td>{{ $item->resolucion_rectoral }}</td>
-            <td>{{ $item->resolucion_creacion_fecha }}</td>
-          </tr>
+    <!--  Listado  -->
+    @foreach ($proyectos as $item)
+      @if ($loop->first)
+        <div class="top">
+          <div class="top_left"><strong>Proyectos anteriores al 2017</strong></div>
+          <div class="top_right"><strong>Nombres:</strong> {{ $investigador[0]->nombres }}</div>
+        </div>
+        <table class="table1">
+          <thead>
+            <tr>
+              <th>Facultad</th>
+              @foreach ($tipos as $tipo)
+                <th>{{ $tipo->tipo_proyecto }}</th>
+              @endforeach
+            </tr>
+          </thead>
+          <tbody>
+      @endif
+      <tr>
+        @foreach ($tipos as $tipo)
+          @if ($tipo->tipo_proyecto == $item->tipo_proyecto)
+            <td>{{ $item->cuenta }}</td>
+          @else
+            <td>0</td>
+          @endif
         @endforeach
-      </tbody>
-    </table>
-
-    <p class="extra-1"><strong>Se expide la presente constancia a solicitud de interesado(a).</strong></p>
-    <br>
-    <p class="extra-2"><strong>Lima {{ $fecha->isoFormat('DD') }} de {{ ucfirst($fecha->monthName) }} de
-        {{ $fecha->year }}</strong></p>
-    <br>
-    <p class="extra-firma">
-      <strong>
-        Dr. José Segundo Niño Montero
-        <br>
-        Vicerrector
-      </strong>
-    </p>
-
+      </tr>
+      @if ($loop->last)
+        </tbody>
+        </table>
+      @endif
+    @endforeach
   </div>
 
   <script type="text/php">
     if (isset($pdf)) {
-      $x = 530;
+      $x = 527;
       $y = 818;
       $text = "Página {PAGE_NUM} de {PAGE_COUNT}";
       $font = $fontMetrics->get_font("Helvetica", "Italic");

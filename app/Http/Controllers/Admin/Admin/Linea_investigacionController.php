@@ -1,14 +1,28 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Admin\Admin;
 
+use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Facultad;
 use App\Models\Linea_investigacion;
 
 class Linea_investigacionController extends Controller {
 
-  //  AJAX
+  public function main() {
+    //  Lista de facultades
+    $facultad = new Facultad();
+    $facultades = $facultad->listar();
+
+    //  Lista de lineas
+    $lineas = $this->getAll();
+
+    return view('admin.admin.lineas_investigacion', [
+      'facultades' => $facultades,
+      'lineas' => $lineas["data"]
+    ]);
+  }
+
   public function getAll() {
     $lineas_investigacion = Linea_investigacion::select('id', 'codigo', 'nombre')
       ->get();
@@ -69,20 +83,5 @@ class Linea_investigacionController extends Controller {
     $linea_investigacion = Linea_investigacion::findOrFail($id);
     $linea_investigacion->delete();
     return $linea_investigacion;
-  }
-
-  //  Views
-  public function main() {
-    //  Lista de facultades
-    $facultad = new Facultad();
-    $facultades = $facultad->listar();
-
-    //  Lista de lineas
-    $lineas = $this->getAll();
-
-    return view('admin.admin.lineas_investigacion', [
-      'facultades' => $facultades,
-      'lineas' => $lineas["data"]
-    ]);
   }
 }
