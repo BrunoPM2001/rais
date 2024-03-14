@@ -135,7 +135,6 @@
   </style>
 </head>
 
-
 <body>
   <div class="head-1">
     <img src="{{ public_path('head-pdf.jpg') }}" alt="Header">
