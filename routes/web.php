@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\Reportes\ConsolidadoGeneralController;
 use App\Http\Controllers\Admin\Reportes\DocenteController;
 use App\Http\Controllers\Admin\Reportes\EstudioController;
 use App\Http\Controllers\Admin\Reportes\GrupoController;
+use App\Http\Controllers\Admin\Reportes\PresupuestoController;
 use App\Http\Controllers\Admin\Reportes\ProyectoController as ReporteProyectoController;
 use App\Http\Controllers\Evaluacion_facultadController;
 use App\Http\Controllers\ProyectoController;
@@ -66,6 +67,7 @@ Route::prefix('api')->group(function () {
       Route::get('proyecto/{facultad}/{tipo}/{periodo}', [ReporteProyectoController::class, 'reporte']);
       Route::get('docente/{investigador_id}', [DocenteController::class, 'reporte']);
       Route::get('consolidadoGeneral/{periodo}', [ConsolidadoGeneralController::class, 'reporte']);
+      Route::get('presupuesto/{facultad_id}/{periodo}', [PresupuestoController::class, 'reporte']);
     });
 
     //  Constancias
