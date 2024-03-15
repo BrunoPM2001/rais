@@ -200,7 +200,7 @@
           row.child(format(row.data().hijos)).show();
         }
       });
-      /* Actualizar al cambiar */
+      /* Actualizar al cambiar - NO FUNCIONA*/
       $('#facultad').on('change', function() {
         ajax_url = 'http://localhost:8000/api/admin/lineasInvestigacion/getAllFacultad/' + $('#facultad').val();
         table.ajax.url(ajax_url).load();
