@@ -7,7 +7,6 @@
   <meta name="csrf_token" content="{{ csrf_token() }}" />
   <title>Asignación de evaluadores</title>
   @vite(['resources/scss/app.scss', 'resources/js/app.js'])
-  <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
 
 </head>
 
@@ -21,12 +20,14 @@
     <!--  Tab list  -->
     <ul class="nav nav-tabs" id="myTab" role="tablist">
       <li class="nav-item" role="presentation">
-        <button class="nav-link active" id="listar-tab" data-bs-toggle="tab" data-bs-target="#listar-tab-pane" type="button" role="tab" aria-controls="listar-tab-pane" aria-selected="true">Listado</button>
+        <button class="nav-link active" id="listar-tab" data-bs-toggle="tab" data-bs-target="#listar-tab-pane"
+          type="button" role="tab" aria-controls="listar-tab-pane" aria-selected="true">Listado</button>
       </li>
     </ul>
 
     <div class="tab-content border border-top-0 rounded-bottom" id="myTabContent">
-      <div class="tab-pane fade show active p-4" id="listar-tab-pane" role="tabpanel" aria-labelledby="listar-tab" tabindex="0">
+      <div class="tab-pane fade show active p-4" id="listar-tab-pane" role="tabpanel" aria-labelledby="listar-tab"
+        tabindex="0">
         <!--Filtro 1-->
         <form class="row mb-4">
           <div class="col-sm-2">
@@ -41,7 +42,8 @@
               <div class="col">
                 <div class="d-flex justify-content-start">
                   <button id="botonA" type="button" class="btn btn-primary">Asignar evaluador</button>
-                  <button id="botonB" type="button" class="btn btn-info ml-2" style="display: none;">Editar evaluador</button>
+                  <button id="botonB" type="button" class="btn btn-info ml-2" style="display: none;">Editar
+                    evaluador</button>
                 </div>
               </div>
             </div>
@@ -107,77 +109,76 @@
   <!-- Modal para Asignar -->
   @extends('admin.components.modal')
   @section('form')
-  <form id="updateForm">
+    <form id="updateForm">
     @endsection
 
     @section('titulo')
-    Evaluadores
+      Evaluadores
     @endsection
 
     @section('contenido')
-    <input type="text" hidden id="edit_id" name="edit_id">
-    <input type="text" hidden id="tabla_id" name="tabla_id">
-    <div class="row align-items-center mb-3">
-      <label for="asignar_evaluador1" class="col-sm-4 col-form-label">Evaluador 1</label>
-      <div class="col-sm-8">
-        <div class="row">
-          <div class="col">
-            <div class="d-flex justify-content-start">
-              <input type="text" id="asignar_evaluador1" name="asignar_evaluador1" class="form-control">
-              <input type="text" hidden id="id1" name="id1">
-              <div class="dropdown-menu" id="autocomplete-dropdown1" style="display:none">
-                <!-- Aquí se mostrarán los resultados -->
+      <input type="text" hidden id="edit_id" name="edit_id">
+      <input type="text" hidden id="tabla_id" name="tabla_id">
+      <div class="row align-items-center mb-3">
+        <label for="asignar_evaluador1" class="col-sm-4 col-form-label">Evaluador 1</label>
+        <div class="col-sm-8">
+          <div class="row">
+            <div class="col">
+              <div class="d-flex justify-content-start">
+                <input type="text" id="asignar_evaluador1" name="asignar_evaluador1" class="form-control">
+                <input type="text" hidden id="id1" name="id1">
+                <div class="dropdown-menu" id="autocomplete-dropdown1" style="display:none">
+                  <!-- Aquí se mostrarán los resultados -->
+                </div>
+                <button type="button" class="btn btn-dark ml-1" id="icono_buscar1">icono</button>
+                <button type="button" class="btn btn-danger ml-1" id="icono_borrar1"><strong>X</strong></button>
               </div>
-              <button type="button" class="btn btn-dark ml-1" id="icono_buscar1">icono</button>
-              <button type="button" class="btn btn-danger ml-1" id="icono_borrar1"><strong>X</strong></button>
             </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <div class="row align-items-center mb-3">
-      <label for="asignar_evaluador2" class="col-sm-4 col-form-label">Evaluador 2</label>
-      <div class="col-sm-8">
-        <div class="row">
-          <div class="col">
-            <div class="d-flex justify-content-start">
-              <input type="text" id="asignar_evaluador2" name="asignar_evaluador2" class="form-control">
-              <input type="text" hidden id="id2" name="id2">
-              <div class="dropdown-menu" id="autocomplete-dropdown2" style="display:none">
-                <!-- Aquí se mostrarán los resultados -->
+      <div class="row align-items-center mb-3">
+        <label for="asignar_evaluador2" class="col-sm-4 col-form-label">Evaluador 2</label>
+        <div class="col-sm-8">
+          <div class="row">
+            <div class="col">
+              <div class="d-flex justify-content-start">
+                <input type="text" id="asignar_evaluador2" name="asignar_evaluador2" class="form-control">
+                <input type="text" hidden id="id2" name="id2">
+                <div class="dropdown-menu" id="autocomplete-dropdown2" style="display:none">
+                  <!-- Aquí se mostrarán los resultados -->
+                </div>
+                <button type="button" class="btn btn-dark ml-1" id="icono_buscar2">icono</button>
+                <button type="button" class="btn btn-danger ml-1" id="icono_borrar2"><strong>X</strong></button>
               </div>
-              <button type="button" class="btn btn-dark ml-1" id="icono_buscar2">icono</button>
-              <button type="button" class="btn btn-danger ml-1" id="icono_borrar2"><strong>X</strong></button>
             </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <div class="row align-items-center mb-3">
-      <label for="asignar_evaluador3" class="col-sm-4 col-form-label">Evaluador 3</label>
-      <div class="col-sm-8">
-        <div class="row">
-          <div class="col">
-            <div class="d-flex justify-content-start">
-              <input type="text" id="asignar_evaluador3" name="asignar_evaluador3" class="form-control">
-              <input type="text" hidden id="id3" name="id3">
-              <div class="dropdown-menu" id="autocomplete-dropdown3" style="display:none">
-                <!-- Aquí se mostrarán los resultados -->
+      <div class="row align-items-center mb-3">
+        <label for="asignar_evaluador3" class="col-sm-4 col-form-label">Evaluador 3</label>
+        <div class="col-sm-8">
+          <div class="row">
+            <div class="col">
+              <div class="d-flex justify-content-start">
+                <input type="text" id="asignar_evaluador3" name="asignar_evaluador3" class="form-control">
+                <input type="text" hidden id="id3" name="id3">
+                <div class="dropdown-menu" id="autocomplete-dropdown3" style="display:none">
+                  <!-- Aquí se mostrarán los resultados -->
+                </div>
+                <button type="button" class="btn btn-dark ml-1" id="icono_buscar3">icono</button>
+                <button type="button" class="btn btn-danger ml-1" id="icono_borrar3"><strong>X</strong></button>
               </div>
-              <button type="button" class="btn btn-dark ml-1" id="icono_buscar3">icono</button>
-              <button type="button" class="btn btn-danger ml-1" id="icono_borrar3"><strong>X</strong></button>
             </div>
           </div>
         </div>
       </div>
-    </div>
-
     @endsection
 
     @section('end_form')
-  </form>
+    </form>
   @endsection
 
   <!--  Toast para notificaciones -->
@@ -216,22 +217,26 @@
       //window.onload = mostrarBotones;
       $("#opciones").on("change", mostrarBotones)
 
-      function MostrarIconoParaAsignar(p_buscar,p_borrar){
+      function MostrarIconoParaAsignar(p_buscar, p_borrar) {
         $(p_buscar).show()
         $(p_borrar).hide()
       }
-      function MostrarIconoParaEditar(p_buscar,p_borrar){
+
+      function MostrarIconoParaEditar(p_buscar, p_borrar) {
         $(p_buscar).hide()
         $(p_borrar).show()
       }
-      function LimpiarImputEnEditar(p_imput){
+
+      function LimpiarImputEnEditar(p_imput) {
         $(p_imput).val('')
       }
 
       // Función de validación al hacer clic en "Asignar evaluador"
       function asignarEvaluador() {
         var table = $('#table').DataTable();
-        var selectedRows = table.rows({selected: true}).count();
+        var selectedRows = table.rows({
+          selected: true
+        }).count();
 
         if (selectedRows === 0) {
           alert("Seleccione al menos un proyecto.");
@@ -239,22 +244,26 @@
           // Aquí colocas la lógica para asignar evaluador
           console.log("Asignar evaluador para una fila seleccionada.");
           //Mostramos vacios los imputs
-          $("#asignar_evaluador1").val('') 
+          $("#asignar_evaluador1").val('')
           $("#asignar_evaluador2").val('')
           $("#asignar_evaluador3").val('')
           modal.show()
-          MostrarIconoParaAsignar("#icono_buscar1","#icono_borrar1")
-          MostrarIconoParaAsignar("#icono_buscar2","#icono_borrar2")
-          MostrarIconoParaAsignar("#icono_buscar3","#icono_borrar3")
+          MostrarIconoParaAsignar("#icono_buscar1", "#icono_borrar1")
+          MostrarIconoParaAsignar("#icono_buscar2", "#icono_borrar2")
+          MostrarIconoParaAsignar("#icono_buscar3", "#icono_borrar3")
         }
       }
 
       // Función de validación al hacer clic en "Editar evaluador"
       function editarEvaluador() {
         var table = $('#table').DataTable();
-        var selectedRows = table.rows({ selected: true }).count();
-        var selectedRow = table.row({ selected: true });
-        var rowId = selectedRow.data().id; 
+        var selectedRows = table.rows({
+          selected: true
+        }).count();
+        var selectedRow = table.row({
+          selected: true
+        });
+        var rowId = selectedRow.data().id;
 
         if (selectedRows === 1) {
           // Aquí colocas la lógica para editar evaluador
@@ -265,9 +274,9 @@
           $("#asignar_evaluador2").val('')
           $("#asignar_evaluador3").val('')
           modal.show()
-          MostrarIconoParaEditar("#icono_buscar1","#icono_borrar1")
-          MostrarIconoParaEditar("#icono_buscar2","#icono_borrar2")
-          MostrarIconoParaEditar("#icono_buscar3","#icono_borrar3")
+          MostrarIconoParaEditar("#icono_buscar1", "#icono_borrar1")
+          MostrarIconoParaEditar("#icono_buscar2", "#icono_borrar2")
+          MostrarIconoParaEditar("#icono_buscar3", "#icono_borrar3")
           $.ajax({
             url: 'http://localhost:8000/api/admin/facultad/getEvaluadoresProyecto/' + rowId,
             type: 'GET',
@@ -286,9 +295,9 @@
 
       $("#botonA").on("click", asignarEvaluador)
       $("#botonB").on("click", editarEvaluador)
-      $("#icono_borrar1").on("click",() => LimpiarImputEnEditar("#asignar_evaluador1"))
-      $("#icono_borrar2").on("click",() => LimpiarImputEnEditar("#asignar_evaluador2"))
-      $("#icono_borrar3").on("click",() => LimpiarImputEnEditar("#asignar_evaluador3"))
+      $("#icono_borrar1").on("click", () => LimpiarImputEnEditar("#asignar_evaluador1"))
+      $("#icono_borrar2").on("click", () => LimpiarImputEnEditar("#asignar_evaluador2"))
+      $("#icono_borrar3").on("click", () => LimpiarImputEnEditar("#asignar_evaluador3"))
 
       // ********Función para mostrar las sugerencias*******
       function showSuggestions(data, p_autocomplete) {
@@ -296,7 +305,8 @@
         dropdownMenu.empty();
 
         data.forEach(function(suggestion) {
-          var item = $('<a class="dropdown-item" href="#" myId="' + suggestion.id + '">').text(suggestion.content);
+          var item = $('<a class="dropdown-item" href="#" myId="' + suggestion.id + '">').text(suggestion
+            .content);
           dropdownMenu.append(item);
         });
 

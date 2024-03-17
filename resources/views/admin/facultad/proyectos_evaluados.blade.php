@@ -7,7 +7,6 @@
   <meta name="csrf_token" content="{{ csrf_token() }}" />
   <title>Proyectos evaluados</title>
   @vite(['resources/scss/app.scss', 'resources/js/app.js'])
-  <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
 
 </head>
 
@@ -21,12 +20,14 @@
     <!--  Tab list  -->
     <ul class="nav nav-tabs" id="myTab" role="tablist">
       <li class="nav-item" role="presentation">
-        <button class="nav-link active" id="listar-tab" data-bs-toggle="tab" data-bs-target="#listar-tab-pane" type="button" role="tab" aria-controls="listar-tab-pane" aria-selected="true">Listado</button>
+        <button class="nav-link active" id="listar-tab" data-bs-toggle="tab" data-bs-target="#listar-tab-pane"
+          type="button" role="tab" aria-controls="listar-tab-pane" aria-selected="true">Listado</button>
       </li>
     </ul>
 
     <div class="tab-content border border-top-0 rounded-bottom" id="myTabContent">
-      <div class="tab-pane fade show active p-4" id="listar-tab-pane" role="tabpanel" aria-labelledby="listar-tab" tabindex="0">
+      <div class="tab-pane fade show active p-4" id="listar-tab-pane" role="tabpanel" aria-labelledby="listar-tab"
+        tabindex="0">
         <!--Filtro 1-->
         <form class="row mb-4">
           <div class="col-sm-3">
@@ -168,9 +169,9 @@
 
   <script type="module">
     $(document).ready(function() {
-
       //  Datatable
-      let ajax_url = 'http://localhost:8000/api/admin/facultad/getAllProyectosEvaluados/' + $('#opciones1').val() + '/' + $('#opciones2').val()
+      let ajax_url = 'http://localhost:8000/api/admin/facultad/getAllProyectosEvaluados/' + $('#opciones1').val() +
+        '/' + $('#opciones2').val()
       let table = new DataTable('#table', {
         paging: true,
         pagingType: 'full_numbers',
@@ -211,22 +212,19 @@
           },
           {
             render: function(data, type, row) {
-            
-            return row.opciones_evaluadas == 15 ? 
-              `<div class="alert alert-success">
-              <strong>Sí</strong></div>`
-              : 
-              `<div class="alert alert-danger">
+
+              return row.opciones_evaluadas == 15 ?
+                `<div class="alert alert-success">
+              <strong>Sí</strong></div>` :
+                `<div class="alert alert-danger">
               <strong>No</strong></div>`;
-          }
+            }
           },
           {
             render: function(data, type, row) {
-            
-              return row.opciones_evaluadas == 15 ? 
+              return row.opciones_evaluadas == 15 ?
                 `<div class="alert alert-success">
-                <strong>Sí</strong></div>`
-                : 
+                <strong>Sí</strong></div>` :
                 `<div class="alert alert-danger">
                 <strong>No</strong></div>`;
             }
@@ -249,19 +247,23 @@
             sNext: "Siguiente",
             sPrevious: "Anterior"
           },
-        },
-        select: {
-          style: 'multi'
         }
       });
 
-        //TODO FALTA HACER QUE SE ACTUALICE
-        /* Actualizar al cambiar - NO FUNCIONAAA*/
-        $('#opciones1').on('change', function() {
-        console.log("gaaa")
-        ajax_url = 'http://localhost:8000/api/admin/facultad/getAllProyectosEvaluados/' + $('#opciones1').val() + '/' + $('#opciones2').val()
+      //  Actualizar al cambiar de valor
+      $('#opciones1').on('change', function() {
+        ajax_url = 'http://localhost:8000/api/admin/facultad/getAllProyectosEvaluados/' + $('#opciones1').val() +
+          '/' + $('#opciones2').val();
+        table.clear().draw();
         table.ajax.url(ajax_url).load();
-        });
+      });
+
+      $('#opciones2').on('change', function() {
+        ajax_url = 'http://localhost:8000/api/admin/facultad/getAllProyectosEvaluados/' + $('#opciones1').val() +
+          '/' + $('#opciones2').val();
+        table.clear().draw();
+        table.ajax.url(ajax_url).load();
+      });
     });
   </script>
 
