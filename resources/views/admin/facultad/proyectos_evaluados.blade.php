@@ -69,7 +69,7 @@
 
         <!--  Tabla  -->
         <div class="overflow-x-hidden">
-          <table id="table" class="table table-striped table-hover align-middle" style="width:100%">
+          <table id="table" class="table table-striped table-hover align-middle" style="width:100%;">
             <thead>
               <tr>
                 <th>
@@ -180,6 +180,14 @@
         lengthChange: false,
         scrollX: true,
         ajax: ajax_url,
+        /*Establecer tamaño de columnas
+        autoWidth: false,
+        columnDefs: [
+        {targets: 2,
+        width: '100px'},
+        {targets: 4,
+        width: '15000px'}
+        ],*/
         columns: [{
             data: 'id'
           },
@@ -214,19 +222,19 @@
             render: function(data, type, row) {
 
               return row.opciones_evaluadas == 15 ?
-                `<div class="alert alert-success">
-              <strong>Sí</strong></div>` :
-                `<div class="alert alert-danger">
-              <strong>No</strong></div>`;
+                `<div style="background-color: green; color: white; border-radius: 7%; font-weight: bold; text-align: center;">
+                Sí</div>` :
+                `<div style="background-color: red; color: white; border-radius: 7%; font-weight: bold; text-align: center;">
+                No</div>`;
             }
           },
           {
             render: function(data, type, row) {
               return row.opciones_evaluadas == 15 ?
-                `<div class="alert alert-success">
-                <strong>Sí</strong></div>` :
-                `<div class="alert alert-danger">
-                <strong>No</strong></div>`;
+                `<div style="background-color: red; color: white; border-radius: 7%; font-weight: bold; text-align: center;">
+                No</div>` :
+                `<div style="background-color: green; color: white; border-radius: 7%; font-weight: bold; text-align: center;">
+                Sí</div>`;
             }
           },
           {
@@ -264,7 +272,9 @@
         table.clear().draw();
         table.ajax.url(ajax_url).load();
       });
+      
     });
+    
   </script>
 
 </body>
