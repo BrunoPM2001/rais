@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\Admin\DependenciaController;
 use App\Http\Controllers\Admin\Admin\Usuario_adminController;
 use App\Http\Controllers\Admin\Admin\Usuario_investigadorController;
 use App\Http\Controllers\Admin\Admin\UsuarioController;
+use App\Http\Controllers\Admin\Facultad\ProyectosEvaluadosController;
 use App\Http\Controllers\Admin\Reportes\ConsolidadoGeneralController;
 use App\Http\Controllers\Admin\Reportes\DocenteController;
 use App\Http\Controllers\Admin\Reportes\EstudioController;
@@ -42,6 +43,7 @@ Route::prefix('admin')->middleware('checkRole:Administrador')->group(function ()
   Route::prefix('facultad')->group(function () {
     Route::get('convocatorias', [Evaluacion_facultadController::class, 'main'])->name('view_facultad_convocatorias');
     Route::get('asignacionEvaluadores', [AsignacionEvaluadorController::class, 'main'])->name('view_facultad_asignacionEvaluadores');
+    Route::get('proyectosEvaluados', [ProyectosEvaluadosController::class, 'main'])->name('view_facultad_proyectosEvaluados');
   });
 
   //  ADMIN

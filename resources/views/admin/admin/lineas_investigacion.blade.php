@@ -16,22 +16,25 @@
     <!--  Tab list  -->
     <ul class="nav nav-tabs" id="myTab" role="tablist">
       <li class="nav-item" role="presentation">
-        <button class="nav-link active" id="listar-tab" data-bs-toggle="tab" data-bs-target="#listar-tab-pane" type="button" role="tab" aria-controls="listar-tab-pane" aria-selected="true">Listar líneas</button>
+        <button class="nav-link active" id="listar-tab" data-bs-toggle="tab" data-bs-target="#listar-tab-pane"
+          type="button" role="tab" aria-controls="listar-tab-pane" aria-selected="true">Listar líneas</button>
       </li>
       <li class="nav-item" role="presentation">
-        <button class="nav-link" id="crear-tab" data-bs-toggle="tab" data-bs-target="#crear-tab-pane" type="button" role="tab" aria-controls="crear-tab-pane" aria-selected="false">Crear línea</button>
+        <button class="nav-link" id="crear-tab" data-bs-toggle="tab" data-bs-target="#crear-tab-pane" type="button"
+          role="tab" aria-controls="crear-tab-pane" aria-selected="false">Crear línea</button>
       </li>
     </ul>
     <div class="tab-content border border-top-0 rounded-bottom" id="myTabContent">
-      <div class="tab-pane fade show active p-4" id="listar-tab-pane" role="tabpanel" aria-labelledby="listar-tab" tabindex="0">
+      <div class="tab-pane fade show active p-4" id="listar-tab-pane" role="tabpanel" aria-labelledby="listar-tab"
+        tabindex="0">
         <!--  Seleccionar facultad  -->
         <form class="row mb-4">
           <label for="facultad" class="col-sm-2 col-form-label">Facultad:</label>
           <div class="col-sm-10">
             <select id="facultad" class="form-select">
               <option value="null" selected>Ninguna</option>
-              @foreach($facultades as $facultad)
-              <option value="{{ $facultad->id }}">{{ $facultad->nombre }}</option>
+              @foreach ($facultades as $facultad)
+                <option value="{{ $facultad->id }}">{{ $facultad->nombre }}</option>
               @endforeach
             </select>
           </div>
@@ -83,8 +86,8 @@
             <div class="col-sm-10">
               <select id="facultad_id" name="facultad_id" class="form-select">
                 <option value="" selected>Ninguna</option>
-                @foreach($facultades as $facultad)
-                <option value="{{ $facultad->id }}">{{ $facultad->nombre }}</option>
+                @foreach ($facultades as $facultad)
+                  <option value="{{ $facultad->id }}">{{ $facultad->nombre }}</option>
                 @endforeach
               </select>
             </div>
@@ -94,8 +97,8 @@
             <div class="col-sm-10">
               <select id="parent_id" name="parent_id" class="form-select">
                 <option value="" selected>Ninguno</option>
-                @foreach($lineas as $linea)
-                <option value="{{ $linea->id }}">{{ $linea->codigo }} - {{ $linea->nombre }}</option>
+                @foreach ($lineas as $linea)
+                  <option value="{{ $linea->id }}">{{ $linea->codigo }} - {{ $linea->nombre }}</option>
                 @endforeach
               </select>
             </div>
@@ -189,6 +192,7 @@
         })
         return childs;
       }
+
       //  Mostrar hijos
       table.on('click', 'td.dt-control', function(e) {
         let tr = e.target.closest('tr');
@@ -200,7 +204,8 @@
           row.child(format(row.data().hijos)).show();
         }
       });
-      /* Actualizar al cambiar */
+
+      // Actualizar al cambiar
       $('#facultad').on('change', function() {
         ajax_url = 'http://localhost:8000/api/admin/lineasInvestigacion/getAllFacultad/' + $('#facultad').val();
         table.ajax.url(ajax_url).load();
