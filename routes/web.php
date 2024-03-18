@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\Admin\DependenciaController;
 use App\Http\Controllers\Admin\Admin\Usuario_adminController;
 use App\Http\Controllers\Admin\Admin\Usuario_investigadorController;
 use App\Http\Controllers\Admin\Admin\UsuarioController;
+use App\Http\Controllers\Admin\Estudios\ConvocatoriasController;
 use App\Http\Controllers\Admin\Facultad\ProyectosEvaluadosController;
 use App\Http\Controllers\Admin\Reportes\ConsolidadoGeneralController;
 use App\Http\Controllers\Admin\Reportes\DocenteController;
@@ -62,6 +63,11 @@ Route::prefix('admin')->middleware('checkRole:Administrador')->group(function ()
 Route::prefix('api')->group(function () {
   //  ADMIN
   Route::prefix('admin')->group(function () {
+    //  Estudios
+    Route::prefix('estudios')->group(function () {
+      Route::get('listarConvocatorias', [ConvocatoriasController::class, 'listarConvocatorias']);
+      Route::get('getOneConvocatoria/{parent_id}', [ConvocatoriasController::class, 'getOneConvocatoria']);
+    });
     //  Reportes
     Route::prefix('reportes')->group(function () {
       Route::get('estudio/{tipo}/{periodo}/{facultad}', [EstudioController::class, 'reporte']);
