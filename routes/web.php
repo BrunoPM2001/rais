@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\Admin\Usuario_adminController;
 use App\Http\Controllers\Admin\Admin\Usuario_investigadorController;
 use App\Http\Controllers\Admin\Admin\UsuarioController;
 use App\Http\Controllers\Admin\Estudios\ConvocatoriasController;
+use App\Http\Controllers\Admin\Estudios\GruposController;
 use App\Http\Controllers\Admin\Facultad\ProyectosEvaluadosController;
 use App\Http\Controllers\Admin\Reportes\ConsolidadoGeneralController;
 use App\Http\Controllers\Admin\Reportes\DocenteController;
@@ -65,9 +66,18 @@ Route::prefix('api')->group(function () {
   Route::prefix('admin')->group(function () {
     //  Estudios
     Route::prefix('estudios')->group(function () {
+      //  Convocatorias
       Route::get('listarConvocatorias', [ConvocatoriasController::class, 'listarConvocatorias']);
       Route::get('getOneConvocatoria/{parent_id}', [ConvocatoriasController::class, 'getOneConvocatoria']);
+      Route::get('listaEvaluaciones', [ConvocatoriasController::class, 'listaEvaluaciones']);
+      Route::get('verCriteriosEvaluacion/{evaluacion_id}', [ConvocatoriasController::class, 'verCriteriosEvaluacion']);
+
+      //  Grupos
+      Route::get('listadoGrupos', [GruposController::class, 'listadoGrupos']);
+      Route::get('listadoSolicitudes', [GruposController::class, 'listadoSolicitudes']);
     });
+
+
     //  Reportes
     Route::prefix('reportes')->group(function () {
       Route::get('estudio/{tipo}/{periodo}/{facultad}', [EstudioController::class, 'reporte']);

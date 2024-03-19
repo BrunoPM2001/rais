@@ -48,10 +48,41 @@ class ConvocatoriasController extends Controller {
       ->select(
         'id',
         'tipo',
+        'periodo',
         'estado'
       )
       ->get();
 
     return ['data' => $evaluaciones];
+  }
+
+  public function verCriteriosEvaluacion($evaluacion_id) {
+    $criterios = DB::table('Evaluacion_template_opcion AS a')
+      ->join('Evaluacion_template AS b', 'b.id', '=', 'a.evaluacion_template_id')
+      ->select(
+        'a.id',
+        'a.opcion',
+        'a.puntaje_max',
+        'a.nivel',
+        'a.orden',
+        'a.editable',
+        'a.otipo',
+        'a.puntos_adicionales'
+      )
+      ->where('b.id', '=', $evaluacion_id)
+      ->orderBy('a.orden')
+      ->get();
+
+    $evaluacion = DB::table('Evaluacion_template')
+      ->select(
+        'id',
+        'tipo',
+        'periodo',
+        'estado'
+      )
+      ->where('id', '=', $evaluacion_id)
+      ->get();
+
+    return ['evaluacion' => $evaluacion, 'criterios' => $criterios];
   }
 }
