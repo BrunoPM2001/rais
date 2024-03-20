@@ -75,6 +75,9 @@ Route::prefix('api')->group(function () {
       //  Grupos
       Route::get('listadoGrupos', [GruposController::class, 'listadoGrupos']);
       Route::get('listadoSolicitudes', [GruposController::class, 'listadoSolicitudes']);
+      Route::get('detalleGrupo/{grupo_id}', [GruposController::class, 'detalleGrupo']);
+      Route::get('miembrosGrupo/{grupo_id}/{estado}', [GruposController::class, 'miembrosGrupo']);
+      Route::get('docsGrupo/{grupo_id}', [GruposController::class, 'docsGrupo']);
     });
 
 
