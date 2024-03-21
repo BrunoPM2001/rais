@@ -1,6 +1,36 @@
-<nav class="navbar navbar-expand-lg bg-body-tertiary">
+<style>
+  a.nav-link,.navbar-brand{
+    color: #fff !important;
+    font-family: Roboto, "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-weight: 400;
+    font-size: 16px;
+    /*height: 20px;*/
+  }
+  .dropdown-item{
+    font-size:14px;
+    font-family: Roboto, "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-weight: 400;
+    line-height: 20px;
+  }
+  .dropdown-item:hover  {
+    background-color: #6a90a9 !important;
+    color: #fff;
+  }
+  .dropdown-divider{
+    margin: 3px;
+  }
+  .navbar-toggler-icon {
+    background-color: white; /* Cambia el color del icono de menú a blanco */
+    border: 1px solid white; /* Cambia el color del marco del icono de menú a blanco */
+    padding: 0.25rem 0.5rem; /* Ajusta el relleno para asegurar que el icono se muestre correctamente */
+    font-size: 1.25rem; /* Ajusta el tamaño de la fuente para asegurar que el icono se muestre correctamente */
+}
+</style>
+
+
+<nav class="navbar navbar-expand-lg bg-body-tertiary" style="background-color: #002e43 !important;">
   <div class="container-fluid miclase">
-    <a class="navbar-brand" href="#">RAIS</a>
+    <a class="navbar-brand" href="#"><strong>RAIS</strong></a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
@@ -81,14 +111,14 @@
           </ul>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="#">Constancias</a>
+          <a class="nav-link abc" href="#">Constancias</a>
         </li>
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Facultad</a>
           <ul class="dropdown-menu">
             <li><a class="dropdown-item" href="{{ route('view_facultad_convocatorias') }}">Convocatorias</a></li>
             <li>
-              <hr class="dropdown-dividir">
+              <hr class="dropdown-divider">
             </li>
             <li><a class="dropdown-item" href="#">Usuarios facultad</a></li>
             <li><a class="dropdown-item" href="#">Usuarios evaluadores</a></li>
@@ -102,7 +132,7 @@
             <li><a class="dropdown-item" href="{{ route('view_lineas') }}">Lineas de investigación</a></li>
             <li><a class="dropdown-item" href="{{ route('view_dependencias') }}">Dependencias</a></li>
             <li>
-              <hr class="dropdown-dividir">
+              <hr class="dropdown-divider">
             </li>
             <li><a class="dropdown-item" href="{{ route('view_usuariosAdmin') }}">Usuarios administrativos</a></li>
             <li><a class="dropdown-item" href="{{ route('view_usuariosInvestigadores') }}">Usuarios investigadores</a></li>
