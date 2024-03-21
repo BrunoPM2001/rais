@@ -149,4 +149,69 @@ class GruposController extends Controller {
 
     return ['data' => $docs];
   }
+
+  public function lineasGrupo($grupo_id) {
+    $lineas = DB::table('Grupo_linea AS a')
+      ->join('Grupo AS b', 'b.id', '=', 'a.grupo_id')
+      ->join('Linea_investigacion AS c', 'c.id', '=', 'a.linea_investigacion_id')
+      ->select(
+        'a.id',
+        'c.codigo',
+        'c.nombre'
+      )
+      ->whereNull('a.concytec_codigo')
+      ->where('a.grupo_id', '=', $grupo_id)
+      ->get();
+
+    return ['data' => $lineas];
+  }
+
+  public function proyectosGrupo($grupo_id) {
+    //  TODO - Averiguar los criterios para colocar un proyecto como válido
+    $proyectos = DB::table('Proyecto')
+      ->select(
+        'id',
+        'titulo',
+        'periodo',
+        'tipo_proyecto'
+      )
+      ->where('grupo_id', '=', $grupo_id)
+      ->get();
+
+    return ['data' => $proyectos];
+  }
+
+  public function publicacionesGrupo($grupo_id) {
+    $publicaciones = DB::table('Grupo_integrante AS a')
+      ->join('Publicacion_autor AS b', 'b.investigador_id', '=', 'a.investigador_id')
+      ->join('Publicacion AS c', 'c.id', '=', 'b.publicacion_id')
+      ->join('Publicacion_categoria AS d', 'd.id', '=', 'c.categoria_id')
+      ->select(
+        'c.id',
+        'c.titulo',
+        'c.fecha_publicacion',
+        'd.tipo'
+      )
+      ->where('a.grupo_id', '=', $grupo_id)
+      ->get();
+
+    return ['data' => $publicaciones];
+  }
+
+  public function laboratoriosGrupo($grupo_id) {
+    $laboratorios = DB::table('Grupo AS a')
+      ->join('Grupo_infraestructura AS b', 'b.grupo_id', '=', 'a.id')
+      ->join('Laboratorio AS c', 'c.id', '=', 'b.laboratorio_id')
+      ->select(
+        'c.codigo',
+        'c.laboratorio',
+        'c.ubicacion',
+        'c.responsable'
+      )
+      ->where('a.grupo_id', '=', $grupo_id)
+      ->where('b.categoria', '=', 'laboratorio')
+      ->get();
+
+    return ['data' => $laboratorios];
+  }
 }

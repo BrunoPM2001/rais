@@ -78,8 +78,11 @@ Route::prefix('api')->group(function () {
       Route::get('detalleGrupo/{grupo_id}', [GruposController::class, 'detalleGrupo']);
       Route::get('miembrosGrupo/{grupo_id}/{estado}', [GruposController::class, 'miembrosGrupo']);
       Route::get('docsGrupo/{grupo_id}', [GruposController::class, 'docsGrupo']);
+      Route::get('lineasGrupo/{grupo_id}', [GruposController::class, 'lineasGrupo']);
+      Route::get('proyectosGrupo/{grupo_id}', [GruposController::class, 'proyectosGrupo']);
+      Route::get('publicacionesGrupo/{grupo_id}', [GruposController::class, 'publicacionesGrupo']);
+      Route::get('laboratoriosGrupo/{grupo_id}', [GruposController::class, 'laboratoriosGrupo']);
     });
-
 
     //  Reportes
     Route::prefix('reportes')->group(function () {
