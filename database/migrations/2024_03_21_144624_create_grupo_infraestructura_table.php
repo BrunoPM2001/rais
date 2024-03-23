@@ -16,7 +16,6 @@ return new class extends Migration {
       $table->unsignedBigInteger('laboratorio_id')->nullable();
       $table->string('categoria', 50);
       $table->string('codigo', 20)->nullable();
-      $table->string('codigo')->nullable();
       $table->string('nombre')->nullable();
       $table->text('descripcion')->nullable();
       $table->decimal('area_mt2', 10)->nullable();
