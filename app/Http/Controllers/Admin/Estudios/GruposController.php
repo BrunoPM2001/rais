@@ -214,4 +214,9 @@ class GruposController extends Controller {
 
     return ['data' => $laboratorios];
   }
+
+  public function main(){
+    return view("admin.estudios.gestion_grupos");
+  }
+
 }

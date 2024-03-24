@@ -55,6 +55,11 @@ Route::prefix('admin')->middleware('checkRole:Administrador')->group(function ()
     Route::get('usuariosAdmin', [Usuario_adminController::class, 'main'])->name('view_usuariosAdmin');
     Route::get('usuariosInvestigadores', [Usuario_investigadorController::class, 'main'])->name('view_usuariosInvestigadores');
   });
+
+  //ESTUDIOS
+  Route::prefix('estudios')->group(function () {
+    Route::get('grupos', [GruposController::class, 'main'])->name('view_estudios_grupos');
+  });
 });
 
 

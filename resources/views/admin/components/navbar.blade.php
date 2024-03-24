@@ -43,7 +43,7 @@
             <li>
               <hr class="dropdown-divider">
             </li>
-            <li><a class="dropdown-item" href="#">Gestión de grupos</a></li>
+            <li><a class="dropdown-item" href="{{ route('view_estudios_grupos') }}">Gestión de grupos</a></li>
             <li><a class="dropdown-item" href="#">Gestión de proyectos de grupos</a></li>
             <li><a class="dropdown-item" href="#">Gestión de proyectos FEX</a></li>
             <li><a class="dropdown-item" href="#">Gestión de proyectos</a></li>
