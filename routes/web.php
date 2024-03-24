@@ -7,11 +7,14 @@ use App\Http\Controllers\Admin\Admin\DependenciaController;
 use App\Http\Controllers\Admin\Admin\Usuario_adminController;
 use App\Http\Controllers\Admin\Admin\Usuario_investigadorController;
 use App\Http\Controllers\Admin\Admin\UsuarioController;
+use App\Http\Controllers\Admin\Estudios\ConvocatoriasController;
+use App\Http\Controllers\Admin\Estudios\GruposController;
 use App\Http\Controllers\Admin\Facultad\ProyectosEvaluadosController;
 use App\Http\Controllers\Admin\Reportes\ConsolidadoGeneralController;
 use App\Http\Controllers\Admin\Reportes\DocenteController;
 use App\Http\Controllers\Admin\Reportes\EstudioController;
 use App\Http\Controllers\Admin\Reportes\GrupoController;
+use App\Http\Controllers\Admin\Reportes\PresupuestoController;
 use App\Http\Controllers\Admin\Reportes\ProyectoController as ReporteProyectoController;
 use App\Http\Controllers\Evaluacion_facultadController;
 use App\Http\Controllers\ProyectoController;
@@ -61,6 +64,26 @@ Route::prefix('admin')->middleware('checkRole:Administrador')->group(function ()
 Route::prefix('api')->group(function () {
   //  ADMIN
   Route::prefix('admin')->group(function () {
+    //  Estudios
+    Route::prefix('estudios')->group(function () {
+      //  Convocatorias
+      Route::get('listarConvocatorias', [ConvocatoriasController::class, 'listarConvocatorias']);
+      Route::get('getOneConvocatoria/{parent_id}', [ConvocatoriasController::class, 'getOneConvocatoria']);
+      Route::get('listaEvaluaciones', [ConvocatoriasController::class, 'listaEvaluaciones']);
+      Route::get('verCriteriosEvaluacion/{evaluacion_id}', [ConvocatoriasController::class, 'verCriteriosEvaluacion']);
+
+      //  Grupos
+      Route::get('listadoGrupos', [GruposController::class, 'listadoGrupos']);
+      Route::get('listadoSolicitudes', [GruposController::class, 'listadoSolicitudes']);
+      Route::get('detalleGrupo/{grupo_id}', [GruposController::class, 'detalleGrupo']);
+      Route::get('miembrosGrupo/{grupo_id}/{estado}', [GruposController::class, 'miembrosGrupo']);
+      Route::get('docsGrupo/{grupo_id}', [GruposController::class, 'docsGrupo']);
+      Route::get('lineasGrupo/{grupo_id}', [GruposController::class, 'lineasGrupo']);
+      Route::get('proyectosGrupo/{grupo_id}', [GruposController::class, 'proyectosGrupo']);
+      Route::get('publicacionesGrupo/{grupo_id}', [GruposController::class, 'publicacionesGrupo']);
+      Route::get('laboratoriosGrupo/{grupo_id}', [GruposController::class, 'laboratoriosGrupo']);
+    });
+
     //  Reportes
     Route::prefix('reportes')->group(function () {
       Route::get('estudio/{tipo}/{periodo}/{facultad}', [EstudioController::class, 'reporte']);
@@ -68,6 +91,7 @@ Route::prefix('api')->group(function () {
       Route::get('proyecto/{facultad}/{tipo}/{periodo}', [ReporteProyectoController::class, 'reporte']);
       Route::get('docente/{investigador_id}', [DocenteController::class, 'reporte']);
       Route::get('consolidadoGeneral/{periodo}', [ConsolidadoGeneralController::class, 'reporte']);
+      Route::get('presupuesto/{facultad_id}/{periodo}', [PresupuestoController::class, 'reporte']);
     });
 
     //  Constancias

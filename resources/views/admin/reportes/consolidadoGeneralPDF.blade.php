@@ -1,5 +1,8 @@
 @php
   $currentFacultad = '';
+  $counter = 0;
+  $totalSum = [];
+  $total = 0;
 @endphp
 <!DOCTYPE html>
 <html lang="es">
@@ -26,7 +29,7 @@
     }
 
     .head-1 img {
-      margin-left: 120px;
+      margin-left: 280px;
       background: red;
       height: 85px;
     }
@@ -74,7 +77,7 @@
     }
 
     .titulo {
-      width: 754px;
+      width: 1083px;
       font-size: 16px;
       text-align: center;
     }
@@ -91,7 +94,7 @@
 
     .table1>thead {
       margin-top: -1px;
-      font-size: 10px;
+      font-size: 11px;
       border-top: 1.5px solid #000;
       border-bottom: 1.5px solid #000;
     }
@@ -101,9 +104,15 @@
     }
 
     .table1>tbody td {
-      font-size: 10px;
+      font-size: 11px;
       text-align: center;
       padding-top: 2px;
+    }
+
+    .table1>tfoot {
+      margin-top: -1px;
+      font-size: 11px;
+      text-align: center;
     }
 
     .extra-1 {
@@ -123,30 +132,8 @@
       text-align: center;
       width: 100%;
     }
-
-    .top {
-      margin-left: 2px;
-    }
-
-    .top_left {
-      display: inline;
-      width: 40%;
-      font-size: 10px;
-      text-align: right;
-    }
-
-    .top_right {
-      display: inline;
-      width: 40%;
-      font-size: 10px;
-      text-align: right;
-      margin-top: 5px;
-      margin-right: 2px;
-      float: right;
-    }
   </style>
 </head>
-
 
 <body>
   <div class="head-1">
@@ -175,10 +162,6 @@
     <!--  Listado  -->
     @foreach ($proyectos as $item)
       @if ($loop->first)
-        <div class="top">
-          <div class="top_left"><strong>Proyectos anteriores al 2017</strong></div>
-          <div class="top_right"><strong>Nombres:</strong> {{ $investigador[0]->nombres }}</div>
-        </div>
         <table class="table1">
           <thead>
             <tr>
@@ -186,21 +169,42 @@
               @foreach ($tipos as $tipo)
                 <th>{{ $tipo->tipo_proyecto }}</th>
               @endforeach
+              <th>Total</th>
             </tr>
           </thead>
           <tbody>
       @endif
       <tr>
+        <td style="text-align: left; padding-left: 10px;">{{ $item->facultad }}</td>
         @foreach ($tipos as $tipo)
-          @if ($tipo->tipo_proyecto == $item->tipo_proyecto)
-            <td>{{ $item->cuenta }}</td>
-          @else
-            <td>0</td>
-          @endif
+          @php
+            $col = $tipo->tipo_proyecto;
+            if (!isset($totalSum[$col])) {
+                $totalSum[$col] = 0;
+            }
+            $totalSum[$col] += $item->$col;
+          @endphp
+          <td>{{ $item->$col }}</td>
         @endforeach
+        <td>{{ $item->total_cuenta }}</td>
+        @php
+          $total += $item->total_cuenta;
+        @endphp
       </tr>
       @if ($loop->last)
         </tbody>
+        <tfoot>
+          <tr>
+            <td>Total</td>
+            @foreach ($tipos as $tipo)
+              @php
+                $col = $tipo->tipo_proyecto;
+              @endphp
+              <td>{{ $totalSum[$col] }}</td>
+            @endforeach
+            <td>{{ $total }}</td>
+          </tr>
+        </tfoot>
         </table>
       @endif
     @endforeach
@@ -208,8 +212,8 @@
 
   <script type="text/php">
     if (isset($pdf)) {
-      $x = 527;
-      $y = 818;
+      $x = 772;
+      $y = 571;
       $text = "Página {PAGE_NUM} de {PAGE_COUNT}";
       $font = $fontMetrics->get_font("Helvetica", "Italic");
       $size = 8;

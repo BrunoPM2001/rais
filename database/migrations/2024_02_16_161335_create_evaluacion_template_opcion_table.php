@@ -10,6 +10,7 @@ return new class extends Migration {
    */
   public function up(): void {
     Schema::create('Evaluacion_template_opcion', function (Blueprint $table) {
+      //  TODO - Eliminar las columnas de tipo y periodo (redundancia con la tabla con la que se tiene la relación)
       $table->id();
       $table->unsignedBigInteger('evaluacion_template_id');
       $table->text('opcion');

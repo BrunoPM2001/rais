@@ -19,20 +19,32 @@ class ConsolidadoGeneralController extends Controller {
       ->orderBy('a.tipo_proyecto')
       ->get();
 
+    $countExp = [];
+
+    foreach ($tipos as $tipo) {
+      $countExp[] = DB::raw('COUNT(IF(a.tipo_proyecto = "' . $tipo->tipo_proyecto . '", 1, NULL)) AS "' . $tipo->tipo_proyecto . '"');
+    }
+
+
     //  Proyectos
     $proyectos = DB::table('Proyecto AS a')
       ->join('Facultad AS b', 'b.id', '=', 'a.facultad_id')
       ->select(
         'b.nombre AS facultad',
-        'a.tipo_proyecto',
-        DB::raw('COUNT(a.id) AS cuenta')
+        DB::raw('COUNT(a.tipo_proyecto) AS total_cuenta'),
+        ...$countExp,
       )
       ->where('a.periodo', '=', $periodo)
-      ->groupBy('a.facultad_id', 'a.tipo_proyecto')
+      ->groupBy('a.facultad_id')
       ->orderBy('a.facultad_id')
-      ->orderBy('a.tipo_proyecto')
       ->get();
 
-    return ['tipos' => $tipos, 'proyectos' => $proyectos];
+    $pdf = Pdf::loadView('admin.reportes.consolidadoGeneralPDF', [
+      'proyectos' => $proyectos,
+      'tipos' => $tipos,
+      'periodo' => $periodo
+    ]);
+    $pdf->setPaper('A4', 'landscape');
+    return $pdf->stream();
   }
 }
