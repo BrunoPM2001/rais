@@ -96,6 +96,7 @@ Route::prefix('api')->group(function () {
         Route::get('listado/{periodo}', [ProyectosGrupoController::class, 'listado']);
         Route::get('detalle/{proyecto_id}', [ProyectosGrupoController::class, 'detalle']);
         Route::get('miembros/{proyecto_id}', [ProyectosGrupoController::class, 'miembros']);
+        Route::get('cartas/{proyecto_id}', [ProyectosGrupoController::class, 'cartas']);
       });
     });
 

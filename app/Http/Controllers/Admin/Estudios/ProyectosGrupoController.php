@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin\Estudios;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class ProyectosGrupoController extends Controller {
   public function listado($periodo) {
@@ -70,5 +71,22 @@ class ProyectosGrupoController extends Controller {
       ->get();
 
     return ['data' => $miembros];
+  }
+
+  public function cartas($proyecto_id) {
+
+    $cartas = DB::table('Proyecto_doc')
+      ->select(
+        'id',
+        'nombre',
+        // 'extension'
+      )
+      ->where('proyecto_id', '=', $proyecto_id)
+      ->get();
+
+    $urlTemp = Storage::temporaryUrl('/proyecto_docs/1.pdf', now()->addMinutes(5));
+
+
+    return ['data' => $cartas, 'url' => $urlTemp];
   }
 }
