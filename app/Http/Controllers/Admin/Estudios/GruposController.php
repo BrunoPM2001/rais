@@ -74,7 +74,7 @@ class GruposController extends Controller {
     return ['data' => $solicitudes];
   }
 
-  public function detalleGrupo($grupo_id) {
+  public function detalle($grupo_id) {
     $detalleGrupo = DB::table('Grupo AS a')
       ->join('Facultad AS b', 'b.id', '=', 'a.facultad_id')
       ->select(
@@ -95,7 +95,8 @@ class GruposController extends Controller {
         'a.grupo_categoria',
         'a.presentacion',
         'a.objetivos',
-        'a.servicios'
+        'a.servicios',
+        'a.infraestructura_ambientes'
       )
       ->where('a.id', '=', $grupo_id)
       ->get();
@@ -103,7 +104,7 @@ class GruposController extends Controller {
     return ['data' => $detalleGrupo];
   }
 
-  public function miembrosGrupo($grupo_id, $estado) {
+  public function miembros($grupo_id, $estado) {
     $miembros = DB::table('Grupo_integrante AS a')
       ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
       ->join('Facultad AS c', 'c.id', '=', 'b.facultad_id')
@@ -136,7 +137,7 @@ class GruposController extends Controller {
     return ['data' => $miembros];
   }
 
-  public function docsGrupo($grupo_id) {
+  public function docs($grupo_id) {
     $docs = DB::table('Grupo_integrante_doc')
       ->select(
         'id',
@@ -150,7 +151,7 @@ class GruposController extends Controller {
     return ['data' => $docs];
   }
 
-  public function lineasGrupo($grupo_id) {
+  public function lineas($grupo_id) {
     $lineas = DB::table('Grupo_linea AS a')
       ->join('Grupo AS b', 'b.id', '=', 'a.grupo_id')
       ->join('Linea_investigacion AS c', 'c.id', '=', 'a.linea_investigacion_id')
@@ -166,7 +167,7 @@ class GruposController extends Controller {
     return ['data' => $lineas];
   }
 
-  public function proyectosGrupo($grupo_id) {
+  public function proyectos($grupo_id) {
     //  TODO - Averiguar los criterios para colocar un proyecto como válido
     $proyectos = DB::table('Proyecto')
       ->select(
@@ -181,7 +182,7 @@ class GruposController extends Controller {
     return ['data' => $proyectos];
   }
 
-  public function publicacionesGrupo($grupo_id) {
+  public function publicaciones($grupo_id) {
     $publicaciones = DB::table('Grupo_integrante AS a')
       ->join('Publicacion_autor AS b', 'b.investigador_id', '=', 'a.investigador_id')
       ->join('Publicacion AS c', 'c.id', '=', 'b.publicacion_id')
@@ -198,7 +199,7 @@ class GruposController extends Controller {
     return ['data' => $publicaciones];
   }
 
-  public function laboratoriosGrupo($grupo_id) {
+  public function laboratorios($grupo_id) {
     $laboratorios = DB::table('Grupo AS a')
       ->join('Grupo_infraestructura AS b', 'b.grupo_id', '=', 'a.id')
       ->join('Laboratorio AS c', 'c.id', '=', 'b.laboratorio_id')
@@ -208,15 +209,16 @@ class GruposController extends Controller {
         'c.ubicacion',
         'c.responsable'
       )
-      ->where('a.grupo_id', '=', $grupo_id)
+      ->where('a.id', '=', $grupo_id)
       ->where('b.categoria', '=', 'laboratorio')
       ->get();
 
     return ['data' => $laboratorios];
   }
 
-  public function main(){
+  //  TODO - implementar reporte de calificación e imprimir
+
+  public function main() {
     return view("admin.estudios.gestion_grupos");
   }
-
 }

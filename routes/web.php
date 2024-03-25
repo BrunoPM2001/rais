@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\Admin\Usuario_investigadorController;
 use App\Http\Controllers\Admin\Admin\UsuarioController;
 use App\Http\Controllers\Admin\Estudios\ConvocatoriasController;
 use App\Http\Controllers\Admin\Estudios\GruposController;
+use App\Http\Controllers\Admin\Estudios\ProyectosGrupoController;
 use App\Http\Controllers\Admin\Facultad\ProyectosEvaluadosController;
 use App\Http\Controllers\Admin\Reportes\ConsolidadoGeneralController;
 use App\Http\Controllers\Admin\Reportes\DocenteController;
@@ -78,15 +79,24 @@ Route::prefix('api')->group(function () {
       Route::get('verCriteriosEvaluacion/{evaluacion_id}', [ConvocatoriasController::class, 'verCriteriosEvaluacion']);
 
       //  Grupos
-      Route::get('listadoGrupos', [GruposController::class, 'listadoGrupos']);
-      Route::get('listadoSolicitudes', [GruposController::class, 'listadoSolicitudes']);
-      Route::get('detalleGrupo/{grupo_id}', [GruposController::class, 'detalleGrupo']);
-      Route::get('miembrosGrupo/{grupo_id}/{estado}', [GruposController::class, 'miembrosGrupo']);
-      Route::get('docsGrupo/{grupo_id}', [GruposController::class, 'docsGrupo']);
-      Route::get('lineasGrupo/{grupo_id}', [GruposController::class, 'lineasGrupo']);
-      Route::get('proyectosGrupo/{grupo_id}', [GruposController::class, 'proyectosGrupo']);
-      Route::get('publicacionesGrupo/{grupo_id}', [GruposController::class, 'publicacionesGrupo']);
-      Route::get('laboratoriosGrupo/{grupo_id}', [GruposController::class, 'laboratoriosGrupo']);
+      Route::prefix('grupos')->group(function () {
+        Route::get('listadoGrupos', [GruposController::class, 'listadoGrupos']);
+        Route::get('listadoSolicitudes', [GruposController::class, 'listadoSolicitudes']);
+        Route::get('detalle/{grupo_id}', [GruposController::class, 'detalle']);
+        Route::get('miembros/{grupo_id}/{estado}', [GruposController::class, 'miembros']);
+        Route::get('docs/{grupo_id}', [GruposController::class, 'docs']);
+        Route::get('lineas/{grupo_id}', [GruposController::class, 'lineas']);
+        Route::get('proyectos/{grupo_id}', [GruposController::class, 'proyectos']);
+        Route::get('publicaciones/{grupo_id}', [GruposController::class, 'publicaciones']);
+        Route::get('laboratorios/{grupo_id}', [GruposController::class, 'laboratorios']);
+      });
+
+      //  Proyectos_grupo
+      Route::prefix('proyectosGrupo')->group(function () {
+        Route::get('listado/{periodo}', [ProyectosGrupoController::class, 'listado']);
+        Route::get('detalle/{proyecto_id}', [ProyectosGrupoController::class, 'detalle']);
+        Route::get('miembros/{proyecto_id}', [ProyectosGrupoController::class, 'miembros']);
+      });
     });
 
     //  Reportes
