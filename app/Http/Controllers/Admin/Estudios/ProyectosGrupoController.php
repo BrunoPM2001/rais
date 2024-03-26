@@ -3,10 +3,11 @@
 namespace App\Http\Controllers\Admin\Estudios;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\S3Controller;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
+use Aws\S3\S3Client;
 
-class ProyectosGrupoController extends Controller {
+class ProyectosGrupoController extends S3Controller {
   public function listado($periodo) {
     $proyectos = DB::table('Proyecto AS a')
       ->join('Grupo AS b', 'b.id', '=', 'a.grupo_id')
@@ -74,19 +75,74 @@ class ProyectosGrupoController extends Controller {
   }
 
   public function cartas($proyecto_id) {
+    $s3 = $this->s3Client;
 
     $cartas = DB::table('Proyecto_doc')
       ->select(
         'id',
         'nombre',
-        // 'extension'
+        'archivo'
       )
       ->where('proyecto_id', '=', $proyecto_id)
       ->get();
 
-    $urlTemp = Storage::temporaryUrl('/proyecto_docs/1.pdf', now()->addMinutes(5));
+    //  Obtener objetos del bucket
+    foreach ($cartas as $carta) {
+      $url = null;
+      if ($carta->archivo != null) {
+        $cmd = $s3->getCommand('GetObject', [
+          'Bucket' => 'proyecto-docs',
+          'Key' => $carta->archivo
+        ]);
+        //  Generar url temporal
+        $url = (string) $s3->createPresignedRequest($cmd, '+5 minutes')->getUri();
+      }
+      $carta->url = $url;
+    }
 
+    return ['data' => $cartas];
+  }
 
-    return ['data' => $cartas, 'url' => $urlTemp];
+  public function descripcion($proyecto_id) {
+    $descripcion = DB::table('Proyecto_descripcion')
+      ->select(
+        'id',
+        'codigo',
+        'detalle'
+      )
+      ->where('proyecto_id', '=', $proyecto_id)
+      ->get();
+
+    return ['data' => $descripcion];
+  }
+
+  public function actividades($proyecto_id) {
+    $actividades = DB::table('Proyecto_actividad')
+      ->select(
+        'id',
+        'actividad',
+        'fecha_inicio',
+        'fecha_fin'
+      )
+      ->where('proyecto_id', '=', $proyecto_id)
+      ->get();
+
+    return ['data' => $actividades];
+  }
+
+  public function presupuesto($proyecto_id) {
+    $presupuesto = DB::table('Proyecto_presupuesto AS a')
+      ->join('Partida AS b', 'b.id', '=', 'a.partida_id')
+      ->select(
+        'a.tipo',
+        'b.partida',
+        'a.justificacion',
+        'a.monto',
+      )
+      ->where('a.proyecto_id', '=', $proyecto_id)
+      ->orderBy('a.tipo')
+      ->get();
+
+    return ['data' => $presupuesto];
   }
 }

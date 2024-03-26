@@ -9,15 +9,14 @@ return new class extends Migration {
    * Run the migrations.
    */
   public function up(): void {
-    Schema::create('Proyecto_doc', function (Blueprint $table) {
+    Schema::create('Proyecto_descripcion', function (Blueprint $table) {
       $table->id();
       $table->unsignedBigInteger('proyecto_id');
-      $table->unsignedBigInteger('tipo')->nullable();
-      $table->string('categoria');
-      $table->string('nombre');
-      $table->string('comentario')->nullable();
-      $table->string('archivo')->nullable();
-      $table->boolean('estado');
+      $table->string('codigo', 50);
+      $table->text('detalle');
+
+      //  Fks
+      $table->foreign('proyecto_id')->references('id')->on('Proyecto');
     });
   }
 
@@ -25,6 +24,6 @@ return new class extends Migration {
    * Reverse the migrations.
    */
   public function down(): void {
-    Schema::drop('Proyecto_doc');
+    Schema::drop('Proyecto_descripcion');
   }
 };
