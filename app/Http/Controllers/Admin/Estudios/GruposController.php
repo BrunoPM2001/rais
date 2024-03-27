@@ -54,6 +54,7 @@ class GruposController extends Controller {
     $solicitudes = DB::table('Grupo AS a')
       ->join('Grupo_integrante AS b', 'b.grupo_id', '=', 'a.id')
       ->join('Facultad AS d', 'd.id', '=', 'a.facultad_id')
+      ->leftJoinSub($coordinador, 'coordinador', 'coordinador.id', '=', 'a.id')
       ->select(
         'a.id',
         'a.grupo_nombre',
@@ -65,7 +66,6 @@ class GruposController extends Controller {
         'a.created_at',
         'a.updated_at'
       )
-      ->leftJoinSub($coordinador, 'coordinador', 'coordinador.id', '=', 'a.id')
       ->where('a.tipo', '=', 'solicitud')
       ->havingBetween('a.estado', [0, 6])
       ->groupBy('a.id')

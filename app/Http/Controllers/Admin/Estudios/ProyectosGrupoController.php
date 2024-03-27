@@ -2,10 +2,8 @@
 
 namespace App\Http\Controllers\Admin\Estudios;
 
-use App\Http\Controllers\Controller;
 use App\Http\Controllers\S3Controller;
 use Illuminate\Support\Facades\DB;
-use Aws\S3\S3Client;
 
 class ProyectosGrupoController extends S3Controller {
   public function listado($periodo) {
@@ -15,13 +13,14 @@ class ProyectosGrupoController extends S3Controller {
       ->leftJoin('Proyecto_integrante AS d', 'd.proyecto_id', '=', 'a.id')
       ->join('Facultad AS e', 'e.id', '=', 'b.facultad_id')
       ->leftJoin('Proyecto_presupuesto AS f', 'f.proyecto_id', '=', 'a.id')
+      ->join('Usuario_investigador AS g', 'g.id', '=', 'd.investigador_id')
       ->select(
         'a.id',
         'a.tipo_proyecto',
         'a.codigo_proyecto',
         'c.nombre AS linea',
         'a.titulo',
-        'd.investigador_id',
+        DB::raw('CONCAT(g.apellido1, " " , g.apellido2, ", ", g.nombres) AS responsable'),
         'b.grupo_nombre',
         'e.nombre AS facultad',
         DB::raw('SUM(f.monto) AS monto'),

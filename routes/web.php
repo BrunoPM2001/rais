@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\Admin\Usuario_investigadorController;
 use App\Http\Controllers\Admin\Admin\UsuarioController;
 use App\Http\Controllers\Admin\Estudios\ConvocatoriasController;
 use App\Http\Controllers\Admin\Estudios\GruposController;
+use App\Http\Controllers\Admin\Estudios\ProyectosFEXController;
 use App\Http\Controllers\Admin\Estudios\ProyectosGrupoController;
 use App\Http\Controllers\Admin\Facultad\ProyectosEvaluadosController;
 use App\Http\Controllers\Admin\Reportes\ConsolidadoGeneralController;
@@ -101,6 +102,11 @@ Route::prefix('api')->group(function () {
         Route::get('actividades/{proyecto_id}', [ProyectosGrupoController::class, 'actividades']);
         Route::get('presupuesto/{proyecto_id}', [ProyectosGrupoController::class, 'presupuesto']);
         Route::get('responsable/{proyecto_id}', [ProyectosGrupoController::class, 'responsable']);
+      });
+
+      //  ProyectosFEX
+      Route::prefix('proyectosFEX')->group(function () {
+        Route::get('listado', [ProyectosFEXController::class, 'listado']);
       });
     });
 
