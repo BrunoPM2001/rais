@@ -7,7 +7,6 @@ use Illuminate\Support\Facades\DB;
 
 class ProyectosFEXController extends Controller {
   public function listado() {
-    //  TODO - Completar campos como moneda, entidad financ. etc
     $responsable = DB::table('Proyecto_integrante AS a')
       ->leftJoin('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
       ->select(
