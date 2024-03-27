@@ -100,6 +100,7 @@ Route::prefix('api')->group(function () {
         Route::get('descripcion/{proyecto_id}', [ProyectosGrupoController::class, 'descripcion']);
         Route::get('actividades/{proyecto_id}', [ProyectosGrupoController::class, 'actividades']);
         Route::get('presupuesto/{proyecto_id}', [ProyectosGrupoController::class, 'presupuesto']);
+        Route::get('responsable/{proyecto_id}', [ProyectosGrupoController::class, 'responsable']);
       });
     });
 

@@ -145,4 +145,40 @@ class ProyectosGrupoController extends S3Controller {
 
     return ['data' => $presupuesto];
   }
+
+  public function responsable($proyecto_id) {
+    $responsable = DB::table('Proyecto_integrante AS a')
+      ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
+      ->leftJoin('Docente_categoria AS c', 'c.categoria_id', '=', 'b.docente_categoria')
+      ->leftJoin('Facultad AS d', 'd.id', '=', 'b.facultad_id')
+      ->leftJoin('Dependencia AS e', 'e.id', '=', 'b.dependencia_id')
+      ->leftJoin('Grupo AS f', 'f.id', '=', 'a.grupo_id')
+      ->select(
+        # Datos personales
+        DB::raw('CONCAT(b.apellido1, " " , b.apellido2) AS apellidos'),
+        'b.nombres',
+        'b.doc_numero',
+        'b.telefono_movil',
+        'b.telefono_trabajo',
+        # Datos profesionales
+        'b.especialidad',
+        'b.titulo_profesional',
+        'b.grado',
+        'b.tipo',
+        DB::raw('CONCAT(c.categoria, " | ", c.clase) AS docente_categoria'),
+        # Datos institucionales
+        'b.codigo',
+        'd.nombre AS facultad',
+        'e.dependencia',
+        'b.email3',
+        # Datos grupo
+        'f.grupo_nombre',
+        'f.grupo_nombre_corto'
+      )
+      ->where('a.condicion', '=', 'Responsable')
+      ->where('a.proyecto_id', '=', $proyecto_id)
+      ->get();
+
+    return ['data' => $responsable];
+  }
 }
