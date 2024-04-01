@@ -43,6 +43,10 @@ return new class extends Migration {
       $table->date('fecha_envio')->nullable();
       $table->string('estado_trabajo')->nullable();
       $table->timestamps();
+
+      //  Fks
+      $table->foreign('proyecto_id')->references('id')->on('Proyecto');
+      $table->foreign('informe_tipo_id')->references('id')->on('Informe_tipo');
     });
   }
 
