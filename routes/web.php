@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\Admin\Usuario_investigadorController;
 use App\Http\Controllers\Admin\Admin\UsuarioController;
 use App\Http\Controllers\Admin\Estudios\ConvocatoriasController;
 use App\Http\Controllers\Admin\Estudios\GruposController;
+use App\Http\Controllers\Admin\Estudios\InformesTecnicosController;
 use App\Http\Controllers\Admin\Estudios\ProyectosFEXController;
 use App\Http\Controllers\Admin\Estudios\ProyectosGrupoController;
 use App\Http\Controllers\Admin\Facultad\ProyectosEvaluadosController;
@@ -58,7 +59,7 @@ Route::prefix('admin')->middleware('checkRole:Administrador')->group(function ()
     Route::get('usuariosInvestigadores', [Usuario_investigadorController::class, 'main'])->name('view_usuariosInvestigadores');
   });
 
-  //ESTUDIOS
+  //  ESTUDIOS
   Route::prefix('estudios')->group(function () {
     Route::get('grupos', [GruposController::class, 'main'])->name('view_estudios_grupos');
   });
@@ -107,6 +108,12 @@ Route::prefix('api')->group(function () {
       //  ProyectosFEX
       Route::prefix('proyectosFEX')->group(function () {
         Route::get('listado', [ProyectosFEXController::class, 'listado']);
+      });
+
+      //  Informe técnico
+      Route::prefix('informesTecnicos')->group(function () {
+        Route::get('proyectosListado/{periodo}', [InformesTecnicosController::class, 'proyectosListado']);
+        Route::get('informes/{proyecto_id}', [InformesTecnicosController::class, 'informes']);
       });
     });
 
