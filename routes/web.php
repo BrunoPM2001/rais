@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\Admin\UsuarioController;
 use App\Http\Controllers\Admin\Estudios\ConvocatoriasController;
 use App\Http\Controllers\Admin\Estudios\GruposController;
 use App\Http\Controllers\Admin\Estudios\InformesTecnicosController;
+use App\Http\Controllers\Admin\Estudios\MonitoreoController;
 use App\Http\Controllers\Admin\Estudios\ProyectosFEXController;
 use App\Http\Controllers\Admin\Estudios\ProyectosGrupoController;
 use App\Http\Controllers\Admin\Facultad\ProyectosEvaluadosController;
@@ -93,7 +94,7 @@ Route::prefix('api')->group(function () {
         Route::get('laboratorios/{grupo_id}', [GruposController::class, 'laboratorios']);
       });
 
-      //  Proyectos_grupo
+      //  Proyectos grupo
       Route::prefix('proyectosGrupo')->group(function () {
         Route::get('listado/{periodo}', [ProyectosGrupoController::class, 'listado']);
         Route::get('detalle/{proyecto_id}', [ProyectosGrupoController::class, 'detalle']);
@@ -105,7 +106,7 @@ Route::prefix('api')->group(function () {
         Route::get('responsable/{proyecto_id}', [ProyectosGrupoController::class, 'responsable']);
       });
 
-      //  ProyectosFEX
+      //  Proyectos FEX
       Route::prefix('proyectosFEX')->group(function () {
         Route::get('listado', [ProyectosFEXController::class, 'listado']);
       });
@@ -114,6 +115,15 @@ Route::prefix('api')->group(function () {
       Route::prefix('informesTecnicos')->group(function () {
         Route::get('proyectosListado/{periodo}', [InformesTecnicosController::class, 'proyectosListado']);
         Route::get('informes/{proyecto_id}', [InformesTecnicosController::class, 'informes']);
+      });
+
+      //  Monitoreo
+      Route::prefix('monitoreo')->group(function () {
+        Route::get('listadoProyectos/{periodo}/{tipo_proyecto}', [MonitoreoController::class, 'listadoProyectos']);
+        Route::get('detalleProyecto/{proyecto_id}', [MonitoreoController::class, 'detalleProyecto']);
+        Route::get('listadoPeriodos', [MonitoreoController::class, 'listadoPeriodos']);
+        Route::get('listadoTipoProyectos/{meta_periodo_id}', [MonitoreoController::class, 'listadoTipoProyectos']);
+        Route::get('listadoPublicaciones/{meta_tipo_proyecto_id}', [MonitoreoController::class, 'listadoPublicaciones']);
       });
     });
 
