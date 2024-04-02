@@ -22,14 +22,14 @@
         <button class="nav-link active" id="listar-tab" data-bs-toggle="tab" data-bs-target="#listar-tab-pane" type="button" role="tab" aria-controls="listar-tab-pane" aria-selected="true">Grupos</button>
       </li>
       <li class="nav-item" role="presentation">
-        <button class="nav-link" id="listar2-tab" data-bs-toggle="tab" data-bs-target="#listar2-tab-pane" type="button" role="tab" aria-controls="listar-tab-pane" aria-selected="true">Solicitud</button>
+        <button class="nav-link" id="listar2-tab" data-bs-toggle="tab" data-bs-target="#listar2-tab-pane" type="button" role="tab" aria-controls="listar-tab-pane" aria-selected="true">Solicitudes</button>
       </li>
       <li class="nav-item" role="presentation">
-        <button hidden class="nav-link" id="detalle-tab" data-bs-toggle="tab" data-bs-target="#detalle-tab-pane" type="button" role="tab" aria-controls="listar-tab-pane" aria-selected="true">Detalle de convocatoria</button>
+        <button hidden class="nav-link" id="detalle-tab" data-bs-toggle="tab" data-bs-target="#detalle-tab-pane" type="button" role="tab" aria-controls="listar-tab-pane" aria-selected="true">Detalle</button>
       </li>
       <li class="nav-item" role="presentation" style="margin-left: 5px;">
         <div style="display: flex; justify-content: center; align-items: center; height: 100%;">
-            <button class="btn btn-primary" id="visualizar" type="button" style="padding:3px;">Visualizar</button>
+            <button class="btn btn-primary" id="BotonVisualizar" type="button" style="padding:3px;">Visualizar</button>
         </div>
       </li>
     </ul>
@@ -194,6 +194,39 @@
 
       <!--tabla 3-->
       <div class="tab-pane fade p-4" id="detalle-tab-pane" role="tabpanel" aria-labelledby="detalle-tab" tabindex="0">
+          <!---->
+          <ul class="nav nav-tabs" id="myTab" role="tablist">
+            <li class="nav-item" role="presentation">
+              <button class="nav-link active" id="nav_id" data-bs-toggle="tab" data-bs-target="#listar-tab-pane" type="button" role="tab" aria-controls="listar-tab-pane" aria-selected="true">ID</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="nav_datos" data-bs-toggle="tab" data-bs-target="#listar2-tab-pane" type="button" role="tab" aria-controls="listar-tab-pane" aria-selected="true">Datos del grupo</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="nav_editar" data-bs-toggle="tab" data-bs-target="#detalle-tab-pane" type="button" role="tab" aria-controls="listar-tab-pane" aria-selected="true">Editar</button>
+            </li>
+          </ul>
+
+          <div class="container" style="padding: 15px; border:1px solid #e3e3e3; margin-top:15px; margin-bottom:15px; border-radius: 4px;">
+            Aqui va el titulo
+          </div>
+          <div class="container row d-flex justify-content-between align-items">
+            <div class="col-sm-3" style="padding: 15px; border:1px solid #e3e3e3; margin-top:15px; margin-bottom:15px; border-radius: 4px;">
+              <label class="col-form-label" style="display: block; padding:0px; margin:0px;">RR creacion:<b> gaaaa</b></label>
+              <label class="col-form-label" style="display: block; padding:0px; margin:0px;">RR fecha creacion:<b> gaaaa</b></label>
+              <label class="col-form-label" style="display: block; padding:0px; margin:0px;">RR actual:<b> gaaaa</b></label>
+              <label class="col-form-label" style="display: block; padding:0px; margin:0px;">RR fecha creacion:<b> gaaaa</b></label>
+            </div>
+            
+            <div class="col-sm-8" style="padding: 15px; border:1px solid #e3e3e3; margin-top:15px; margin-bottom:15px; border-radius: 4px;">
+              <label class="col-form-label" style="display: block; padding:0px; margin:0px;">
+                <b>Observaciones:</b></label>
+                <hr>
+              <label class="col-form-label" style="display: block; padding:0px; margin:0px;">
+                <b>Observaciones al investigador:</b></label>
+            </div>
+          </div>
+          <!---->
         <div class="row align-items-center my-4">
           <div class="col-sm-3">
             <label class="col-form-label">Tipo de proyecto</label>
@@ -327,6 +360,7 @@
 
   <!--  Toast para notificaciones -->
   @extends('admin.components.toast')
+  
 
   <script type="module">
     $(document).ready(function() {
@@ -334,6 +368,32 @@
       let table2, table3
       let toast = new bootstrap.Toast(document.getElementById('myToast'));
       let tab = new bootstrap.Tab(document.getElementById('detalle-tab'));
+
+
+      function VisualizarGrupo() {
+        /*Fila tabla1*/
+        var table = $("#table").DataTable();
+        var selectedRows = table.rows({ selected: true }).count();
+        var selectedRow = table.row({selected: true });
+        //var rowId = selectedRow.data().id;
+
+        if (selectedRows===1) {
+          var rowId = selectedRow.data().id;
+          console.log(rowId)
+          console.log("table")
+          $('#detalle-tab').removeAttr('hidden');
+          //$('#BotonVisualizar').hide();
+          $('#detalle-tab').click();
+          
+        }else {
+          alert("Por favor, seleccione un registro para visualizar.");
+        }
+
+      }
+      $("#BotonVisualizar").on("click",VisualizarGrupo)
+
+
+
       //  Datatable grupos
       let ajax_url = 'http://localhost:8000/api/admin/estudios/listadoGrupos'
       let table = new DataTable('#table', {
@@ -392,6 +452,9 @@
             sNext: "Siguiente",
             sPrevious: "Anterior"
           },
+        },
+        select: {
+          style: 'multi'
         }
       });
 
@@ -448,144 +511,10 @@
             sNext: "Siguiente",
             sPrevious: "Anterior"
           },
+        },
+        select: {
+          style: 'multi'
         }
-      });
-
-
-      //  Iniciar nueva tab
-      $('#table').on('click', '.createTab', (e) => {
-        let item = e.currentTarget.getAttribute('id');
-        let [_, tipo_proyecto, periodo] = item.split('_');
-        $('#val_tipo_proyecto').val(tipo_proyecto);
-        $('#val_periodo').val(periodo);
-        //  Mostrar tab
-        $('#detalle-tab').removeAttr('hidden');
-        tab.show()
-        //  Si no se ha inicializado
-        if (!$.fn.DataTable.isDataTable('#table_detalles')) {
-          //  Nueva tabla
-          table2 = new DataTable('#table_detalles', {
-            paging: true,
-            // select: true,
-            pagingType: 'full_numbers',
-            deferRender: true,
-            processing: true,
-            lengthChange: false,
-            scrollX: true,
-            ajax: 'http://localhost:8000/api/admin/facultad/getDetalleConvocatoria/' + periodo + '/' + tipo_proyecto,
-            columns: [{
-                data: 'facultad'
-              },
-              {
-                data: 'cupos'
-              },
-              {
-                data: 'puntaje_minimo'
-              },
-              {
-                data: 'fecha_inicio'
-              },
-              {
-                data: 'fecha_fin'
-              },
-              {
-                data: 'evaluacion_fecha_inicio'
-              },
-              {
-                data: 'evaluacion_fecha_fin'
-              },
-              {
-                data: 'evaluadores'
-              }
-            ],
-            //  Idioma de la información mostrada
-            language: {
-              zeroRecords: "No se encontraron resultados",
-              info: "Mostrando _START_-_END_ de _TOTAL_ registros.",
-              infoEmpty: "No hay registros ...",
-              infoFiltered: "(filtrado de _MAX_ registros)",
-              sSearch: "Buscar:",
-              sProcessing: "Cargando data...",
-              oPaginate: {
-                sFirst: "Primero",
-                sLast: "Último",
-                sNext: "Siguiente",
-                sPrevious: "Anterior"
-              },
-            }
-          });
-        } else {
-          let ajax_url = 'http://localhost:8000/api/admin/facultad/getDetalleConvocatoria/' + periodo + '/' + tipo_proyecto;
-          table2.clear().draw();
-          table3.clear().draw();
-          table2.ajax.url(ajax_url).load();
-        }
-        table2.on('click', 'tbody tr', (e) => {
-          let classList = e.currentTarget.classList;
-          if (classList.contains('selected')) {
-            classList.remove('selected');
-          } else {
-            table2.rows('.selected').nodes().each((row) => row.classList.remove('selected'));
-            classList.add('selected');
-          }
-        });
-        table2.on('click', 'tbody tr', function() {
-          let data = table2.row(this).data();
-          //  Animación
-          $('html, body').animate({
-            scrollTop: $('#table_evaluadores').offset().top
-          }, 1000);
-          if (!$.fn.DataTable.isDataTable('#table_evaluadores')) {
-            //  Nueva tabla
-            table3 = new DataTable('#table_evaluadores', {
-              paging: false,
-              searching: false,
-              deferRender: true,
-              processing: true,
-              lengthChange: false,
-              scrollX: true,
-              ajax: 'http://localhost:8000/api/admin/facultad/getEvaluadoresConvocatoria/' + data.id,
-              columns: [{
-                  data: 'tipo'
-                },
-                {
-                  data: 'apellidos'
-                },
-                {
-                  data: 'nombres'
-                },
-                {
-                  data: 'institucion'
-                },
-                {
-                  data: 'cargo'
-                },
-                {
-                  data: 'codigo_regina'
-                },
-              ],
-              //  Idioma de la información mostrada
-              language: {
-                zeroRecords: "No se encontraron resultados",
-                info: "Mostrando _START_-_END_ de _TOTAL_ registros.",
-                infoEmpty: "No hay registros ...",
-                infoFiltered: "(filtrado de _MAX_ registros)",
-                sSearch: "Buscar:",
-                sProcessing: "Cargando data...",
-                oPaginate: {
-                  sFirst: "Primero",
-                  sLast: "Último",
-                  sNext: "Siguiente",
-                  sPrevious: "Anterior"
-                },
-              }
-            });
-          } else {
-            let ajax_url = 'http://localhost:8000/api/admin/facultad/getEvaluadoresConvocatoria/' + data.id;
-            table3.clear().draw();
-            table3.ajax.url(ajax_url).load();
-          }
-        });
       });
     });
   </script>
