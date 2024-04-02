@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\DB;
 
 class MonitoreoController extends Controller {
 
-  public function listadoProyectos($periodo, $tipo_proyecto) {
+  public function listadoProyectos($periodo, $tipo_proyecto, $estado_meta) {
     //  Validar si el periodo coincide con la tabla de Meta_periodo
     $periodos = DB::table('Meta_periodo')
       ->select(
@@ -25,16 +25,22 @@ class MonitoreoController extends Controller {
 
       if (sizeof($tipos_proyecto) > 0) {
         //  Retornar en caso coincida todo
-        $proyectos = DB::table('Proyecto')
+        $proyectos = DB::table('Proyecto AS a')
+          ->leftJoin('Monitoreo_proyecto AS b', 'b.proyecto_id', '=', 'a.id')
           ->select(
-            'id',
-            'codigo_proyecto',
-            'titulo',
+            'a.id',
+            'a.codigo_proyecto',
+            'a.titulo',
+            'a.estado',
+            'b.estado AS estado_meta',
+            'a.tipo_proyecto',
+            'a.periodo'
           )
-          ->where('estado', '=', 1)
-          ->where('periodo', '=', $periodo)
-          ->where('tipo_proyecto', '=', $tipo_proyecto)
-          ->get();
+          ->where('a.estado', '=', 1)
+          ->where('a.periodo', '=', $periodo)
+          ->where('a.tipo_proyecto', '=', $tipo_proyecto);
+
+        $proyectos = $estado_meta == 'null' ? $proyectos->get() : $proyectos->where('b.estado', '=', $estado_meta)->get();
 
         return ['data' => $proyectos];
       } else {
@@ -45,6 +51,7 @@ class MonitoreoController extends Controller {
     }
   }
 
+  //  TODO - Verificar para qué es la tabla de Monitoreo_proyecto_publicacion
   public function detalleProyecto($proyecto_id) {
     $proyecto = DB::table('Proyecto')
       ->select(

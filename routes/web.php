@@ -119,7 +119,7 @@ Route::prefix('api')->group(function () {
 
       //  Monitoreo
       Route::prefix('monitoreo')->group(function () {
-        Route::get('listadoProyectos/{periodo}/{tipo_proyecto}', [MonitoreoController::class, 'listadoProyectos']);
+        Route::get('listadoProyectos/{periodo}/{tipo_proyecto}/{estado_meta}', [MonitoreoController::class, 'listadoProyectos']);
         Route::get('detalleProyecto/{proyecto_id}', [MonitoreoController::class, 'detalleProyecto']);
         Route::get('listadoPeriodos', [MonitoreoController::class, 'listadoPeriodos']);
         Route::get('listadoTipoProyectos/{meta_periodo_id}', [MonitoreoController::class, 'listadoTipoProyectos']);
