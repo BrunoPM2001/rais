@@ -36,6 +36,7 @@ class DeudaProyectosController extends Controller {
       ->join('Usuario_investigador AS c', 'c.id', '=', 'a.investigador_id')
       ->leftJoin('Licencia AS d', 'd.investigador_id', '=', 'c.id')
       ->leftJoin('Licencia_tipo AS e', 'e.id', '=', 'd.licencia_tipo_id')
+      ->leftJoin('Proyecto_integrante_deuda AS f', 'f.proyecto_integrante_id', '=', 'a.id')
       ->select(
         'a.id',
         'c.doc_numero',
@@ -43,11 +44,50 @@ class DeudaProyectosController extends Controller {
         'c.apellido2',
         'c.nombres',
         'b.nombre AS condicion',
-        'e.tipo',
+        'e.tipo AS licencia',
+        'f.categoria AS tipo_deuda',
+        'f.informe',
+        'f.detalle',
+        'f.fecha_sub'
       )
       ->where('a.proyecto_id', '=', $proyecto_id)
       ->get();
 
     return ['data' => $integrantes];
+  }
+
+  public function listadoProyectosNoDeuda($periodo, $tipo_proyecto) {
+    $responsable = DB::table('Proyecto_integrante AS a')
+      ->leftJoin('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
+      ->select(
+        'a.proyecto_id',
+        DB::raw('CONCAT(b.apellido1, " " , b.apellido2, ", ", b.nombres) AS responsable')
+      )
+      ->where('condicion', '=', 'Responsable');
+
+    $lista = DB::table('Proyecto AS a')
+      ->join('Facultad AS b', 'b.id', '=', 'a.facultad_id')
+      ->leftJoinSub($responsable, 'res', 'res.proyecto_id', '=', 'a.id')
+      ->select(
+        'a.id',
+        'a.tipo_proyecto',
+        'a.codigo_proyecto',
+        'a.titulo',
+        'b.nombre AS facultad',
+        'res.responsable',
+        'a.deuda',
+        'a.periodo'
+      )
+      ->where('a.periodo', '=', $periodo)
+      ->where('a.tipo_proyecto', '=', $tipo_proyecto)
+      ->where(function ($query) {
+        $query->orWhere('a.deuda', '<', '1')
+          ->orWhere('a.deuda', '=', 2)
+          ->orWhere('a.deuda', '=', 8)
+          ->orWhereNull('a.deuda');
+      })
+      ->get();
+
+    return ['data' => $lista];
   }
 }

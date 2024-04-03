@@ -122,6 +122,8 @@ Route::prefix('api')->group(function () {
       Route::prefix('monitoreo')->group(function () {
         Route::get('listadoProyectos/{periodo}/{tipo_proyecto}/{estado_meta}', [MonitoreoController::class, 'listadoProyectos']);
         Route::get('detalleProyecto/{proyecto_id}', [MonitoreoController::class, 'detalleProyecto']);
+        Route::get('metasCumplidas/{proyecto_id}', [MonitoreoController::class, 'metasCumplidas']);
+        Route::get('publicaciones/{proyecto_id}', [MonitoreoController::class, 'publicaciones']);
         Route::get('listadoPeriodos', [MonitoreoController::class, 'listadoPeriodos']);
         Route::get('listadoTipoProyectos/{meta_periodo_id}', [MonitoreoController::class, 'listadoTipoProyectos']);
         Route::get('listadoPublicaciones/{meta_tipo_proyecto_id}', [MonitoreoController::class, 'listadoPublicaciones']);
@@ -131,6 +133,7 @@ Route::prefix('api')->group(function () {
       Route::prefix('deudaProyecto')->group(function () {
         Route::get('listadoProyectos/{periodo}/{tipo_proyecto}/{deuda}', [DeudaProyectosController::class, 'listadoProyectos']);
         Route::get('listadoIntegrantes/{proyecto_id}', [DeudaProyectosController::class, 'listadoIntegrantes']);
+        Route::get('listadoProyectosNoDeuda/{periodo}/{tipo_proyecto}', [DeudaProyectosController::class, 'listadoProyectosNoDeuda']);
       });
     });
 
