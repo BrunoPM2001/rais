@@ -194,6 +194,7 @@ class GruposController extends Controller {
         'd.tipo'
       )
       ->where('a.grupo_id', '=', $grupo_id)
+      ->groupBy('c.id')
       ->get();
 
     return ['data' => $publicaciones];
