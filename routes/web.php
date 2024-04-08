@@ -14,6 +14,7 @@ use App\Http\Controllers\Admin\Estudios\InformesTecnicosController;
 use App\Http\Controllers\Admin\Estudios\MonitoreoController;
 use App\Http\Controllers\Admin\Estudios\ProyectosFEXController;
 use App\Http\Controllers\Admin\Estudios\ProyectosGrupoController;
+use App\Http\Controllers\Admin\Estudios\PublicacionesController;
 use App\Http\Controllers\Admin\Facultad\ProyectosEvaluadosController;
 use App\Http\Controllers\Admin\Reportes\ConsolidadoGeneralController;
 use App\Http\Controllers\Admin\Reportes\DocenteController;
@@ -134,6 +135,16 @@ Route::prefix('api')->group(function () {
         Route::get('listadoProyectos/{periodo}/{tipo_proyecto}/{deuda}', [DeudaProyectosController::class, 'listadoProyectos']);
         Route::get('listadoIntegrantes/{proyecto_id}', [DeudaProyectosController::class, 'listadoIntegrantes']);
         Route::get('listadoProyectosNoDeuda/{periodo}/{tipo_proyecto}', [DeudaProyectosController::class, 'listadoProyectosNoDeuda']);
+      });
+
+      //  Gestión de publicaciones
+      Route::prefix('publicaciones')->group(function () {
+        Route::get('listado', [PublicacionesController::class, 'listado']);
+        Route::get('listadoInvestigador/{investigador_id}', [PublicacionesController::class, 'listadoInvestigador']);
+      });
+
+      Route::prefix('sincronizarPub')->group(function () {
+        // Route::get('listado/{investigador_id}');
       });
     });
 
