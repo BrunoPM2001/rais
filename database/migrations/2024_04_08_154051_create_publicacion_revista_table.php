@@ -19,7 +19,7 @@ return new class extends Migration {
       $table->string('pais', 50)->nullable();
       $table->string('cobertura', 50)->nullable();
       $table->boolean('estado')->nullable();
-      $table->timestamps();
+      $table->nullableTimestamps();
     });
   }
 
