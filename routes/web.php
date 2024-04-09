@@ -11,10 +11,12 @@ use App\Http\Controllers\Admin\Estudios\ConvocatoriasController;
 use App\Http\Controllers\Admin\Estudios\DeudaProyectosController;
 use App\Http\Controllers\Admin\Estudios\GruposController;
 use App\Http\Controllers\Admin\Estudios\InformesTecnicosController;
+use App\Http\Controllers\Admin\Estudios\InvestigadoresController;
 use App\Http\Controllers\Admin\Estudios\MonitoreoController;
 use App\Http\Controllers\Admin\Estudios\ProyectosFEXController;
 use App\Http\Controllers\Admin\Estudios\ProyectosGrupoController;
 use App\Http\Controllers\Admin\Estudios\PublicacionesController;
+use App\Http\Controllers\Admin\Estudios\RevistasController;
 use App\Http\Controllers\Admin\Facultad\ProyectosEvaluadosController;
 use App\Http\Controllers\Admin\Reportes\ConsolidadoGeneralController;
 use App\Http\Controllers\Admin\Reportes\DocenteController;
@@ -145,6 +147,23 @@ Route::prefix('api')->group(function () {
 
       Route::prefix('sincronizarPub')->group(function () {
         // Route::get('listado/{investigador_id}');
+      });
+
+      //  Revistas
+      Route::prefix('revistas')->group(function () {
+        Route::get('listado', [RevistasController::class, 'listado']);
+        Route::get('listadoDBindex', [RevistasController::class, 'listadoDBindex']);
+        Route::get('listadoDBwos', [RevistasController::class, 'listadoDBwos']);
+      });
+
+      //  Laboratorio
+      Route::prefix('laboratorios')->group(function () {
+        Route::get('listado', [RevistasController::class, 'listado']);
+      });
+
+      //  Gestión de investigadores
+      Route::prefix('investigadores')->group(function () {
+        Route::get('listado', [InvestigadoresController::class, 'listado']);
       });
     });
 
