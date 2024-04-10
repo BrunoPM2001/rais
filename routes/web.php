@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\Admin\Usuario_investigadorController;
 use App\Http\Controllers\Admin\Admin\UsuarioController;
 use App\Http\Controllers\Admin\Estudios\ConvocatoriasController;
 use App\Http\Controllers\Admin\Estudios\DeudaProyectosController;
+use App\Http\Controllers\Admin\Estudios\DocentesController;
 use App\Http\Controllers\Admin\Estudios\GruposController;
 use App\Http\Controllers\Admin\Estudios\InformesTecnicosController;
 use App\Http\Controllers\Admin\Estudios\InvestigadoresController;
@@ -164,6 +165,12 @@ Route::prefix('api')->group(function () {
       //  Gestión de investigadores
       Route::prefix('investigadores')->group(function () {
         Route::get('listado', [InvestigadoresController::class, 'listado']);
+      });
+
+      //  Gestión de docentes investigadores
+      Route::prefix('docentes')->group(function () {
+        Route::get('listadoSolicitudes', [DocentesController::class, 'listadoSolicitudes']);
+        Route::get('listadoConstancias', [DocentesController::class, 'listadoConstancias']);
       });
     });
 
