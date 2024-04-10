@@ -30,7 +30,10 @@ class InvestigadoresController extends Controller {
         'a.apellido1',
         'a.apellido2',
         'a.nombres',
-        'a.fecha_nac'
+        'a.fecha_nac',
+        'a.doc_tipo',
+        'a.doc_numero',
+        'a.telefono_movil'
       )
       ->get();
 
