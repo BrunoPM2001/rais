@@ -48,6 +48,7 @@ class ProyectosGrupoController extends S3Controller {
         'a.resolucion_rectoral',
         'a.resolucion_fecha',
         'a.comentario',
+        'a.observaciones_admin',
         'a.fecha_inicio',
         'a.fecha_fin',
         'a.palabras_clave',
@@ -146,7 +147,27 @@ class ProyectosGrupoController extends S3Controller {
       ->orderBy('a.tipo')
       ->get();
 
-    return ['data' => $presupuesto];
+    //  Info de presupuesto
+    $info = [
+      'bienes_monto' => 0.00, 'bienes_cantidad' => 0,
+      'servicios_monto' => 0.00, 'servicios_cantidad' => 0
+    ];
+
+    foreach ($presupuesto as $data) {
+      if ($data->tipo == "Bienes") {
+        $info["bienes_monto"] += $data->monto;
+        $info["bienes_cantidad"]++;
+      }
+      if ($data->tipo == "Servicios") {
+        $info["servicios_monto"] += $data->monto;
+        $info["servicios_cantidad"]++;
+      }
+    }
+
+    $info["bienes_porcentaje"] = ($info["bienes_monto"] / ($info["bienes_monto"] + $info["servicios_monto"])) * 100;
+    $info["servicios_porcentaje"] = ($info["servicios_monto"] / ($info["bienes_monto"] + $info["servicios_monto"])) * 100;
+
+    return ['data' => $presupuesto, 'info' => $info];
   }
 
   public function responsable($proyecto_id) {
