@@ -9,33 +9,21 @@ use App\Models\Linea_investigacion;
 
 class Linea_investigacionController extends Controller {
 
-  public function main() {
-    //  Lista de facultades
-    $facultad = new Facultad();
-    $facultades = $facultad->listar();
-
-    //  Lista de lineas
-    $lineas = $this->getAll();
-
-    return view('admin.admin.lineas_investigacion', [
-      'facultades' => $facultades,
-      'lineas' => $lineas["data"]
-    ]);
-  }
-
-  public function getAll() {
+  public function getAll($facultad_id) {
     $lineas_investigacion = Linea_investigacion::select('id', 'codigo', 'nombre')
+      ->where('facultad_id', $facultad_id)
       ->get();
+
     return ['data' => $lineas_investigacion];
   }
 
-  public function getAllOfFacultad($id) {
+  public function getAllOfFacultad($facultad_id) {
     $query = Linea_investigacion::with('hijos')
       ->whereNull('parent_id');
-    if ($id == 'null') {
+    if ($facultad_id == 'null') {
       $query->whereNull('facultad_id');
     } else {
-      $query->where('facultad_id', $id);
+      $query->where('facultad_id', $facultad_id);
     }
     $lineas_investigacion = $query->get();
     return ['data' => $lineas_investigacion];

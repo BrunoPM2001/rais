@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers\Admin\Estudios;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\S3Controller;
 use Illuminate\Support\Facades\DB;
 
-class GruposController extends Controller {
+class GruposController extends S3Controller {
 
   public function listadoGrupos() {
     //  Subquery para obtener el coordinador de cada grupo
@@ -30,7 +30,8 @@ class GruposController extends Controller {
         'coordinador.nombre AS coordinador',
         'a.resolucion_rectoral',
         'a.created_at',
-        'a.updated_at'
+        'a.updated_at',
+        'a.estado'
       )
       ->leftJoinSub($coordinador, 'coordinador', 'coordinador.id', '=', 'a.id')
       ->where('a.tipo', '=', 'grupo')
@@ -52,7 +53,7 @@ class GruposController extends Controller {
 
     //  Query base
     $solicitudes = DB::table('Grupo AS a')
-      ->join('Grupo_integrante AS b', 'b.grupo_id', '=', 'a.id')
+      ->leftJoin('Grupo_integrante AS b', 'b.grupo_id', '=', 'a.id')
       ->join('Facultad AS d', 'd.id', '=', 'a.facultad_id')
       ->leftJoinSub($coordinador, 'coordinador', 'coordinador.id', '=', 'a.id')
       ->select(
@@ -75,9 +76,22 @@ class GruposController extends Controller {
   }
 
   public function detalle($grupo_id) {
+
+    $s3 = $this->s3Client;
+
+    $coordinador = DB::table('Grupo_integrante AS a')
+      ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
+      ->select(
+        'a.grupo_id AS id',
+        DB::raw('CONCAT(b.apellido1, " ", b.apellido2, ", ", b.nombres) AS nombre'),
+      )
+      ->where('a.cargo', '=', 'Coordinador');
+
     $detalleGrupo = DB::table('Grupo AS a')
       ->join('Facultad AS b', 'b.id', '=', 'a.facultad_id')
+      ->leftJoinSub($coordinador, 'coordinador', 'coordinador.id', '=', 'a.id')
       ->select(
+        'a.id',
         'a.grupo_nombre',
         'a.resolucion_rectoral_creacion',
         'a.resolucion_creacion_fecha',
@@ -85,6 +99,8 @@ class GruposController extends Controller {
         'a.resolucion_fecha',
         'a.observaciones',
         'a.observaciones_admin',
+        'coordinador.nombre AS coordinador',
+        'a.estado',
         'b.nombre AS facultad',
         'a.telefono',
         'a.anexo',
@@ -96,11 +112,25 @@ class GruposController extends Controller {
         'a.presentacion',
         'a.objetivos',
         'a.servicios',
-        'a.infraestructura_ambientes'
+        'a.infraestructura_ambientes',
+        'a.infraestructura_sgestion'
       )
       ->where('a.id', '=', $grupo_id)
       ->get();
 
+    //  Obtener objetos del bucket
+    foreach ($detalleGrupo as $detalle) {
+      $url = null;
+      if ($detalle->infraestructura_sgestion != null) {
+        $cmd = $s3->getCommand('GetObject', [
+          'Bucket' => 'grupo-infraestructura-sgestion',
+          'Key' => $detalle->id . "." . $detalle->infraestructura_sgestion
+        ]);
+        //  Generar url temporal
+        $url = (string) $s3->createPresignedRequest($cmd, '+10 minutes')->getUri();
+      }
+      $detalle->infraestructura_sgestion = $url;
+    }
     return ['data' => $detalleGrupo];
   }
 

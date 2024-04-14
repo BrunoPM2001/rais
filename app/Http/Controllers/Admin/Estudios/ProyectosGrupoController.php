@@ -43,6 +43,10 @@ class ProyectosGrupoController extends S3Controller {
       ->select(
         'a.titulo',
         'a.codigo_proyecto',
+        'a.tipo_proyecto',
+        'a.estado',
+        'a.resolucion_rectoral',
+        'a.resolucion_fecha',
         'a.comentario',
         'a.fecha_inicio',
         'a.fecha_fin',
