@@ -44,10 +44,10 @@ class MonitoreoController extends Controller {
 
         return ['data' => $proyectos];
       } else {
-        return ['error' => 'Tipo de proyecto inválido'];
+        return ['data' => [], 'error' => 'Tipo de proyecto inválido'];
       }
     } else {
-      return ['error' => 'Periodo inválido'];
+      return ['data' => [], 'error' => 'Periodo inválido'];
     }
   }
 
