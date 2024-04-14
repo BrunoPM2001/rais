@@ -117,7 +117,39 @@ class ProyectosGrupoController extends S3Controller {
       ->where('proyecto_id', '=', $proyecto_id)
       ->get();
 
-    return ['data' => $descripcion];
+    $detalles = [];
+    foreach ($descripcion  as $data) {
+      switch ($data->codigo) {
+        case "resumen_ejecutivo":
+          $detalles["resumen_ejecutivo"] = $data->detalle;
+          break;
+        case "antecedentes":
+          $detalles["antecedentes"] = $data->detalle;
+          break;
+        case "objetivos":
+          $detalles["objetivos"] = $data->detalle;
+          break;
+        case "justificacion":
+          $detalles["justificacion"] = $data->detalle;
+          break;
+        case "hipotesis":
+          $detalles["hipotesis"] = $data->detalle;
+          break;
+        case "metodologia_trabajo":
+          $detalles["metodologia_trabajo"] = $data->detalle;
+          break;
+        case "referencias_bibliograficas":
+          $detalles["referencias_bibliograficas"] = $data->detalle;
+          break;
+        case "contribucion_impacto":
+          $detalles["contribucion_impacto"] = $data->detalle;
+          break;
+        default:
+          break;
+      }
+    }
+
+    return ['data' => $detalles];
   }
 
   public function actividades($proyecto_id) {
