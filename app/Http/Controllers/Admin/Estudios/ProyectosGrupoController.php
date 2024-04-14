@@ -182,7 +182,8 @@ class ProyectosGrupoController extends S3Controller {
     //  Info de presupuesto
     $info = [
       'bienes_monto' => 0.00, 'bienes_cantidad' => 0,
-      'servicios_monto' => 0.00, 'servicios_cantidad' => 0
+      'servicios_monto' => 0.00, 'servicios_cantidad' => 0,
+      'otros_monto' => 0.00, 'otros_cantidad' => 0
     ];
 
     foreach ($presupuesto as $data) {
@@ -194,10 +195,15 @@ class ProyectosGrupoController extends S3Controller {
         $info["servicios_monto"] += $data->monto;
         $info["servicios_cantidad"]++;
       }
+      if ($data->tipo == "Otros") {
+        $info["otros_monto"] += $data->monto;
+        $info["otros_cantidad"]++;
+      }
     }
 
-    $info["bienes_porcentaje"] = ($info["bienes_monto"] / ($info["bienes_monto"] + $info["servicios_monto"])) * 100;
-    $info["servicios_porcentaje"] = ($info["servicios_monto"] / ($info["bienes_monto"] + $info["servicios_monto"])) * 100;
+    $info["bienes_porcentaje"] = number_format(($info["bienes_monto"] / ($info["bienes_monto"] + $info["servicios_monto"] + $info["otros_monto"])) * 100, 2);
+    $info["servicios_porcentaje"] = number_format(($info["servicios_monto"] / ($info["bienes_monto"] + $info["servicios_monto"] + $info["otros_monto"])) * 100, 2);
+    $info["otros_porcentaje"] = number_format(($info["servicios_monto"] / ($info["bienes_monto"] + $info["servicios_monto"] + $info["otros_monto"])) * 100, 2);
 
     return ['data' => $presupuesto, 'info' => $info];
   }
