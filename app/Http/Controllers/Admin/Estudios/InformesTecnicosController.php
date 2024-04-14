@@ -38,7 +38,7 @@ class InformesTecnicosController extends Controller {
         'deu.estado AS deuda',
         'deu.categoria AS tipo_deuda',
         'res.responsable',
-        'c.nombre',
+        'c.nombre AS facultad',
         'a.titulo',
       )
       ->where('a.periodo', '=', $periodo)
