@@ -203,7 +203,7 @@ class ProyectosGrupoController extends S3Controller {
 
     $info["bienes_porcentaje"] = number_format(($info["bienes_monto"] / ($info["bienes_monto"] + $info["servicios_monto"] + $info["otros_monto"])) * 100, 2);
     $info["servicios_porcentaje"] = number_format(($info["servicios_monto"] / ($info["bienes_monto"] + $info["servicios_monto"] + $info["otros_monto"])) * 100, 2);
-    $info["otros_porcentaje"] = number_format(($info["servicios_monto"] / ($info["bienes_monto"] + $info["servicios_monto"] + $info["otros_monto"])) * 100, 2);
+    $info["otros_porcentaje"] = number_format(($info["otros_monto"] / ($info["bienes_monto"] + $info["servicios_monto"] + $info["otros_monto"])) * 100, 2);
 
     return ['data' => $presupuesto, 'info' => $info];
   }
