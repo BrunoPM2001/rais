@@ -36,19 +36,28 @@ class DashboardController extends Controller {
       ->select(
         'tipo_proyecto'
       )
+      ->where('periodo', '>', 2016)
+      ->whereNotNull('periodo')
+      ->whereNotNull('tipo_proyecto')
       ->groupBy('tipo_proyecto')
       ->get();
+
+    $countExp = [];
+
+    foreach ($tipos as $tipo) {
+      $countExp[] = DB::raw('COUNT(IF(tipo_proyecto = "' . $tipo->tipo_proyecto . '", 1, NULL)) AS "' . $tipo->tipo_proyecto . '"');
+    }
 
     $cuenta =  DB::table('Proyecto')
       ->select(
         'periodo',
-        'tipo_proyecto',
-        DB::raw('COUNT(*) AS cuenta')
+        DB::raw('COUNT(*) AS cuenta'),
+        ...$countExp,
       )
       ->where('periodo', '>', 2016)
       ->whereNotNull('periodo')
       ->whereNotNull('tipo_proyecto')
-      ->groupBy('tipo_proyecto', 'periodo')
+      ->groupBy('periodo')
       ->orderBy('periodo')
       ->get();
 
