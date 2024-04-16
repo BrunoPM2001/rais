@@ -51,7 +51,6 @@ class DashboardController extends Controller {
     $cuenta =  DB::table('Proyecto')
       ->select(
         'periodo',
-        DB::raw('COUNT(*) AS cuenta'),
         ...$countExp,
       )
       ->where('periodo', '>', 2016)
