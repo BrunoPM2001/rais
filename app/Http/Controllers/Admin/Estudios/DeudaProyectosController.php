@@ -56,7 +56,7 @@ class DeudaProyectosController extends Controller {
     return ['data' => $integrantes];
   }
 
-  public function listadoProyectosNoDeuda($periodo, $tipo_proyecto) {
+  public function listadoProyectosNoDeuda() {
     $responsable = DB::table('Proyecto_integrante AS a')
       ->leftJoin('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
       ->select(
@@ -78,8 +78,6 @@ class DeudaProyectosController extends Controller {
         'a.deuda',
         'a.periodo'
       )
-      ->where('a.periodo', '=', $periodo)
-      ->where('a.tipo_proyecto', '=', $tipo_proyecto)
       ->where(function ($query) {
         $query->orWhere('a.deuda', '<', '1')
           ->orWhere('a.deuda', '=', 2)

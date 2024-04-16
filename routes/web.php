@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\Admin\DependenciaController;
 use App\Http\Controllers\Admin\Admin\Usuario_adminController;
 use App\Http\Controllers\Admin\Admin\Usuario_investigadorController;
 use App\Http\Controllers\Admin\Admin\UsuarioController;
+use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\Estudios\ConvocatoriasController;
 use App\Http\Controllers\Admin\Estudios\DeudaProyectosController;
 use App\Http\Controllers\Admin\Estudios\DocentesController;
@@ -78,6 +79,10 @@ Route::prefix('admin')->middleware('checkRole:Administrador')->group(function ()
 Route::prefix('api')->group(function () {
   //  ADMIN
   Route::prefix('admin')->group(function () {
+    Route::prefix('dashboard')->group(function () {
+      Route::get('metricas', [DashboardController::class, 'metricas']);
+      Route::get('proyectosHistoricoData', [DashboardController::class, 'proyectosHistoricoData']);
+    });
     //  Estudios
     Route::prefix('estudios')->group(function () {
       //  Convocatorias
@@ -137,7 +142,7 @@ Route::prefix('api')->group(function () {
       Route::prefix('deudaProyecto')->group(function () {
         Route::get('listadoProyectos/{periodo}/{tipo_proyecto}/{deuda}', [DeudaProyectosController::class, 'listadoProyectos']);
         Route::get('listadoIntegrantes/{proyecto_id}', [DeudaProyectosController::class, 'listadoIntegrantes']);
-        Route::get('listadoProyectosNoDeuda/{periodo}/{tipo_proyecto}', [DeudaProyectosController::class, 'listadoProyectosNoDeuda']);
+        Route::get('listadoProyectosNoDeuda', [DeudaProyectosController::class, 'listadoProyectosNoDeuda']);
       });
 
       //  Gestión de publicaciones

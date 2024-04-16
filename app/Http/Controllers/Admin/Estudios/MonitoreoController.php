@@ -69,6 +69,8 @@ class MonitoreoController extends Controller {
       ->where('a.id', '=', $proyecto_id)
       ->get();
 
+    $proyecto[0]->estado_label = "Enviado";
+
     return ['data' => $proyecto];
   }
 
