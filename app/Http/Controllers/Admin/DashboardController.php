@@ -31,6 +31,21 @@ class DashboardController extends Controller {
     ];
   }
 
+  public function proyectos($periodo) {
+    $proyectos = DB::table('Proyecto')
+      ->select(
+        'tipo_proyecto',
+        DB::raw('COUNT(*) AS cuenta')
+      )
+      ->where('periodo', '=', $periodo)
+      ->whereNotNull('periodo')
+      ->whereNotNull('tipo_proyecto')
+      ->groupBy('tipo_proyecto')
+      ->get();
+
+    return ['data' => $proyectos];
+  }
+
   public function proyectosHistoricoData() {
     $tipos = DB::table('Proyecto')
       ->select(
