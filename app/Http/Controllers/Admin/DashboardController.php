@@ -24,7 +24,7 @@ class DashboardController extends Controller {
       ->count();
 
     $proyectosPasados = DB::table('Proyecto_H')
-      ->whereNotNull('tipo_proyecto')
+      ->whereNotNull('tipo')
       ->count();
 
     return [
