@@ -34,8 +34,8 @@ class DashboardController extends Controller {
   public function proyectos($periodo) {
     $proyectos = DB::table('Proyecto')
       ->select(
-        'tipo_proyecto',
-        DB::raw('COUNT(*) AS cuenta')
+        'tipo_proyecto AS tittle',
+        DB::raw('COUNT(*) AS value')
       )
       ->where('periodo', '=', $periodo)
       ->whereNotNull('periodo')
