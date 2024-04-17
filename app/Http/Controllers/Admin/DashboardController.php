@@ -23,11 +23,16 @@ class DashboardController extends Controller {
       ->whereNotNull('tipo_proyecto')
       ->count();
 
+    $proyectosPasados = DB::table('Proyecto_H')
+      ->whereNotNull('tipo_proyecto')
+      ->count();
+
     return [
       'grupos' => $grupos,
       'investigadores' => $investigadores,
       'publicaciones' => $publicaciones,
-      'proyectos' => $proyectos
+      'proyectos' => $proyectos,
+      'proyectosPasados' => $proyectosPasados
     ];
   }
 
