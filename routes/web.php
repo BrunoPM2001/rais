@@ -197,6 +197,16 @@ Route::prefix('api')->group(function () {
       Route::get('getConstanciaGrupoInvestigacion/{investigador_id}', [ReporteController::class, 'getConstanciaGrupoInvestigacion']);
     });
 
+    //  Facultad
+    Route::prefix('facultad')->group(function () {
+      //  Convocatorias
+      Route::prefix('convocatorias')->group(function () {
+        Route::get('getConvocatorias', [Evaluacion_facultadController::class, 'getConvocatorias']);
+        Route::get('getDetalleConvocatoria/{periodo}/{tipo_proyecto}', [Evaluacion_facultadController::class, 'getDetalleConvocatoria']);
+        Route::get('getEvaluadoresConvocatoria/{id}', [Evaluacion_facultadController::class, 'getEvaluadoresConvocatoria']);
+      });
+    });
+
 
     //  Admin
     Route::prefix('admin')->group(function () {
@@ -224,10 +234,6 @@ Route::prefix('api')->group(function () {
 
       //  Facultad
       Route::prefix('facultad')->group(function () {
-        Route::get('getConvocatorias', [Evaluacion_facultadController::class, 'getConvocatorias']);
-        Route::get('getDetalleConvocatoria/{periodo}/{tipo_proyecto}', [Evaluacion_facultadController::class, 'getDetalleConvocatoria']);
-        Route::get('getEvaluadoresConvocatoria/{id}', [Evaluacion_facultadController::class, 'getEvaluadoresConvocatoria']);
-
         Route::get('getAllEvaluadores', [ProyectoController::class, 'getAllEvaluadores']);
         Route::get('searchEvaluadorBy/{input}', [AsignacionEvaluadorController::class, 'searchEvaluadorBy']);
         Route::get('getEvaluadoresProyecto/{id}', [AsignacionEvaluadorController::class, 'getEvaluadoresProyecto']);

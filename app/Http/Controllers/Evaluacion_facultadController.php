@@ -8,6 +8,7 @@ class Evaluacion_facultadController extends Controller {
   public function getConvocatorias() {
     $convocatorias = DB::table('Evaluacion_facultad_H AS a')
       ->select(
+        'id',
         'tipo_proyecto',
         'periodo',
         DB::raw('COUNT(*) AS facultades'),
