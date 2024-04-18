@@ -36,6 +36,36 @@ class DashboardController extends Controller {
     ];
   }
 
+  public function tipoPublicaciones() {
+    $tipos = DB::table('Publicacion AS a')
+      ->leftJoin('Publicacion_categoria AS b', 'b.id', '=', 'a.categoria_id')
+      ->select(
+        'b.tipo'
+      )
+      ->whereRaw('YEAR(a.fecha_inscripcion) > 2020')
+      ->whereNotNull('b.tipo')
+      ->groupBy('b.tipo')
+      ->get();
+
+    $countExp = [];
+
+    foreach ($tipos as $tipo) {
+      $countExp[] = DB::raw('COUNT(IF(b.tipo = "' . $tipo->tipo . '", 1, NULL)) AS "' . $tipo->tipo . '"');
+    }
+
+    $publicaciones = DB::table('Publicacion AS a')
+      ->leftJoin('Publicacion_categoria AS b', 'b.id', '=', 'a.categoria_id')
+      ->select(
+        DB::raw('YEAR(a.fecha_inscripcion) AS periodo'),
+        ...$countExp,
+      )
+      ->whereRaw('YEAR(a.fecha_inscripcion) > 2020')
+      ->groupByRaw('YEAR(a.fecha_inscripcion)')
+      ->get();
+
+    return ['tipos' => $tipos, 'cuenta' => $publicaciones];
+  }
+
   public function proyectos($periodo) {
     $proyectos = DB::table('Proyecto')
       ->select(

@@ -81,6 +81,7 @@ Route::prefix('api')->group(function () {
   Route::prefix('admin')->group(function () {
     Route::prefix('dashboard')->group(function () {
       Route::get('metricas', [DashboardController::class, 'metricas']);
+      Route::get('tipoPublicaciones', [DashboardController::class, 'tipoPublicaciones']);
       Route::get('proyectosHistoricoData', [DashboardController::class, 'proyectosHistoricoData']);
       Route::get('proyectos/{periodo}', [DashboardController::class, 'proyectos']);
     });
