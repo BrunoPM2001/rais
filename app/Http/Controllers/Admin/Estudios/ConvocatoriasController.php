@@ -15,6 +15,7 @@ class ConvocatoriasController extends Controller {
         'fecha_final',
         'fecha_corte',
         'periodo',
+        'convocatoria',
         'estado'
       )
       ->where('evento', '=', 'registro')

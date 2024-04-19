@@ -28,6 +28,7 @@ use App\Http\Controllers\Admin\Reportes\PresupuestoController;
 use App\Http\Controllers\Admin\Reportes\ProyectoController as ReporteProyectoController;
 use App\Http\Controllers\Evaluacion_facultadController;
 use App\Http\Controllers\ProyectoController;
+use App\Http\Controllers\SessionController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -41,41 +42,11 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/', function () {
-  return view('welcome');
-});
-
-Route::get('/login', function () {
-  return view('login');
-})->name('login');
-
-//  ADMIN VIEWS
-Route::prefix('admin')->middleware('checkRole:Administrador')->group(function () {
-  //  FACULTAD
-  Route::prefix('facultad')->group(function () {
-    Route::get('convocatorias', [Evaluacion_facultadController::class, 'main'])->name('view_facultad_convocatorias');
-    Route::get('asignacionEvaluadores', [AsignacionEvaluadorController::class, 'main'])->name('view_facultad_asignacionEvaluadores');
-    Route::get('proyectosEvaluados', [ProyectosEvaluadosController::class, 'main'])->name('view_facultad_proyectosEvaluados');
-  });
-
-  //  ADMIN
-  Route::prefix('admin')->group(function () {
-    Route::get('lineas', [Linea_investigacionController::class, 'main'])->name('view_lineas');
-    Route::get('dependencias', [DependenciaController::class, 'main'])->name('view_dependencias');
-    Route::get('usuariosAdmin', [Usuario_adminController::class, 'main'])->name('view_usuariosAdmin');
-    Route::get('usuariosInvestigadores', [Usuario_investigadorController::class, 'main'])->name('view_usuariosInvestigadores');
-  });
-
-  //  ESTUDIOS
-  Route::prefix('estudios')->group(function () {
-    Route::get('grupos', [GruposController::class, 'main'])->name('view_estudios_grupos');
-  });
-});
+//  Auth
+Route::post('login', [SessionController::class, 'login']);
+Route::get('checkAuth', [SessionController::class, 'checkAuth']);
 
 
-// +---------------------------------------------------------------------------------------------------------------------------------------------+
-
-//  API
 Route::prefix('api')->group(function () {
   //  ADMIN
   Route::prefix('admin')->group(function () {
@@ -88,10 +59,12 @@ Route::prefix('api')->group(function () {
     //  Estudios
     Route::prefix('estudios')->group(function () {
       //  Convocatorias
-      Route::get('listarConvocatorias', [ConvocatoriasController::class, 'listarConvocatorias']);
-      Route::get('getOneConvocatoria/{parent_id}', [ConvocatoriasController::class, 'getOneConvocatoria']);
-      Route::get('listaEvaluaciones', [ConvocatoriasController::class, 'listaEvaluaciones']);
-      Route::get('verCriteriosEvaluacion/{evaluacion_id}', [ConvocatoriasController::class, 'verCriteriosEvaluacion']);
+      Route::prefix('convocatorias')->group(function () {
+        Route::get('listarConvocatorias', [ConvocatoriasController::class, 'listarConvocatorias']);
+        Route::get('getOneConvocatoria/{parent_id}', [ConvocatoriasController::class, 'getOneConvocatoria']);
+        Route::get('listaEvaluaciones', [ConvocatoriasController::class, 'listaEvaluaciones']);
+        Route::get('verCriteriosEvaluacion/{evaluacion_id}', [ConvocatoriasController::class, 'verCriteriosEvaluacion']);
+      });
 
       //  Grupos
       Route::prefix('grupos')->group(function () {

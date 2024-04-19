@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller {
@@ -42,7 +41,7 @@ class DashboardController extends Controller {
       ->select(
         'b.tipo'
       )
-      ->whereRaw('YEAR(a.fecha_inscripcion) > 2020')
+      ->whereRaw('YEAR(a.fecha_inscripcion) > 2019')
       ->whereNotNull('b.tipo')
       ->groupBy('b.tipo')
       ->get();
@@ -59,7 +58,7 @@ class DashboardController extends Controller {
         DB::raw('YEAR(a.fecha_inscripcion) AS periodo'),
         ...$countExp,
       )
-      ->whereRaw('YEAR(a.fecha_inscripcion) > 2020')
+      ->whereRaw('YEAR(a.fecha_inscripcion) > 2019')
       ->groupByRaw('YEAR(a.fecha_inscripcion)')
       ->get();
 
