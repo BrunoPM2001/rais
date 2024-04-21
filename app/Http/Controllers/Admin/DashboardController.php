@@ -3,10 +3,18 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\SessionController;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller {
-  public function metricas() {
+  public function metricas(Request $request) {
+
+    //  Check token
+    $sesion = new SessionController();
+    if (!$sesion->checkRole("Usuario_admin", $request->header('Authorization'))) {
+      return response()->json(['error' => 'Unauthorized'], 401);
+    }
 
     $grupos = DB::table('Grupo')
       ->where('estado', '=', 4)
