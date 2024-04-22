@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\DB;
 class LaboratoriosController extends Controller {
   public function listado() {
     $laboratorios = DB::table('Laboratorio AS a')
-      ->join('Facultad AS b', 'b.id', '=', 'a.facutad_id')
+      ->join('Facultad AS b', 'b.id', '=', 'a.facultad_id')
       ->select(
         'a.id',
         'a.codigo',

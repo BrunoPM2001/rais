@@ -14,6 +14,7 @@ use App\Http\Controllers\Admin\Estudios\DocentesController;
 use App\Http\Controllers\Admin\Estudios\GruposController;
 use App\Http\Controllers\Admin\Estudios\InformesTecnicosController;
 use App\Http\Controllers\Admin\Estudios\InvestigadoresController;
+use App\Http\Controllers\Admin\Estudios\LaboratoriosController;
 use App\Http\Controllers\Admin\Estudios\MonitoreoController;
 use App\Http\Controllers\Admin\Estudios\ProyectosFEXController;
 use App\Http\Controllers\Admin\Estudios\ProyectosGrupoController;
@@ -49,7 +50,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('api')->group(function () {
   //  ADMIN
-  Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function () {
+  Route::prefix('admin')->group(function () {
     //  Estudios
     Route::prefix('estudios')->group(function () {
       //  Convocatorias
@@ -133,7 +134,7 @@ Route::prefix('api')->group(function () {
 
       //  Laboratorio
       Route::prefix('laboratorios')->group(function () {
-        Route::get('listado', [RevistasController::class, 'listado']);
+        Route::get('listado', [LaboratoriosController::class, 'listado']);
       });
 
       //  Gestión de investigadores
