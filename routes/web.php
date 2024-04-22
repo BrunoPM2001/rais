@@ -43,19 +43,13 @@ use Illuminate\Support\Facades\Route;
 */
 
 //  Auth
-Route::post('login', [SessionController::class, 'login']);
-Route::get('checkAuth', [SessionController::class, 'checkAuth']);
+// Route::post('login', [SessionController::class, 'login']);
+// Route::get('checkAuth', [SessionController::class, 'checkAuth']);
 
 
 Route::prefix('api')->group(function () {
   //  ADMIN
-  Route::prefix('admin')->group(function () {
-    Route::prefix('dashboard')->group(function () {
-      Route::get('metricas', [DashboardController::class, 'metricas']);
-      Route::get('tipoPublicaciones', [DashboardController::class, 'tipoPublicaciones']);
-      Route::get('proyectosHistoricoData', [DashboardController::class, 'proyectosHistoricoData']);
-      Route::get('proyectos/{periodo}', [DashboardController::class, 'proyectos']);
-    });
+  Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function () {
     //  Estudios
     Route::prefix('estudios')->group(function () {
       //  Convocatorias

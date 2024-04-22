@@ -3,9 +3,10 @@
 namespace App\Http\Middleware;
 
 use Closure;
+use Exception;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Gate;
+use Firebase\JWT\JWT;
+use Firebase\JWT\Key;
 use Symfony\Component\HttpFoundation\Response;
 
 class CheckRole {
@@ -14,15 +15,16 @@ class CheckRole {
    *
    * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
    */
-  public function handle(Request $request, Closure $next, String $tabla): Response {
-    if (!Auth::check()) {
-      return redirect()->route('login');
-    } else {
-      if (!Gate::allows($tabla)) {
-        return abort(403, 'Permisos insuficientes para acceder a este recurso');
-      } else {
+  public function handle(Request $request, Closure $next, String $role): Response {
+    try {
+      $decoded = JWT::decode($request->header('Authorization'), new Key(env('JWT_SECRET'), 'HS256'));
+      if ($role == $decoded->tabla) {
         return $next($request);
+      } else {
+        return response()->json(['error' => 'Unauthorized'], 401);
       }
+    } catch (Exception $e) {
+      return response()->json(['error' => 'Unauthorized'], 401);
     }
   }
 }
