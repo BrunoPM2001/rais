@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
-class ProyectoConFinanciamientoController extends Controller {
+class AsesoriaTesisPreController extends Controller {
 
   public function listado(Request $request) {
     $proyectos = DB::table('Proyecto AS a')
@@ -22,7 +22,7 @@ class ProyectoConFinanciamientoController extends Controller {
         'a.periodo'
       )
       ->where('b.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
-      ->where('a.tipo_proyecto', '=', 'PCONFIGI')
+      ->whereIn('a.tipo_proyecto', ['PTPBACHILLER', 'PTPGRADO', 'Tesis', 'PTPMAEST', 'PTPDOCTO'])
       ->orderByDesc('a.periodo')
       ->get();
 

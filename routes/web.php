@@ -45,7 +45,7 @@ use Illuminate\Support\Facades\Route;
 
 //  Auth
 // Route::post('login', [SessionController::class, 'login']);
-// Route::get('checkAuth', [SessionController::class, 'checkAuth']);
+Route::get('checkAuth', [SessionController::class, 'checkAuth']);
 
 
 Route::prefix('api')->group(function () {

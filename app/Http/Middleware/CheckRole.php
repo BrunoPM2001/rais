@@ -17,7 +17,7 @@ class CheckRole {
    */
   public function handle(Request $request, Closure $next, String $role): Response {
     try {
-      $decoded = JWT::decode($request->header('Authorization'), new Key(env('JWT_SECRET'), 'HS256'));
+      $decoded = JWT::decode($request->header('Authorization') ?? "", new Key(env('JWT_SECRET'), 'HS256'));
       if ($role == $decoded->tabla) {
         return $next($request);
       } else {

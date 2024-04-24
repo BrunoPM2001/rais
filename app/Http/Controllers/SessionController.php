@@ -20,17 +20,30 @@ class SessionController extends Controller {
       //  Datos básicos
       $table = DB::table('Usuario')
         ->select(
-          'tabla'
+          'id',
+          'tabla',
+          'tabla_id',
+          'estado'
         )
         ->where('username', '=', $user)
         ->first();
 
-      //  Token
-      $jwt = JWT::encode([
-        'usuario' => $user,
-        'tabla' => $table->tabla,
-        'exp' => time() + 3600
-      ], env('JWT_SECRET'), 'HS256');
+      if ($table->tabla == "Usuario_admin") {
+        $jwt = JWT::encode([
+          'id' => $table->id,
+          'usuario' => $user,
+          'tabla' => $table->tabla,
+          'exp' => time() + 3600
+        ], env('JWT_SECRET'), 'HS256');
+      } else if ($table->tabla == "Usuario_investigador") {
+        $jwt = JWT::encode([
+          'id' => $table->id,
+          'usuario' => $user,
+          'tabla' => $table->tabla,
+          'investigador_id' => $table->tabla_id,
+          'exp' => time() + 3600
+        ], env('JWT_SECRET'), 'HS256');
+      }
       return ['data' => [
         'usuario' => $user,
         'tabla' => $table->tabla,

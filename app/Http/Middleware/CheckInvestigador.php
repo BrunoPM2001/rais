@@ -15,11 +15,12 @@ class CheckInvestigador {
    *
    * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
    */
-  public function handle(Request $request, Closure $next, String $role): Response {
+  public function handle(Request $request, Closure $next): Response {
     try {
-      $decoded = JWT::decode($request->header('Authorization'), new Key(env('JWT_SECRET'), 'HS256'));
-      if ($role == $decoded->tabla) {
-        return $next($decoded->investigador_id);
+      $decoded = JWT::decode($request->header('Authorization') ?? "", new Key(env('JWT_SECRET'), 'HS256'));
+      if ($decoded->tabla == 'Usuario_investigador') {
+        $request->attributes->add(['token_decoded' => $decoded]);
+        return $next($request);
       } else {
         return response()->json(['error' => 'Unauthorized'], 401);
       }
