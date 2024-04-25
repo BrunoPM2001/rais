@@ -14,6 +14,12 @@ use App\Http\Controllers\Investigador\Actividades\ProyectoMultidisciplinarioCont
 use App\Http\Controllers\Investigador\Actividades\ProyectoSinFinanciamientoController;
 use App\Http\Controllers\Investigador\Actividades\PublicacionLibrosUniController;
 use App\Http\Controllers\Investigador\Actividades\TalleresController;
+use App\Http\Controllers\Investigador\Publicaciones\ArticulosController;
+use App\Http\Controllers\Investigador\Publicaciones\CapitulosLibrosController;
+use App\Http\Controllers\Investigador\Publicaciones\EventoController;
+use App\Http\Controllers\Investigador\Publicaciones\LibrosController;
+use App\Http\Controllers\Investigador\Publicaciones\TesisAsesoriaController;
+use App\Http\Controllers\Investigador\Publicaciones\TesisPropiasController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\SessionController;
 
@@ -103,6 +109,45 @@ Route::prefix('investigador')->middleware('checkInvestigador:Usuario_investigado
     //  Grupos de estudio
     Route::prefix('gruposEstudio')->group(function () {
       Route::get('listado', [GrupoEstudioController::class, 'listado']);
+    });
+  });
+
+  //  Publicaciones
+  Route::prefix('publicaciones')->group(function () {
+
+    //  Artículos en revistas de investigación
+    Route::prefix('articulos')->group(function () {
+      Route::get('listado', [ArticulosController::class, 'listado']);
+    });
+
+    //  Libros
+    Route::prefix('libros')->group(function () {
+      Route::get('listado', [LibrosController::class, 'listado']);
+    });
+
+    //  Capítulos de libros
+    Route::prefix('capitulos')->group(function () {
+      Route::get('listado', [CapitulosLibrosController::class, 'listado']);
+    });
+
+    //  Participación en eventos
+    Route::prefix('evento')->group(function () {
+      Route::get('listado', [EventoController::class, 'listado']);
+    });
+
+    //  Tesis propias
+    Route::prefix('tesisPropias')->group(function () {
+      Route::get('listado', [TesisPropiasController::class, 'listado']);
+    });
+
+    //  Tesis propias
+    Route::prefix('tesisAsesoria')->group(function () {
+      Route::get('listado', [TesisAsesoriaController::class, 'listado']);
+    });
+
+    //  Propiedad intelectual
+    Route::prefix('propiedadInt')->group(function () {
+      Route::get('listado', [TesisAsesoriaController::class, 'listado']);
     });
   });
 });
