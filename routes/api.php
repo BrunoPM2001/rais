@@ -18,6 +18,7 @@ use App\Http\Controllers\Investigador\Publicaciones\ArticulosController;
 use App\Http\Controllers\Investigador\Publicaciones\CapitulosLibrosController;
 use App\Http\Controllers\Investigador\Publicaciones\EventoController;
 use App\Http\Controllers\Investigador\Publicaciones\LibrosController;
+use App\Http\Controllers\Investigador\Publicaciones\PropiedadIntelectualController;
 use App\Http\Controllers\Investigador\Publicaciones\TesisAsesoriaController;
 use App\Http\Controllers\Investigador\Publicaciones\TesisPropiasController;
 use Illuminate\Support\Facades\Route;
@@ -147,7 +148,7 @@ Route::prefix('investigador')->middleware('checkInvestigador:Usuario_investigado
 
     //  Propiedad intelectual
     Route::prefix('propiedadInt')->group(function () {
-      Route::get('listado', [TesisAsesoriaController::class, 'listado']);
+      Route::get('listado', [PropiedadIntelectualController::class, 'listado']);
     });
   });
 });
