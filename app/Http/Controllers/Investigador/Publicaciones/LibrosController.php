@@ -16,7 +16,6 @@ class LibrosController extends Controller {
         'a.id',
         'a.titulo',
         DB::raw("IF(a.publicacion_nombre IS NULL OR a.publicacion_nombre = '',CONCAT(c.revista,' ',c.issn),CONCAT(a.publicacion_nombre,' ',a.issn)) AS revista"),
-        'a.observaciones_usuario',
         DB::raw('COALESCE(a.issn, a.isbn) AS isbn'),
         DB::raw('YEAR(a.fecha_publicacion) AS año_publicacion'),
         'b.puntaje',

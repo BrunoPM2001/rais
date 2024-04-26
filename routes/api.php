@@ -17,6 +17,7 @@ use App\Http\Controllers\Investigador\Actividades\TalleresController;
 use App\Http\Controllers\Investigador\Publicaciones\ArticulosController;
 use App\Http\Controllers\Investigador\Publicaciones\CapitulosLibrosController;
 use App\Http\Controllers\Investigador\Publicaciones\EventoController;
+use App\Http\Controllers\Investigador\Grupo\GrupoController as InvestigadorGrupoController;
 use App\Http\Controllers\Investigador\Publicaciones\LibrosController;
 use App\Http\Controllers\Investigador\Publicaciones\PropiedadIntelectualController;
 use App\Http\Controllers\Investigador\Publicaciones\TesisAsesoriaController;
@@ -150,5 +151,11 @@ Route::prefix('investigador')->middleware('checkInvestigador:Usuario_investigado
     Route::prefix('propiedadInt')->group(function () {
       Route::get('listado', [PropiedadIntelectualController::class, 'listado']);
     });
+  });
+
+  //  Grupo
+  Route::prefix('grupo')->group(function () {
+    Route::get('listadoGrupos', [InvestigadorGrupoController::class, 'listadoGrupos']);
+    Route::get('listadoSolicitudes', [InvestigadorGrupoController::class, 'listadoSolicitudes']);
   });
 });
