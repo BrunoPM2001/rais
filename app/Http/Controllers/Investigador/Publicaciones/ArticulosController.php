@@ -30,4 +30,16 @@ class ArticulosController extends Controller {
 
     return ['data' => $publicaciones];
   }
+
+  public function listadoRevistasIndexadas() {
+    $revistas = DB::table('Publicacion_db_indexada')
+      ->select(
+        'nombre AS label',
+        'nombre AS value',
+      )
+      ->where('estado', '!=', 0)
+      ->get();
+
+    return $revistas;
+  }
 }

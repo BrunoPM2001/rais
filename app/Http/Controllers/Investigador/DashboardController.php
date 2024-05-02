@@ -1,0 +1,78 @@
+<?php
+
+namespace App\Http\Controllers\Investigador;
+
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+
+class DashboardController extends Controller {
+
+  public function metricas(Request $request) {
+
+    $grupos = DB::table('Grupo_integrante')
+      ->where('investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+      ->whereNot('condicion', 'LIKE', 'Ex%')
+      ->count();
+
+    $proyectos = DB::table('Proyecto_integrante')
+      ->where('investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+      ->count();
+
+    $publicaciones = DB::table('Publicacion AS a')
+      ->leftJoin('Publicacion_autor AS b', 'a.id', '=', 'b.publicacion_id')
+      ->select(
+        '*'
+      )
+      ->where('a.estado', '>', 0)
+      ->where('b.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+      ->count();
+
+
+    $puntaje = DB::table('Publicacion AS a')
+      ->leftJoin('Publicacion_autor AS b', 'a.id', '=', 'b.publicacion_id')
+      ->select(
+        DB::raw('SUM(b.puntaje) AS puntaje')
+      )
+      ->where('a.estado', '>', 0)
+      ->where('b.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+      ->first()->puntaje;
+
+    return [
+      'grupos' => $grupos,
+      'proyectos' => $proyectos,
+      'publicaciones' => $publicaciones,
+      'puntaje' => $puntaje,
+    ];
+  }
+
+  public function tipoPublicaciones(Request $request) {
+    $tipos = DB::table('Publicacion AS a')
+      ->leftJoin('Publicacion_autor AS b', 'a.id', '=', 'b.publicacion_id')
+      ->select(
+        'a.tipo_publicacion AS title',
+        DB::raw('COUNT(*) AS value')
+      )
+      ->where('a.estado', '>', 0)
+      ->where('b.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+      ->groupBy('a.tipo_publicacion')
+      ->get();
+
+    return ['data' => $tipos];
+  }
+
+  public function tipoProyectos(Request $request) {
+    $tipos = DB::table('Proyecto AS a')
+      ->leftJoin('Proyecto_integrante AS b', 'a.id', '=', 'b.proyecto_id')
+      ->select(
+        'a.tipo_proyecto AS title',
+        DB::raw('COUNT(*) AS cuenta')
+      )
+      ->where('a.estado', '>', 0)
+      ->where('b.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+      ->groupBy('a.tipo_proyecto')
+      ->get();
+
+    return ['data' => $tipos];
+  }
+}

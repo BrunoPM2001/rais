@@ -159,13 +159,6 @@ Route::prefix('api')->group(function () {
       Route::get('presupuesto/{facultad_id}/{periodo}', [PresupuestoController::class, 'reporte']);
     });
 
-    //  Constancias
-    Route::prefix('constancias')->group(function () {
-      Route::get('getConstanciaPuntajePublicaciones/{investigador_id}', [ReporteController::class, 'getConstanciaPuntajePublicaciones']);
-      Route::get('getConstanciaPublicacionesCientificas/{investigador_id}', [ReporteController::class, 'getConstanciaPublicacionesCientificas']);
-      Route::get('getConstanciaGrupoInvestigacion/{investigador_id}', [ReporteController::class, 'getConstanciaGrupoInvestigacion']);
-    });
-
     //  Facultad
     Route::prefix('facultad')->group(function () {
       //  Convocatorias

@@ -15,8 +15,8 @@ class SessionController extends Controller {
     $user = $request->input('username_mail');
     $pass = $request->input('password');
 
-    $res = Auth::attempt(['username' => $user, 'password' => $pass]);
-    if ($res) {
+    // $res = Auth::attempt(['username' => $user, 'password' => $pass]) || Auth::attempt(['email' => $user, 'password' => $pass]);
+    if (Auth::attempt(['username' => $user, 'password' => $pass]) || Auth::attempt(['email' => $user, 'password' => $pass])) {
       //  Datos básicos
       $table = DB::table('Usuario')
         ->select(
@@ -26,19 +26,18 @@ class SessionController extends Controller {
           'estado'
         )
         ->where('username', '=', $user)
+        ->orWhere('email', '=', $user)
         ->first();
 
       if ($table->tabla == "Usuario_admin") {
         $jwt = JWT::encode([
           'id' => $table->id,
-          'usuario' => $user,
           'tabla' => $table->tabla,
           'exp' => time() + 3600
         ], env('JWT_SECRET'), 'HS256');
       } else if ($table->tabla == "Usuario_investigador") {
         $jwt = JWT::encode([
           'id' => $table->id,
-          'usuario' => $user,
           'tabla' => $table->tabla,
           'investigador_id' => $table->tabla_id,
           'exp' => time() + 3600
@@ -50,7 +49,7 @@ class SessionController extends Controller {
         'token' => $jwt
       ]];
     } else {
-      return ['data' => $res];
+      return ['data' => "Error"];
     }
   }
 

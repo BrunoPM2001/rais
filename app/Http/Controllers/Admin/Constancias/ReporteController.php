@@ -27,10 +27,10 @@ class ReporteController extends Controller {
         'c.titulo',
         'c.categoria',
         DB::raw('COUNT(*) AS cantidad'),
-        DB::raw('(c.puntaje * COUNT(*)) AS puntaje')
+        DB::raw('(a.puntaje * COUNT(*)) AS puntaje')
       )
       ->where('a.investigador_id', '=', $investigador_id)
-      ->where('b.estado', '=', 1)
+      ->where('b.validado', '=', 1)
       ->groupBy('b.categoria_id')
       ->groupBy('c.titulo')
       ->groupBy('c.categoria')
@@ -61,7 +61,7 @@ class ReporteController extends Controller {
       ->select(
         'c.tipo',
         'c.categoria',
-        'c.puntaje',
+        'a.puntaje',
         DB::raw('YEAR(b.fecha_publicacion) AS año'),
         'b.step',
         'b.titulo',
@@ -73,7 +73,7 @@ class ReporteController extends Controller {
         'b.observaciones_usuario',
       )
       ->where('a.investigador_id', '=', $investigador_id)
-      ->where('b.estado', '=', 1)
+      ->where('b.validado', '=', 1)
       ->orderBy('c.tipo')
       ->orderBy('c.categoria')
       ->orderByDesc('año')

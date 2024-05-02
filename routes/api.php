@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\Constancias\ReporteController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\Estudios\ConvocatoriasController;
 use App\Http\Controllers\Investigador\Actividades\AsesoriaTesisPosController;
@@ -14,6 +15,7 @@ use App\Http\Controllers\Investigador\Actividades\ProyectoMultidisciplinarioCont
 use App\Http\Controllers\Investigador\Actividades\ProyectoSinFinanciamientoController;
 use App\Http\Controllers\Investigador\Actividades\PublicacionLibrosUniController;
 use App\Http\Controllers\Investigador\Actividades\TalleresController;
+use App\Http\Controllers\Investigador\DashboardController as InvestigadorDashboardController;
 use App\Http\Controllers\Investigador\Publicaciones\ArticulosController;
 use App\Http\Controllers\Investigador\Publicaciones\CapitulosLibrosController;
 use App\Http\Controllers\Investigador\Publicaciones\EventoController;
@@ -59,9 +61,24 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
       Route::get('verCriteriosEvaluacion/{evaluacion_id}', [ConvocatoriasController::class, 'verCriteriosEvaluacion']);
     });
   });
+
+  //  Constancias
+  Route::prefix('constancias')->group(function () {
+    Route::get('getConstanciaPuntajePublicaciones/{investigador_id}', [ReporteController::class, 'getConstanciaPuntajePublicaciones']);
+    Route::get('getConstanciaPublicacionesCientificas/{investigador_id}', [ReporteController::class, 'getConstanciaPublicacionesCientificas']);
+    Route::get('getConstanciaGrupoInvestigacion/{investigador_id}', [ReporteController::class, 'getConstanciaGrupoInvestigacion']);
+  });
 });
 
 Route::prefix('investigador')->middleware('checkInvestigador:Usuario_investigador')->group(function () {
+
+  //  Main dashboard
+  Route::prefix('dashboard')->group(function () {
+    Route::get('metricas', [InvestigadorDashboardController::class, 'metricas']);
+    Route::get('tipoPublicaciones', [InvestigadorDashboardController::class, 'tipoPublicaciones']);
+    Route::get('tipoProyectos', [InvestigadorDashboardController::class, 'tipoProyectos']);
+  });
+
   //  Actividades
   Route::prefix('actividades')->group(function () {
     //  Proyectos con financiamiento
@@ -133,7 +150,7 @@ Route::prefix('investigador')->middleware('checkInvestigador:Usuario_investigado
     });
 
     //  Participación en eventos
-    Route::prefix('evento')->group(function () {
+    Route::prefix('eventos')->group(function () {
       Route::get('listado', [EventoController::class, 'listado']);
     });
 
@@ -151,6 +168,8 @@ Route::prefix('investigador')->middleware('checkInvestigador:Usuario_investigado
     Route::prefix('propiedadInt')->group(function () {
       Route::get('listado', [PropiedadIntelectualController::class, 'listado']);
     });
+
+    Route::get('listadoRevistasIndexadas', [ArticulosController::class, 'listadoRevistasIndexadas']);
   });
 
   //  Grupo
