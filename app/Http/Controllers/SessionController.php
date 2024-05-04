@@ -15,7 +15,6 @@ class SessionController extends Controller {
     $user = $request->input('username_mail');
     $pass = $request->input('password');
 
-    // $res = Auth::attempt(['username' => $user, 'password' => $pass]) || Auth::attempt(['email' => $user, 'password' => $pass]);
     if (Auth::attempt(['username' => $user, 'password' => $pass]) || Auth::attempt(['email' => $user, 'password' => $pass])) {
       //  Datos básicos
       $table = DB::table('Usuario')
