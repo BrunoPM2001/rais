@@ -1,8 +1,15 @@
 <?php
 
+use App\Http\Controllers\Admin\Admin\DependenciaController;
+use App\Http\Controllers\Admin\Admin\Linea_investigacionController;
+use App\Http\Controllers\Admin\Admin\Usuario_adminController;
+use App\Http\Controllers\Admin\Admin\Usuario_investigadorController;
+use App\Http\Controllers\Admin\Admin\UsuarioController;
 use App\Http\Controllers\Admin\Constancias\ReporteController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\Estudios\ConvocatoriasController;
+use App\Http\Controllers\Admin\Facultad\AsignacionEvaluadorController;
+use App\Http\Controllers\Admin\Reportes\ProyectoController;
 use App\Http\Controllers\Investigador\Actividades\AsesoriaTesisPosController;
 use App\Http\Controllers\Investigador\Actividades\AsesoriaTesisPreController;
 use App\Http\Controllers\Investigador\Actividades\ComiteEditorialController;
@@ -67,6 +74,32 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
     Route::get('getConstanciaPuntajePublicaciones/{investigador_id}', [ReporteController::class, 'getConstanciaPuntajePublicaciones']);
     Route::get('getConstanciaPublicacionesCientificas/{investigador_id}', [ReporteController::class, 'getConstanciaPublicacionesCientificas']);
     Route::get('getConstanciaGrupoInvestigacion/{investigador_id}', [ReporteController::class, 'getConstanciaGrupoInvestigacion']);
+  });
+
+  //  Admin
+  Route::prefix('admin')->group(function () {
+
+    //  Lineas de investigación
+    Route::prefix('lineasInvestigacion')->group(function () {
+      Route::get('getAllFacultad/{facultad_id}', [Linea_investigacionController::class, 'getAllOfFacultad']);
+      Route::get('getAll/{facultad_id}', [Linea_investigacionController::class, 'getAll']);
+      Route::post('create', [Linea_investigacionController::class, 'create']);
+    });
+
+    //  Usuarios
+    Route::prefix('usuarios')->group(function () {
+      Route::post('create', [UsuarioController::class, 'create']);
+      Route::post('update', [UsuarioController::class, 'update']);
+
+      //  Administrador
+      Route::get('getUsuariosAdmin', [Usuario_adminController::class, 'getAll']);
+      Route::get('getOneAdmin/{id}', [Usuario_adminController::class, 'getOne']);
+
+      //  Investigador
+      Route::get('getUsuariosInvestigadores', [Usuario_investigadorController::class, 'getAll']);
+      Route::get('getOneInvestigador/{id}', [Usuario_investigadorController::class, 'getOne']);
+      Route::get('searchInvestigadorBy/{input}', [Usuario_investigadorController::class, 'searchInvestigadorBy']);
+    });
   });
 });
 

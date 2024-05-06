@@ -8,7 +8,6 @@ class Usuario_admin extends Model {
   protected $table = 'Usuario_admin';
 
   protected $fillable = [
-    'facultad_id',
     'codigo_trabajador',
     'apellido1',
     'apellido2',

@@ -6,16 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\Usuario;
 use App\Models\Usuario_admin;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 
 class UsuarioController extends Controller {
-
-
-  public function getAll() {
-    $usuarios = Usuario::all();
-    return $usuarios;
-  }
 
   public function create(Request $request) {
     //  TIPOS DE USUARIOS
@@ -23,14 +17,13 @@ class UsuarioController extends Controller {
 
     $tipoUsuario = $request->input('tipo');
     if (!in_array($tipoUsuario, $tiposUsuarios)) {
-      return redirect()->route('view_usuariosAdmin')->withErrors(['message' => 'Error al crear usuario']);
+      return ['message' => 'Error'];
     } else {
       switch ($tipoUsuario) {
         case $tiposUsuarios[0]:
           //  Validar la data
-          $request->validate([
+          $validator = Validator::make($request->all(), [
             'username' => 'required|string|unique:Usuario,username|max:255',
-            'facultad_id' => 'required|exists:Facultad,id',
             'codigo_trabajador' => 'required|string|max:255',
             'apellido1' => 'required|string|max:255',
             'apellido2' => 'required|string|max:255',
@@ -44,6 +37,10 @@ class UsuarioController extends Controller {
             'direccion1' => 'nullable|string|max:255',
             'cargo' => 'nullable|string|max:255',
           ]);
+
+          if ($validator->fails()) {
+            return ['message' => 'Error'];
+          }
 
           //  Insertar en las BDS
           $user1 = Usuario_admin::create([
@@ -70,15 +67,19 @@ class UsuarioController extends Controller {
           ]);
 
           //  Respuesta
-          return redirect()->route('view_usuariosAdmin');
+          return ['message' => 'Success'];
           break;
         case $tiposUsuarios[1]:
           //  USUARIOS INVESTIGADORES
-          $request->validate([
+          $validator = Validator::make($request->all(), [
             'id' => 'required|exists:Usuario_investigador,id',
             'email' => 'required|string|unique:Usuario,email|max:255',
             'password' => 'required|string|max:255',
           ]);
+
+          if ($validator->fails()) {
+            return ['message' => 'Error'];
+          }
 
           $result = DB::table('Usuario')
             ->where('tabla_id', '=', $request->id)
@@ -86,7 +87,7 @@ class UsuarioController extends Controller {
             ->count();
 
           if ($result > 0) {
-            return redirect()->route('view_usuariosInvestigadores')->withErrors(['message' => 'El investigador ya tiene cuenta']);
+            return ['message' => 'El investigador ya tiene cuenta'];
           } else {
             Usuario::create([
               'email' => $request->email,
@@ -94,11 +95,11 @@ class UsuarioController extends Controller {
               'tabla' => $tipoUsuario,
               'tabla_id' => $request->id
             ]);
-            return redirect()->route('view_usuariosInvestigadores');
+            return ['message' => 'Success'];
           }
           break;
         default:
-          return redirect()->route('view_usuariosAdmin')->withErrors(['message' => 'Error al crear usuario']);
+          return ['message' => 'Error al crear usuario'];
           break;
       }
     }
@@ -184,17 +185,6 @@ class UsuarioController extends Controller {
           return redirect()->route('view_usuariosAdmin')->withErrors(['message' => 'Error al crear usuario']);
           break;
       }
-    }
-  }
-
-  public function login(Request $request) {
-    $user = $request->input('username_mail');
-    $pass = $request->input('password');
-
-    if (Auth::attempt(['username' => $user, 'password' => $pass]) || Auth::attempt(['email' => $user, 'password' => $pass])) {
-      return redirect()->route('view_lineas');
-    } else {
-      return redirect()->route('login')->withErrors(['message' => 'Credenciales incorrectas']);
     }
   }
 }

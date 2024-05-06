@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Admin\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\Facultad;
 use App\Models\Linea_investigacion;
+use Illuminate\Support\Facades\Validator;
 
 class Linea_investigacionController extends Controller {
 
@@ -20,24 +20,30 @@ class Linea_investigacionController extends Controller {
   public function getAllOfFacultad($facultad_id) {
     $query = Linea_investigacion::with('hijos')
       ->whereNull('parent_id');
+
     if ($facultad_id == 'null') {
       $query->whereNull('facultad_id');
     } else {
       $query->where('facultad_id', $facultad_id);
     }
     $lineas_investigacion = $query->get();
+
     return ['data' => $lineas_investigacion];
   }
 
   public function create(Request $request) {
     //  Validar la data
-    $request->validate([
+    $validator =  Validator::make($request->all(), [
       'facultad_id' => 'nullable|exists:Facultad,id',
       'parent_id' => 'nullable|exists:Linea_investigacion,id',
       'codigo' => 'required|string|unique:Linea_investigacion,codigo|max:255',
       'nombre' => 'required|string|unique:Linea_investigacion,nombre|max:255',
       'resolucion' => 'nullable|string|max:255'
     ]);
+
+    if ($validator->fails()) {
+      return ['message' => 'Error'];
+    }
 
     //  Insertar en la DB
     Linea_investigacion::create([
@@ -47,29 +53,7 @@ class Linea_investigacionController extends Controller {
       'nombre' => $request->nombre,
       'resolucion' => $request->resolucion
     ]);
-    return redirect()->route('view_lineas');
-  }
 
-  public function update(Request $request, $id) {
-    //  Validar la data
-    $request->validate([
-      'facultad_id' => 'required|exists:Facultad,id',
-      'parent_id' => 'nullable|exists:Linea_investigacion,id',
-      'codigo' => 'required|string|unique:Linea_investigacion,codigo,' . $id . ',id|max:255',
-      'nombre' => 'required|string|unique:Linea_investigacion,nombre,' . $id . ',id|max:255',
-      'resolucion' => 'string|max:255',
-      'estado' => 'required|boolean'
-    ]);
-
-    //  Encontrar y actualizar data
-    $linea_investigacion = Linea_investigacion::findOrFail($id);
-    $linea_investigacion->update($request->all());
-    return $linea_investigacion;
-  }
-
-  public function delete($id) {
-    $linea_investigacion = Linea_investigacion::findOrFail($id);
-    $linea_investigacion->delete();
-    return $linea_investigacion;
+    return ['message' => 'Success'];
   }
 }

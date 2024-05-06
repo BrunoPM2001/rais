@@ -3,8 +3,6 @@
 namespace App\Http\Controllers\Admin\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Facultad;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class Usuario_adminController extends Controller {
@@ -36,7 +34,6 @@ class Usuario_adminController extends Controller {
         'a.id',
         'a.tabla_id',
         'a.username',
-        'b.facultad_id',
         'b.codigo_trabajador',
         'b.apellido1',
         'b.apellido2',
@@ -56,16 +53,5 @@ class Usuario_adminController extends Controller {
       ->first();
 
     return $usuario;
-  }
-
-  public function main() {
-    //  Lista de facultades
-    $facultad = new Facultad();
-    $facultades = $facultad->listar();
-
-    //  Vista de usuarios
-    return view('admin.admin.usuarios_admin', [
-      'facultades' => $facultades
-    ]);
   }
 }

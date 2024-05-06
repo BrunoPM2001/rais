@@ -11,7 +11,6 @@ return new class extends Migration {
   public function up(): void {
     Schema::create('Usuario_admin', function (Blueprint $table) {
       $table->id();
-      $table->unsignedBigInteger("facultad_id");
       $table->string("codigo_trabajador")->default("");
       $table->string("apellido1");
       $table->string("apellido2");
@@ -26,9 +25,6 @@ return new class extends Migration {
       $table->string("cargo")->nullable();
       $table->date("fecha_baja")->nullable();
       $table->timestamps();
-
-      //  Fks
-      $table->foreign("facultad_id")->references("id")->on("Facultad");
     });
   }
 

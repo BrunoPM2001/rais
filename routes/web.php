@@ -168,49 +168,5 @@ Route::prefix('api')->group(function () {
         Route::get('getEvaluadoresConvocatoria/{id}', [Evaluacion_facultadController::class, 'getEvaluadoresConvocatoria']);
       });
     });
-
-
-    //  Admin
-    Route::prefix('admin')->group(function () {
-      //  Usuarios
-      Route::prefix('usuarios')->group(function () {
-        Route::get('getUsuarios', [UsuarioController::class, 'getAll']);
-        Route::post('create', [UsuarioController::class, 'create'])->name('create_usuario');
-        Route::post('update', [UsuarioController::class, 'update']);
-        //  Administrador
-        Route::get('getUsuariosAdmin', [Usuario_adminController::class, 'getAll']);
-        Route::get('getOneAdmin/{id}', [Usuario_adminController::class, 'getOne']);
-        //  Investigador
-        Route::get('getUsuariosInvestigadores', [Usuario_investigadorController::class, 'getAll']);
-        Route::get('getOneInvestigador/{id}', [Usuario_investigadorController::class, 'getOne']);
-        Route::get('searchInvestigadorBy/{input}', [Usuario_investigadorController::class, 'searchInvestigadorBy']);
-      });
-
-      //  Dependencias
-      Route::prefix('dependencias')->group(function () {
-        Route::get('getOne/{id}', [DependenciaController::class, 'getOne']);
-        Route::get('getAll', [DependenciaController::class, 'getAll']);
-        Route::post('create', [DependenciaController::class, 'create'])->name('create_dependencia');
-        Route::post('update', [DependenciaController::class, 'update']);
-      });
-
-      //  Facultad
-      Route::prefix('facultad')->group(function () {
-        Route::get('getAllEvaluadores', [ProyectoController::class, 'getAllEvaluadores']);
-        Route::get('searchEvaluadorBy/{input}', [AsignacionEvaluadorController::class, 'searchEvaluadorBy']);
-        Route::get('getEvaluadoresProyecto/{id}', [AsignacionEvaluadorController::class, 'getEvaluadoresProyecto']);
-        Route::get('getAllProyectosEvaluados/{periodo}/{tipo_proyecto}', [ProyectoController::class, 'getAllProyectosEvaluados']);
-      });
-
-      //  Lineas de investigación
-      Route::prefix('lineasInvestigacion')->group(function () {
-        Route::get('getAllFacultad/{facultad_id}', [Linea_investigacionController::class, 'getAllOfFacultad']);
-        Route::get('getAll/{facultad_id}', [Linea_investigacionController::class, 'getAll']);
-        Route::post('create', [Linea_investigacionController::class, 'create'])->name('create_linea');
-      });
-    });
   });
 });
-
-//  Login
-Route::post('/reqlogin', [UsuarioController::class, 'login'])->name('login_form');
