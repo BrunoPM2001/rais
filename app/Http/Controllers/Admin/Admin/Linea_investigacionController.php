@@ -42,7 +42,7 @@ class Linea_investigacionController extends Controller {
     ]);
 
     if ($validator->fails()) {
-      return ['message' => 'Error'];
+      return ['message' => 'error', 'detail' => 'Error al crear nueva línea de investigación'];
     }
 
     //  Insertar en la DB
@@ -54,6 +54,6 @@ class Linea_investigacionController extends Controller {
       'resolucion' => $request->resolucion
     ]);
 
-    return ['message' => 'Success'];
+    return ['message' => 'success', 'detail' => 'Línea de investigación creada con éxito'];
   }
 }
