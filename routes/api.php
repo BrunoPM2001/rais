@@ -89,7 +89,8 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
     //  Usuarios
     Route::prefix('usuarios')->group(function () {
       Route::post('create', [UsuarioController::class, 'create']);
-      Route::post('update', [UsuarioController::class, 'update']);
+      Route::put('update', [UsuarioController::class, 'update']);
+      Route::delete('delete', [UsuarioController::class, 'delete']);
 
       //  Administrador
       Route::get('getUsuariosAdmin', [Usuario_adminController::class, 'getAll']);

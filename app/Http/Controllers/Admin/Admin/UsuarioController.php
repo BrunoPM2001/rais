@@ -17,7 +17,7 @@ class UsuarioController extends Controller {
 
     $tipoUsuario = $request->input('tipo');
     if (!in_array($tipoUsuario, $tiposUsuarios)) {
-      return ['message' => 'Error'];
+      return ['message' => 'error', 'detail' => 'Error al crear usuario'];
     } else {
       switch ($tipoUsuario) {
         case $tiposUsuarios[0]:
@@ -39,7 +39,7 @@ class UsuarioController extends Controller {
           ]);
 
           if ($validator->fails()) {
-            return ['message' => 'Error'];
+            return ['message' => 'error', 'detail' => 'Data inválida'];
           }
 
           //  Insertar en las BDS
@@ -67,39 +67,39 @@ class UsuarioController extends Controller {
           ]);
 
           //  Respuesta
-          return ['message' => 'Success'];
+          return ['message' => 'success', 'detail' => 'Usuario creado con éxito'];
           break;
         case $tiposUsuarios[1]:
           //  USUARIOS INVESTIGADORES
           $validator = Validator::make($request->all(), [
-            'id' => 'required|exists:Usuario_investigador,id',
+            'investigador_id' => 'required|exists:Usuario_investigador,id',
             'email' => 'required|string|unique:Usuario,email|max:255',
             'password' => 'required|string|max:255',
           ]);
 
           if ($validator->fails()) {
-            return ['message' => 'Error'];
+            return ['message' => 'error', 'detail' => 'Data inválida'];
           }
 
           $result = DB::table('Usuario')
-            ->where('tabla_id', '=', $request->id)
+            ->where('tabla_id', '=', $request->investigador_id)
             ->where('tabla', '=', $tipoUsuario)
             ->count();
 
           if ($result > 0) {
-            return ['message' => 'El investigador ya tiene cuenta'];
+            return ['message' => 'error', 'detail' => 'El investigador ya tiene cuenta'];
           } else {
             Usuario::create([
               'email' => $request->email,
               'password' => bcrypt($request->password),
               'tabla' => $tipoUsuario,
-              'tabla_id' => $request->id
+              'tabla_id' => $request->investigador_id
             ]);
-            return ['message' => 'Success'];
+            return ['message' => 'success', 'detail' => 'Usuario creado con éxito'];
           }
           break;
         default:
-          return ['message' => 'Error al crear usuario'];
+          return ['message' => 'error', 'detail' => 'Error al crear usuario'];
           break;
       }
     }
@@ -183,6 +183,33 @@ class UsuarioController extends Controller {
           break;
         default:
           return redirect()->route('view_usuariosAdmin')->withErrors(['message' => 'Error al crear usuario']);
+          break;
+      }
+    }
+  }
+
+  public function delete(Request $request) {
+    //  TIPOS DE USUARIOS
+    $tiposUsuarios = ['Usuario_admin', 'Usuario_investigador'];
+
+    $idUsuario = $request->input('idUser');
+    $tipoUsuario = $request->input('tipo');
+    if (!in_array($tipoUsuario, $tiposUsuarios)) {
+      return ['message' => 'error', 'detail' => 'Error al eliminar usuario'];
+    } else {
+      switch ($tipoUsuario) {
+        case $tiposUsuarios[0]:
+          $user = Usuario::find($idUsuario);
+          Usuario_admin::find($user->tabla_id)->delete();
+          $user->delete();
+          return ['message' => 'success', 'detail' => 'Usuario eliminado correctamente'];
+          break;
+        case $tiposUsuarios[1]:
+          $user = Usuario::find($idUsuario)->delete();
+          return ['message' => 'success', 'detail' => 'Usuario eliminado correctamente'];
+          break;
+        default:
+          return ['message' => 'error', 'detail' => 'Error al eliminar usuario'];
           break;
       }
     }
