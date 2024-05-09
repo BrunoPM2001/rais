@@ -53,14 +53,6 @@ Route::prefix('api')->group(function () {
   Route::prefix('admin')->group(function () {
     //  Estudios
     Route::prefix('estudios')->group(function () {
-      //  Convocatorias
-      Route::prefix('convocatorias')->group(function () {
-        Route::get('listarConvocatorias', [ConvocatoriasController::class, 'listarConvocatorias']);
-        Route::get('getOneConvocatoria/{parent_id}', [ConvocatoriasController::class, 'getOneConvocatoria']);
-        Route::get('listaEvaluaciones', [ConvocatoriasController::class, 'listaEvaluaciones']);
-        Route::get('verCriteriosEvaluacion/{evaluacion_id}', [ConvocatoriasController::class, 'verCriteriosEvaluacion']);
-      });
-
       //  Grupos
       Route::prefix('grupos')->group(function () {
         Route::get('listadoGrupos', [GruposController::class, 'listadoGrupos']);

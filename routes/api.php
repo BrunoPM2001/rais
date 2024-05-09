@@ -52,6 +52,7 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
 
   //  Main dashboard
   Route::prefix('dashboard')->group(function () {
+    Route::get('getData', [DashboardController::class, 'getData']);
     Route::get('metricas', [DashboardController::class, 'metricas']);
     Route::get('tipoPublicaciones', [DashboardController::class, 'tipoPublicaciones']);
     Route::get('proyectosHistoricoData', [DashboardController::class, 'proyectosHistoricoData']);
