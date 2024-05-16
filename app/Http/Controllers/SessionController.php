@@ -51,27 +51,4 @@ class SessionController extends Controller {
       return ['data' => "Error"];
     }
   }
-
-  public function checkAuth(Request $request) {
-    try {
-      $token = $request->header('Authorization');
-      $decoded = JWT::decode($token, new Key(env('JWT_SECRET'), 'HS256'));
-      return ['data' => $decoded];
-    } catch (Exception $e) {
-      return ['data' => 'Error en token'];
-    }
-  }
-
-  public function checkRole($role, $token) {
-    try {
-      $decoded = JWT::decode($token, new Key(env('JWT_SECRET'), 'HS256'));
-      if ($role == $decoded->tabla) {
-        return true;
-      } else {
-        return false;
-      }
-    } catch (Exception $e) {
-      return false;
-    }
-  }
 }

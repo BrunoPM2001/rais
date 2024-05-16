@@ -150,15 +150,5 @@ Route::prefix('api')->group(function () {
       Route::get('consolidadoGeneral/{periodo}', [ConsolidadoGeneralController::class, 'reporte']);
       Route::get('presupuesto/{facultad_id}/{periodo}', [PresupuestoController::class, 'reporte']);
     });
-
-    //  Facultad
-    Route::prefix('facultad')->group(function () {
-      //  Convocatorias
-      Route::prefix('convocatorias')->group(function () {
-        Route::get('getConvocatorias', [Evaluacion_facultadController::class, 'getConvocatorias']);
-        Route::get('getDetalleConvocatoria/{periodo}/{tipo_proyecto}', [Evaluacion_facultadController::class, 'getDetalleConvocatoria']);
-        Route::get('getEvaluadoresConvocatoria/{id}', [Evaluacion_facultadController::class, 'getEvaluadoresConvocatoria']);
-      });
-    });
   });
 });

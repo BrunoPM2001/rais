@@ -1,10 +1,11 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Admin\Facultad;
 
+use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\DB;
 
-class Evaluacion_facultadController extends Controller {
+class ConvocatoriasController extends Controller {
   public function getConvocatorias() {
     $convocatorias = DB::table('Evaluacion_facultad_H AS a')
       ->select(
@@ -62,9 +63,5 @@ class Evaluacion_facultadController extends Controller {
       ->get();
 
     return ['data' => $evaluadores];
-  }
-
-  public function main() {
-    return view('admin.facultad.convocatorias');
   }
 }

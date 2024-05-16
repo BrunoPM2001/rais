@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Usuario;
 use App\Models\Usuario_admin;
+use App\Models\Usuario_investigador;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -113,20 +114,18 @@ class UsuarioController extends Controller {
     $tabla_id = $request->input('tabla_id');
     $tipoUsuario = $request->input('tipo');
     if (!in_array($tipoUsuario, $tiposUsuarios)) {
-      return redirect()->route('view_usuariosAdmin')->withErrors(['message' => 'Error al actualizar usuario']);
+      return ['message' => 'error', 'detail' => 'Error al actualizar usuario'];
     } else {
       switch ($tipoUsuario) {
         case $tiposUsuarios[0]:
           //  Validar la data
           $request->validate([
             'username' => 'required|string|unique:Usuario,username,' . $id . ',id|max:255',
-            'facultad_id' => 'required|exists:Facultad,id',
             'codigo_trabajador' => 'required|string|max:255',
             'apellido1' => 'required|string|max:255',
             'apellido2' => 'required|string|max:255',
             'nombres' => 'required|string|max:255',
             'sexo' => 'required|string|max:1',
-            'fecha_nacimiento' => 'nullable|date',
             'email_admin' => 'nullable|string|max:255',
             'telefono_casa' => 'nullable|string|max:255',
             'telefono_trabajo' => 'nullable|string|max:255',
@@ -138,13 +137,11 @@ class UsuarioController extends Controller {
           //  Encontrar ambas filas (Usuario_admin y Usuario) para actualizar
           $usuario_admin = Usuario_admin::findOrFail($tabla_id);
           $usuario_admin->update([
-            'facultad_id' => $request->facultad_id,
             'codigo_trabajador' => $request->codigo_trabajador,
             'apellido1' => $request->apellido1,
             'apellido2' => $request->apellido2,
             'nombres' => $request->nombres,
             'sexo' => $request->sexo,
-            'fecha_nacimiento' => date('Y-m-d', strtotime($request->fecha_nacimiento)),
             'email' => $request->email_admin,
             'telefono_casa' => $request->telefono_casa,
             'telefono_trabajo' => $request->telefono_trabajo,
@@ -157,9 +154,8 @@ class UsuarioController extends Controller {
           $usuario->update([
             'username' => $request->username,
           ]);
-
           //  Respuesta
-          return ['result' => 'Success'];
+          return ['message' => 'success', 'detail' => 'Usuario actualizado con éxito'];
           break;
         case $tiposUsuarios[1]:
           //  USUARIOS INVESTIGADORES
@@ -177,12 +173,44 @@ class UsuarioController extends Controller {
             $usuario->password = bcrypt($request->input('password'));
           }
           $usuario->save();
-
           //  Respuesta
-          return ['result' => 'Success'];
+          return ['message' => 'success', 'detail' => 'Investigador actualizado con éxito'];
           break;
         default:
-          return redirect()->route('view_usuariosAdmin')->withErrors(['message' => 'Error al crear usuario']);
+          return ['message' => 'error', 'detail' => 'Error al actualizar usuario'];
+          break;
+      }
+    }
+  }
+
+  public function resetPassword(Request $request) {
+    //  TIPOS DE USUARIOS
+    $tiposUsuarios = ['Usuario_admin', 'Usuario_investigador'];
+
+    $idUsuario = $request->input('id');
+    $user = Usuario::findOrFail($idUsuario);
+    $tipoUsuario = $user->tabla;
+
+    if (!in_array($tipoUsuario, $tiposUsuarios)) {
+      return ['message' => 'error', 'detail' => 'Error al reestablecer contraseña'];
+    } else {
+      switch ($tipoUsuario) {
+        case $tiposUsuarios[0]:
+          $usuario_admin = Usuario_admin::find($user->tabla_id);
+          $user->update([
+            'password' => bcrypt($usuario_admin->apellido1[0] . $usuario_admin->apellido2),
+          ]);
+          return ['message' => 'success', 'detail' => 'Contraseña reestablecida correctamente'];
+          break;
+        case $tiposUsuarios[1]:
+          $usuario_invest = Usuario_investigador::find($user->tabla_id);
+          $user->update([
+            'password' => bcrypt($usuario_invest->doc_numero),
+          ]);
+          return ['message' => 'success', 'detail' => 'Contraseña reestablecida correctamente'];
+          break;
+        default:
+          return ['message' => 'error', 'detail' => 'Error al reestablecer contraseña'];
           break;
       }
     }

@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\Constancias\ReporteController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\Estudios\ConvocatoriasController;
 use App\Http\Controllers\Admin\Facultad\AsignacionEvaluadorController;
+use App\Http\Controllers\Admin\Facultad\ConvocatoriasController as FacultadConvocatoriasController;
 use App\Http\Controllers\Admin\Reportes\ProyectoController;
 use App\Http\Controllers\Investigador\Actividades\AsesoriaTesisPosController;
 use App\Http\Controllers\Investigador\Actividades\AsesoriaTesisPreController;
@@ -77,6 +78,16 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
     Route::get('getConstanciaGrupoInvestigacion/{investigador_id}', [ReporteController::class, 'getConstanciaGrupoInvestigacion']);
   });
 
+  //  Facultad
+  Route::prefix('facultad')->group(function () {
+    //  Convocatorias
+    Route::prefix('convocatorias')->group(function () {
+      Route::get('getConvocatorias', [FacultadConvocatoriasController::class, 'getConvocatorias']);
+      Route::get('getDetalleConvocatoria/{periodo}/{tipo_proyecto}', [FacultadConvocatoriasController::class, 'getDetalleConvocatoria']);
+      Route::get('getEvaluadoresConvocatoria/{id}', [FacultadConvocatoriasController::class, 'getEvaluadoresConvocatoria']);
+    });
+  });
+
   //  Admin
   Route::prefix('admin')->group(function () {
 
@@ -91,6 +102,7 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
     Route::prefix('usuarios')->group(function () {
       Route::post('create', [UsuarioController::class, 'create']);
       Route::put('update', [UsuarioController::class, 'update']);
+      Route::put('resetPass', [UsuarioController::class, 'resetPassword']);
       Route::delete('delete', [UsuarioController::class, 'delete']);
 
       //  Administrador
