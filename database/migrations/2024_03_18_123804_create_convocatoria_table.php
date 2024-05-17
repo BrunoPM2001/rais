@@ -18,7 +18,7 @@ return new class extends Migration {
       $table->date('fecha_corte');
       $table->year('periodo');
       $table->tinyInteger('convocatoria');
-      $table->boolean('estado');
+      $table->boolean('estado')->default(1);
       $table->unsignedBigInteger('parent_id')->nullable();
       $table->timestamps();
     });

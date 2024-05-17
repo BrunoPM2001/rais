@@ -75,12 +75,13 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
     Route::get('proyectos/{periodo}', [DashboardController::class, 'proyectos']);
   });
 
-
-
   //  Estudios
   Route::prefix('estudios')->group(function () {
     //  Gestión de convocatorias
     Route::prefix('convocatorias')->group(function () {
+      Route::post('createConvocatoria', [ConvocatoriasController::class, 'createConvocatoria']);
+      Route::put('updateConvocatoria', [ConvocatoriasController::class, 'updateConvocatoria']);
+      Route::delete('deleteConvocatoria', [ConvocatoriasController::class, 'deleteConvocatoria']);
       Route::get('listarConvocatorias', [ConvocatoriasController::class, 'listarConvocatorias']);
       Route::get('getOneConvocatoria/{parent_id}', [ConvocatoriasController::class, 'getOneConvocatoria']);
       Route::get('listaEvaluaciones', [ConvocatoriasController::class, 'listaEvaluaciones']);
