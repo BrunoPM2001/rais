@@ -9,6 +9,7 @@ use App\Models\Usuario_investigador;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 
 class UsuarioController extends Controller {
 
@@ -238,6 +239,36 @@ class UsuarioController extends Controller {
           break;
         default:
           return ['message' => 'error', 'detail' => 'Error al eliminar usuario'];
+          break;
+      }
+    }
+  }
+
+  public function createTemporal(Request $request) {
+    //  TIPOS DE USUARIOS
+    $tiposUsuarios = ['Usuario_investigador'];
+
+    $idUsuario = $request->input('id');
+    $user = Usuario::findOrFail($idUsuario);
+    $tipoUsuario = $user->tabla;
+
+    if (!in_array($tipoUsuario, $tiposUsuarios)) {
+      return ['message' => 'error', 'detail' => 'Error al reestablecer contraseña'];
+    } else {
+      switch ($tipoUsuario) {
+        case $tiposUsuarios[0]:
+          $username = "temporal1";
+          $pass = Str::random(8);
+          Usuario::create([
+            'email' => $username,
+            'password' => bcrypt($pass),
+            'tabla' => $tipoUsuario,
+            'tabla_id' => $user->tabla_id
+          ]);
+          return ['message' => 'info', 'detail' => 'Usuario temporal creado - Usuario: ' . $username . ' | Contraseña: ' . $pass];
+          break;
+        default:
+          return ['message' => 'error', 'detail' => 'Error al reestablecer contraseña'];
           break;
       }
     }
