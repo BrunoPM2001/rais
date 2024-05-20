@@ -99,6 +99,9 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
       Route::get('proyectos/{grupo_id}', [GruposController::class, 'proyectos']);
       Route::get('publicaciones/{grupo_id}', [GruposController::class, 'publicaciones']);
       Route::get('laboratorios/{grupo_id}', [GruposController::class, 'laboratorios']);
+      //  Miembros
+      Route::get('searchDocenteRrhh', [GruposController::class, 'searchDocenteRrhh']);
+      Route::get('incluirMiembroData', [GruposController::class, 'incluirMiembroData']);
     });
 
     //  Proyectos grupo

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin\Estudios;
 
 use App\Http\Controllers\S3Controller;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class GruposController extends S3Controller {
@@ -247,9 +248,60 @@ class GruposController extends S3Controller {
     return ['data' => $laboratorios];
   }
 
-  //  TODO - implementar reporte de calificación e imprimir
+  public function searchDocenteRrhh(Request $request) {
+    $investigadores = DB::table('Repo_rrhh AS a')
+      ->leftJoin('Usuario_investigador AS b', 'b.doc_numero', '=', 'a.ser_doc_id_act')
+      ->leftJoin('Licencia AS c', 'c.investigador_id', '=', 'b.id')
+      ->leftJoin('Licencia_tipo AS d', 'c.licencia_tipo_id', '=', 'd.id')
+      ->select(
+        DB::raw("CONCAT(TRIM(a.ser_cod_ant), ' | ', a.ser_doc_id_act, ' | ', a.ser_ape_pat, ' ', a.ser_ape_mat, ' ', a.ser_nom) AS value"),
+        DB::raw("TRIM(a.ser_cod_ant) AS ser_cod_ant"),
+        'a.id',
+        'ser_ape_pat',
+        'ser_ape_mat',
+        'ser_nom',
+        'ser_doc_id_act',
+        'des_tip_ser',
+        'desc_est',
+        'ser_cat_act',
+        'ser_cta_ban_act',
+        'ser_cod',
+        'ser_sexo',
+        'abv_doc_id',
+        'ser_fech_nac',
+      )
+      ->where('des_tip_ser', 'LIKE', 'DOCENTE%')
+      ->where(function ($query) {
+        $query->where('c.fecha_fin', '<', date('Y-m-d'))
+          ->orWhere('d.id', '=', 9)
+          ->orWhereNull('d.tipo');
+      })
+      ->groupBy('ser_cod_ant')
+      ->having('value', 'LIKE', '%' . $request->query('query') . '%')
+      ->limit(10)
+      ->get();
 
-  public function main() {
-    return view("admin.estudios.gestion_grupos");
+    return $investigadores;
   }
+
+  public function incluirMiembroData(Request $request) {
+    //  Validar que no sea miembro de ningún grupo
+    $cuenta = DB::table('Grupo_integrante AS a')
+      ->join('Grupo AS b', 'b.id', '=', 'a.grupo_id')
+      ->select(
+        'b.grupo_nombre'
+      )
+      ->where('investigador_id', '=', $request->input('investigador_id'))
+      ->whereNot('condicion', 'LIKE', 'Ex%')
+      ->get();
+
+    if (sizeof($cuenta) > 0) {
+      return ['message' => 'alert', 'detail' => 'Esta persona ya pertenece a un grupo de investigación: ' . $cuenta[0]['grupo_nombre']];
+    } else {
+
+      return ['message' => 'info', 'detail' => 'No pertenece a ningún grupo'];
+    }
+  }
+
+  //  TODO - implementar reporte de calificación e imprimir
 }
