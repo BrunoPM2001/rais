@@ -248,27 +248,40 @@ class GruposController extends S3Controller {
     return ['data' => $laboratorios];
   }
 
+  //  Incluir miembro
+
   public function searchDocenteRrhh(Request $request) {
     $investigadores = DB::table('Repo_rrhh AS a')
       ->leftJoin('Usuario_investigador AS b', 'b.doc_numero', '=', 'a.ser_doc_id_act')
       ->leftJoin('Licencia AS c', 'c.investigador_id', '=', 'b.id')
       ->leftJoin('Licencia_tipo AS d', 'c.licencia_tipo_id', '=', 'd.id')
+      ->leftJoin('Facultad AS e', 'e.id', '=', 'b.facultad_id')
       ->select(
         DB::raw("CONCAT(TRIM(a.ser_cod_ant), ' | ', a.ser_doc_id_act, ' | ', a.ser_ape_pat, ' ', a.ser_ape_mat, ' ', a.ser_nom) AS value"),
-        DB::raw("TRIM(a.ser_cod_ant) AS ser_cod_ant"),
         'a.id',
+        'b.id AS investigador_id',
         'ser_ape_pat',
         'ser_ape_mat',
         'ser_nom',
+        'ser_cod_ant',
         'ser_doc_id_act',
-        'des_tip_ser',
-        'desc_est',
-        'ser_cat_act',
-        'ser_cta_ban_act',
-        'ser_cod',
-        'ser_sexo',
-        'abv_doc_id',
-        'ser_fech_nac',
+        DB::raw("CASE
+          WHEN SUBSTRING_INDEX(ser_cat_act, '-', 1) = '1' THEN 'Principal'
+          WHEN SUBSTRING_INDEX(ser_cat_act, '-', 1) = '2' THEN 'Asociado'
+          WHEN SUBSTRING_INDEX(ser_cat_act, '-', 1) = '3' THEN 'Auxiliar'
+          WHEN SUBSTRING_INDEX(ser_cat_act, '-', 1) = '4' THEN 'Jefe de Práctica'
+          ELSE 'Sin categoría'
+        END AS categoria"),
+        DB::raw("CASE
+          WHEN SUBSTRING_INDEX(SUBSTRING_INDEX(ser_cat_act, '-', 2), '-', -1) = '1' THEN 'Dedicación Exclusiva'
+          WHEN SUBSTRING_INDEX(SUBSTRING_INDEX(ser_cat_act, '-', 2), '-', -1) = '2' THEN 'Tiempo Completo'
+          WHEN SUBSTRING_INDEX(SUBSTRING_INDEX(ser_cat_act, '-', 2), '-', -1) = '3' THEN 'Tiempo Parcial'
+          ELSE 'Sin clase'
+        END AS clase"),
+        DB::raw("SUBSTRING_INDEX(ser_cat_act, '-', -1) AS horas"),
+        'des_dep_cesantes',
+        'e.nombre AS facultad',
+        'e.id AS facultad_id'
       )
       ->where('des_tip_ser', 'LIKE', 'DOCENTE%')
       ->where(function ($query) {
@@ -285,22 +298,66 @@ class GruposController extends S3Controller {
   }
 
   public function incluirMiembroData(Request $request) {
-    //  Validar que no sea miembro de ningún grupo
-    $cuenta = DB::table('Grupo_integrante AS a')
-      ->join('Grupo AS b', 'b.id', '=', 'a.grupo_id')
+
+    $investigador = DB::table('Usuario_investigador AS a')
+      ->leftJoin('Grupo_integrante AS b', 'b.investigador_id', '=', 'a.id')
+      ->leftJoin('Dependencia AS c', 'c.id', '=', 'a.dependencia_id')
+      ->leftJoin('Facultad AS d', 'd.id', '=', 'a.facultad_id')
+      ->leftJoin('Instituto AS e', 'e.id', '=', 'a.instituto_id')
+      ->leftJoin('Grupo AS f', function ($join) {
+        $join->on('f.id', '=', 'b.grupo_id')
+          ->where('b.condicion', 'NOT LIKE', 'Ex%');
+      })
       ->select(
-        'b.grupo_nombre'
+        'a.codigo_orcid',
+        'c.dependencia',
+        'd.nombre AS facultad',
+        'e.instituto',
+        DB::raw('IFNULL(SUM(b.condicion NOT LIKE "Ex%"), 0) AS grupos'),
+        DB::raw('GROUP_CONCAT(DISTINCT IF(b.condicion NOT LIKE "Ex%", f.grupo_nombre, NULL)) AS grupo_nombre')
       )
-      ->where('investigador_id', '=', $request->input('investigador_id'))
-      ->whereNot('condicion', 'LIKE', 'Ex%')
-      ->get();
+      ->where('a.id', '=', $request->query('investigador_id'))
+      ->groupBy('a.id')
+      ->first();
 
-    if (sizeof($cuenta) > 0) {
-      return ['message' => 'alert', 'detail' => 'Esta persona ya pertenece a un grupo de investigación: ' . $cuenta[0]['grupo_nombre']];
+    if ($investigador->grupos > 0) {
+      return [
+        'message' => 'error',
+        'detail' => 'Esta persona ya pertenece a un grupo de investigación: ' . $investigador->grupo_nombre
+      ];
+    } else if (in_array(null, [$investigador->codigo_orcid, $investigador->dependencia, $investigador->facultad, $investigador->instituto])) {
+      return [
+        'message' => 'warning',
+        'detail' => 'Registro de investigador incompleto',
+        'codigo_orcid' => $investigador->codigo_orcid ?? "",
+        'dependencia' => $investigador->dependencia ?? "",
+        'facultad' => $investigador->facultad ?? "",
+        'instituto' => $investigador->instituto ?? "",
+      ];
     } else {
-
-      return ['message' => 'info', 'detail' => 'No pertenece a ningún grupo'];
+      return [
+        'message' => 'success',
+        'detail' => 'No pertenece a ningún grupo y tiene los datos de investigador completos',
+        'codigo_orcid' => $investigador->codigo_orcid ?? "",
+        'dependencia' => $investigador->dependencia ?? "",
+        'facultad' => $investigador->facultad ?? "",
+        'instituto' => $investigador->instituto ?? "",
+      ];
     }
+  }
+
+  public function agregarMiembro(Request $request) {
+    DB::table('Grupo_integrante')
+      ->insert([
+        'grupo_id' => $request->input('grupo_id'),
+        'facultad_id' => $request->input('facultad_id'),
+        'facultad_id' => $request->input('facultad_id'),
+        'investigador_id' => $request->input('investigador_id'),
+        'codigo' => $request->input('ser_cod_ant'),
+        'tipo' => $request->input('tipo'),
+        'condicion' => $request->input('condicion'),
+        'estado' => '1',
+      ]);
   }
 
   //  TODO - implementar reporte de calificación e imprimir
