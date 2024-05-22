@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin\Estudios;
 
 use App\Http\Controllers\S3Controller;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -299,6 +300,13 @@ class GruposController extends S3Controller {
 
   public function incluirMiembroData(Request $request) {
 
+    if ($request->query('investigador_id') == null) {
+      return [
+        'message' => 'warning',
+        'detail' => 'No está registrado como investigador'
+      ];
+    }
+
     $investigador = DB::table('Usuario_investigador AS a')
       ->leftJoin('Grupo_integrante AS b', 'b.investigador_id', '=', 'a.id')
       ->leftJoin('Dependencia AS c', 'c.id', '=', 'a.dependencia_id')
@@ -311,8 +319,11 @@ class GruposController extends S3Controller {
       ->select(
         'a.codigo_orcid',
         'c.dependencia',
+        'c.id AS dependencia_id',
         'd.nombre AS facultad',
+        'd.id AS facultad_id',
         'e.instituto',
+        'e.id AS instituto_id',
         DB::raw('IFNULL(SUM(b.condicion NOT LIKE "Ex%"), 0) AS grupos'),
         DB::raw('GROUP_CONCAT(DISTINCT IF(b.condicion NOT LIKE "Ex%", f.grupo_nombre, NULL)) AS grupo_nombre')
       )
@@ -328,36 +339,58 @@ class GruposController extends S3Controller {
     } else if (in_array(null, [$investigador->codigo_orcid, $investigador->dependencia, $investigador->facultad, $investigador->instituto])) {
       return [
         'message' => 'warning',
-        'detail' => 'Registro de investigador incompleto',
-        'codigo_orcid' => $investigador->codigo_orcid ?? "",
-        'dependencia' => $investigador->dependencia ?? "",
-        'facultad' => $investigador->facultad ?? "",
-        'instituto' => $investigador->instituto ?? "",
+        'detail' => 'Registro de investigador incompleto (necesita tener orcid, dependencia, facultad e instituto)'
       ];
     } else {
       return [
         'message' => 'success',
         'detail' => 'No pertenece a ningún grupo y tiene los datos de investigador completos',
-        'codigo_orcid' => $investigador->codigo_orcid ?? "",
-        'dependencia' => $investigador->dependencia ?? "",
-        'facultad' => $investigador->facultad ?? "",
-        'instituto' => $investigador->instituto ?? "",
+        'codigo_orcid' => $investigador->codigo_orcid,
+        'dependencia' => $investigador->dependencia,
+        'facultad' => $investigador->facultad,
+        'instituto' => $investigador->instituto,
+        'dependencia_id' => $investigador->dependencia_id,
+        'facultad_id' => $investigador->facultad_id,
+        'instituto_id' => $investigador->instituto_id,
       ];
     }
   }
 
   public function agregarMiembro(Request $request) {
+    $investigador = DB::table('Usuario_investigador AS a')
+      ->select(
+        'a.codigo',
+        'a.codigo_orcid',
+        'a.dependencia_id',
+        'a.facultad_id',
+        'a.instituto_id',
+      )
+      ->where('a.id', '=', $request->input('investigador_id'))
+      ->first();
+
     DB::table('Grupo_integrante')
       ->insert([
         'grupo_id' => $request->input('grupo_id'),
-        'facultad_id' => $request->input('facultad_id'),
-        'facultad_id' => $request->input('facultad_id'),
+        'facultad_id' => $investigador->facultad_id,
+        'dependencia_id' => $investigador->dependencia_id,
+        'instituto_id' => $investigador->instituto_id,
         'investigador_id' => $request->input('investigador_id'),
-        'codigo' => $request->input('ser_cod_ant'),
+        'codigo' => $investigador->codigo,
         'tipo' => $request->input('tipo'),
         'condicion' => $request->input('condicion'),
+        'fecha_inclusion' => $request->input('fecha_inclusion'),
+        'resolucion_oficina' => $request->input('resolucion_oficina'),
+        'resolucion' => $request->input('resolucion'),
+        'resolucion_fecha' => $request->input('resolucion_fecha'),
         'estado' => '1',
+        'created_at' => Carbon::now(),
+        'updated_at' => Carbon::now()
       ]);
+
+    return [
+      'message' => 'success',
+      'detail' => 'Miembro registrado exitosamente'
+    ];
   }
 
   //  TODO - implementar reporte de calificación e imprimir
