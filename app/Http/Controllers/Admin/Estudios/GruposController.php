@@ -298,61 +298,122 @@ class GruposController extends S3Controller {
     return $investigadores;
   }
 
-  public function incluirMiembroData(Request $request) {
-
-    if ($request->query('investigador_id') == null) {
-      return [
-        'message' => 'warning',
-        'detail' => 'No está registrado como investigador'
-      ];
-    }
-
-    $investigador = DB::table('Usuario_investigador AS a')
-      ->leftJoin('Grupo_integrante AS b', 'b.investigador_id', '=', 'a.id')
-      ->leftJoin('Dependencia AS c', 'c.id', '=', 'a.dependencia_id')
-      ->leftJoin('Facultad AS d', 'd.id', '=', 'a.facultad_id')
-      ->leftJoin('Instituto AS e', 'e.id', '=', 'a.instituto_id')
-      ->leftJoin('Grupo AS f', function ($join) {
-        $join->on('f.id', '=', 'b.grupo_id')
-          ->where('b.condicion', 'NOT LIKE', 'Ex%');
-      })
+  public function searchEstudiante(Request $request) {
+    $estudiantes = DB::table('Repo_sum')
       ->select(
-        'a.codigo_orcid',
-        'c.dependencia',
-        'c.id AS dependencia_id',
-        'd.nombre AS facultad',
-        'd.id AS facultad_id',
-        'e.instituto',
-        'e.id AS instituto_id',
-        DB::raw('IFNULL(SUM(b.condicion NOT LIKE "Ex%"), 0) AS grupos'),
-        DB::raw('GROUP_CONCAT(DISTINCT IF(b.condicion NOT LIKE "Ex%", f.grupo_nombre, NULL)) AS grupo_nombre')
+        DB::raw("CONCAT(TRIM(codigo_alumno), ' | ', dni, ' | ', apellido_paterno, ' ', apellido_materno, ' ', nombres, ' | ', programa) AS value"),
+        'id',
+        'codigo_alumno',
+        'dni',
+        'apellido_paterno',
+        'apellido_materno',
+        'nombres',
+        'facultad',
+        'programa',
+        'permanencia',
+        'ultimo_periodo_matriculado'
       )
-      ->where('a.id', '=', $request->query('investigador_id'))
-      ->groupBy('a.id')
-      ->first();
+      ->whereIn('permanencia', ['Activo', 'Reserva de Matricula'])
+      ->having('value', 'LIKE', '%' . $request->query('query') . '%')
+      ->get();
 
-    if ($investigador->grupos > 0) {
-      return [
-        'message' => 'error',
-        'detail' => 'Esta persona ya pertenece a un grupo de investigación: ' . $investigador->grupo_nombre
-      ];
-    } else if (in_array(null, [$investigador->codigo_orcid, $investigador->dependencia, $investigador->facultad, $investigador->instituto])) {
-      return [
-        'message' => 'warning',
-        'detail' => 'Registro de investigador incompleto (necesita tener orcid, dependencia, facultad e instituto)'
-      ];
-    } else {
-      return [
-        'message' => 'success',
-        'detail' => 'No pertenece a ningún grupo y tiene los datos de investigador completos',
-        'codigo_orcid' => $investigador->codigo_orcid,
-        'dependencia' => $investigador->dependencia,
-        'facultad' => $investigador->facultad,
-        'instituto' => $investigador->instituto,
-        'dependencia_id' => $investigador->dependencia_id,
-        'facultad_id' => $investigador->facultad_id,
-        'instituto_id' => $investigador->instituto_id,
-      ];
+    return $estudiantes;
+  }
+
+  public function incluirMiembroData(Request $request) {
+    switch ($request->query('tipo')) {
+      case "titular":
+        if ($request->query('investigador_id') == null) {
+          return [
+            'message' => 'warning',
+            'detail' => 'No está registrado como investigador'
+          ];
+        } else {
+
+          $investigador = DB::table('Usuario_investigador AS a')
+            ->leftJoin('Grupo_integrante AS b', 'b.investigador_id', '=', 'a.id')
+            ->leftJoin('Dependencia AS c', 'c.id', '=', 'a.dependencia_id')
+            ->leftJoin('Facultad AS d', 'd.id', '=', 'a.facultad_id')
+            ->leftJoin('Instituto AS e', 'e.id', '=', 'a.instituto_id')
+            ->leftJoin('Grupo AS f', function ($join) {
+              $join->on('f.id', '=', 'b.grupo_id')
+                ->where('b.condicion', 'NOT LIKE', 'Ex%');
+            })
+            ->select(
+              'a.codigo_orcid',
+              'c.dependencia',
+              'c.id AS dependencia_id',
+              'd.nombre AS facultad',
+              'd.id AS facultad_id',
+              'e.instituto',
+              'e.id AS instituto_id',
+              DB::raw('IFNULL(SUM(b.condicion NOT LIKE "Ex%"), 0) AS grupos'),
+              DB::raw('GROUP_CONCAT(DISTINCT IF(b.condicion NOT LIKE "Ex%", f.grupo_nombre, NULL)) AS grupo_nombre')
+            )
+            ->where('a.id', '=', $request->query('investigador_id'))
+            ->groupBy('a.id')
+            ->first();
+
+          if ($investigador->grupos > 0) {
+            return [
+              'message' => 'error',
+              'detail' => 'Esta persona ya pertenece a un grupo de investigación: ' . $investigador->grupo_nombre
+            ];
+          } else if (in_array(null, [$investigador->codigo_orcid, $investigador->dependencia, $investigador->facultad, $investigador->instituto])) {
+            return [
+              'message' => 'warning',
+              'detail' => 'Registro de investigador incompleto (necesita tener orcid, dependencia, facultad e instituto)'
+            ];
+          } else {
+            return [
+              'message' => 'success',
+              'detail' => 'No pertenece a ningún grupo y tiene los datos de investigador completos',
+              'codigo_orcid' => $investigador->codigo_orcid,
+              'dependencia' => $investigador->dependencia,
+              'facultad' => $investigador->facultad,
+              'instituto' => $investigador->instituto,
+              'dependencia_id' => $investigador->dependencia_id,
+              'facultad_id' => $investigador->facultad_id,
+              'instituto_id' => $investigador->instituto_id,
+            ];
+          }
+        }
+        break;
+      case "estudiante":
+        $investigador = DB::table('Usuario_investigador AS a')
+          ->leftJoin('Grupo_integrante AS b', 'b.investigador_id', '=', 'a.id')
+          ->leftJoin('Grupo AS c', function ($join) {
+            $join->on('c.id', '=', 'b.grupo_id')
+              ->where('b.condicion', 'NOT LIKE', 'Ex%');
+          })
+          ->select(
+            'a.id',
+            DB::raw('IFNULL(SUM(b.condicion NOT LIKE "Ex%"), 0) AS grupos'),
+            DB::raw('GROUP_CONCAT(DISTINCT IF(b.condicion NOT LIKE "Ex%", c.grupo_nombre, NULL)) AS grupo_nombre')
+          )
+          ->where('a.codigo', '=', $request->query('codigo'))
+          ->groupBy('a.codigo')
+          ->first();
+
+        if ($investigador == null) {
+          return [
+            'message' => 'warning',
+            'detail' => 'No está registrado como investigador'
+          ];
+        } else if ($investigador->grupos > 0) {
+          return [
+            'message' => 'error',
+            'detail' => 'Esta persona ya pertenece a un grupo de investigación: ' . $investigador->grupo_nombre
+          ];
+        } else {
+          return [
+            'message' => 'success',
+            'detail' => 'No pertenece a ningún grupo y tiene los datos de investigador completos'
+          ];
+        }
+        break;
+      default:
+        break;
     }
   }
 
