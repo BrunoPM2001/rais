@@ -320,6 +320,28 @@ class GruposController extends S3Controller {
     return $estudiantes;
   }
 
+  public function searchEgresado(Request $request) {
+    $egresados = DB::table('Repo_sum')
+      ->select(
+        DB::raw("CONCAT(TRIM(codigo_alumno), ' | ', dni, ' | ', apellido_paterno, ' ', apellido_materno, ' ', nombres, ' | ', programa) AS value"),
+        'id',
+        'codigo_alumno',
+        'dni',
+        'apellido_paterno',
+        'apellido_materno',
+        'nombres',
+        'facultad',
+        'programa',
+        'permanencia',
+        'ultimo_periodo_matriculado'
+      )
+      ->whereIn('permanencia', ['Egresado'])
+      ->having('value', 'LIKE', '%' . $request->query('query') . '%')
+      ->get();
+
+    return $egresados;
+  }
+
   public function incluirMiembroData(Request $request) {
     switch ($request->query('tipo')) {
       case "titular":
@@ -379,7 +401,7 @@ class GruposController extends S3Controller {
           }
         }
         break;
-      case "estudiante":
+      case "estudiante" || "egresado":
         $investigador = DB::table('Usuario_investigador AS a')
           ->leftJoin('Grupo_integrante AS b', 'b.investigador_id', '=', 'a.id')
           ->leftJoin('Grupo AS c', function ($join) {
@@ -413,45 +435,92 @@ class GruposController extends S3Controller {
         }
         break;
       default:
+        return [
+          'message' => 'error',
+          'detail' => 'Error al solicitar información'
+        ];
         break;
     }
   }
 
   public function agregarMiembro(Request $request) {
-    $investigador = DB::table('Usuario_investigador AS a')
-      ->select(
-        'a.codigo',
-        'a.codigo_orcid',
-        'a.dependencia_id',
-        'a.facultad_id',
-        'a.instituto_id',
-      )
-      ->where('a.id', '=', $request->input('investigador_id'))
-      ->first();
+    switch ($request->input('tipo')) {
+      case 'titular':
+        $investigador = DB::table('Usuario_investigador AS a')
+          ->select(
+            'a.codigo',
+            'a.dependencia_id',
+            'a.facultad_id',
+            'a.instituto_id',
+          )
+          ->where('a.id', '=', $request->input('investigador_id'))
+          ->first();
 
-    DB::table('Grupo_integrante')
-      ->insert([
-        'grupo_id' => $request->input('grupo_id'),
-        'facultad_id' => $investigador->facultad_id,
-        'dependencia_id' => $investigador->dependencia_id,
-        'instituto_id' => $investigador->instituto_id,
-        'investigador_id' => $request->input('investigador_id'),
-        'codigo' => $investigador->codigo,
-        'tipo' => $request->input('tipo'),
-        'condicion' => $request->input('condicion'),
-        'fecha_inclusion' => $request->input('fecha_inclusion'),
-        'resolucion_oficina' => $request->input('resolucion_oficina'),
-        'resolucion' => $request->input('resolucion'),
-        'resolucion_fecha' => $request->input('resolucion_fecha'),
-        'estado' => '1',
-        'created_at' => Carbon::now(),
-        'updated_at' => Carbon::now()
-      ]);
+        DB::table('Grupo_integrante')
+          ->insert([
+            'grupo_id' => $request->input('grupo_id'),
+            'facultad_id' => $investigador->facultad_id,
+            'dependencia_id' => $investigador->dependencia_id,
+            'instituto_id' => $investigador->instituto_id,
+            'investigador_id' => $request->input('investigador_id'),
+            'codigo' => $investigador->codigo,
+            'tipo' => $request->input('tipo'),
+            'condicion' => $request->input('condicion'),
+            'fecha_inclusion' => $request->input('fecha_inclusion'),
+            'resolucion_oficina' => $request->input('resolucion_oficina'),
+            'resolucion' => $request->input('resolucion'),
+            'resolucion_fecha' => $request->input('resolucion_fecha'),
+            'estado' => '1',
+            'created_at' => Carbon::now(),
+            'updated_at' => Carbon::now()
+          ]);
 
-    return [
-      'message' => 'success',
-      'detail' => 'Miembro registrado exitosamente'
-    ];
+        return [
+          'message' => 'success',
+          'detail' => 'Miembro registrado exitosamente'
+        ];
+        break;
+      case 'externo':
+        $investigador_id = DB::table('Usuario_investigador')
+          ->insertGetId([
+            'codigo_orcid' => $request->input('codigo_orcid'),
+            'apellido1' => $request->input('apellido1'),
+            'apellido2' => $request->input('apellido2'),
+            'nombres' => $request->input('nombres'),
+            'sexo' => $request->input('sexo'),
+            'institucion' => $request->input('sexo'),
+            'pais' => $request->input('sexo'),
+            'correo' => $request->input('correo'),
+            'tipo_doc' => $request->input('tipo_doc'),
+            'doc_numero' => $request->input('doc_numero'),
+            'telefono' => $request->input('telefono'),
+            'titulo' => $request->input('titulo'),
+            'grado' => $request->input('grado'),
+            'especialidad' => $request->input('especialidad'),
+            'researcher_id' => $request->input('researcher_id'),
+            'scopus_id' => $request->input('scopus_id'),
+            'web' => $request->input('web'),
+            'posicion_unmsm' => $request->input('posicion_unmsm'),
+            'perfil' => $request->input('perfil'),
+            'observacion' => $request->input('observacion')
+          ]);
+
+        DB::table('Grupo_integrante')
+          ->insert([
+            'grupo_id' => $request->input('grupo_id'),
+            'investigador_id' => $investigador_id,
+            'tipo' => 'Externo',
+            'condicion' => 'Adherente',
+            'estado' => '1',
+            'created_at' => Carbon::now(),
+            'updated_at' => Carbon::now()
+          ]);
+
+        return [
+          'message' => 'success',
+          'detail' => 'Miembro registrado exitosamente'
+        ];
+    }
   }
 
   //  ARCHIVO EXTERNO SE GUARDA EN GRUPO

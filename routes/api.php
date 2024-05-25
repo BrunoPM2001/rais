@@ -102,6 +102,7 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
       //  Miembros
       Route::get('searchDocenteRrhh', [GruposController::class, 'searchDocenteRrhh']);
       Route::get('searchEstudiante', [GruposController::class, 'searchEstudiante']);
+      Route::get('searchEgresado', [GruposController::class, 'searchEgresado']);
       Route::get('incluirMiembroData', [GruposController::class, 'incluirMiembroData']);
       Route::put('agregarMiembro', [GruposController::class, 'agregarMiembro']);
     });
