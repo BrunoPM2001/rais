@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Controllers\Admin\Admin\DependenciaController;
 use App\Http\Controllers\Admin\Admin\Linea_investigacionController;
 use App\Http\Controllers\Admin\Admin\Usuario_adminController;
 use App\Http\Controllers\Admin\Admin\Usuario_investigadorController;
@@ -104,7 +103,8 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
       Route::get('searchEstudiante', [GruposController::class, 'searchEstudiante']);
       Route::get('searchEgresado', [GruposController::class, 'searchEgresado']);
       Route::get('incluirMiembroData', [GruposController::class, 'incluirMiembroData']);
-      Route::put('agregarMiembro', [GruposController::class, 'agregarMiembro']);
+      Route::post('agregarMiembro', [GruposController::class, 'agregarMiembro']);
+      Route::put('excluirMiembro', [GruposController::class, 'excluirMiembro']);
     });
 
     //  Proyectos grupo

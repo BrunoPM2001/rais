@@ -139,13 +139,12 @@ class GruposController extends S3Controller {
   public function miembros($grupo_id, $estado) {
     $miembros = DB::table('Grupo_integrante AS a')
       ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
-      ->join('Facultad AS c', 'c.id', '=', 'b.facultad_id')
+      ->leftJoin('Facultad AS c', 'c.id', '=', 'b.facultad_id')
       ->leftJoin('Proyecto_integrante AS d', 'd.grupo_integrante_id', '=', 'a.id')
       ->select(
         'a.id',
         'a.investigador_id',
         'a.condicion',
-        'a.cargo',
         'b.doc_numero',
         DB::raw('CONCAT(b.apellido1, " ", b.apellido2, ", ", b.nombres) AS nombres'),
         'b.codigo_orcid',
@@ -299,21 +298,23 @@ class GruposController extends S3Controller {
   }
 
   public function searchEstudiante(Request $request) {
-    $estudiantes = DB::table('Repo_sum')
+    $estudiantes = DB::table('Repo_sum AS a')
+      ->leftJoin('Usuario_investigador AS b', 'b.codigo', '=', 'a.codigo_alumno')
       ->select(
-        DB::raw("CONCAT(TRIM(codigo_alumno), ' | ', dni, ' | ', apellido_paterno, ' ', apellido_materno, ' ', nombres, ' | ', programa) AS value"),
-        'id',
-        'codigo_alumno',
-        'dni',
-        'apellido_paterno',
-        'apellido_materno',
-        'nombres',
-        'facultad',
-        'programa',
-        'permanencia',
-        'ultimo_periodo_matriculado'
+        DB::raw("CONCAT(TRIM(a.codigo_alumno), ' | ', a.dni, ' | ', a.apellido_paterno, ' ', a.apellido_materno, ', ', a.nombres, ' | ', a.programa) AS value"),
+        'a.id',
+        'b.id AS investigador_id',
+        'a.codigo_alumno',
+        'a.dni',
+        'a.apellido_paterno',
+        'a.apellido_materno',
+        'a.nombres',
+        'a.facultad',
+        'a.programa',
+        'a.permanencia',
+        'a.ultimo_periodo_matriculado'
       )
-      ->whereIn('permanencia', ['Activo', 'Reserva de Matricula'])
+      ->whereIn('a.permanencia', ['Activo', 'Reserva de Matricula'])
       ->having('value', 'LIKE', '%' . $request->query('query') . '%')
       ->get();
 
@@ -321,21 +322,23 @@ class GruposController extends S3Controller {
   }
 
   public function searchEgresado(Request $request) {
-    $egresados = DB::table('Repo_sum')
+    $egresados = DB::table('Repo_sum AS a')
+      ->leftJoin('Usuario_investigador AS b', 'b.codigo', '=', 'a.codigo_alumno')
       ->select(
-        DB::raw("CONCAT(TRIM(codigo_alumno), ' | ', dni, ' | ', apellido_paterno, ' ', apellido_materno, ' ', nombres, ' | ', programa) AS value"),
-        'id',
-        'codigo_alumno',
-        'dni',
-        'apellido_paterno',
-        'apellido_materno',
-        'nombres',
-        'facultad',
-        'programa',
-        'permanencia',
-        'ultimo_periodo_matriculado'
+        DB::raw("CONCAT(TRIM(a.codigo_alumno), ' | ', a.dni, ' | ', a.apellido_paterno, ' ', a.apellido_materno, ', ', a.nombres, ' | ', a.programa) AS value"),
+        'a.id',
+        'b.id AS investigador_id',
+        'a.codigo_alumno',
+        'a.dni',
+        'a.apellido_paterno',
+        'a.apellido_materno',
+        'a.nombres',
+        'a.facultad',
+        'a.programa',
+        'a.permanencia',
+        'a.ultimo_periodo_matriculado'
       )
-      ->whereIn('permanencia', ['Egresado'])
+      ->whereIn('a.permanencia', ['Egresado'])
       ->having('value', 'LIKE', '%' . $request->query('query') . '%')
       ->get();
 
@@ -444,7 +447,7 @@ class GruposController extends S3Controller {
   }
 
   public function agregarMiembro(Request $request) {
-    switch ($request->input('tipo')) {
+    switch ($request->input('tipo_registro')) {
       case 'titular':
         $investigador = DB::table('Usuario_investigador AS a')
           ->select(
@@ -488,21 +491,20 @@ class GruposController extends S3Controller {
             'apellido2' => $request->input('apellido2'),
             'nombres' => $request->input('nombres'),
             'sexo' => $request->input('sexo'),
-            'institucion' => $request->input('sexo'),
-            'pais' => $request->input('sexo'),
-            'correo' => $request->input('correo'),
-            'tipo_doc' => $request->input('tipo_doc'),
+            'institucion' => $request->input('institucion'),
+            'pais' => $request->input('pais'),
+            'direccion1' => $request->input('direccion1'),
+            'doc_tipo' => $request->input('doc_tipo'),
             'doc_numero' => $request->input('doc_numero'),
-            'telefono' => $request->input('telefono'),
-            'titulo' => $request->input('titulo'),
+            'telefono_movil' => $request->input('telefono_movil'),
+            'titulo_profesional' => $request->input('titulo_profesional'),
             'grado' => $request->input('grado'),
             'especialidad' => $request->input('especialidad'),
             'researcher_id' => $request->input('researcher_id'),
             'scopus_id' => $request->input('scopus_id'),
-            'web' => $request->input('web'),
+            'link' => $request->input('link'),
             'posicion_unmsm' => $request->input('posicion_unmsm'),
-            'perfil' => $request->input('perfil'),
-            'observacion' => $request->input('observacion')
+            'biografia' => $request->input('biografia'),
           ]);
 
         DB::table('Grupo_integrante')
@@ -511,6 +513,8 @@ class GruposController extends S3Controller {
             'investigador_id' => $investigador_id,
             'tipo' => 'Externo',
             'condicion' => 'Adherente',
+            'observacion' => $request->input('observacion'),
+            'fecha_inclusion' => Carbon::now(),
             'estado' => '1',
             'created_at' => Carbon::now(),
             'updated_at' => Carbon::now()
@@ -520,9 +524,46 @@ class GruposController extends S3Controller {
           'message' => 'success',
           'detail' => 'Miembro registrado exitosamente'
         ];
+        break;
+      case 'estudiante' || 'egresado':
+        $day = Carbon::now()->day;
+        DB::table('Grupo_integrante')
+          ->insert([
+            'grupo_id' => $request->input('grupo_id'),
+            'investigador_id' => $request->input('investigador_id'),
+            'condicion' => $request->input('condicion'),
+            'fecha_inclusion' => Carbon::now(),
+            'estado' => '1',
+            'created_at' => Carbon::now(),
+            'updated_at' => Carbon::now()
+          ]);
+
+        return [
+          'message' => 'success',
+          'detail' => 'Miembro registrado exitosamente',
+          'extra' => $day
+        ];
+        break;
     }
   }
 
+  public function excluirMiembro(Request $request) {
+    DB::table('Grupo_integrante')
+      ->where('id', '=', $request->input('id'))
+      ->update([
+        'condicion' => "Ex " . $request->input('condicion'),
+        'fecha_exclusion' => $request->input('fecha_exclusion'),
+        'resolucion_exclusion' => $request->input('resolucion_exclusion'),
+        'resolucion_exclusion_fecha' => $request->input('resolucion_exclusion_fecha'),
+        'resolucion_oficina_exclusion' => $request->input('resolucion_oficina_exclusion'),
+        'observacion_excluir' => $request->input('observacion_excluir')
+      ]);
+
+    return [
+      'message' => 'info',
+      'detail' => 'Miembro excluído exitosamente'
+    ];
+  }
   //  ARCHIVO EXTERNO SE GUARDA EN GRUPO
   //  TODO - implementar reporte de calificación e imprimir
 }

@@ -32,14 +32,14 @@ class SessionController extends Controller {
         $jwt = JWT::encode([
           'id' => $table->id,
           'tabla' => $table->tabla,
-          'exp' => time() + 3600
+          'exp' => time() + 7200
         ], env('JWT_SECRET'), 'HS256');
       } else if ($table->tabla == "Usuario_investigador") {
         $jwt = JWT::encode([
           'id' => $table->id,
           'tabla' => $table->tabla,
           'investigador_id' => $table->tabla_id,
-          'exp' => time() + 3600
+          'exp' => time() + 7200
         ], env('JWT_SECRET'), 'HS256');
       }
       return ['data' => [
