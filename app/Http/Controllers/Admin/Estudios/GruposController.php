@@ -160,7 +160,7 @@ class GruposController extends S3Controller {
       ->where('a.grupo_id', '=', $grupo_id);
 
     //  Tipo de miembro
-    $miembros = $estado == 1 ? $miembros->whereNull('a.fecha_exclusion') : $miembros->whereNotNull('a.fecha_exclusion');
+    $miembros = $estado == 1 ? $miembros->whereNot('a.condicion', 'LIKE', 'Ex%') : $miembros->where('a.condicion', 'LIKE', 'Ex%');
 
     $miembros = $miembros->groupBy('a.id')
       ->get();
@@ -316,6 +316,7 @@ class GruposController extends S3Controller {
       )
       ->whereIn('a.permanencia', ['Activo', 'Reserva de Matricula'])
       ->having('value', 'LIKE', '%' . $request->query('query') . '%')
+      ->limit(10)
       ->get();
 
     return $estudiantes;
@@ -340,6 +341,7 @@ class GruposController extends S3Controller {
       )
       ->whereIn('a.permanencia', ['Egresado'])
       ->having('value', 'LIKE', '%' . $request->query('query') . '%')
+      ->limit(10)
       ->get();
 
     return $egresados;

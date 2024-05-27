@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Admin\Admin;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Svg\Tag\Rect;
 
 class Usuario_investigadorController extends Controller {
 
@@ -42,21 +44,18 @@ class Usuario_investigadorController extends Controller {
     return $usuario[0];
   }
 
-  public function searchInvestigadorBy($input) {
+  public function searchInvestigadorBy(Request $request) {
     $investigadores = DB::table('Usuario_investigador AS a')
       ->select(
-        'id',
+        DB::raw("CONCAT(TRIM(codigo), ' | ', doc_numero, ' | ', apellido1, ' ', apellido2, ', ', nombres) AS value"),
+        'id AS investigador_id',
         'codigo',
         'doc_numero',
         'apellido1',
         'apellido2',
         'nombres'
       )
-      ->where('codigo', 'LIKE', '%' . $input . '%')
-      ->orWhere('doc_numero', 'LIKE', '%' . $input . '%')
-      ->orWhere('apellido1', 'LIKE', '%' . $input . '%')
-      ->orWhere('apellido2', 'LIKE', '%' . $input . '%')
-      ->orWhere('nombres', 'LIKE', '%' . $input . '%')
+      ->having('value', 'LIKE', '%' . $request->query('query') . '%')
       ->limit(10)
       ->get();
 

@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\Estudios\ConvocatoriasController;
 use App\Http\Controllers\Admin\Estudios\DeudaProyectosController;
 use App\Http\Controllers\Admin\Estudios\DocentesController;
+use App\Http\Controllers\Admin\Estudios\GestionSUMController;
 use App\Http\Controllers\Admin\Estudios\GruposController;
 use App\Http\Controllers\Admin\Estudios\InformesTecnicosController;
 use App\Http\Controllers\Admin\Estudios\InvestigadoresController;
@@ -180,6 +181,12 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
       Route::get('listadoSolicitudes', [DocentesController::class, 'listadoSolicitudes']);
       Route::get('listadoConstancias', [DocentesController::class, 'listadoConstancias']);
     });
+
+    //  Gestión de SUM
+    Route::prefix('sum')->group(function () {
+      Route::get('listadoLocal', [GestionSUMController::class, 'listadoLocal']);
+      Route::get('listadoSum', [GestionSUMController::class, 'listadoSum']);
+    });
   });
 
   //  Reportes
@@ -233,7 +240,7 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
       //  Investigador
       Route::get('getUsuariosInvestigadores', [Usuario_investigadorController::class, 'getAll']);
       Route::get('getOneInvestigador/{id}', [Usuario_investigadorController::class, 'getOne']);
-      Route::get('searchInvestigadorBy/{input}', [Usuario_investigadorController::class, 'searchInvestigadorBy']);
+      Route::get('searchInvestigadorBy', [Usuario_investigadorController::class, 'searchInvestigadorBy']);
     });
   });
 });
