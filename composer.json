@@ -12,6 +12,7 @@
         "guzzlehttp/guzzle": "^7.2",
         "laravel/framework": "^10.10",
         "laravel/sanctum": "^3.2",
+        "laravel/socialite": "*",
         "laravel/tinker": "^2.8",
         "yajra/laravel-oci8": "^10"
     },
