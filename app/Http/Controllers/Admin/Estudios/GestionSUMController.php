@@ -10,11 +10,9 @@ class GestionSUMController extends Controller {
 
   public function listadoLocal(Request $request) {
 
-    $concat = "(codigo_alumno || ' | ' || dni || ' | ' || apellido_paterno || ' ' || apellido_materno || ', ' || nombres || ' | ' || programa)";
-
     $listado = DB::table('Repo_sum')
       ->select([
-        DB::raw($concat . " value"),
+        DB::raw("CONCAT(codigo_alumno, ' ', dni, ' ', apellido_paterno, ' ', apellido_materno, ' ', nombres) AS value"),
         'codigo_alumno',
         'nombres',
         'apellido_paterno',
@@ -35,10 +33,15 @@ class GestionSUMController extends Controller {
         'situacion_academica',
         'permanencia',
         'ultimo_periodo_matriculado',
-
-      ])
-      ->having("value", " LIKE", "%" . $request->query('query') . "%")
-      ->get();
+      ]);
+    if ($request->query('search') != "") {
+      $listado = $listado->having('value', 'LIKE', '%' . $request->query('search') . '%');
+    }
+    $listado = $listado
+      ->orderBy('apellido_paterno')
+      ->orderBy('apellido_materno')
+      ->orderBy('nombres')
+      ->paginate(10, ['*'], 'page', $request->query('page'));
 
     return $listado;
   }
@@ -55,12 +58,19 @@ class GestionSUMController extends Controller {
         'apellido_paterno',
         'apellido_materno',
         'nombres',
+        'sexo',
         'facultad',
         'programa',
         'permanencia',
-        'ultimo_periodo_matriculado'
+        'ultimo_periodo_matriculado',
+        DB::raw("TO_CHAR(FECHA_NACIMIENTO, 'dd-MM-yyyy') fecha_nacimiento"),
+        'telefono',
+        'telefono_personal',
+        'correo_electronico',
+        'correo_electronico_personal',
       )
-      ->whereRaw($concat . " LIKE '%' || ? || '%'", [$request->query('query')])
+      ->whereRaw($concat . " LIKE '%' || ? || '%'", [mb_strtoupper($request->query('query'))])
+      ->limit(10)
       ->get();
 
     return $listado;
