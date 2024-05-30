@@ -174,6 +174,10 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
     //  Gestión de investigadores
     Route::prefix('investigadores')->group(function () {
       Route::get('listado', [InvestigadoresController::class, 'listado']);
+      Route::get('getOne', [InvestigadoresController::class, 'getOne']);
+      Route::put('update', [InvestigadoresController::class, 'update']);
+      //  Search
+      Route::get('searchDocenteRrhh', [InvestigadoresController::class, 'searchDocenteRrhh']);
     });
 
     //  Gestión de docentes investigadores
