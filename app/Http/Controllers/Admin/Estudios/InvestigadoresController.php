@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin\Estudios;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Svg\Tag\Rect;
 
 class InvestigadoresController extends Controller {
   public function listado() {
@@ -279,10 +280,22 @@ class InvestigadoresController extends Controller {
     ];
   }
 
+  public function licenciasTipo() {
+    $licencias = DB::table('Licencia_tipo')
+      ->select([
+        'id AS value',
+        'tipo AS label'
+      ])
+      ->get();
+
+    return $licencias;
+  }
+
   public function getLicencias(Request $request) {
     $licencias = DB::table('Licencia AS a')
       ->join('Licencia_tipo AS b', 'b.id', '=', 'a.licencia_tipo_id')
       ->select([
+        'a.id',
         'b.tipo',
         'a.fecha_inicio',
         'a.fecha_fin',
@@ -295,6 +308,23 @@ class InvestigadoresController extends Controller {
       ->get();
 
     return $licencias;
+  }
+
+  public function addLicencia(Request $request) {
+    DB::table('Licencia')
+      ->insert([
+        'investigador_id' => $request->input('investigador_id'),
+        'licencia_tipo_id' => $request->input('investigador_id'),
+        'fecha_inicio' => $request->input('fecha_inicio'),
+        'fecha_fin' => $request->input('fecha_fin'),
+        'documento' => $request->input('documento') ?? "",
+        'comentario' => $request->input('comentario') ?? ""
+      ]);
+
+    return [
+      'message' => 'success',
+      'detail' => 'Licencia añadida con éxito'
+    ];
   }
 
   //  Autosuggest

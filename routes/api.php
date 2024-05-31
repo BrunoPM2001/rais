@@ -178,7 +178,10 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
       Route::post('create', [InvestigadoresController::class, 'create']);
       Route::put('update', [InvestigadoresController::class, 'update']);
       Route::get('getSelectsData', [InvestigadoresController::class, 'getSelectsData']);
+      Route::get('licenciasTipo', [InvestigadoresController::class, 'licenciasTipo']);
       Route::get('getLicencias', [InvestigadoresController::class, 'getLicencias']);
+      Route::post('addLicencia', [InvestigadoresController::class, 'addLicencia']);
+
       //  Search
       Route::get('searchDocenteRrhh', [InvestigadoresController::class, 'searchDocenteRrhh']);
       Route::get('searchEstudiante', [InvestigadoresController::class, 'searchEstudiante']);
