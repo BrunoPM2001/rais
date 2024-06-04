@@ -360,7 +360,13 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
     Route::get('proyectos_asociados', [ArticulosController::class, 'proyectos_asociados']);
     Route::get('proyectos_registrados', [ArticulosController::class, 'proyectos_registrados']);
     Route::post('agregarProyecto', [ArticulosController::class, 'agregarProyecto']);
+    Route::delete('eliminarProyecto', [ArticulosController::class, 'eliminarProyecto']);
     Route::get('listarAutores', [ArticulosController::class, 'listarAutores']);
+    Route::get('searchDocenteRegistrado', [ArticulosController::class, 'searchDocenteRegistrado']);
+    Route::get('searchEstudianteRegistrado', [ArticulosController::class, 'searchEstudianteRegistrado']);
+    Route::get('searchExternoRegistrado', [ArticulosController::class, 'searchExternoRegistrado']);
+    Route::post('agregarAutor', [ArticulosController::class, 'agregarAutor']);
+    Route::delete('eliminarAutor', [ArticulosController::class, 'eliminarAutor']);
   });
 
   //  Grupo

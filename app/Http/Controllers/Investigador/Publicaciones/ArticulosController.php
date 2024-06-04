@@ -33,55 +33,103 @@ class ArticulosController extends Controller {
   }
 
   public function registrarPaso1(Request $request) {
-    $publicacion_id = DB::table('Publicacion')->insertGetId([
-      'doi' => $request->input('doi'),
-      'art_tipo' => $request->input('art_tipo')["value"],
-      'titulo' => $request->input('titulo'),
-      'pagina_inicial' => $request->input('pagina_inicial'),
-      'pagina_final' => $request->input('pagina_final'),
-      'fecha_publicacion' => $request->input('fecha_publicacion'),
-      'publicacion_nombre' => $request->input('publicacion_nombre'),
-      'issn' => $request->input('issn'),
-      'issn_e' => $request->input('issn_e'),
-      'volumen' => $request->input('volumen'),
-      'edicion' => $request->input('edicion'),
-      'url' => $request->input('url'),
-      'validado' => 0,
-      'step' => 2,
-      'tipo_publicacion' => 'articulo',
-      'estado' => 6,
-      'created_at' => Carbon::now(),
-      'updated_at' => Carbon::now()
-    ]);
-
-    DB::table('Publicacion_autor')->insert([
-      'publicacion_id' => $publicacion_id,
-      'investigador_id' => $request->attributes->get('token_decoded')->investigador_id,
-      'tipo' => 'interno',
-      'categoria' => 'Autor',
-      'presentado' => 1,
-      'estado' => 0,
-      'created_at' => Carbon::now(),
-      'updated_at' => Carbon::now()
-    ]);
-
-    foreach ($request->input('palabras_clave') as $palabra) {
-      DB::table('Publicacion_palabra_clave')->insert([
-        'publicacion_id' => $publicacion_id,
-        'clave' => $palabra["label"]
-      ]);
-    }
-
-    foreach ($request->input('indexada') as $indexada) {
-      DB::table('Publicacion_index')->insert([
-        'publicacion_id' => $publicacion_id,
-        'publicacion_db_indexada_id' => $indexada["value"],
+    if ($request->input('publicacion_id') == null) {
+      $publicacion_id = DB::table('Publicacion')->insertGetId([
+        'doi' => $request->input('doi'),
+        'art_tipo' => $request->input('art_tipo')["value"],
+        'titulo' => $request->input('titulo'),
+        'pagina_inicial' => $request->input('pagina_inicial'),
+        'pagina_final' => $request->input('pagina_final'),
+        'fecha_publicacion' => $request->input('fecha_publicacion'),
+        'publicacion_nombre' => $request->input('publicacion_nombre'),
+        'issn' => $request->input('issn'),
+        'issn_e' => $request->input('issn_e'),
+        'volumen' => $request->input('volumen'),
+        'edicion' => $request->input('edicion'),
+        'url' => $request->input('url'),
+        'validado' => 0,
+        'step' => 2,
+        'tipo_publicacion' => 'articulo',
+        'estado' => 6,
         'created_at' => Carbon::now(),
         'updated_at' => Carbon::now()
       ]);
-    }
 
-    return ['message' => 'success', 'detail' => 'Datos de la publicación registrados', 'publicacion_id' => $publicacion_id];
+      DB::table('Publicacion_autor')->insert([
+        'publicacion_id' => $publicacion_id,
+        'investigador_id' => $request->attributes->get('token_decoded')->investigador_id,
+        'tipo' => 'interno',
+        'categoria' => 'Autor',
+        'presentado' => 1,
+        'estado' => 1,
+        'created_at' => Carbon::now(),
+        'updated_at' => Carbon::now()
+      ]);
+
+      foreach ($request->input('palabras_clave') as $palabra) {
+        DB::table('Publicacion_palabra_clave')->insert([
+          'publicacion_id' => $publicacion_id,
+          'clave' => $palabra["label"]
+        ]);
+      }
+
+      foreach ($request->input('indexada') as $indexada) {
+        DB::table('Publicacion_index')->insert([
+          'publicacion_id' => $publicacion_id,
+          'publicacion_db_indexada_id' => $indexada["value"],
+          'created_at' => Carbon::now(),
+          'updated_at' => Carbon::now()
+        ]);
+      }
+      return ['message' => 'success', 'detail' => 'Datos de la publicación registrados', 'publicacion_id' => $publicacion_id];
+    } else {
+      $publicacion_id = $request->input('publicacion_id');
+      DB::table('Publicacion')
+        ->where('id', '=', $publicacion_id)
+        ->update([
+          'doi' => $request->input('doi'),
+          'art_tipo' => $request->input('art_tipo')["value"],
+          'titulo' => $request->input('titulo'),
+          'pagina_inicial' => $request->input('pagina_inicial'),
+          'pagina_final' => $request->input('pagina_final'),
+          'fecha_publicacion' => $request->input('fecha_publicacion'),
+          'publicacion_nombre' => $request->input('publicacion_nombre'),
+          'issn' => $request->input('issn'),
+          'issn_e' => $request->input('issn_e'),
+          'volumen' => $request->input('volumen'),
+          'edicion' => $request->input('edicion'),
+          'url' => $request->input('url'),
+          'validado' => 0,
+          'step' => 2,
+          'tipo_publicacion' => 'articulo',
+          'estado' => 6,
+          'created_at' => Carbon::now(),
+          'updated_at' => Carbon::now()
+        ]);
+
+      DB::table('Publicacion_palabra_clave')
+        ->where('publicacion_id', '=', $publicacion_id)
+        ->delete();
+      foreach ($request->input('palabras_clave') as $palabra) {
+        DB::table('Publicacion_palabra_clave')->insert([
+          'publicacion_id' => $publicacion_id,
+          'clave' => $palabra["label"]
+        ]);
+      }
+
+      DB::table('Publicacion_index')
+        ->where('publicacion_id', '=', $publicacion_id)
+        ->delete();
+      foreach ($request->input('indexada') as $indexada) {
+        DB::table('Publicacion_index')->insert([
+          'publicacion_id' => $publicacion_id,
+          'publicacion_db_indexada_id' => $indexada["value"],
+          'created_at' => Carbon::now(),
+          'updated_at' => Carbon::now()
+        ]);
+      }
+      return ['message' => 'success', 'detail' => 'Datos de la publicación actualizados'];
+    }
   }
 
   public function datosPaso1(Request $request) {
@@ -108,26 +156,31 @@ class ArticulosController extends Controller {
           'url',
         ])
         ->where('id', '=', $request->query('publicacion_id'))
-        ->get();
+        ->first();
 
       $palabras_clave = DB::table('Publicacion_palabra_clave')
         ->select([
-          'clave'
+          'clave AS label'
         ])
         ->where('publicacion_id', '=', $request->query('publicacion_id'))
         ->get();
 
-      $indexada = DB::table('Publicacion_index')
+      $indexada = DB::table('Publicacion_index AS a')
+        ->join('Publicacion_db_indexada AS b', 'b.id', '=', 'a.publicacion_db_indexada_id')
         ->select([
-          'publicacion_db_indexada_id'
+          'b.id AS value',
+          'b.nombre AS label'
         ])
-        ->where('publicacion_id', '=', $request->query('publicacion_id'))
+        ->where('a.publicacion_id', '=', $request->query('publicacion_id'))
         ->get();
+
+      $revistas =  $this->listadoRevistasIndexadas();
 
       return [
         'data' => $publicacion,
         'palabras_clave' => $palabras_clave,
-        'indexada' => $indexada
+        'indexada' => $indexada,
+        'revistas' => $revistas
       ];
     } else {
       return response()->json(['error' => 'Unauthorized'], 401);
@@ -221,6 +274,14 @@ class ArticulosController extends Controller {
     return ['message' => 'success', 'detail' => 'Proyecto agregado exitosamente'];
   }
 
+  public function eliminarProyecto(Request $request) {
+    DB::table('Publicacion_proyecto')
+      ->where('id', '=', $request->query('proyecto_id'))
+      ->delete();
+
+    return ['message' => 'info', 'detail' => 'Proyecto eliminado de la lista exitosamente'];
+  }
+
   public function listarAutores(Request $request) {
     $esAutor = DB::table('Publicacion_autor')
       ->where('publicacion_id', '=', $request->query('publicacion_id'))
@@ -234,8 +295,9 @@ class ArticulosController extends Controller {
           'a.id',
           'a.presentado',
           'a.categoria',
-          DB::raw("CONCAT(b.apellido1, ' ', b.apellido2, ', ', b.nombres) AS nombres"),
+          'a.autor',
           'b.tipo',
+          DB::raw("CONCAT(b.apellido1, ' ', b.apellido2, ', ', b.nombres) AS nombres"),
           'a.filiacion',
         ])
         ->where('publicacion_id', '=', $request->query('publicacion_id'))
@@ -245,5 +307,84 @@ class ArticulosController extends Controller {
     } else {
       return response()->json(['error' => 'Unauthorized'], 401);
     }
+  }
+
+  public function searchDocenteRegistrado(Request $request) {
+    $investigadores = DB::table('Usuario_investigador')
+      ->select(
+        DB::raw("CONCAT(doc_numero, ' | ', codigo, ' | ', apellido1, ' ', apellido2, ' ', nombres) AS value"),
+        'id',
+        'nombres',
+        'apellido1',
+        'apellido2',
+        'tipo'
+      )
+      ->where('tipo', 'LIKE', 'DOCENTE%')
+      ->having('value', 'LIKE', '%' . $request->query('query') . '%')
+      ->limit(10)
+      ->get();
+
+    return $investigadores;
+  }
+
+  public function searchEstudianteRegistrado(Request $request) {
+    $investigadores = DB::table('Usuario_investigador')
+      ->select(
+        DB::raw("CONCAT(doc_numero, ' | ', codigo, ' | ', apellido1, ' ', apellido2, ' ', nombres) AS value"),
+        'id',
+        'nombres',
+        'apellido1',
+        'apellido2',
+        'tipo'
+      )
+      ->where('tipo', 'LIKE', 'ESTUDIANTE%')
+      ->having('value', 'LIKE', '%' . $request->query('query') . '%')
+      ->limit(10)
+      ->get();
+
+    return $investigadores;
+  }
+
+  public function searchExternoRegistrado(Request $request) {
+    $investigadores = DB::table('Usuario_investigador')
+      ->select(
+        DB::raw("CONCAT(doc_numero, ' | ', codigo, ' | ', apellido1, ' ', apellido2, ' ', nombres) AS value"),
+        'id',
+        'nombres',
+        'apellido1',
+        'apellido2',
+        'tipo'
+      )
+      ->where('tipo', 'LIKE', 'EXTERNO%')
+      ->having('value', 'LIKE', '%' . $request->query('query') . '%')
+      ->limit(10)
+      ->get();
+
+    return $investigadores;
+  }
+
+  public function agregarAutor(Request $request) {
+    DB::table('Publicacion_autor')->insert([
+      'publicacion_id' => $request->input('publicacion_id'),
+      'investigador_id' => $request->input('investigador_id'),
+      'tipo' => $request->input('tipo'),
+      'autor' => $request->input('autor'),
+      'categoria' => $request->input('categoria'),
+      'filiacion' => $request->input('filiacion'),
+      'presentado' => 0,
+      'estado' => 0,
+      'created_at' => Carbon::now(),
+      'updated_at' => Carbon::now()
+    ]);
+
+    return ['message' => 'success', 'detail' => 'Autor agregado exitosamente'];
+  }
+
+  public function eliminarAutor(Request $request) {
+    DB::table('Publicacion_autor')
+      ->where('id', '=', $request->query('id'))
+      ->delete();
+
+    return ['message' => 'info', 'detail' => 'Autor eliminado de la lista exitosamente'];
   }
 }
