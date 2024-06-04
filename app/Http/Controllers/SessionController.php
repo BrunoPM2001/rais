@@ -2,9 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use Exception;
 use Firebase\JWT\JWT;
-use Firebase\JWT\Key;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -29,12 +27,27 @@ class SessionController extends Controller {
         ->first();
 
       if ($table->tabla == "Usuario_admin") {
+        //  Nombres
+        $usuario = DB::table('Usuario_admin')
+          ->select([
+            DB::raw("CONCAT(nombres, ' ', apellido1, ' ', apellido2) AS nombre")
+          ])
+          ->where('id', '=', $table->id)
+          ->first();
+        //  Token
         $jwt = JWT::encode([
           'id' => $table->id,
           'tabla' => $table->tabla,
           'exp' => time() + 7200
         ], env('JWT_SECRET'), 'HS256');
       } else if ($table->tabla == "Usuario_investigador") {
+        //  Nombres
+        $usuario = DB::table('Usuario_investigador')
+          ->select([
+            DB::raw("CONCAT(nombres, ' ', apellido1, ' ', apellido2) AS nombre")
+          ])
+          ->where('id', '=', $table->id)
+          ->first();
         $jwt = JWT::encode([
           'id' => $table->id,
           'tabla' => $table->tabla,
@@ -43,7 +56,7 @@ class SessionController extends Controller {
         ], env('JWT_SECRET'), 'HS256');
       }
       return ['data' => [
-        'usuario' => $user,
+        'usuario' => $usuario->nombre,
         'tabla' => $table->tabla,
         'token' => $jwt
       ]];

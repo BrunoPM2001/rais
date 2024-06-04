@@ -301,8 +301,8 @@ class InvestigadoresController extends Controller {
         'a.fecha_fin',
         'a.comentario',
         'a.documento',
-        'a.user_create',
-        'a.user_edit'
+        // 'a.user_create',
+        // 'a.user_edit'
       ])
       ->where('a.investigador_id', '=', $request->query('investigador_id'))
       ->get();

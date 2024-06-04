@@ -19,6 +19,7 @@ class CheckRole {
     try {
       $decoded = JWT::decode($request->header('Authorization') ?? "", new Key(env('JWT_SECRET'), 'HS256'));
       if ($role == $decoded->tabla) {
+        $request->attributes->add(['token_decoded' => $decoded]);
         return $next($request);
       } else {
         return response()->json(['error' => 'Unauthorized'], 401);

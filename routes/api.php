@@ -256,13 +256,12 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
   });
 });
 
-Route::prefix('investigador')->middleware('checkInvestigador:Usuario_investigador')->group(function () {
+Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->group(function () {
 
   //  Main dashboard
   Route::prefix('dashboard')->group(function () {
+    Route::get('getData', [InvestigadorDashboardController::class, 'getData']);
     Route::get('metricas', [InvestigadorDashboardController::class, 'metricas']);
-    Route::get('tipoPublicaciones', [InvestigadorDashboardController::class, 'tipoPublicaciones']);
-    Route::get('tipoProyectos', [InvestigadorDashboardController::class, 'tipoProyectos']);
   });
 
   //  Actividades
@@ -323,6 +322,8 @@ Route::prefix('investigador')->middleware('checkInvestigador:Usuario_investigado
     //  Artículos en revistas de investigación
     Route::prefix('articulos')->group(function () {
       Route::get('listado', [ArticulosController::class, 'listado']);
+      Route::post('registrarPaso1', [ArticulosController::class, 'registrarPaso1']);
+      Route::get('datosPaso1', [ArticulosController::class, 'datosPaso1']);
     });
 
     //  Libros
@@ -356,6 +357,10 @@ Route::prefix('investigador')->middleware('checkInvestigador:Usuario_investigado
     });
 
     Route::get('listadoRevistasIndexadas', [ArticulosController::class, 'listadoRevistasIndexadas']);
+    Route::get('proyectos_asociados', [ArticulosController::class, 'proyectos_asociados']);
+    Route::get('proyectos_registrados', [ArticulosController::class, 'proyectos_registrados']);
+    Route::post('agregarProyecto', [ArticulosController::class, 'agregarProyecto']);
+    Route::get('listarAutores', [ArticulosController::class, 'listarAutores']);
   });
 
   //  Grupo
