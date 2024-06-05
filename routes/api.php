@@ -366,6 +366,7 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
     Route::get('searchEstudianteRegistrado', [ArticulosController::class, 'searchEstudianteRegistrado']);
     Route::get('searchExternoRegistrado', [ArticulosController::class, 'searchExternoRegistrado']);
     Route::post('agregarAutor', [ArticulosController::class, 'agregarAutor']);
+    Route::put('editarAutor', [ArticulosController::class, 'editarAutor']);
     Route::delete('eliminarAutor', [ArticulosController::class, 'eliminarAutor']);
   });
 

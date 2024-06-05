@@ -380,6 +380,19 @@ class ArticulosController extends Controller {
     return ['message' => 'success', 'detail' => 'Autor agregado exitosamente'];
   }
 
+  public function editarAutor(Request $request) {
+    DB::table('Publicacion_autor')
+      ->where('id', '=', $request->input('id'))
+      ->update([
+        'autor' => $request->input('autor'),
+        'categoria' => $request->input('categoria'),
+        'filiacion' => $request->input('filiacion'),
+        'updated_at' => Carbon::now()
+      ]);
+
+    return ['message' => 'info', 'detail' => 'Datos del autor editado exitosamente'];
+  }
+
   public function eliminarAutor(Request $request) {
     DB::table('Publicacion_autor')
       ->where('id', '=', $request->query('id'))
