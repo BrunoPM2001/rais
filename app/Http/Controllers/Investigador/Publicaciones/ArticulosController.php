@@ -20,7 +20,8 @@ class ArticulosController extends Controller {
         'a.observaciones_usuario',
         DB::raw('YEAR(a.fecha_publicacion) AS año_publicacion'),
         'b.puntaje',
-        'a.estado'
+        'a.estado',
+        'a.step'
       )
       ->where('a.estado', '>', 0)
       ->where('b.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
@@ -48,7 +49,7 @@ class ArticulosController extends Controller {
         'edicion' => $request->input('edicion'),
         'url' => $request->input('url'),
         'validado' => 0,
-        'step' => 2,
+        'step' => 1,
         'tipo_publicacion' => 'articulo',
         'estado' => 6,
         'created_at' => Carbon::now(),
@@ -103,7 +104,6 @@ class ArticulosController extends Controller {
           'step' => 2,
           'tipo_publicacion' => 'articulo',
           'estado' => 6,
-          'created_at' => Carbon::now(),
           'updated_at' => Carbon::now()
         ]);
 
@@ -244,6 +244,13 @@ class ArticulosController extends Controller {
   }
 
   public function agregarProyecto(Request $request) {
+
+    DB::table('Publicacion')
+      ->where('id', '=', $request->input('publicacion_id'))
+      ->update([
+        'step' => 2
+      ]);
+
     if ($request->input('proyecto_id') != null) {
       DB::table('Publicacion_proyecto')->insert([
         'investigador_id' => $request->attributes->get('token_decoded')->investigador_id,
@@ -364,6 +371,13 @@ class ArticulosController extends Controller {
   }
 
   public function agregarAutor(Request $request) {
+
+    DB::table('Publicacion')
+      ->where('id', '=', $request->input('publicacion_id'))
+      ->update([
+        'step' => 3
+      ]);
+
     DB::table('Publicacion_autor')->insert([
       'publicacion_id' => $request->input('publicacion_id'),
       'investigador_id' => $request->input('investigador_id'),

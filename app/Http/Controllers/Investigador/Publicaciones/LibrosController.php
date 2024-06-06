@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Investigador\Publicaciones;
 
 use App\Http\Controllers\Controller;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -29,5 +30,88 @@ class LibrosController extends Controller {
       ->get();
 
     return ['data' => $publicaciones];
+  }
+
+  public function registrarPaso1(Request $request) {
+    if ($request->input('publicacion_id') == null) {
+      $publicacion_id = DB::table('Publicacion')->insertGetId([
+        'isbn' => $request->input('isbn'),
+        'titulo' => $request->input('titulo'),
+        'editorial' => $request->input('editorial'),
+        'ciudad' => $request->input('ciudad'),
+        'pais' => $request->input('pais'),
+        'edicion' => $request->input('edicion'),
+        'volumen' => $request->input('volumen'),
+        'pagina_total' => $request->input('pagina_total'),
+        'fecha_publicacion' => $request->input('fecha_publicacion'),
+        'url' => $request->input('url'),
+        'validado' => 0,
+        'step' => 1,
+        'tipo_publicacion' => 'libro',
+        'estado' => 6,
+        'created_at' => Carbon::now(),
+        'updated_at' => Carbon::now()
+      ]);
+
+      DB::table('Publicacion_autor')->insert([
+        'publicacion_id' => $publicacion_id,
+        'investigador_id' => $request->attributes->get('token_decoded')->investigador_id,
+        'tipo' => 'interno',
+        'categoria' => $request->input('categoria_autor'),
+        'presentado' => 1,
+        'estado' => 1,
+        'created_at' => Carbon::now(),
+        'updated_at' => Carbon::now()
+      ]);
+
+      foreach ($request->input('palabras_clave') as $palabra) {
+        DB::table('Publicacion_palabra_clave')->insert([
+          'publicacion_id' => $publicacion_id,
+          'clave' => $palabra["label"]
+        ]);
+      }
+      return ['message' => 'success', 'detail' => 'Datos de la publicación registrados', 'publicacion_id' => $publicacion_id];
+    } else {
+      $publicacion_id = $request->input('publicacion_id');
+      DB::table('Publicacion')
+        ->where('id', '=', $publicacion_id)
+        ->update([
+          'isbn' => $request->input('isbn'),
+          'titulo' => $request->input('titulo'),
+          'editorial' => $request->input('editorial'),
+          'ciudad' => $request->input('ciudad'),
+          'pais' => $request->input('pais'),
+          'edicion' => $request->input('edicion'),
+          'volumen' => $request->input('volumen'),
+          'pagina_total' => $request->input('pagina_total'),
+          'fecha_publicacion' => $request->input('fecha_publicacion'),
+          'url' => $request->input('url'),
+          'validado' => 0,
+          'step' => 1,
+          'tipo_publicacion' => 'libro',
+          'estado' => 6,
+          'updated_at' => Carbon::now()
+        ]);
+
+      DB::table('Publicacion_palabra_clave')
+        ->where('publicacion_id', '=', $publicacion_id)
+        ->delete();
+      foreach ($request->input('palabras_clave') as $palabra) {
+        DB::table('Publicacion_palabra_clave')->insert([
+          'publicacion_id' => $publicacion_id,
+          'clave' => $palabra["label"]
+        ]);
+      }
+      return ['message' => 'success', 'detail' => 'Datos de la publicación actualizados'];
+    }
+  }
+
+  public function getPaises() {
+    $paises = DB::table('Pais')
+      ->select([
+        'name AS value'
+      ])->get();
+
+    return $paises;
   }
 }
