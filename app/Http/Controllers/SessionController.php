@@ -32,11 +32,11 @@ class SessionController extends Controller {
           ->select([
             DB::raw("CONCAT(nombres, ' ', apellido1, ' ', apellido2) AS nombre")
           ])
-          ->where('id', '=', $table->id)
+          ->where('id', '=', $table->tabla_id)
           ->first();
         //  Token
         $jwt = JWT::encode([
-          'id' => $table->id,
+          'id' => $table->table_id,
           'tabla' => $table->tabla,
           'exp' => time() + 7200
         ], env('JWT_SECRET'), 'HS256');
@@ -46,7 +46,7 @@ class SessionController extends Controller {
           ->select([
             DB::raw("CONCAT(nombres, ' ', apellido1, ' ', apellido2) AS nombre")
           ])
-          ->where('id', '=', $table->id)
+          ->where('id', '=', $table->tabla_id)
           ->first();
         $jwt = JWT::encode([
           'id' => $table->id,

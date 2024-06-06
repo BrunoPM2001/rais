@@ -33,6 +33,7 @@ use App\Http\Controllers\Investigador\Actividades\EquipamientoCientificoControll
 use App\Http\Controllers\Investigador\Actividades\EventosController;
 use App\Http\Controllers\Investigador\Actividades\GrupoEstudioController;
 use App\Http\Controllers\Investigador\Actividades\ProyectoConFinanciamientoController;
+use App\Http\Controllers\Investigador\Actividades\ProyectoDetalleController;
 use App\Http\Controllers\Investigador\Actividades\ProyectoFEXController;
 use App\Http\Controllers\Investigador\Actividades\ProyectoMultidisciplinarioController;
 use App\Http\Controllers\Investigador\Actividades\ProyectoSinFinanciamientoController;
@@ -314,6 +315,8 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
     Route::prefix('gruposEstudio')->group(function () {
       Route::get('listado', [GrupoEstudioController::class, 'listado']);
     });
+
+    Route::get('detalleProyecto', [ProyectoDetalleController::class, 'detalleProyecto']);
   });
 
   //  Publicaciones
