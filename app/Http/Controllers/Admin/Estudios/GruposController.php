@@ -89,16 +89,18 @@ class GruposController extends S3Controller {
       )
       ->where('a.cargo', '=', 'Coordinador');
 
-    $detalleGrupo = DB::table('Grupo AS a')
+    $detalle = DB::table('Grupo AS a')
       ->join('Facultad AS b', 'b.id', '=', 'a.facultad_id')
       ->leftJoinSub($coordinador, 'coordinador', 'coordinador.id', '=', 'a.id')
       ->select(
         'a.id',
+        'a.tipo',
         'a.grupo_nombre',
+        'a.grupo_nombre_corto',
         'a.resolucion_rectoral_creacion',
-        'a.resolucion_creacion_fecha',
+        DB::raw("IFNULL(a.resolucion_creacion_fecha, '') AS resolucion_creacion_fecha"),
         'a.resolucion_rectoral',
-        'a.resolucion_fecha',
+        DB::raw("IFNULL(a.resolucion_fecha, '') AS resolucion_fecha"),
         'a.observaciones',
         'a.observaciones_admin',
         'coordinador.nombre AS coordinador',
@@ -118,22 +120,121 @@ class GruposController extends S3Controller {
         'a.infraestructura_sgestion'
       )
       ->where('a.id', '=', $grupo_id)
-      ->get();
+      ->first();
 
-    //  Obtener objetos del bucket
-    foreach ($detalleGrupo as $detalle) {
-      $url = null;
-      if ($detalle->infraestructura_sgestion != null) {
-        $cmd = $s3->getCommand('GetObject', [
-          'Bucket' => 'grupo-infraestructura-sgestion',
-          'Key' => $detalle->id . "." . $detalle->infraestructura_sgestion
-        ]);
-        //  Generar url temporal
-        $url = (string) $s3->createPresignedRequest($cmd, '+10 minutes')->getUri();
-      }
-      $detalle->infraestructura_sgestion = $url;
+
+    if ($detalle->infraestructura_sgestion != null) {
+      $cmd = $s3->getCommand('GetObject', [
+        'Bucket' => 'grupo-infraestructura-sgestion',
+        'Key' => $detalle->id . "." . $detalle->infraestructura_sgestion
+      ]);
+      //  Generar url temporal
+      $url = (string) $s3->createPresignedRequest($cmd, '+10 minutes')->getUri();
     }
-    return ['data' => $detalleGrupo];
+    $detalle->infraestructura_sgestion = $url;
+
+    return $detalle;
+  }
+
+  public function updateDetalle(Request $request) {
+    if ($request->input('tipo') == 'grupo') {
+      $count = DB::table('Grupo')
+        ->where('id', '=', $request->input('grupo_id'))
+        ->update([
+          'grupo_nombre' => $request->input('grupo_nombre'),
+          'grupo_nombre_corto' => $request->input('grupo_nombre_corto'),
+          'resolucion_rectoral_creacion' => $request->input('resolucion_rectoral_creacion'),
+          'resolucion_creacion_fecha' => $request->input('resolucion_creacion_fecha'),
+          'resolucion_rectoral' => $request->input('resolucion_rectoral'),
+          'resolucion_fecha' => $request->input('resolucion_fecha'),
+          'observaciones' => $request->input('observaciones'),
+          'observaciones_admin' => $request->input('observaciones_admin'),
+          'estado' => $request->input('estado')["value"],
+          'grupo_categoria' => $request->input('grupo_categoria')["value"],
+          'telefono' => $request->input('telefono'),
+          'anexo' => $request->input('anexo'),
+          'oficina' => $request->input('oficina'),
+          'direccion' => $request->input('direccion'),
+          'email' => $request->input('email'),
+          'web' => $request->input('web'),
+          'updated_at' => Carbon::now()
+        ]);
+    } else {
+      $count = DB::table('Grupo')
+        ->where('id', '=', $request->input('grupo_id'))
+        ->update([
+          'grupo_nombre' => $request->input('grupo_nombre'),
+          'grupo_nombre_corto' => $request->input('grupo_nombre_corto'),
+          'resolucion_rectoral_creacion' => $request->input('resolucion_rectoral_creacion'),
+          'resolucion_creacion_fecha' => $request->input('resolucion_creacion_fecha'),
+          'resolucion_rectoral' => $request->input('resolucion_rectoral'),
+          'resolucion_fecha' => $request->input('resolucion_fecha'),
+          'observaciones' => $request->input('observaciones'),
+          'observaciones_admin' => $request->input('observaciones_admin'),
+          'estado' => $request->input('estado')["value"],
+          'telefono' => $request->input('telefono'),
+          'anexo' => $request->input('anexo'),
+          'oficina' => $request->input('oficina'),
+          'direccion' => $request->input('direccion'),
+          'email' => $request->input('email'),
+          'web' => $request->input('web'),
+          'updated_at' => Carbon::now()
+        ]);
+    }
+
+    if ($count > 0) {
+      return ['message' => 'success', 'detail' => 'Datos del grupo actualizados correctamente'];
+    } else {
+      return ['message' => 'warning', 'detail' => 'No se pudo actualizar la información!'];
+    }
+  }
+
+  public function aprobarSolicitud(Request $request) {
+    $count = DB::table('Grupo')
+      ->where('id', '=', $request->input('grupo_id'))
+      ->where('tipo', '=', 'solicitud')
+      ->update([
+        'grupo_categoria' => $request->input('grupo_categoria')["value"],
+        'tipo' => 'grupo',
+        'estado' => 4,
+        'updated_at' => Carbon::now()
+      ]);
+
+    if ($count > 0) {
+      return ['message' => 'success', 'detail' => 'Solicitud aprobada correctamente'];
+    } else {
+      return ['message' => 'warning', 'detail' => 'No se pudo aprobar la solicitud'];
+    }
+  }
+
+  public function disolverGrupo(Request $request) {
+    $count = DB::table('Grupo')
+      ->where('id', '=', $request->input('grupo_id'))
+      ->where('estado', '!=', '-2')
+      ->update([
+        'motivo_disolucion' => $request->input('motivo_disolucion'),
+        'fecha_disolucion' => Carbon::now(),
+        'estado' => '-2',
+        'updated_at' => Carbon::now()
+      ]);
+
+    if ($count > 0) {
+      DB::table('Grupo_integrante')
+        ->where('grupo_id', '=', $request->input('grupo_id'))
+        ->whereNot('condicion', 'LIKE', 'Ex%')
+        ->update([
+          'condicion' => DB::raw("CONCAT('Ex ', condicion)"),
+          'cargo' => DB::raw("IFNULL(null,CONCAT('Ex ', cargo))"),
+          'observacion_excluir' => 'Grupo disuelto',
+          'fecha_exclusion' => Carbon::now(),
+          'estado' => '-2',
+          'updated_at' => Carbon::now()
+        ]);
+
+      return ['message' => 'info', 'detail' => 'Grupo disuelto exitosamente'];
+    } else {
+      return ['message' => 'error', 'detail' => 'No se pudo realizar la disolución'];
+    }
   }
 
   public function miembros($grupo_id, $estado) {
@@ -558,7 +659,8 @@ class GruposController extends S3Controller {
         'resolucion_exclusion' => $request->input('resolucion_exclusion'),
         'resolucion_exclusion_fecha' => $request->input('resolucion_exclusion_fecha'),
         'resolucion_oficina_exclusion' => $request->input('resolucion_oficina_exclusion'),
-        'observacion_excluir' => $request->input('observacion_excluir')
+        'observacion_excluir' => $request->input('observacion_excluir'),
+        'estado' => "-2"
       ]);
 
     return [

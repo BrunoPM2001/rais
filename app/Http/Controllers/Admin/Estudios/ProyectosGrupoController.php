@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin\Estudios;
 
 use App\Http\Controllers\S3Controller;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class ProyectosGrupoController extends S3Controller {
@@ -46,7 +47,7 @@ class ProyectosGrupoController extends S3Controller {
         'a.tipo_proyecto',
         'a.estado',
         'a.resolucion_rectoral',
-        'a.resolucion_fecha',
+        DB::raw("IFNULL(a.resolucion_fecha, '') AS resolucion_fecha"),
         'a.comentario',
         'a.observaciones_admin',
         'a.fecha_inicio',
@@ -60,6 +61,31 @@ class ProyectosGrupoController extends S3Controller {
       ->get();
 
     return ['data' => $detalle];
+  }
+
+  public function updateDetalle(Request $request) {
+    $count = DB::table('Proyecto')
+      ->where('id', '=', $request->input('proyecto_id'))
+      ->update([
+        'titulo' => $request->input('titulo'),
+        'codigo_proyecto' => $request->input('codigo_proyecto'),
+        'resolucion_rectoral' => $request->input('resolucion_rectoral'),
+        'resolucion_fecha' => $request->input('resolucion_fecha'),
+        'resolucion_decanal' => $request->input('resolucion_decanal'),
+        'comentario' => $request->input('comentario'),
+        'estado' => $request->input('estado')["value"],
+      ]);
+
+    if ($count > 0) {
+      //  Relacionar proyecto a economía
+      if ($request->input('resolucion_rectoral') != "" && $request->input('resolucion_fecha') != "" && $request->input('resolucion_decanal') != "") {
+
+        return ['message' => 'success', 'detail' => 'Datos del proyecto actualizados y proyecto incluído al módulo de economía'];
+      }
+      return ['message' => 'success', 'detail' => 'Datos del proyecto actualizados correctamente'];
+    } else {
+      return ['message' => 'warning', 'detail' => 'No se pudo actualizar la información'];
+    }
   }
 
   public function miembros($proyecto_id) {

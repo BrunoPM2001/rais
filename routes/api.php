@@ -94,6 +94,11 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
       Route::get('listadoGrupos', [GruposController::class, 'listadoGrupos']);
       Route::get('listadoSolicitudes', [GruposController::class, 'listadoSolicitudes']);
       Route::get('detalle/{grupo_id}', [GruposController::class, 'detalle']);
+
+      Route::put('updateDetalle', [GruposController::class, 'updateDetalle']);
+      Route::put('aprobarSolicitud', [GruposController::class, 'aprobarSolicitud']);
+      Route::put('disolverGrupo', [GruposController::class, 'disolverGrupo']);
+
       Route::get('miembros/{grupo_id}/{estado}', [GruposController::class, 'miembros']);
       Route::get('docs/{grupo_id}', [GruposController::class, 'docs']);
       Route::get('lineas/{grupo_id}', [GruposController::class, 'lineas']);
@@ -113,6 +118,9 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
     Route::prefix('proyectosGrupo')->group(function () {
       Route::get('listado/{periodo}', [ProyectosGrupoController::class, 'listado']);
       Route::get('detalle/{proyecto_id}', [ProyectosGrupoController::class, 'detalle']);
+
+      Route::put('updateDetalle', [ProyectosGrupoController::class, 'updateDetalle']);
+
       Route::get('miembros/{proyecto_id}', [ProyectosGrupoController::class, 'miembros']);
       Route::get('cartas/{proyecto_id}', [ProyectosGrupoController::class, 'cartas']);
       Route::get('descripcion/{proyecto_id}', [ProyectosGrupoController::class, 'descripcion']);
