@@ -2,12 +2,13 @@
 
 namespace App\Http\Controllers\Investigador\Publicaciones;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\S3Controller;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 
-class ArticulosController extends Controller {
+class ArticulosController extends S3Controller {
 
   public function listado(Request $request) {
     $publicaciones = DB::table('Publicacion AS a')
@@ -85,8 +86,9 @@ class ArticulosController extends Controller {
       return ['message' => 'success', 'detail' => 'Datos de la publicación registrados', 'publicacion_id' => $publicacion_id];
     } else {
       $publicacion_id = $request->input('publicacion_id');
-      DB::table('Publicacion')
+      $count = DB::table('Publicacion')
         ->where('id', '=', $publicacion_id)
+        ->where('estado', '!=', 5)
         ->update([
           'doi' => $request->input('doi'),
           'art_tipo' => $request->input('art_tipo')["value"],
@@ -106,6 +108,10 @@ class ArticulosController extends Controller {
           'estado' => 6,
           'updated_at' => Carbon::now()
         ]);
+
+      if ($count == 0) {
+        return ['message' => 'error', 'detail' => 'Esta publicación ya ha sido enviada, no se pueden hacer más cambios'];
+      }
 
       DB::table('Publicacion_palabra_clave')
         ->where('publicacion_id', '=', $publicacion_id)
@@ -245,11 +251,16 @@ class ArticulosController extends Controller {
 
   public function agregarProyecto(Request $request) {
 
-    DB::table('Publicacion')
+    $count = DB::table('Publicacion')
       ->where('id', '=', $request->input('publicacion_id'))
+      ->where('estado', '!=', 5)
       ->update([
         'step' => 2
       ]);
+
+    if ($count == 0) {
+      return ['message' => 'error', 'detail' => 'Esta publicación ya ha sido enviada, no se pueden hacer más cambios'];
+    }
 
     if ($request->input('proyecto_id') != null) {
       DB::table('Publicacion_proyecto')->insert([
@@ -282,9 +293,14 @@ class ArticulosController extends Controller {
   }
 
   public function eliminarProyecto(Request $request) {
-    DB::table('Publicacion_proyecto')
+    $count = DB::table('Publicacion_proyecto')
       ->where('id', '=', $request->query('proyecto_id'))
+      ->where('estado', '!=', 5)
       ->delete();
+
+    if ($count == 0) {
+      return ['message' => 'error', 'detail' => 'Esta publicación ya ha sido enviada, no se pueden hacer más cambios'];
+    }
 
     return ['message' => 'info', 'detail' => 'Proyecto eliminado de la lista exitosamente'];
   }
@@ -372,11 +388,16 @@ class ArticulosController extends Controller {
 
   public function agregarAutor(Request $request) {
 
-    DB::table('Publicacion')
+    $count = DB::table('Publicacion')
       ->where('id', '=', $request->input('publicacion_id'))
+      ->where('estado', '!=', 5)
       ->update([
         'step' => 3
       ]);
+
+    if ($count == 0) {
+      return ['message' => 'error', 'detail' => 'Esta publicación ya ha sido enviada, no se pueden hacer más cambios'];
+    }
 
     DB::table('Publicacion_autor')->insert([
       'publicacion_id' => $request->input('publicacion_id'),
@@ -395,8 +416,9 @@ class ArticulosController extends Controller {
   }
 
   public function editarAutor(Request $request) {
-    DB::table('Publicacion_autor')
+    $count = DB::table('Publicacion_autor')
       ->where('id', '=', $request->input('id'))
+      ->where('estado', '=', 5)
       ->update([
         'autor' => $request->input('autor'),
         'categoria' => $request->input('categoria'),
@@ -404,14 +426,68 @@ class ArticulosController extends Controller {
         'updated_at' => Carbon::now()
       ]);
 
+    if ($count == 0) {
+      return ['message' => 'error', 'detail' => 'Esta publicación ya ha sido enviada, no se pueden hacer más cambios'];
+    }
+
     return ['message' => 'info', 'detail' => 'Datos del autor editado exitosamente'];
   }
 
   public function eliminarAutor(Request $request) {
-    DB::table('Publicacion_autor')
+    $count = DB::table('Publicacion_autor')
+      ->where('estado', '=', 5)
       ->where('id', '=', $request->query('id'))
       ->delete();
 
+    if ($count == 0) {
+      return ['message' => 'error', 'detail' => 'Esta publicación ya ha sido enviada, no se pueden hacer más cambios'];
+    }
+
     return ['message' => 'info', 'detail' => 'Autor eliminado de la lista exitosamente'];
+  }
+
+  public function enviarPublicacion(Request $request) {
+    $publicacion = DB::transaction(function () use ($request) {
+      $count = DB::table('Publicacion')
+        ->where('id', '=', $request->input('publicacion_id'))
+        ->where('estado', '!=', '5')
+        ->update([
+          'step' => 4,
+          'estado' => 5
+        ]);
+
+      if ($count == 0) {
+        return null;
+      }
+
+      $publicacion = DB::table('Publicacion')
+        ->select([
+          'tipo_publicacion',
+          'estado'
+        ])
+        ->where('id', '=', $request->input('publicacion_id'))
+        ->first();
+
+      return $publicacion;
+    });
+
+    if ($publicacion == null) {
+      return ['message' => 'error', 'detail' => 'Esta publicación ya ha sido enviada, no se pueden hacer más cambios'];
+    }
+
+    if ($publicacion->tipo_publicacion == "articulo") {
+      $validator = Validator::make($request->allFiles(), [
+        'file' => 'required|file|max:6144',
+      ]);
+
+      if ($validator->fails()) {
+        return ['message' => 'error', 'detail' => 'Error al cargar archivo'];
+      }
+    }
+
+    if ($request->hasFile('file')) {
+      $this->uploadFile($request->file('file'), "publicacion", $request->input('publicacion_id'));
+    }
+    return ['message' => 'success', 'detail' => 'Publicación enviada correctamente'];
   }
 }

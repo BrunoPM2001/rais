@@ -332,7 +332,8 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
     //  Libros
     Route::prefix('libros')->group(function () {
       Route::get('listado', [LibrosController::class, 'listado']);
-      Route::post('registrarPaso1', [ArticulosController::class, 'registrarPaso1']);
+      Route::post('registrarPaso1', [LibrosController::class, 'registrarPaso1']);
+      Route::get('datosPaso1', [LibrosController::class, 'datosPaso1']);
       Route::get('getPaises', [LibrosController::class, 'getPaises']);
     });
 
@@ -361,11 +362,14 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
       Route::get('listado', [PropiedadIntelectualController::class, 'listado']);
     });
 
+    //  Paso 1
     Route::get('listadoRevistasIndexadas', [ArticulosController::class, 'listadoRevistasIndexadas']);
+    //  Paso 2
     Route::get('proyectos_asociados', [ArticulosController::class, 'proyectos_asociados']);
     Route::get('proyectos_registrados', [ArticulosController::class, 'proyectos_registrados']);
     Route::post('agregarProyecto', [ArticulosController::class, 'agregarProyecto']);
     Route::delete('eliminarProyecto', [ArticulosController::class, 'eliminarProyecto']);
+    //  Paso 3
     Route::get('listarAutores', [ArticulosController::class, 'listarAutores']);
     Route::get('searchDocenteRegistrado', [ArticulosController::class, 'searchDocenteRegistrado']);
     Route::get('searchEstudianteRegistrado', [ArticulosController::class, 'searchEstudianteRegistrado']);
@@ -373,6 +377,8 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
     Route::post('agregarAutor', [ArticulosController::class, 'agregarAutor']);
     Route::put('editarAutor', [ArticulosController::class, 'editarAutor']);
     Route::delete('eliminarAutor', [ArticulosController::class, 'eliminarAutor']);
+    //  Paso 4
+    Route::post('enviarPublicacion', [ArticulosController::class, 'enviarPublicacion']);
   });
 
   //  Grupo

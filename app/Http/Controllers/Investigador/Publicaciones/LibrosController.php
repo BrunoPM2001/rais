@@ -20,7 +20,8 @@ class LibrosController extends Controller {
         DB::raw('COALESCE(a.issn, a.isbn) AS isbn'),
         DB::raw('YEAR(a.fecha_publicacion) AS año_publicacion'),
         'b.puntaje',
-        'a.estado'
+        'a.estado',
+        'a.step'
       )
       ->where('a.estado', '>', 0)
       ->where('b.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
@@ -39,7 +40,7 @@ class LibrosController extends Controller {
         'titulo' => $request->input('titulo'),
         'editorial' => $request->input('editorial'),
         'ciudad' => $request->input('ciudad'),
-        'pais' => $request->input('pais'),
+        'pais' => $request->input('pais')["value"],
         'edicion' => $request->input('edicion'),
         'volumen' => $request->input('volumen'),
         'pagina_total' => $request->input('pagina_total'),
@@ -57,7 +58,7 @@ class LibrosController extends Controller {
         'publicacion_id' => $publicacion_id,
         'investigador_id' => $request->attributes->get('token_decoded')->investigador_id,
         'tipo' => 'interno',
-        'categoria' => $request->input('categoria_autor'),
+        'categoria' => $request->input('categoria_autor')["value"],
         'presentado' => 1,
         'estado' => 1,
         'created_at' => Carbon::now(),
@@ -73,14 +74,15 @@ class LibrosController extends Controller {
       return ['message' => 'success', 'detail' => 'Datos de la publicación registrados', 'publicacion_id' => $publicacion_id];
     } else {
       $publicacion_id = $request->input('publicacion_id');
-      DB::table('Publicacion')
+      $count = DB::table('Publicacion')
         ->where('id', '=', $publicacion_id)
+        ->where('estado', '!=', 5)
         ->update([
           'isbn' => $request->input('isbn'),
           'titulo' => $request->input('titulo'),
           'editorial' => $request->input('editorial'),
           'ciudad' => $request->input('ciudad'),
-          'pais' => $request->input('pais'),
+          'pais' => $request->input('pais')["value"],
           'edicion' => $request->input('edicion'),
           'volumen' => $request->input('volumen'),
           'pagina_total' => $request->input('pagina_total'),
@@ -93,6 +95,10 @@ class LibrosController extends Controller {
           'updated_at' => Carbon::now()
         ]);
 
+      if ($count == 0) {
+        return ['message' => 'error', 'detail' => 'Esta publicación ya ha sido enviada, no se pueden hacer más cambios'];
+      }
+
       DB::table('Publicacion_palabra_clave')
         ->where('publicacion_id', '=', $publicacion_id)
         ->delete();
@@ -103,6 +109,52 @@ class LibrosController extends Controller {
         ]);
       }
       return ['message' => 'success', 'detail' => 'Datos de la publicación actualizados'];
+    }
+  }
+
+  public function datosPaso1(Request $request) {
+    $esAutor = DB::table('Publicacion_autor')
+      ->where('publicacion_id', '=', $request->query('publicacion_id'))
+      ->where('investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+      ->count();
+
+    if ($esAutor > 0) {
+      $publicacion = DB::table('Publicacion AS a')
+        ->join('Publicacion_autor AS b', 'b.publicacion_id', '=', 'a.id')
+        ->select([
+          'a.id',
+          'b.categoria',
+          'a.isbn',
+          'a.titulo',
+          'a.editorial',
+          'a.ciudad',
+          'a.pais',
+          'a.edicion',
+          'a.volumen',
+          'a.pagina_total',
+          'a.fecha_publicacion',
+          'a.url',
+        ])
+        ->where('b.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+        ->where('a.id', '=', $request->query('publicacion_id'))
+        ->first();
+
+      $palabras_clave = DB::table('Publicacion_palabra_clave')
+        ->select([
+          'clave AS label'
+        ])
+        ->where('publicacion_id', '=', $request->query('publicacion_id'))
+        ->get();
+
+      $paises = $this->getPaises();
+
+      return [
+        'data' => $publicacion,
+        'palabras_clave' => $palabras_clave,
+        'paises' => $paises
+      ];
+    } else {
+      return response()->json(['error' => 'Unauthorized'], 401);
     }
   }
 

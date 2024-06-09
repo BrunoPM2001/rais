@@ -36,7 +36,7 @@ class SessionController extends Controller {
           ->first();
         //  Token
         $jwt = JWT::encode([
-          'id' => $table->table_id,
+          'id' => $table->tabla_id,
           'tabla' => $table->tabla,
           'exp' => time() + 7200
         ], env('JWT_SECRET'), 'HS256');
