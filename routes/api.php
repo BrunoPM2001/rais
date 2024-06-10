@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\Admin\Usuario_investigadorController;
 use App\Http\Controllers\Admin\Admin\UsuarioController;
 use App\Http\Controllers\Admin\Constancias\ReporteController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\Economia\GestionComprobantesController;
 use App\Http\Controllers\Admin\Estudios\ConvocatoriasController;
 use App\Http\Controllers\Admin\Estudios\DeudaProyectosController;
 use App\Http\Controllers\Admin\Estudios\DocentesController;
@@ -207,6 +208,11 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
       Route::get('listadoLocal', [GestionSUMController::class, 'listadoLocal']);
       Route::get('listadoSum', [GestionSUMController::class, 'listadoSum']);
     });
+  });
+
+  //  Economía
+  Route::prefix('economia')->group(function () {
+    Route::get('listadoProyectos', [GestionComprobantesController::class, 'listadoProyectos']);
   });
 
   //  Reportes
