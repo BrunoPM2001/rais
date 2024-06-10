@@ -9,11 +9,11 @@ return new class extends Migration {
    * Run the migrations.
    */
   public function up(): void {
-    Schema::create('Geco_proyecto', function (Blueprint $table) {
+    Schema::create('Geco_comprobante', function (Blueprint $table) {
       $table->id();
-      $table->unsignedBigInteger('proyecto_id');
-      $table->decimal('total', 10, 2);
-      $table->boolean('estado');
+      $table->string('codigo');
+      $table->string('descripcion');
+      $table->boolean('estado')->default(1);
       $table->timestamps();
     });
   }
@@ -22,6 +22,6 @@ return new class extends Migration {
    * Reverse the migrations.
    */
   public function down(): void {
-    Schema::drop('Geco_proyecto');
+    Schema::drop('Geco_comprobante');
   }
 };
