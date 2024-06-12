@@ -212,7 +212,14 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
 
   //  Economía
   Route::prefix('economia')->group(function () {
-    Route::get('listadoProyectos', [GestionComprobantesController::class, 'listadoProyectos']);
+
+    Route::prefix('comprobantes')->group(function () {
+      Route::get('listadoProyectos', [GestionComprobantesController::class, 'listadoProyectos']);
+      Route::get('detalleProyecto', [GestionComprobantesController::class, 'detalleProyecto']);
+      Route::get('listadoComprobantes', [GestionComprobantesController::class, 'listadoComprobantes']);
+      Route::get('listadoPartidasComprobante', [GestionComprobantesController::class, 'listadoPartidasComprobante']);
+      Route::put('updateEstadoComprobante', [GestionComprobantesController::class, 'updateEstadoComprobante']);
+    });
   });
 
   //  Reportes
