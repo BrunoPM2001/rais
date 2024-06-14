@@ -47,6 +47,17 @@ class GestionTransferenciasController extends Controller {
   }
 
   public function getSolicitudData(Request $request) {
+
+    $detalle = DB::table('Geco_proyecto AS a')
+      ->join('Proyecto AS b', 'b.id', '=', 'a.proyecto_id')
+      ->select([
+        'b.tipo_proyecto',
+        'b.titulo',
+        'b.codigo_proyecto',
+      ])
+      ->where('a.id', '=', $request->query('geco_proyecto_id'))
+      ->first();
+
     $solicitud = DB::table('Geco_operacion')
       ->select([
         'id',
@@ -60,10 +71,16 @@ class GestionTransferenciasController extends Controller {
 
     $presupuesto = DB::table('Geco_proyecto_presupuesto AS a')
       ->join('Partida AS b', 'b.id', '=', 'a.partida_id')
+      ->leftJoin('Geco_operacion_movimiento AS c', function ($join) use ($solicitud) {
+        $join->on('c.geco_proyecto_presupuesto_id', '=', 'a.id')
+          ->where('c.geco_operacion_id', '=', $solicitud->id);
+      })
       ->select([
         'b.codigo',
         'b.partida',
-        'a.monto'
+        'a.monto',
+        'c.operacion',
+        'c.monto AS transferencia'
       ])
       ->where('a.geco_proyecto_id', '=', $request->query('geco_proyecto_id'))
       ->get();
@@ -79,7 +96,7 @@ class GestionTransferenciasController extends Controller {
       ->orderByDesc('created_at')
       ->get();
 
-    return ['data' => $solicitud, 'presupuesto' => $presupuesto, 'historial' => $historial];
+    return ['proyecto' => $detalle, 'solicitud' => $solicitud, 'presupuesto' => $presupuesto, 'historial' => $historial];
   }
 
   public function movimientosTransferencia(Request $request) {

@@ -122,7 +122,7 @@ class GestionComprobantesController extends Controller {
 
   public function listadoPartidasProyecto(Request $request) {
     $partidas = DB::table('Geco_proyecto_presupuesto AS a')
-      ->join('Partida AS b', 'b.id', '=', 'a.partida_id')
+      ->leftJoin('Partida AS b', 'b.id', '=', 'a.partida_id')
       ->select([
         'b.codigo',
         'b.tipo',
@@ -133,8 +133,13 @@ class GestionComprobantesController extends Controller {
         'a.monto_excedido'
       ])
       ->where('a.geco_proyecto_id', '=', $request->query('geco_proyecto_id'))
-      ->where('a.partida_nueva', '!=', '1')
-      ->where('a.monto', '>', '0')
+      ->where(function ($query) {
+        $query
+          ->orWhere('a.partida_nueva', '!=', '1')
+          ->orWhereNull('a.partida_nueva');
+      })
       ->get();
+
+    return $partidas;
   }
 }

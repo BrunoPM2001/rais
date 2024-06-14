@@ -220,6 +220,7 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
       Route::get('listadoComprobantes', [GestionComprobantesController::class, 'listadoComprobantes']);
       Route::get('listadoPartidasComprobante', [GestionComprobantesController::class, 'listadoPartidasComprobante']);
       Route::put('updateEstadoComprobante', [GestionComprobantesController::class, 'updateEstadoComprobante']);
+      Route::get('listadoPartidasProyecto', [GestionComprobantesController::class, 'listadoPartidasProyecto']);
     });
 
     Route::prefix('transferencias')->group(function () {
