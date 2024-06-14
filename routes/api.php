@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\Admin\UsuarioController;
 use App\Http\Controllers\Admin\Constancias\ReporteController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\Economia\GestionComprobantesController;
+use App\Http\Controllers\Admin\Economia\GestionTransferenciasController;
 use App\Http\Controllers\Admin\Estudios\ConvocatoriasController;
 use App\Http\Controllers\Admin\Estudios\DeudaProyectosController;
 use App\Http\Controllers\Admin\Estudios\DocentesController;
@@ -219,6 +220,12 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
       Route::get('listadoComprobantes', [GestionComprobantesController::class, 'listadoComprobantes']);
       Route::get('listadoPartidasComprobante', [GestionComprobantesController::class, 'listadoPartidasComprobante']);
       Route::put('updateEstadoComprobante', [GestionComprobantesController::class, 'updateEstadoComprobante']);
+    });
+
+    Route::prefix('transferencias')->group(function () {
+      Route::get('listadoProyectos', [GestionTransferenciasController::class, 'listadoProyectos']);
+      Route::get('getSolicitudData', [GestionTransferenciasController::class, 'getSolicitudData']);
+      Route::get('movimientosTransferencia', [GestionTransferenciasController::class, 'movimientosTransferencia']);
     });
   });
 
