@@ -13,8 +13,8 @@ return new class extends Migration {
       $table->id();
       $table->unsignedBigInteger('geco_proyecto_id');
       $table->tinyInteger('estado');
-      $table->string('observacion');
-      $table->string('justificacion');
+      $table->text('observacion');
+      $table->text('justificacion');
       $table->dateTime('fecha_aprobado');
       $table->timestamps();
 

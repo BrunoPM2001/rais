@@ -63,7 +63,7 @@ class GestionTransferenciasController extends Controller {
         'id',
         'justificacion',
         'estado',
-        'updated_at'
+        'created_at'
       ])
       ->where('geco_proyecto_id', '=', $request->query('geco_proyecto_id'))
       ->orderByDesc('created_at')
@@ -76,14 +76,30 @@ class GestionTransferenciasController extends Controller {
           ->where('c.geco_operacion_id', '=', $solicitud->id);
       })
       ->select([
+        'b.tipo',
         'b.codigo',
         'b.partida',
         'a.monto',
-        'c.operacion',
-        'c.monto AS transferencia'
+        $solicitud->estado == 1 ? DB::raw('0') : 'c.operacion',
+        $solicitud->estado == 1 ? DB::raw('0') : 'c.monto AS transferencia',
+        DB::raw('(a.monto + IFNULL(c.monto, 0)) AS monto_nuevo'),
       ])
       ->where('a.geco_proyecto_id', '=', $request->query('geco_proyecto_id'))
       ->get();
+
+    $groupedData = $presupuesto->groupBy('tipo');
+
+    $result = $groupedData->map(function ($items, $tipo) {
+      return [
+        'tipo' => $tipo,
+        'children' => $items->map(function ($item) {
+          // Eliminar la propiedad 'tipo' de cada item
+          $itemArray = (array) $item;
+          unset($itemArray['tipo']);
+          return $itemArray;
+        })->toArray()
+      ];
+    })->values()->toArray();
 
     $historial = DB::table('Geco_operacion')
       ->select([
@@ -93,10 +109,11 @@ class GestionTransferenciasController extends Controller {
         'estado'
       ])
       ->where('geco_proyecto_id', '=', $request->query('geco_proyecto_id'))
+      ->where('estado', '>', 0)
       ->orderByDesc('created_at')
       ->get();
 
-    return ['proyecto' => $detalle, 'solicitud' => $solicitud, 'presupuesto' => $presupuesto, 'historial' => $historial];
+    return ['proyecto' => $detalle, 'solicitud' => $solicitud, 'presupuesto' => $result, 'historial' => $historial];
   }
 
   public function movimientosTransferencia(Request $request) {
@@ -104,11 +121,16 @@ class GestionTransferenciasController extends Controller {
       ->join('Geco_proyecto_presupuesto AS b', 'b.id', '=', 'a.geco_proyecto_presupuesto_id')
       ->join('Partida AS c', 'c.id', '=', 'b.partida_id')
       ->select([
+        'c.tipo',
         'c.codigo',
         'c.partida',
-        'a.operacion',
         'a.monto_original',
+        'a.operacion',
         'a.monto',
+        DB::raw('CASE 
+                    WHEN a.operacion = "+" THEN a.monto_original + a.monto 
+                    ELSE a.monto_original - a.monto 
+                 END AS monto_nuevo')
       ])
       ->where('geco_operacion_id', '=', $request->query('geco_operacion_id'))
       ->get();
