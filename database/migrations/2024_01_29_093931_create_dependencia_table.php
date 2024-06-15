@@ -14,9 +14,7 @@ return new class extends Migration {
       $table->unsignedBigInteger('facultad_id')->nullable();
       $table->string('dependencia')->nullable(false);
       //  Fks
-      $table->foreign('facultad_id')->references('id')->on('Facultad')
-        ->cascadeOnUpdate()
-        ->cascadeOnDelete();
+      $table->foreign('facultad_id')->references('id')->on('Facultad');
     });
   }
 

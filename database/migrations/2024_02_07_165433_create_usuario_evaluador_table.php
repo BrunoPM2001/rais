@@ -19,9 +19,7 @@ return new class extends Migration {
       $table->string('cargo')->nullable();
       $table->string('codigo_regina')->nullable();
       //  Fks
-      $table->foreign('usuario_investigador_id')->references('id')->on('Usuario_investigador')
-        ->cascadeOnUpdate()
-        ->cascadeOnDelete();
+      $table->foreign('usuario_investigador_id')->references('id')->on('Usuario_investigador');
     });
   }
 

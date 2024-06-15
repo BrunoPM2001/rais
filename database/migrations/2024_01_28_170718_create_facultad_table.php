@@ -15,9 +15,7 @@ return new class extends Migration {
       $table->string('nombre')->unique();
       $table->timestamps();
       //  Fks
-      $table->foreign('area_id')->references('id')->on('Area')
-        ->cascadeOnUpdate()
-        ->cascadeOnDelete();
+      $table->foreign('area_id')->references('id')->on('Area');
     });
   }
 

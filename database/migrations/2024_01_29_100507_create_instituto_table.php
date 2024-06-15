@@ -15,9 +15,7 @@ return new class extends Migration {
       $table->string('instituto')->nullable(false);
       $table->boolean('estado')->default(true);
       //  Fks
-      $table->foreign('facultad_id')->references('id')->on('Facultad')
-        ->cascadeOnUpdate()
-        ->cascadeOnDelete();
+      $table->foreign('facultad_id')->references('id')->on('Facultad');
     });
   }
 

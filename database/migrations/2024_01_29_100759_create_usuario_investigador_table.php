@@ -69,15 +69,9 @@ return new class extends Migration {
       $table->string('dep_academico')->nullable();
       $table->timestamps();
       //  Fks
-      $table->foreign('dependencia_id')->references('id')->on('Dependencia')
-        ->cascadeOnUpdate()
-        ->cascadeOnDelete();
-      $table->foreign('facultad_id')->references('id')->on('Facultad')
-        ->cascadeOnUpdate()
-        ->cascadeOnDelete();
-      $table->foreign('instituto_id')->references('id')->on('Instituto')
-        ->cascadeOnUpdate()
-        ->cascadeOnDelete();
+      $table->foreign('dependencia_id')->references('id')->on('Dependencia');
+      $table->foreign('facultad_id')->references('id')->on('Facultad');
+      $table->foreign('instituto_id')->references('id')->on('Instituto');
     });
   }
 

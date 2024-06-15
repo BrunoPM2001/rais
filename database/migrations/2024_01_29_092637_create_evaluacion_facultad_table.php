@@ -22,9 +22,7 @@ return new class extends Migration {
       $table->string('tipo_proyecto', 15);
       $table->timestamps();
       //  Fks
-      $table->foreign('facultad_id')->references('id')->on('Facultad')
-        ->cascadeOnUpdate()
-        ->cascadeOnDelete();;
+      $table->foreign('facultad_id')->references('id')->on('Facultad');
     });
   }
 

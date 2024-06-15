@@ -14,12 +14,8 @@ return new class extends Migration {
       $table->unsignedBigInteger('evaluacion_facultad_id');
       $table->unsignedBigInteger('usuario_evaluador_id');
       //  Fks
-      $table->foreign('evaluacion_facultad_id')->references('id')->on('Evaluacion_facultad')
-        ->cascadeOnUpdate()
-        ->cascadeOnDelete();
-      $table->foreign('usuario_evaluador_id')->references('id')->on('Usuario_evaluador')
-        ->cascadeOnUpdate()
-        ->cascadeOnDelete();
+      $table->foreign('evaluacion_facultad_id')->references('id')->on('Evaluacion_facultad');
+      $table->foreign('usuario_evaluador_id')->references('id')->on('Usuario_evaluador');
     });
   }
 

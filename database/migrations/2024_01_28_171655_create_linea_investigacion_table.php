@@ -19,9 +19,7 @@ return new class extends Migration {
       $table->boolean('estado')->default(true)->nullable(false);
       $table->timestamps();
       //  Fks
-      $table->foreign('facultad_id')->references('id')->on('Facultad')
-        ->cascadeOnUpdate()
-        ->cascadeOnDelete();
+      $table->foreign('facultad_id')->references('id')->on('Facultad');
     });
   }
 

@@ -17,7 +17,6 @@ return new class extends Migration {
       $table->string("tabla");
       $table->unsignedBigInteger("tabla_id");
       $table->boolean("estado")->default(true);
-      $table->rememberToken();
     });
   }
 
