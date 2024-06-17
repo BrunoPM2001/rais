@@ -31,6 +31,8 @@ class EstudioController extends Controller {
       ->orderBy('b.condicion', 'desc')
       ->get();
 
+    return $proyectos;
+
     $pdf = Pdf::loadView('admin.reportes.estudioPDF', ['lista' => $proyectos, 'periodo' => $periodo]);
     return $pdf->stream();
   }

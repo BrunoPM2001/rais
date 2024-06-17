@@ -12,9 +12,10 @@ return new class extends Migration {
     Schema::create('Instituto', function (Blueprint $table) {
       $table->id();
       $table->unsignedBigInteger('facultad_id');
-      $table->string('instituto')->nullable(false);
+      $table->string('instituto');
       $table->boolean('estado')->default(true);
       //  Fks
+
       $table->foreign('facultad_id')->references('id')->on('Facultad');
     });
   }

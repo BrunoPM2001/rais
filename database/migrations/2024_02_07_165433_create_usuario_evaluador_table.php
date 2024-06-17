@@ -18,6 +18,7 @@ return new class extends Migration {
       $table->string('institucion')->nullable();
       $table->string('cargo')->nullable();
       $table->string('codigo_regina')->nullable();
+
       //  Fks
       $table->foreign('usuario_investigador_id')->references('id')->on('Usuario_investigador');
     });

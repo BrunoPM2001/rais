@@ -15,9 +15,9 @@ return new class extends Migration {
       $table->string("tipo");
       $table->string("categoria");
       $table->string("titulo");
-      $table->decimal("puntaje");
+      $table->decimal("puntaje", 10, 2);
       $table->boolean("compartir")->default(false);
-      $table->decimal("monto_rec")->default("0.00");
+      $table->decimal("monto_rec", 10, 2)->default(0);
       $table->timestamps();
     });
   }

@@ -9,7 +9,7 @@ return new class extends Migration {
    * Run the migrations.
    */
   public function up(): void {
-    Schema::create('Evaluacion_facultad', function (Blueprint $table) {
+    Schema::create('Evaluacion_facultad_H', function (Blueprint $table) {
       $table->id();
       $table->unsignedBigInteger('facultad_id');
       $table->unsignedInteger('cupos')->default(0);
@@ -21,6 +21,7 @@ return new class extends Migration {
       $table->unsignedInteger('periodo');
       $table->string('tipo_proyecto', 15);
       $table->timestamps();
+
       //  Fks
       $table->foreign('facultad_id')->references('id')->on('Facultad');
     });

@@ -126,7 +126,7 @@ class GruposController extends S3Controller {
     if ($detalle->infraestructura_sgestion != null) {
       $cmd = $s3->getCommand('GetObject', [
         'Bucket' => 'grupo-infraestructura-sgestion',
-        'Key' => $detalle->id . "." . $detalle->infraestructura_sgestion
+        'Key' => $detalle->infraestructura_sgestion
       ]);
       //  Generar url temporal
       $url = (string) $s3->createPresignedRequest($cmd, '+10 minutes')->getUri();

@@ -12,8 +12,6 @@ return new class extends Migration {
     Schema::create('Eval_declaracion_jurada', function (Blueprint $table) {
       $table->id();
       $table->unsignedBigInteger('investigador_id');
-      $table->boolean('constancia')->default(false);
-      $table->boolean('declaracion')->default(false);
       $table->dateTime('fecha_inicio');
       $table->dateTime('fecha_fin');
       $table->timestamps();

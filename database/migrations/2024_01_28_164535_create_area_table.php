@@ -13,7 +13,6 @@ return new class extends Migration {
       $table->id();
       $table->char('sigla', '1')->unique();
       $table->string('nombre')->unique();
-      $table->timestamps();
     });
   }
 

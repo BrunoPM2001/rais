@@ -9,13 +9,10 @@ return new class extends Migration {
    * Run the migrations.
    */
   public function up(): void {
-    Schema::create('Facultad', function (Blueprint $table) {
+    Schema::create('Ods', function (Blueprint $table) {
       $table->id();
-      $table->unsignedBigInteger('area_id')->nullable();
-      $table->string('nombre')->unique();
-
-      //  Fks
-      $table->foreign('area_id')->references('id')->on('Area');
+      $table->string('objetivo');
+      $table->string('descripcion')->nullable();
     });
   }
 
@@ -23,6 +20,6 @@ return new class extends Migration {
    * Reverse the migrations.
    */
   public function down(): void {
-    Schema::drop('Facultad');
+    Schema::drop('Ods');
   }
 };

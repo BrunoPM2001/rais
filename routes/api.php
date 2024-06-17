@@ -41,6 +41,7 @@ use App\Http\Controllers\Investigador\Actividades\ProyectoMultidisciplinarioCont
 use App\Http\Controllers\Investigador\Actividades\ProyectoSinFinanciamientoController;
 use App\Http\Controllers\Investigador\Actividades\PublicacionLibrosUniController;
 use App\Http\Controllers\Investigador\Actividades\TalleresController;
+use App\Http\Controllers\Investigador\Convocatorias\ProCTIController;
 use App\Http\Controllers\Investigador\DashboardController as InvestigadorDashboardController;
 use App\Http\Controllers\Investigador\Publicaciones\ArticulosController;
 use App\Http\Controllers\Investigador\Publicaciones\CapitulosLibrosController;
@@ -414,5 +415,14 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
   Route::prefix('grupo')->group(function () {
     Route::get('listadoGrupos', [InvestigadorGrupoController::class, 'listadoGrupos']);
     Route::get('listadoSolicitudes', [InvestigadorGrupoController::class, 'listadoSolicitudes']);
+  });
+
+  //  Convocatorias
+  Route::prefix('convocatorias')->group(function () {
+    Route::get('getDataToPaso1', [ProCTIController::class, 'getDataToPaso1']);
+    Route::post('registrarPaso1', [ProCTIController::class, 'registrarPaso1']);
+
+    //  Extras
+    Route::get('getOcde', [ProCTIController::class, 'getOcde']);
   });
 });

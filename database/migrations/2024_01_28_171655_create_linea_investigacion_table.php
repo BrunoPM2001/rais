@@ -13,10 +13,10 @@ return new class extends Migration {
       $table->id();
       $table->unsignedBigInteger('facultad_id')->nullable();
       $table->unsignedBigInteger('parent_id')->nullable();
-      $table->string('codigo')->unique()->nullable(false);
-      $table->string('nombre')->unique()->nullable(false);
+      $table->string('codigo')->unique();
+      $table->string('nombre');
       $table->string('resolucion')->nullable();
-      $table->boolean('estado')->default(true)->nullable(false);
+      $table->boolean('estado')->default(true);
       $table->timestamps();
       //  Fks
       $table->foreign('facultad_id')->references('id')->on('Facultad');

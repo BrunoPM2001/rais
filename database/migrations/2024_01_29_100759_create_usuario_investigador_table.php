@@ -55,8 +55,6 @@ return new class extends Migration {
       $table->string('posicion_unmsm')->nullable();
       $table->text('biografia')->nullable();
       $table->integer('estado')->nullable();
-      $table->string('tmp_facultad')->nullable();
-      $table->text('tmp_id')->nullable();
       $table->string('enlace_cti')->nullable();
       $table->string('tipo_investigador')->nullable();
       $table->string('tipo_investigador_categoria')->nullable();
@@ -68,6 +66,7 @@ return new class extends Migration {
       $table->boolean('rrhh_status')->nullable();
       $table->string('dep_academico')->nullable();
       $table->timestamps();
+
       //  Fks
       $table->foreign('dependencia_id')->references('id')->on('Dependencia');
       $table->foreign('facultad_id')->references('id')->on('Facultad');
