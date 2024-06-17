@@ -422,7 +422,11 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
     Route::get('getDataToPaso1', [ProCTIController::class, 'getDataToPaso1']);
     Route::post('registrarPaso1', [ProCTIController::class, 'registrarPaso1']);
 
+    Route::get('getDataPaso2', [ProCTIController::class, 'getDataPaso2']);
+    Route::post('registrarPaso2', [ProCTIController::class, 'registrarPaso2']);
+
     //  Extras
     Route::get('getOcde', [ProCTIController::class, 'getOcde']);
+    Route::get('getOds', [ProCTIController::class, 'getOds']);
   });
 });
