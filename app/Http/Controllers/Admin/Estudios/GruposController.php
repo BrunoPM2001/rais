@@ -413,7 +413,7 @@ class GruposController extends S3Controller {
         'a.facultad',
         'a.programa',
         'a.permanencia',
-        'a.ultimo_periodo_matriculado'
+        'b.email3'
       )
       ->whereIn('a.permanencia', ['Activo', 'Reserva de Matricula'])
       ->having('value', 'LIKE', '%' . $request->query('query') . '%')

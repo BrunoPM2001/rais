@@ -419,11 +419,32 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
 
   //  Convocatorias
   Route::prefix('convocatorias')->group(function () {
+    Route::get('verificar', [ProCTIController::class, 'verificar']);
+
     Route::get('getDataToPaso1', [ProCTIController::class, 'getDataToPaso1']);
     Route::post('registrarPaso1', [ProCTIController::class, 'registrarPaso1']);
 
     Route::get('getDataPaso2', [ProCTIController::class, 'getDataPaso2']);
     Route::post('registrarPaso2', [ProCTIController::class, 'registrarPaso2']);
+
+    Route::get('listarIntegrantes', [ProCTIController::class, 'listarIntegrantes']);
+    Route::get('searchEstudiante', [ProCTIController::class, 'searchEstudiante']);
+    Route::get('verificarEstudiante', [ProCTIController::class, 'verificarEstudiante']);
+    Route::post('agregarIntegrante', [ProCTIController::class, 'agregarIntegrante']);
+    Route::delete('eliminarIntegrante', [ProCTIController::class, 'eliminarIntegrante']);
+
+    Route::post('registrarPaso4', [ProCTIController::class, 'registrarPaso4']);
+
+    Route::get('listarActividades', [ProCTIController::class, 'listarActividades']);
+    Route::post('agregarActividad', [ProCTIController::class, 'agregarActividad']);
+    Route::delete('eliminarActividad', [ProCTIController::class, 'eliminarActividad']);
+
+    Route::get('listarPartidas', [ProCTIController::class, 'listarPartidas']);
+    Route::get('listarTiposPartidas', [ProCTIController::class, 'listarTiposPartidas']);
+    Route::post('agregarPartida', [ProCTIController::class, 'agregarPartida']);
+    Route::delete('eliminarPartida', [ProCTIController::class, 'eliminarPartida']);
+
+    Route::put('enviarProyecto', [ProCTIController::class, 'enviarProyecto']);
 
     //  Extras
     Route::get('getOcde', [ProCTIController::class, 'getOcde']);
