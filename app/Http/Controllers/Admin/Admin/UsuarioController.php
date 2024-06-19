@@ -257,15 +257,24 @@ class UsuarioController extends Controller {
     } else {
       switch ($tipoUsuario) {
         case $tiposUsuarios[0]:
-          $username = "temporal1";
           $pass = Str::random(8);
-          Usuario::create([
-            'email' => $username,
-            'password' => bcrypt($pass),
-            'tabla' => $tipoUsuario,
-            'tabla_id' => $user->tabla_id
-          ]);
-          return ['message' => 'info', 'detail' => 'Usuario temporal creado - Usuario: ' . $username . ' | Contraseña: ' . $pass];
+          //  Cuenta de temporales
+          $cuenta = DB::table('Usuario')
+            ->select([
+              DB::raw("SUBSTR(email,9) AS idTemp")
+            ])
+            ->where('email', 'LIKE', 'temporal%')
+            ->orderByDesc('id')
+            ->get();
+
+          DB::table('Usuario')
+            ->insert([
+              'email' => 'temporal' . ($cuenta[0]->idTemp ?? 0 + 1),
+              'password' => bcrypt($pass),
+              'tabla' => $tipoUsuario,
+              'tabla_id' => $user->tabla_id
+            ]);
+          return ['message' => 'info', 'detail' => 'Usuario temporal creado - Usuario: temporal' . ($cuenta[0]->idTemp ?? 0 + 1) . ' | Contraseña: ' . $pass];
           break;
         default:
           return ['message' => 'error', 'detail' => 'Error al reestablecer contraseña'];

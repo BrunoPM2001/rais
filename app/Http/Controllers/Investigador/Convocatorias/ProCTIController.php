@@ -20,21 +20,30 @@ class ProCTIController extends S3Controller {
       $errores[] = 'Tiene que pertenecer a algún grupo de investigación.';
     }
 
-    $participaProyecto = DB::table('Proyecto_integrante AS a')
+    $proyecto = DB::table('Proyecto_integrante AS a')
       ->join('Proyecto AS b', 'b.id', '=', 'a.proyecto_id')
+      ->select([
+        'a.proyecto_id',
+        'b.estado',
+        'b.step'
+      ])
       ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
       ->where('b.tipo_proyecto', '=', 'PRO-CTIE')
       ->where('b.periodo', '=', '2024')
-      ->count();
+      ->first();
 
-    if ($participaProyecto > 0) {
-      $errores[] = 'Ya es participante en otro proyecto PRO-CTI de este año.';
+    if ($proyecto != null) {
+      if ($proyecto->estado != 6) {
+        $errores[] = 'Ya es participante en otro proyecto PRO-CTI de este año.';
+      } else {
+        return ['estado' => true, 'paso' => 'paso' . $proyecto->step . '?proyecto_id=' . $proyecto->proyecto_id];
+      }
     }
 
     if (!empty($errores)) {
       return ['estado' => false, 'message' => $errores];
     } else {
-      return ['estado' => true];
+      return ['estado' => true, 'paso' => 'paso1'];
     }
   }
 

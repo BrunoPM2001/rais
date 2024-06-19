@@ -13,6 +13,7 @@ class GestionSUMController extends Controller {
     $listado = DB::table('Repo_sum')
       ->select([
         DB::raw("CONCAT(codigo_alumno, ' ', dni, ' ', apellido_paterno, ' ', apellido_materno, ' ', nombres) AS value"),
+        'id',
         'codigo_alumno',
         'nombres',
         'apellido_paterno',
@@ -34,13 +35,13 @@ class GestionSUMController extends Controller {
         'permanencia',
         'ultimo_periodo_matriculado',
       ]);
-    if ($request->query('search') != "") {
+    if (!empty($request->query('search'))) {
       $listado = $listado->having('value', 'LIKE', '%' . $request->query('search') . '%');
     }
     $listado = $listado
       ->orderBy('apellido_paterno')
       ->orderBy('apellido_materno')
-      ->orderBy('nombres')
+      ->orderByDesc('id')
       ->paginate(10, ['*'], 'page', $request->query('page'));
 
     return $listado;
