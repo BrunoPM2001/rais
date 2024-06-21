@@ -43,6 +43,7 @@ class InformesTecnicosController extends Controller {
       )
       ->where('a.periodo', '=', $periodo)
       ->where('a.estado', '>', 0)
+      ->groupBy('a.id')
       ->get();
 
     return ['data' => $proyectos];

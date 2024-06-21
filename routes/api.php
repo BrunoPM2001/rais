@@ -115,6 +115,9 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
       Route::get('incluirMiembroData', [GruposController::class, 'incluirMiembroData']);
       Route::post('agregarMiembro', [GruposController::class, 'agregarMiembro']);
       Route::put('excluirMiembro', [GruposController::class, 'excluirMiembro']);
+      Route::get('visualizarMiembro', [GruposController::class, 'visualizarMiembro']);
+      Route::put('cambiarCondicion', [GruposController::class, 'cambiarCondicion']);
+      Route::put('cambiarCargo', [GruposController::class, 'cambiarCargo']);
     });
 
     //  Proyectos grupo
@@ -190,9 +193,12 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
       Route::post('create', [InvestigadoresController::class, 'create']);
       Route::put('update', [InvestigadoresController::class, 'update']);
       Route::get('getSelectsData', [InvestigadoresController::class, 'getSelectsData']);
+
       Route::get('licenciasTipo', [InvestigadoresController::class, 'licenciasTipo']);
       Route::get('getLicencias', [InvestigadoresController::class, 'getLicencias']);
       Route::post('addLicencia', [InvestigadoresController::class, 'addLicencia']);
+      Route::put('updateLicencia', [InvestigadoresController::class, 'updateLicencia']);
+      Route::delete('deleteLicencia', [InvestigadoresController::class, 'deleteLicencia']);
 
       //  Search
       Route::get('searchDocenteRrhh', [InvestigadoresController::class, 'searchDocenteRrhh']);
@@ -415,6 +421,15 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
   Route::prefix('grupo')->group(function () {
     Route::get('listadoGrupos', [InvestigadorGrupoController::class, 'listadoGrupos']);
     Route::get('listadoSolicitudes', [InvestigadorGrupoController::class, 'listadoSolicitudes']);
+    Route::get('detalle', [InvestigadorGrupoController::class, 'detalle']);
+    Route::get('listarMiembros', [InvestigadorGrupoController::class, 'listarMiembros']);
+
+    Route::get('searchEstudiante', [InvestigadorGrupoController::class, 'searchEstudiante']);
+    Route::get('searchEgresado', [InvestigadorGrupoController::class, 'searchEgresado']);
+    Route::get('incluirMiembroData', [InvestigadorGrupoController::class, 'incluirMiembroData']);
+    Route::post('agregarMiembro', [InvestigadorGrupoController::class, 'agregarMiembro']);
+    Route::put('excluirMiembro', [InvestigadorGrupoController::class, 'excluirMiembro']);
+    Route::get('visualizarMiembro', [InvestigadorGrupoController::class, 'visualizarMiembro']);
   });
 
   //  Convocatorias

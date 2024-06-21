@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Admin\Estudios;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Svg\Tag\Rect;
 
 class InvestigadoresController extends Controller {
   public function listado() {
@@ -301,8 +300,6 @@ class InvestigadoresController extends Controller {
         'a.fecha_fin',
         'a.comentario',
         'a.documento',
-        // 'a.user_create',
-        // 'a.user_edit'
       ])
       ->where('a.investigador_id', '=', $request->query('investigador_id'))
       ->get();
@@ -314,7 +311,7 @@ class InvestigadoresController extends Controller {
     DB::table('Licencia')
       ->insert([
         'investigador_id' => $request->input('investigador_id'),
-        'licencia_tipo_id' => $request->input('investigador_id'),
+        'licencia_tipo_id' => $request->input('licencia_tipo_id'),
         'fecha_inicio' => $request->input('fecha_inicio'),
         'fecha_fin' => $request->input('fecha_fin'),
         'documento' => $request->input('documento') ?? "",
@@ -324,6 +321,34 @@ class InvestigadoresController extends Controller {
     return [
       'message' => 'success',
       'detail' => 'Licencia añadida con éxito'
+    ];
+  }
+
+  public function updateLicencia(Request $request) {
+    DB::table('Licencia')
+      ->where('id', '=', $request->input('id'))
+      ->update([
+        'licencia_tipo_id' => $request->input('licencia_tipo_id')["value"],
+        'fecha_inicio' => $request->input('fecha_inicio'),
+        'fecha_fin' => $request->input('fecha_fin'),
+        'documento' => $request->input('documento') ?? "",
+        'comentario' => $request->input('comentario') ?? ""
+      ]);
+
+    return [
+      'message' => 'info',
+      'detail' => 'Licencia actualizada con éxito'
+    ];
+  }
+
+  public function deleteLicencia(Request $request) {
+    DB::table('Licencia')
+      ->where('id', '=', $request->query('id'))
+      ->delete();
+
+    return [
+      'message' => 'info',
+      'detail' => 'Licencia eliminada con éxito'
     ];
   }
 
@@ -341,7 +366,6 @@ class InvestigadoresController extends Controller {
         'ser_cod_ant AS codigo',
         'abv_doc_id AS doc_tipo',
         'ser_doc_id_act AS doc_numero',
-        // 'ser_cod_dep_ces AS dependencia_id',
         'ser_cat_act AS docente_categoria',
         'ser_sexo AS sexo',
         'ser_fech_nac AS fecha_nac'
@@ -367,7 +391,6 @@ class InvestigadoresController extends Controller {
         'a.apellido_paterno AS apellido1',
         'a.apellido_materno AS apellido2',
         'a.nombres AS nombres',
-        // 'a.id_facultad AS facultad_id',
         'a.domicilio AS direccion1',
         'a.correo_electronico_personal AS email1',
         'a.correo_electronico AS email3',

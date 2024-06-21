@@ -49,12 +49,13 @@ class ProCTIController extends S3Controller {
 
   public function getDataToPaso1(Request $request) {
     $data = DB::table('Grupo_integrante AS a')
-      ->join('Facultad AS b', 'b.id', '=', 'a.facultad_id')
-      ->join('Grupo AS c', 'c.id', '=', 'a.grupo_id')
+      ->join('Grupo AS b', 'b.id', '=', 'a.grupo_id')
+      ->join('Usuario_investigador AS c', 'c.id', '=', 'a.investigador_id')
+      ->join('Facultad AS d', 'd.id', '=', 'c.facultad_id')
       ->select([
-        'b.nombre AS facultad',
-        'c.grupo_nombre',
-        'a.grupo_id'
+        'd.nombre AS facultad',
+        'b.grupo_nombre',
+        'b.id AS grupo_id'
       ])
       ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
       ->whereNot('a.condicion', 'LIKE', 'Ex%')

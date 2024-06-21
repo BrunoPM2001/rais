@@ -16,23 +16,36 @@ class GestionComprobantesController extends Controller {
       )
       ->where('condicion', '=', 'Responsable');
 
-    $proyectos = DB::table('Geco_proyecto AS a')
-      ->join('Proyecto AS b', 'b.id', '=', 'a.proyecto_id')
-      ->leftJoin('Geco_documento AS c', 'a.id', '=', 'c.geco_proyecto_id')
-      ->join('Facultad AS d', 'd.id', '=', 'b.facultad_id')
-      ->leftJoinSub($responsable, 'res', 'res.proyecto_id', '=', 'b.id')
+    $latestEntries = DB::table('Geco_documento AS a')
       ->select([
-        'a.id',
-        'b.id AS proyecto_id',
-        'b.codigo_proyecto',
-        DB::raw("MAX(c.updated_at) AS fecha_actualizacion"),
+        'a.geco_proyecto_id',
+        DB::raw('MAX(a.created_at) AS max_created_at'),
+        DB::raw("SUM(IF(a.estado = 4, 1, 0)) AS cuenta")
+      ])
+      ->groupBy('a.geco_proyecto_id');
+
+    $proyectos = DB::table('Geco_documento AS a')
+      ->join('Geco_proyecto AS b', 'b.id', '=', 'a.geco_proyecto_id')
+      ->join('Proyecto AS c', 'c.id', '=', 'b.proyecto_id')
+      ->join('Facultad AS d', 'd.id', '=', 'c.facultad_id')
+      ->leftJoinSub($responsable, 'res', 'res.proyecto_id', '=', 'c.id')
+      ->joinSub($latestEntries, 'latest', function ($join) {
+        $join->on('a.geco_proyecto_id', '=', 'latest.geco_proyecto_id')
+          ->on('a.created_at', '=', 'latest.max_created_at');
+      })
+      ->select([
+        'b.id',
+        'c.codigo_proyecto',
+        'latest.max_created_at AS fecha_ultimo_comprobante',
         'res.responsable',
         'd.nombre AS facultad',
-        'b.tipo_proyecto',
-        'b.periodo',
+        'c.tipo_proyecto',
+        'c.periodo',
         'a.estado',
+        'latest.cuenta AS cuenta',
       ])
-      ->groupBy('a.id')
+      ->groupBy('a.geco_proyecto_id')
+      ->orderByDesc('latest.max_created_at')
       ->get();
 
     return $proyectos;

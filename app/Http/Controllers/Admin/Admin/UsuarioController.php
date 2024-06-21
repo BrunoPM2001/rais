@@ -63,7 +63,7 @@ class UsuarioController extends Controller {
 
           Usuario::create([
             'username' => $request->username,
-            'password' => bcrypt($request->apellido1[0] . $request->apellido2),
+            'password' => bcrypt($request->password),
             'tabla' => $tipoUsuario,
             'tabla_id' => $user1['id']
           ]);
@@ -269,12 +269,12 @@ class UsuarioController extends Controller {
 
           DB::table('Usuario')
             ->insert([
-              'email' => 'temporal' . ($cuenta[0]->idTemp ?? 0 + 1),
+              'email' => 'temporal' . ($cuenta[0]->idTemp + 1),
               'password' => bcrypt($pass),
               'tabla' => $tipoUsuario,
               'tabla_id' => $user->tabla_id
             ]);
-          return ['message' => 'info', 'detail' => 'Usuario temporal creado - Usuario: temporal' . ($cuenta[0]->idTemp ?? 0 + 1) . ' | Contraseña: ' . $pass];
+          return ['message' => 'info', 'detail' => 'Usuario temporal creado - Usuario: temporal' . ($cuenta[0]->idTemp + 1) . ' | Contraseña: ' . $pass];
           break;
         default:
           return ['message' => 'error', 'detail' => 'Error al reestablecer contraseña'];
