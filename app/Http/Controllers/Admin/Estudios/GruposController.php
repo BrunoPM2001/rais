@@ -526,8 +526,8 @@ class GruposController extends S3Controller {
 
         if ($investigador == null) {
           return [
-            'message' => 'warning',
-            'detail' => 'No está registrado como investigador'
+            'message' => 'success',
+            'detail' => 'No pertenece a ningún grupo'
           ];
         } else if ($investigador->grupos > 0) {
           return [
@@ -537,7 +537,7 @@ class GruposController extends S3Controller {
         } else {
           return [
             'message' => 'success',
-            'detail' => 'No pertenece a ningún grupo y tiene los datos de investigador completos'
+            'detail' => 'No pertenece a ningún grupo'
           ];
         }
         break;
@@ -590,6 +590,16 @@ class GruposController extends S3Controller {
               'updated_at' => $date
             ]);
 
+          DB::table('Grupo_integrante_doc')
+            ->insert([
+              'grupo_id' => $request->input('grupo_id'),
+              'investigador_id' => $request->input('investigador_id'),
+              'nombre' => 'Formato de adhesión',
+              'key' => $name,
+              'fecha' => $date,
+              'estado' => 1
+            ]);
+
           return [
             'message' => 'success',
             'detail' => 'Miembro registrado exitosamente'
@@ -632,21 +642,77 @@ class GruposController extends S3Controller {
               'updated_at' => $date
             ]);
 
+          DB::table('Grupo_integrante_doc')
+            ->insert([
+              'grupo_id' => $request->input('grupo_id'),
+              'investigador_id' => $investigador_id,
+              'nombre' => 'Formato de adhesión',
+              'key' => $name,
+              'fecha' => $date,
+              'estado' => 1
+            ]);
+
           return [
             'message' => 'success',
             'detail' => 'Miembro registrado exitosamente'
           ];
           break;
         case 'estudiante' || 'egresado':
+
+          $id_investigador = $request->input('investigador_id');
+
+          if ($id_investigador == "null") {
+
+            $sumData = DB::table('Repo_sum')
+              ->select([
+                'id_facultad',
+                'codigo_alumno',
+                'nombres',
+                'apellido_paterno',
+                'apellido_materno',
+                'dni',
+                'sexo',
+                'correo_electronico',
+              ])
+              ->where('id', '=', $request->input('sum_id'))
+              ->first();
+
+            $id_investigador = DB::table('Usuario_investigador')
+              ->insertGetId([
+                'facultad_id' => $sumData->id_facultad,
+                'codigo' => $sumData->codigo_alumno,
+                'nombres' => $sumData->nombres,
+                'apellido1' => $sumData->apellido_paterno,
+                'apellido2' => $sumData->apellido_materno,
+                'doc_tipo' => 'DNI',
+                'doc_numero' => $sumData->dni,
+                'sexo' => $sumData->sexo,
+                'email3' => $sumData->correo_electronico,
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
+                'tipo_investigador' => 'Estudiante'
+              ]);
+          }
+
           DB::table('Grupo_integrante')
             ->insert([
               'grupo_id' => $request->input('grupo_id'),
-              'investigador_id' => $request->input('investigador_id'),
+              'investigador_id' => $id_investigador,
               'condicion' => $request->input('condicion'),
               'fecha_inclusion' => $date,
               'estado' => '1',
               'created_at' => $date,
               'updated_at' => $date
+            ]);
+
+          DB::table('Grupo_integrante_doc')
+            ->insert([
+              'grupo_id' => $request->input('grupo_id'),
+              'investigador_id' => $id_investigador,
+              'nombre' => 'Formato de adhesión',
+              'key' => $name,
+              'fecha' => $date,
+              'estado' => 1
             ]);
 
           return [
