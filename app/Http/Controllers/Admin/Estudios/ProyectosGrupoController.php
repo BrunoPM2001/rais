@@ -121,7 +121,7 @@ class ProyectosGrupoController extends S3Controller {
       $url = null;
       if ($carta->archivo != null) {
         $cmd = $s3->getCommand('GetObject', [
-          'Bucket' => 'proyecto-docs',
+          'Bucket' => 'proyecto-doc',
           'Key' => $carta->archivo
         ]);
         //  Generar url temporal

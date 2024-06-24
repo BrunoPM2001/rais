@@ -2,12 +2,13 @@
 
 namespace App\Http\Controllers\Admin\Estudios;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\S3Controller;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
-class InformesTecnicosController extends Controller {
+class InformesTecnicosController extends S3Controller {
 
-  public function proyectosListado($periodo) {
+  public function proyectosListado() {
     $responsable = DB::table('Proyecto_integrante AS a')
       ->leftJoin('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
       ->select(
@@ -16,37 +17,27 @@ class InformesTecnicosController extends Controller {
       )
       ->where('condicion', '=', 'Responsable');
 
-    $deuda = DB::table('Proyecto_integrante_deuda AS a')
-      ->join('Proyecto_integrante AS b', 'b.id', '=', 'a.proyecto_integrante_id')
-      ->select(
-        'b.proyecto_id',
-        'a.estado',
-        'a.categoria'
-      )
-      ->groupBy('b.proyecto_id');
-
+    //  TODO - Incluir deuda dentro de otra consulta para una nueva tabla en la UI
     $proyectos = DB::table('Proyecto AS a')
-      ->leftJoin('Informe_tecnico AS b', 'b.proyecto_id', '=', 'a.id')
+      ->join('Informe_tecnico AS b', 'b.proyecto_id', '=', 'a.id')
       ->leftJoin('Facultad AS c', 'c.id', '=', 'a.facultad_id')
       ->leftJoinSub($responsable, 'res', 'res.proyecto_id', '=', 'a.id')
-      ->leftJoinSub($deuda, 'deu', 'deu.proyecto_id', '=', 'a.id')
       ->select(
         'a.id',
         'a.tipo_proyecto',
         'a.codigo_proyecto',
-        'b.estado',
-        'deu.estado AS deuda',
-        'deu.categoria AS tipo_deuda',
+        'a.titulo',
+        DB::raw('COUNT(b.id) AS cantidad_informes'),
         'res.responsable',
         'c.nombre AS facultad',
-        'a.titulo',
+        'a.periodo',
+        'a.estado'
       )
-      ->where('a.periodo', '=', $periodo)
       ->where('a.estado', '>', 0)
       ->groupBy('a.id')
       ->get();
 
-    return ['data' => $proyectos];
+    return $proyectos;
   }
 
   public function informes($proyecto_id) {
@@ -63,6 +54,108 @@ class InformesTecnicosController extends Controller {
       ->where('a.proyecto_id', '=', $proyecto_id)
       ->get();
 
-    return ['data' => $informes];
+    return $informes;
+  }
+
+  public function getDataInforme(Request $request) {
+    $s3 = $this->s3Client;
+
+    $detalles = DB::table('Informe_tecnico AS a')
+      ->join('Proyecto AS b', 'b.id', '=', 'a.proyecto_id')
+      ->leftJoin('Facultad AS c', 'c.id', '=', 'b.facultad_id')
+      ->select([
+        'b.id AS proyecto_id',
+        'b.codigo_proyecto',
+        'b.tipo_proyecto',
+        'b.titulo',
+        'b.periodo',
+        'b.resolucion_rectoral',
+        'c.nombre AS facultad',
+        'a.*',
+      ])
+      ->where('a.id', '=', $request->query('informe_tecnico_id'))
+      ->first();
+
+    $archivos = DB::table('Proyecto_doc')
+      ->select([
+        'categoria',
+        'archivo',
+        'comentario'
+      ])
+      ->where('proyecto_id', '=', $detalles->proyecto_id)
+      ->where('estado', '=', 1);
+
+    switch ($detalles->tipo_proyecto) {
+      case "ECI":
+        $archivos = $archivos->where('nombre', '=', 'Anexos proyecto ECI')->get();
+        foreach ($archivos as $archivo) {
+          $url = null;
+          $cmd = $s3->getCommand('GetObject', [
+            'Bucket' => 'proyecto-doc',
+            'Key' => $archivo->archivo
+          ]);
+          //  Generar url temporal
+          $url = (string) $s3->createPresignedRequest($cmd, '+60 minutes')->getUri();
+          $url = parse_url($url);
+          $archivo->url = '/minio' . $url["path"] . '?' . $url['query'];
+        }
+        break;
+    }
+
+    return ['detalles' => $detalles, 'archivos' => $archivos];
+  }
+
+  public function updateInforme(Request $request) {
+
+    $data = $request->all();
+
+    // Función para convertir "null" string a null
+    $data = array_map(function ($item) {
+      return $item === "null" || $item === "" ? null : $item;
+    }, $data);
+
+    $request->merge($data);
+
+    DB::table('Informe_tecnico')
+      ->where('id', '=', $request->input('informe_tecnico_id'))
+      ->update([
+        'estado' => $request->input('estado'),
+        'fecha_presentacion' => $request->input('fecha_presentacion'),
+        'registro_nro_vrip' => $request->input('registro_nro_vrip'),
+        'fecha_registro_csi' => $request->input('fecha_registro_csi'),
+        'observaciones' => $request->input('observaciones'),
+        'observaciones_admin' => $request->input('observaciones_admin'),
+        'resumen_ejecutivo' => $request->input('resumen_ejecutivo'),
+        'palabras_clave' => $request->input('palabras_clave'),
+        'fecha_evento' => $request->input('fecha_evento'),
+        'fecha_informe_tecnico' => $request->input('fecha_informe_tecnico'),
+        'objetivos_taller' => $request->input('objetivos_taller'),
+        'resultados_taller' => $request->input('resultados_taller'),
+        'propuestas_taller' => $request->input('propuestas_taller'),
+        'conclusion_taller' => $request->input('conclusion_taller'),
+        'recomendacion_taller' => $request->input('recomendacion_taller'),
+        'asistencia_taller' => $request->input('asistencia_taller'),
+        'infinal1' => $request->input('infinal1'),
+        'infinal2' => $request->input('infinal2'),
+        'infinal3' => $request->input('infinal3'),
+        'infinal4' => $request->input('infinal4'),
+        'infinal5' => $request->input('infinal5'),
+        'infinal6' => $request->input('infinal6'),
+        'infinal7' => $request->input('infinal7'),
+        'infinal8' => $request->input('infinal8'),
+        'infinal9' => $request->input('infinal9'),
+        'infinal10' => $request->input('infinal10'),
+        'infinal11' => $request->input('infinal11'),
+        'estado_trabajo' => $request->input('estado_trabajo'),
+      ]);
+    $i = DB::table('Informe_tecnico')
+      ->where('id', '=', $request->input('informe_tecnico_id'))
+      ->count();
+
+    return [
+      'message' => 'success',
+      'detail' => 'Informe actualizado exitosamente',
+      'c' => $i
+    ];
   }
 }

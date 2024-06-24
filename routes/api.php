@@ -142,8 +142,10 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
 
     //  Informe técnico
     Route::prefix('informesTecnicos')->group(function () {
-      Route::get('proyectosListado/{periodo}', [InformesTecnicosController::class, 'proyectosListado']);
+      Route::get('proyectosListado', [InformesTecnicosController::class, 'proyectosListado']);
       Route::get('informes/{proyecto_id}', [InformesTecnicosController::class, 'informes']);
+      Route::get('getDataInforme', [InformesTecnicosController::class, 'getDataInforme']);
+      Route::post('updateInforme', [InformesTecnicosController::class, 'updateInforme']);
     });
 
     //  Monitoreo
