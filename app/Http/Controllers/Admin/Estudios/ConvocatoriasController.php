@@ -61,7 +61,8 @@ class ConvocatoriasController extends Controller {
       ->where('evento', '=', 'calendario')
       ->updateOrInsert([
         'parent_id' => $request->id,
-        'evento' => 'calendario',
+        'evento' => 'calendario'
+      ], [
         'fecha_inicial' => $request->fecha_inicial_calendario,
         'fecha_final' => $request->fecha_final_calendario,
       ]);
@@ -72,7 +73,8 @@ class ConvocatoriasController extends Controller {
       ->where('evento', '=', 'evaluacion')
       ->updateOrInsert([
         'parent_id' => $request->id,
-        'evento' => 'evaluacion',
+        'evento' => 'evaluacion'
+      ], [
         'fecha_inicial' => $request->fecha_inicial_evaluacion,
         'fecha_final' => $request->fecha_final_evaluacion,
       ]);

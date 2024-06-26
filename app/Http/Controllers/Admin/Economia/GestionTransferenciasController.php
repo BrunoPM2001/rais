@@ -47,7 +47,7 @@ class GestionTransferenciasController extends Controller {
   }
 
   public function getSolicitudData(Request $request) {
-
+    $presupuesto = [];
     $detalle = DB::table('Geco_proyecto AS a')
       ->join('Proyecto AS b', 'b.id', '=', 'a.proyecto_id')
       ->select([
@@ -69,23 +69,37 @@ class GestionTransferenciasController extends Controller {
       ->orderByDesc('created_at')
       ->first();
 
-    $presupuesto = DB::table('Geco_proyecto_presupuesto AS a')
-      ->join('Partida AS b', 'b.id', '=', 'a.partida_id')
-      ->leftJoin('Geco_operacion_movimiento AS c', function ($join) use ($solicitud) {
-        $join->on('c.geco_proyecto_presupuesto_id', '=', 'a.id')
-          ->where('c.geco_operacion_id', '=', $solicitud->id);
-      })
-      ->select([
-        'b.tipo',
-        'b.codigo',
-        'b.partida',
-        'a.monto',
-        $solicitud->estado == 1 ? DB::raw('0') : 'c.operacion',
-        $solicitud->estado == 1 ? DB::raw('0') : 'c.monto AS transferencia',
-        DB::raw('(a.monto + IFNULL(c.monto, 0)) AS monto_nuevo'),
-      ])
-      ->where('a.geco_proyecto_id', '=', $request->query('geco_proyecto_id'))
-      ->get();
+    //  En caso sea una operación para no evaluar se retora el presupuesto actual
+    if ($solicitud->estado != 3) {
+      $presupuesto = DB::table('Geco_proyecto_presupuesto AS a')
+        ->join('Partida AS b', 'b.id', '=', 'a.partida_id')
+        ->select([
+          'b.tipo',
+          'b.codigo',
+          'b.partida',
+          'a.monto'
+        ])
+        ->where('a.geco_proyecto_id', '=', $request->query('geco_proyecto_id'))
+        ->get();
+    } else {
+      $presupuesto = DB::table('Geco_proyecto_presupuesto AS a')
+        ->join('Partida AS b', 'b.id', '=', 'a.partida_id')
+        ->leftJoin('Geco_operacion_movimiento AS c', function ($join) use ($solicitud) {
+          $join->on('c.geco_proyecto_presupuesto_id', '=', 'a.id')
+            ->where('c.geco_operacion_id', '=', $solicitud->id);
+        })
+        ->select([
+          'b.tipo',
+          'b.codigo',
+          'b.partida',
+          'a.monto',
+          'c.operacion',
+          'c.monto AS transferencia',
+          DB::raw('(a.monto + IFNULL(c.monto, 0)) AS monto_nuevo'),
+        ])
+        ->where('a.geco_proyecto_id', '=', $request->query('geco_proyecto_id'))
+        ->get();
+    }
 
     $groupedData = $presupuesto->groupBy('tipo');
 

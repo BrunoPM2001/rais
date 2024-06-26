@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers\Admin\Economia;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\S3Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
-class GestionComprobantesController extends Controller {
+class GestionComprobantesController extends S3Controller {
   public function listadoProyectos() {
     $responsable = DB::table('Proyecto_integrante AS a')
       ->leftJoin('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
@@ -93,6 +93,7 @@ class GestionComprobantesController extends Controller {
         'estado',
         'razon_social',
         'ruc',
+        'observacion'
       ])
       ->where('geco_proyecto_id', '=', $request->query('geco_id'))
       ->get()
@@ -105,6 +106,7 @@ class GestionComprobantesController extends Controller {
   }
 
   public function listadoPartidasComprobante(Request $request) {
+
     $partidas = DB::table('Geco_documento_item AS a')
       ->join('Partida AS b', 'b.id', '=', 'a.partida_id')
       ->select([
@@ -114,22 +116,51 @@ class GestionComprobantesController extends Controller {
         'a.total'
       ])
       ->where('a.geco_documento_id', '=', $request->query('geco_documento_id'))
+      ->where('b.tipo', '!=', 'Otros')
       ->get();
 
-    return $partidas;
+    $comprobante = DB::table('Geco_documento_file')
+      ->select([
+        'key'
+      ])
+      ->where('geco_documento_id', '=', $request->query('geco_documento_id'))
+      ->first();
+
+    if ($comprobante->key != null) {
+      $comprobante->url = '/minio/geco-documento/' . $comprobante->key;
+    }
+
+    return ['partidas' => $partidas, 'comprobante' => $comprobante->url];
   }
 
   public function updateEstadoComprobante(Request $request) {
-    $count = DB::table('Geco_documento')
-      ->where('id', '=', $request->input('geco_documento_id'))
-      ->update([
-        'estado' => $request->input('estado')["value"]
-      ]);
+    if ($request->input('estado')["value"] == 3 && $request->input('observacion') == "") {
+      return ['message' => 'warning', 'detail' => 'Necesita detallar la observación'];
+    } else if ($request->input('estado')["value"] == 3 && $request->input('observacion') != "") {
+      $count = DB::table('Geco_documento')
+        ->where('id', '=', $request->input('geco_documento_id'))
+        ->update([
+          'estado' => $request->input('estado')["value"],
+          'observacion' => $request->input('observacion')
+        ]);
 
-    if ($count > 0) {
-      return ['message' => 'info', 'detail' => 'Estado del comprobante actualizado'];
+      if ($count > 0) {
+        return ['message' => 'info', 'detail' => 'Estado del comprobante actualizado'];
+      } else {
+        return ['message' => 'warning', 'detail' => 'No se pudo actualizar la información'];
+      }
     } else {
-      return ['message' => 'warning', 'detail' => 'No se pudo actualizar la información'];
+      $count = DB::table('Geco_documento')
+        ->where('id', '=', $request->input('geco_documento_id'))
+        ->update([
+          'estado' => $request->input('estado')["value"]
+        ]);
+
+      if ($count > 0) {
+        return ['message' => 'info', 'detail' => 'Estado del comprobante actualizado'];
+      } else {
+        return ['message' => 'warning', 'detail' => 'No se pudo actualizar la información'];
+      }
     }
   }
 
@@ -146,6 +177,7 @@ class GestionComprobantesController extends Controller {
         'a.monto_excedido'
       ])
       ->where('a.geco_proyecto_id', '=', $request->query('geco_proyecto_id'))
+      ->where('b.tipo', '!=', 'Otros')
       ->where(function ($query) {
         $query
           ->orWhere('a.partida_nueva', '!=', '1')

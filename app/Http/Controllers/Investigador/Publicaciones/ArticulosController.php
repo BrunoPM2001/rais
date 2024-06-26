@@ -88,7 +88,12 @@ class ArticulosController extends S3Controller {
       $publicacion_id = $request->input('publicacion_id');
       $count = DB::table('Publicacion')
         ->where('id', '=', $publicacion_id)
+        ->where('estado', '!=', -1)
+        ->where('estado', '!=', 1)
         ->where('estado', '!=', 5)
+        ->where('estado', '!=', 7)
+        ->where('estado', '!=', 8)
+        ->where('estado', '!=', 9)
         ->update([
           'doi' => $request->input('doi'),
           'art_tipo' => $request->input('art_tipo')["value"],
@@ -103,10 +108,16 @@ class ArticulosController extends S3Controller {
           'edicion' => $request->input('edicion'),
           'url' => $request->input('url'),
           'validado' => 0,
-          'step' => 2,
           'tipo_publicacion' => 'articulo',
           'estado' => 6,
           'updated_at' => Carbon::now()
+        ]);
+
+      DB::table('Publicacion')
+        ->where('id', '=', $publicacion_id)
+        ->where('estado', '!=', 5)
+        ->update([
+          'step' => 2
         ]);
 
       if ($count == 0) {
@@ -254,9 +265,7 @@ class ArticulosController extends S3Controller {
     $count = DB::table('Publicacion')
       ->where('id', '=', $request->input('publicacion_id'))
       ->where('estado', '!=', 5)
-      ->update([
-        'step' => 2
-      ]);
+      ->count();
 
     if ($count == 0) {
       return ['message' => 'error', 'detail' => 'Esta publicación ya ha sido enviada, no se pueden hacer más cambios'];
@@ -288,6 +297,12 @@ class ArticulosController extends S3Controller {
         'updated_at' => Carbon::now()
       ]);
     }
+
+    DB::table('Publicacion')
+      ->where('id', '=', $request->input('publicacion_id'))
+      ->update([
+        'step' => 2
+      ]);
 
     return ['message' => 'success', 'detail' => 'Proyecto agregado exitosamente'];
   }
@@ -391,9 +406,7 @@ class ArticulosController extends S3Controller {
     $count = DB::table('Publicacion')
       ->where('id', '=', $request->input('publicacion_id'))
       ->where('estado', '!=', 5)
-      ->update([
-        'step' => 3
-      ]);
+      ->count();
 
     if ($count == 0) {
       return ['message' => 'error', 'detail' => 'Esta publicación ya ha sido enviada, no se pueden hacer más cambios'];
@@ -411,6 +424,13 @@ class ArticulosController extends S3Controller {
       'created_at' => Carbon::now(),
       'updated_at' => Carbon::now()
     ]);
+
+    DB::table('Publicacion')
+      ->where('id', '=', $request->input('publicacion_id'))
+      ->where('estado', '!=', 5)
+      ->update([
+        'step' => 3
+      ]);
 
     return ['message' => 'success', 'detail' => 'Autor agregado exitosamente'];
   }

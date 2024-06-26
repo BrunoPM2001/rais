@@ -47,6 +47,7 @@ use App\Http\Controllers\Investigador\Publicaciones\ArticulosController;
 use App\Http\Controllers\Investigador\Publicaciones\CapitulosLibrosController;
 use App\Http\Controllers\Investigador\Publicaciones\EventoController;
 use App\Http\Controllers\Investigador\Grupo\GrupoController as InvestigadorGrupoController;
+use App\Http\Controllers\Investigador\Informes\Informe_economicoController;
 use App\Http\Controllers\Investigador\Publicaciones\LibrosController;
 use App\Http\Controllers\Investigador\Publicaciones\PropiedadIntelectualController;
 use App\Http\Controllers\Investigador\Publicaciones\TesisAsesoriaController;
@@ -438,6 +439,7 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
   Route::prefix('convocatorias')->group(function () {
     Route::get('verificar', [ProCTIController::class, 'verificar']);
 
+    Route::get('datosPaso1', [ProCTIController::class, 'datosPaso1']);
     Route::get('getDataToPaso1', [ProCTIController::class, 'getDataToPaso1']);
     Route::post('registrarPaso1', [ProCTIController::class, 'registrarPaso1']);
 
@@ -450,6 +452,7 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
     Route::post('agregarIntegrante', [ProCTIController::class, 'agregarIntegrante']);
     Route::delete('eliminarIntegrante', [ProCTIController::class, 'eliminarIntegrante']);
 
+    Route::get('getDataPaso4', [ProCTIController::class, 'getDataPaso4']);
     Route::post('registrarPaso4', [ProCTIController::class, 'registrarPaso4']);
 
     Route::get('listarActividades', [ProCTIController::class, 'listarActividades']);
@@ -466,5 +469,14 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
     //  Extras
     Route::get('getOcde', [ProCTIController::class, 'getOcde']);
     Route::get('getOds', [ProCTIController::class, 'getOds']);
+  });
+
+  //  Informes
+  Route::prefix('informes')->group(function () {
+
+    Route::prefix('informe_economico')->group(function () {
+      Route::get('listadoProyectos', [Informe_economicoController::class, 'listadoProyectos']);
+      Route::get('detalles', [Informe_economicoController::class, 'detalles']);
+    });
   });
 });

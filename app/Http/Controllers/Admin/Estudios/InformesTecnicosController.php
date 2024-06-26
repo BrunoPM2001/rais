@@ -89,15 +89,7 @@ class InformesTecnicosController extends S3Controller {
       case "ECI":
         $archivos = $archivos->where('nombre', '=', 'Anexos proyecto ECI')->get();
         foreach ($archivos as $archivo) {
-          $url = null;
-          $cmd = $s3->getCommand('GetObject', [
-            'Bucket' => 'proyecto-doc',
-            'Key' => $archivo->archivo
-          ]);
-          //  Generar url temporal
-          $url = (string) $s3->createPresignedRequest($cmd, '+60 minutes')->getUri();
-          $url = parse_url($url);
-          $archivo->url = '/minio' . $url["path"] . '?' . $url['query'];
+          $archivo->url = '/minio/proyecto-doc/' . $archivo->archivo;
         }
         break;
     }
@@ -148,14 +140,10 @@ class InformesTecnicosController extends S3Controller {
         'infinal11' => $request->input('infinal11'),
         'estado_trabajo' => $request->input('estado_trabajo'),
       ]);
-    $i = DB::table('Informe_tecnico')
-      ->where('id', '=', $request->input('informe_tecnico_id'))
-      ->count();
 
     return [
       'message' => 'success',
       'detail' => 'Informe actualizado exitosamente',
-      'c' => $i
     ];
   }
 }

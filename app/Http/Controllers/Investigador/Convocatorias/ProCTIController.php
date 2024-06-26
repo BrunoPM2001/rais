@@ -47,6 +47,96 @@ class ProCTIController extends S3Controller {
     }
   }
 
+  public function datosPaso1(Request $request) {
+    $esIntegrante = DB::table('Proyecto_integrante')
+      ->where('proyecto_id', '=', $request->query('proyecto_id'))
+      ->where('investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+      ->count();
+
+    if ($esIntegrante > 0) {
+      $proyecto = DB::table('Proyecto')
+        ->select([
+          'id',
+          'titulo',
+          'linea_investigacion_id',
+          'ocde_id',
+          'localizacion'
+        ])
+        ->where('id', '=', $request->query('proyecto_id'))
+        ->first();
+
+      $ods = DB::table('Proyecto_descripcion')
+        ->select([
+          'detalle'
+        ])
+        ->where('proyecto_id', '=', $request->query('proyecto_id'))
+        ->where('codigo', '=', 'objetivo_ods')
+        ->first();
+
+      $tipo_investigacion = DB::table('Proyecto_descripcion')
+        ->select([
+          'detalle'
+        ])
+        ->where('proyecto_id', '=', $request->query('proyecto_id'))
+        ->where('codigo', '=', 'tipo_investigacion')
+        ->first();
+
+      $listOds =  DB::table('Ods AS a')
+        ->join('Linea_investigacion_ods AS b', 'b.ods_id', '=', 'a.id')
+        ->select([
+          'a.descripcion AS value'
+        ])
+        ->where('b.linea_investigacion_id', '=', $proyecto->linea_investigacion_id)
+        ->get();
+
+      $data = $this->getDataToPaso1($request);
+
+      $ocde_1 = DB::table('Ocde')
+        ->select([
+          'parent_id',
+        ])
+        ->where('id', '=', $proyecto->ocde_id)
+        ->first();
+
+      $ocde_3er = DB::table('Ocde')
+        ->select([
+          'id AS value',
+          DB::raw("CONCAT(codigo, ' ', linea) AS label"),
+          'parent_id'
+        ])
+        ->where('parent_id', '=', $ocde_1->parent_id)
+        ->get();
+
+      $ocde_2 = DB::table('Ocde')
+        ->select([
+          'parent_id',
+        ])
+        ->where('id', '=', $ocde_3er[0]->parent_id)
+        ->first();
+
+      $ocde_2do = DB::table('Ocde')
+        ->select([
+          'id AS value',
+          DB::raw("CONCAT(codigo, ' ', linea) AS label"),
+          'parent_id'
+        ])
+        ->where('parent_id', '=', $ocde_2->parent_id)
+        ->get();
+
+      return [
+        'proyecto' => $proyecto,
+        'ods' => $ods,
+        'tipo_investigacion' => $tipo_investigacion,
+        'listOds' => $listOds,
+        'data' => $data,
+        'ocde_2' => $ocde_2do,
+        'ocde_3' => $ocde_3er,
+      ];
+    } else {
+      return response()->json(['error' => 'Unauthorized'], 401);
+    }
+  }
+
   public function getDataToPaso1(Request $request) {
     $data = DB::table('Grupo_integrante AS a')
       ->join('Grupo AS b', 'b.id', '=', 'a.grupo_id')
@@ -163,7 +253,6 @@ class ProCTIController extends S3Controller {
 
   //  Paso 2
   public function getDataPaso2(Request $request) {
-    $s3 = $this->s3Client;
 
     $data = DB::table('Usuario_investigador')
       ->select([
@@ -185,14 +274,21 @@ class ProCTIController extends S3Controller {
       ->where('id', '=', $request->attributes->get('token_decoded')->investigador_id)
       ->first();
 
-    //  Formato
-    $cmd = $s3->getCommand('GetObject', [
-      'Bucket' => 'templates',
-      'Key' => 'compromiso-confidencialidad.docx'
-    ]);
+    $key = DB::table('Proyecto_doc')
+      ->select([
+        'archivo',
+        'comentario'
+      ])
+      ->where('proyecto_id', '=', $request->query('proyecto_id'))
+      ->where('categoria', '=', 'carta')
+      ->where('nombre', '=', 'Carta de compromiso del asesor')
+      ->where('estado', '=', 1)
+      ->first();
 
-    //  Generar url temporal
-    $data->url = (string) $s3->createPresignedRequest($cmd, '+5 minutes')->getUri();
+    if ($key != null) {
+      $data->url = "/minio/proyecto-doc/" . $key->archivo;
+      $data->comentario = $key->comentario;
+    }
 
     return $data;
   }
@@ -213,24 +309,49 @@ class ProCTIController extends S3Controller {
         ]);
 
       DB::table('Proyecto_doc')
+        ->where('proyecto_id', '=', $id)
+        ->where('categoria', '=', 'carta')
+        ->where('nombre', '=', 'Carta de compromiso del asesor')
+        ->update([
+          'estado' => 0
+        ]);
+
+      DB::table('Proyecto_doc')
         ->insert([
           'proyecto_id' => $id,
           'categoria' => 'carta',
           'tipo' => 29,
           'nombre' => 'Carta de compromiso del asesor',
           'comentario' => $date,
-          'archivo' => $nameFile
+          'archivo' => $nameFile,
+          'estado' => 1
         ]);
 
-      return ['message' => 'success', 'detail' => 'Archivo cargado correctamente'];
+      return ['message' => 'success', 'detail' => 'Archivo actualizado correctamente'];
     } else {
-      return ['message' => 'error', 'detail' => 'Error al cargar archivo'];
+      $count = DB::table('Proyecto_doc')
+        ->where('proyecto_id', '=', $id)
+        ->where('categoria', '=', 'carta')
+        ->where('nombre', '=', 'Carta de compromiso del asesor')
+        ->where('estado', '=', 1)
+        ->count();
+
+
+      if ($count > 0) {
+        DB::table('Proyecto')
+          ->where('id', '=', $id)
+          ->update([
+            'step' => 3,
+          ]);
+        return ['message' => 'success', 'detail' => 'Se ha verificado que ya ha cargado la carta de compromiso'];
+      } else {
+        return ['message' => 'error', 'detail' => 'Necesita cargar la carta de compromiso'];
+      }
     }
   }
 
   //  Paso 3
   public function listarIntegrantes(Request $request) {
-    $s3 = $this->s3Client;
 
     $integrantes = DB::table('Proyecto_integrante AS a')
       ->join('Proyecto_integrante_tipo AS b', 'b.id', '=', 'a.proyecto_integrante_tipo_id')
@@ -247,25 +368,22 @@ class ProCTIController extends S3Controller {
         DB::raw("CONCAT(c.apellido1, ' ', c.apellido2, ', ', c.nombres) AS nombre"),
         'c.tipo',
         'd.nombre AS facultad',
-        'e.bucket',
-        'e.key',
+        DB::raw("CONCAT('/minio/', e.bucket, '/', e.key) AS url")
       ])
       ->where('a.proyecto_id', '=', $request->query('proyecto_id'))
       ->get();
 
-    // foreach ($integrantes as $integrante) {
-    //   $url = null;
-    //   $cmd = $s3->getCommand('GetObject', [
-    //     'Bucket' => $integrante->bucket,
-    //     'Key' => $integrante->key
-    //   ]);
-    //   //  Generar url temporal
-    //   $url = (string) $s3->createPresignedRequest($cmd, '+60 minutes')->getUri();
+    $key = DB::table('Proyecto_doc')
+      ->select([
+        'archivo',
+      ])
+      ->where('proyecto_id', '=', $request->query('proyecto_id'))
+      ->where('categoria', '=', 'carta')
+      ->where('nombre', '=', 'Carta de compromiso del asesor')
+      ->where('estado', '=', 1)
+      ->first();
 
-    //   $integrante->url = $url;
-    //   unset($integrante->bucket);
-    //   unset($integrante->key);
-    // }
+    $integrantes[0]->url = "/minio/proyecto-doc/" . $key->archivo;
 
     return $integrantes;
   }
@@ -413,6 +531,26 @@ class ProCTIController extends S3Controller {
     return ['message' => 'info', 'detail' => 'Integrante eliminado correctamente'];
   }
 
+  //  Paso 4
+  public function getDataPaso4(Request $request) {
+    $palabras = DB::table('Proyecto')
+      ->select([
+        'palabras_clave'
+      ])
+      ->where('id', '=', $request->query('proyecto_id'))
+      ->first();
+
+    $detalles = DB::table('Proyecto_descripcion')
+      ->select([
+        'codigo',
+        'detalle'
+      ])
+      ->where('proyecto_id', '=', $request->query('proyecto_id'))
+      ->get();
+
+    return ['palabras_claves' => $palabras->palabras_clave, 'detalles' => $detalles];
+  }
+
   public function registrarPaso4(Request $request) {
 
     $palabrasConcatenadas = "";
@@ -429,60 +567,108 @@ class ProCTIController extends S3Controller {
       ]);
 
     DB::table('Proyecto_descripcion')
-      ->insert([
-        'proyecto_id' => $request->input('proyecto_id'),
-        'codigo' => 'resumen_ejecutivo',
-        'detalle' => $request->input('resumen'),
-      ]);
+      ->where('proyecto_id', '=', $request->input('proyecto_id'))
+      ->where('codigo', '=', 'resumen_ejecutivo')
+      ->updateOrInsert(
+        [
+          'proyecto_id' => $request->input('proyecto_id'),
+          'codigo' => 'resumen_ejecutivo',
+        ],
+        [
+          'detalle' => $request->input('resumen')
+        ]
+      );
 
     DB::table('Proyecto_descripcion')
-      ->insert([
-        'proyecto_id' => $request->input('proyecto_id'),
-        'codigo' => 'antecedentes',
-        'detalle' => $request->input('antecedentes'),
-      ]);
+      ->where('proyecto_id', '=', $request->input('proyecto_id'))
+      ->where('codigo', '=', 'antecedentes')
+      ->updateOrInsert(
+        [
+          'proyecto_id' => $request->input('proyecto_id'),
+          'codigo' => 'antecedentes'
+        ],
+        [
+          'detalle' => $request->input('antecedentes')
+        ]
+      );
 
     DB::table('Proyecto_descripcion')
-      ->insert([
-        'proyecto_id' => $request->input('proyecto_id'),
-        'codigo' => 'justificacion',
-        'detalle' => $request->input('justificacion'),
-      ]);
+      ->where('proyecto_id', '=', $request->input('proyecto_id'))
+      ->where('codigo', '=', 'justificacion')
+      ->updateOrInsert(
+        [
+          'proyecto_id' => $request->input('proyecto_id'),
+          'codigo' => 'justificacion'
+        ],
+        [
+          'detalle' => $request->input('justificacion')
+        ]
+      );
 
     DB::table('Proyecto_descripcion')
-      ->insert([
-        'proyecto_id' => $request->input('proyecto_id'),
-        'codigo' => 'contribucion',
-        'detalle' => $request->input('contribucion'),
-      ]);
+      ->where('proyecto_id', '=', $request->input('proyecto_id'))
+      ->where('codigo', '=', 'contribucion')
+      ->updateOrInsert(
+        [
+          'proyecto_id' => $request->input('proyecto_id'),
+          'codigo' => 'contribucion'
+        ],
+        [
+          'detalle' => $request->input('contribucion')
+        ]
+      );
 
     DB::table('Proyecto_descripcion')
-      ->insert([
-        'proyecto_id' => $request->input('proyecto_id'),
-        'codigo' => 'objetivos',
-        'detalle' => $request->input('objetivos'),
-      ]);
+      ->where('proyecto_id', '=', $request->input('proyecto_id'))
+      ->where('codigo', '=', 'objetivos')
+      ->updateOrInsert(
+        [
+          'proyecto_id' => $request->input('proyecto_id'),
+          'codigo' => 'objetivos'
+        ],
+        [
+          'detalle' => $request->input('objetivos')
+        ]
+      );
 
     DB::table('Proyecto_descripcion')
-      ->insert([
-        'proyecto_id' => $request->input('proyecto_id'),
-        'codigo' => 'metodologia_trabajo',
-        'detalle' => $request->input('metodologia'),
-      ]);
+      ->where('proyecto_id', '=', $request->input('proyecto_id'))
+      ->where('codigo', '=', 'metodologia_trabajo')
+      ->updateOrInsert(
+        [
+          'proyecto_id' => $request->input('proyecto_id'),
+          'codigo' => 'metodologia_trabajo'
+        ],
+        [
+          'detalle' => $request->input('metodologia')
+        ]
+      );
 
     DB::table('Proyecto_descripcion')
-      ->insert([
-        'proyecto_id' => $request->input('proyecto_id'),
-        'codigo' => 'hipotesis',
-        'detalle' => $request->input('hipotesis'),
-      ]);
+      ->where('proyecto_id', '=', $request->input('proyecto_id'))
+      ->where('codigo', '=', 'hipotesis')
+      ->updateOrInsert(
+        [
+          'proyecto_id' => $request->input('proyecto_id'),
+          'codigo' => 'hipotesis'
+        ],
+        [
+          'detalle' => $request->input('hipotesis')
+        ]
+      );
 
     DB::table('Proyecto_descripcion')
-      ->insert([
-        'proyecto_id' => $request->input('proyecto_id'),
-        'codigo' => 'referencias_bibliograficas',
-        'detalle' => $request->input('referencias'),
-      ]);
+      ->where('proyecto_id', '=', $request->input('proyecto_id'))
+      ->where('codigo', '=', 'referencias_bibliograficas')
+      ->updateOrInsert(
+        [
+          'proyecto_id' => $request->input('proyecto_id'),
+          'codigo' => 'referencias_bibliograficas'
+        ],
+        [
+          'detalle' => $request->input('referencias')
+        ]
+      );
 
     return ['message' => 'success', 'detail' => 'Datos cargados correctamente'];
   }
