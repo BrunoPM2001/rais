@@ -480,6 +480,7 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
       Route::get('listarPartidas', [Informe_economicoController::class, 'listarPartidas']);
       Route::get('dataComprobante', [Informe_economicoController::class, 'dataComprobante']);
       Route::post('subirComprobante', [Informe_economicoController::class, 'subirComprobante']);
+      Route::post('calcularNuevoPresupuesto', [Informe_economicoController::class, 'calcularNuevoPresupuesto']);
     });
   });
 });

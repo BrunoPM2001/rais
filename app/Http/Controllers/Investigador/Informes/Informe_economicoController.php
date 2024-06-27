@@ -97,7 +97,7 @@ class Informe_economicoController extends S3Controller {
       //  Comprobantes
       $comprobantes = DB::table('Geco_documento AS a')
         ->join('Geco_proyecto AS b', 'b.id', '=', 'a.geco_proyecto_id')
-        ->join('Geco_documento_file AS c', 'c.geco_documento_id', '=', 'a.id')
+        ->leftJoin('Geco_documento_file AS c', 'c.geco_documento_id', '=', 'a.id')
         ->select(
           'a.id',
           'a.tipo',
@@ -139,31 +139,59 @@ class Informe_economicoController extends S3Controller {
       ->where('a.id', '=', $request->query('geco_proyecto_id'))
       ->first();
 
-    $partidas = DB::table('Partida_proyecto AS a')
-      ->join('Partida AS b', 'b.id', '=', 'a.partida_id')
+    $partidas = DB::table('Geco_comprobante AS a')
+      ->join('Geco_comprobante_partida AS b', 'a.id', '=', 'b.geco_comprobante_id')
+      ->join('Partida_proyecto AS c', 'c.partida_id', '=', 'b.partida_id')
+      ->join('Partida AS d', 'd.id', '=', 'c.partida_id')
+      ->join('Geco_proyecto_presupuesto AS e', 'e.partida_id', '=', 'c.partida_id')
       ->select([
-        'b.id AS value',
-        DB::raw("CONCAT(b.codigo, ' - ', b.partida) AS label"),
+        'd.id AS value',
+        DB::raw("CONCAT(d.codigo, ' - ', d.partida) AS label"),
+        DB::raw("(e. monto - (IFNULL(e.monto_rendido_enviado, 0) + IFNULL(e.monto_rendido, 0))) AS max")
       ])
-      ->where('a.tipo_proyecto', '=', $proyecto->tipo_proyecto)
-      ->where('a.postulacion', '=', 1)
+      ->where('a.codigo', '=', $request->query('tipo'))
+      ->where('b.periodo', '=', 2018)
+      ->where('c.postulacion', '=', 1)
+      ->where('c.tipo_proyecto', '=', $proyecto->tipo_proyecto)
+      ->where('e.geco_proyecto_id', '=', $request->query('geco_proyecto_id'))
       ->get();
 
     return $partidas;
   }
 
   public function dataComprobante(Request $request) {
-    $documento = DB::table('Geco_documento')
-      ->select([
-        'tipo',
-        'numero',
-        'ruc',
-        'fecha',
-        'retencion',
-        'razon_social'
-      ])
-      ->where('id', '=', $request->query('id'))
-      ->first();
+    $documento = [];
+    switch ($request->query('tipo')) {
+      case "BOLETA":
+        $documento = DB::table('Geco_documento')
+          ->select([
+            'tipo',
+            'numero',
+            'ruc',
+            'fecha',
+            'razon_social'
+          ])
+          ->where('id', '=', $request->query('id'))
+          ->first();
+        break;
+      case "FACTURA":
+        $documento = DB::table('Geco_documento')
+          ->select([
+            'tipo',
+            'numero',
+            'ruc',
+            'fecha',
+            'retencion',
+            'razon_social'
+          ])
+          ->where('id', '=', $request->query('id'))
+          ->first();
+
+        $documento->retencion = [
+          'value' => $documento->retencion,
+          'label' => $documento->retencion == 0 ? 'No afecta' : 'Retención'
+        ];
+    }
 
     $partidas = DB::table('Geco_documento_item AS a')
       ->join('Partida AS b', 'b.id', '=', 'a.partida_id')
@@ -209,24 +237,13 @@ class Informe_economicoController extends S3Controller {
             'observacion' => "[]"
           ]);
 
-        $partidas = json_decode($request->input('partidas'));
-
         //  Crear partidas asignadas al documento
-        foreach ($partidas as $partida) {
-          DB::table('Geco_documento_item')
-            ->insert([
-              'geco_documento_id' => $id,
-              'partida_id' => $partida->partida->value,
-              'sub_total' => $partida->monto,
-              'total' => $partida->monto,
-              'created_at' => $date,
-              'updated_at' => $date,
-            ]);
-        }
+        $this->actualizarPartidas($id, $request->input('partidas'));
 
         //  Guardar comprobante
-        $name = $id . "/comprobante-" . $date->format('Ymd-His') . "." . $request->file('file')->getClientOriginalExtension();;
+        $name = $id . "/comprobante-" . $date->format('Ymd-His') . "." . $request->file('file')->getClientOriginalExtension();
         $this->uploadFile($request->file('file'), "geco-documento", $name);
+        $this->calcularNuevoPresupuesto($request);
 
         DB::table('Geco_documento_file')
           ->updateOrInsert([
@@ -253,23 +270,7 @@ class Informe_economicoController extends S3Controller {
           ]);
 
         //  Actualizar partidas
-        $partidas = json_decode($request->input('partidas'));
-
-        DB::table('Geco_documento_item')
-          ->where('geco_documento_id', '=', $request->input('geco_documento_id'))
-          ->delete();
-
-        foreach ($partidas as $partida) {
-          DB::table('Geco_documento_item')
-            ->insert([
-              'geco_documento_id' => $request->input('geco_documento_id'),
-              'partida_id' => $partida->partida->value,
-              'sub_total' => $partida->monto,
-              'total' => $partida->monto,
-              'created_at' => $date,
-              'updated_at' => $date,
-            ]);
-        }
+        $this->actualizarPartidas($request->input('geco_documento_id'), $request->input('partidas'));
 
         //  Guardar comprobante
         $name = $request->input('geco_documento_id') . "/comprobante-" . $date->format('Ymd-His') . "." . $request->file('file')->getClientOriginalExtension();;
@@ -300,23 +301,7 @@ class Informe_economicoController extends S3Controller {
           ]);
 
         //  Actualizar partidas
-        $partidas = json_decode($request->input('partidas'));
-
-        DB::table('Geco_documento_item')
-          ->where('geco_documento_id', '=', $request->input('geco_documento_id'))
-          ->delete();
-
-        foreach ($partidas as $partida) {
-          DB::table('Geco_documento_item')
-            ->insert([
-              'geco_documento_id' => $request->input('geco_documento_id'),
-              'partida_id' => $partida->partida->value,
-              'sub_total' => $partida->monto,
-              'total' => $partida->monto,
-              'created_at' => $date,
-              'updated_at' => $date,
-            ]);
-        }
+        $this->actualizarPartidas($request->input('geco_documento_id'), $request->input('partidas'));
 
         return ['message' => 'success', 'detail' => 'Comprobante actualizado exitosamente'];
       } else {
@@ -326,5 +311,93 @@ class Informe_economicoController extends S3Controller {
         ];
       }
     }
+  }
+
+  public function actualizarPartidas($id, $partidas) {
+    $monto = 0;
+    $date = Carbon::now();
+    $partidas = json_decode($partidas);
+
+    DB::table('Geco_documento_item')
+      ->where('geco_documento_id', '=', $id)
+      ->delete();
+
+    foreach ($partidas as $partida) {
+      $monto += $partida->monto;
+      DB::table('Geco_documento_item')
+        ->insert([
+          'geco_documento_id' => $id,
+          'partida_id' => $partida->partida->value,
+          'sub_total' => $partida->monto,
+          'total' => $partida->monto,
+          'created_at' => $date,
+          'updated_at' => $date,
+        ]);
+    }
+
+    //  Actualizar el monto del documento
+    DB::table('Geco_documento')
+      ->where('id', '=', $id)
+      ->update([
+        'total_sin_igv' => $monto,
+        'total_declarado' => $monto,
+      ]);
+  }
+
+  //  Recalcular rendición y envíos
+  public function calcularNuevoPresupuesto(Request $request) {
+    $documentos = DB::table('Geco_documento AS a')
+      ->join('Geco_documento_item AS b', 'b.geco_documento_id', '=', 'a.id')
+      ->join('Geco_proyecto_presupuesto AS c', 'c.partida_id', '=', 'b.partida_id')
+      ->select([
+        'b.partida_id',
+        'c.monto AS maximo',
+        DB::raw("SUM(b.total) AS total"),
+      ])
+      ->where('a.geco_proyecto_id', '=', $request->input('geco_proyecto_id'))
+      ->where('c.geco_proyecto_id', '=', $request->input('geco_proyecto_id'))
+      ->where('a.estado', '=', 1)
+      ->groupBy('b.partida_id')
+      ->get();
+
+    foreach ($documentos as $documento) {
+      $max = floatval($documento->maximo);
+      $total = floatval($documento->total);
+      DB::table('Geco_proyecto_presupuesto')
+        ->where('geco_proyecto_id', '=', $request->input('geco_proyecto_id'))
+        ->where('partida_id', '=', $documento->partida_id)
+        ->update([
+          'monto_rendido' => min($max, $total),
+          'monto_excedido' => $max < $total ? $max - $total : 0
+        ]);
+    }
+
+    $documentos = DB::table('Geco_documento AS a')
+      ->join('Geco_documento_item AS b', 'b.geco_documento_id', '=', 'a.id')
+      ->join('Geco_proyecto_presupuesto AS c', 'c.partida_id', '=', 'b.partida_id')
+      ->select([
+        'b.partida_id',
+        DB::raw("(c.monto - c.monto_rendido) AS maximo"),
+        DB::raw("SUM(b.total) AS total"),
+      ])
+      ->where('a.geco_proyecto_id', '=', $request->input('geco_proyecto_id'))
+      ->where('c.geco_proyecto_id', '=', $request->input('geco_proyecto_id'))
+      ->whereIn('a.estado', [3, 4])
+      ->groupBy('b.partida_id')
+      ->get();
+
+    foreach ($documentos as $documento) {
+      $max = floatval($documento->maximo);
+      $total = floatval($documento->total);
+      DB::table('Geco_proyecto_presupuesto')
+        ->where('geco_proyecto_id', '=', $request->input('geco_proyecto_id'))
+        ->where('partida_id', '=', $documento->partida_id)
+        ->update([
+          'monto_rendido_enviado' => $total,
+          'monto_excedido' => $max < $total ? DB::raw('monto_excedido + ' . $max) : 'monto_excedido'
+        ]);
+    }
+
+    return "ok";
   }
 }

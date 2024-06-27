@@ -24,12 +24,12 @@ class GestionComprobantesController extends S3Controller {
       ])
       ->groupBy('a.geco_proyecto_id');
 
-    $proyectos = DB::table('Geco_documento AS a')
-      ->join('Geco_proyecto AS b', 'b.id', '=', 'a.geco_proyecto_id')
+    $proyectos = DB::table('Geco_proyecto AS b')
+      ->leftJoin('Geco_documento AS a', 'b.id', '=', 'a.geco_proyecto_id')
       ->join('Proyecto AS c', 'c.id', '=', 'b.proyecto_id')
       ->join('Facultad AS d', 'd.id', '=', 'c.facultad_id')
       ->leftJoinSub($responsable, 'res', 'res.proyecto_id', '=', 'c.id')
-      ->joinSub($latestEntries, 'latest', function ($join) {
+      ->leftJoinSub($latestEntries, 'latest', function ($join) {
         $join->on('a.geco_proyecto_id', '=', 'latest.geco_proyecto_id')
           ->on('a.created_at', '=', 'latest.max_created_at');
       })
@@ -44,7 +44,8 @@ class GestionComprobantesController extends S3Controller {
         'a.estado',
         'latest.cuenta AS cuenta',
       ])
-      ->groupBy('a.geco_proyecto_id')
+      ->where('c.estado', '>', 0)
+      ->groupBy('b.id')
       ->orderByDesc('latest.max_created_at')
       ->get();
 
