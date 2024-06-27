@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers\Investigador\Informes;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\S3Controller;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
-class Informe_economicoController extends Controller {
+class Informe_economicoController extends S3Controller {
   public function listadoProyectos(Request $request) {
     $proyectos = DB::table('Proyecto AS a')
       ->join('Geco_proyecto AS b', 'b.proyecto_id', '=', 'a.id')
@@ -126,6 +127,204 @@ class Informe_economicoController extends Controller {
         'asignacion' => $asignacion,
         'comprobantes' => $comprobantes,
       ];
+    }
+  }
+
+  public function listarPartidas(Request $request) {
+    $proyecto = DB::table('Geco_proyecto AS a')
+      ->join('Proyecto AS b', 'b.id', '=', 'a.proyecto_id')
+      ->select([
+        'b.tipo_proyecto'
+      ])
+      ->where('a.id', '=', $request->query('geco_proyecto_id'))
+      ->first();
+
+    $partidas = DB::table('Partida_proyecto AS a')
+      ->join('Partida AS b', 'b.id', '=', 'a.partida_id')
+      ->select([
+        'b.id AS value',
+        DB::raw("CONCAT(b.codigo, ' - ', b.partida) AS label"),
+      ])
+      ->where('a.tipo_proyecto', '=', $proyecto->tipo_proyecto)
+      ->where('a.postulacion', '=', 1)
+      ->get();
+
+    return $partidas;
+  }
+
+  public function dataComprobante(Request $request) {
+    $documento = DB::table('Geco_documento')
+      ->select([
+        'tipo',
+        'numero',
+        'ruc',
+        'fecha',
+        'retencion',
+        'razon_social'
+      ])
+      ->where('id', '=', $request->query('id'))
+      ->first();
+
+    $partidas = DB::table('Geco_documento_item AS a')
+      ->join('Partida AS b', 'b.id', '=', 'a.partida_id')
+      ->select([
+        'b.id AS value',
+        DB::raw("CONCAT(b.codigo, ' - ', b.partida) AS label"),
+        'total'
+      ])
+      ->where('geco_documento_id', '=', $request->input('id'))
+      ->get()
+      ->map(function ($item) {
+        return [
+          'partida' => [
+            'value' => $item->value,
+            'label' => $item->label
+          ],
+          'monto' => $item->total
+        ];
+      });;
+
+    $listaPartidas = $this->listarPartidas($request);
+
+    return ['documento' => $documento, 'partidas' => $partidas, 'lista' => $listaPartidas];
+  }
+
+  public function subirComprobante(Request $request) {
+    $date = Carbon::now();
+    if ($request->hasFile('file')) {
+      if ($request->input('geco_documento_id') == "") {
+        //  Crear documento
+        $id = DB::table('Geco_documento')
+          ->insertGetId([
+            'geco_proyecto_id' => $request->input('geco_proyecto_id'),
+            'tipo' => 'BOLETA',
+            'numero' => $request->input('numero'),
+            'ruc' => $request->input('ruc'),
+            'fecha' => $request->input('fecha'),
+            'retencion' => $request->input('retencion') == "" ? null : $request->input('retencion'),
+            'razon_social' => $request->input('razon_social'),
+            'estado' => 4,
+            'created_at' => $date,
+            'updated_at' => $date,
+            'observacion' => "[]"
+          ]);
+
+        $partidas = json_decode($request->input('partidas'));
+
+        //  Crear partidas asignadas al documento
+        foreach ($partidas as $partida) {
+          DB::table('Geco_documento_item')
+            ->insert([
+              'geco_documento_id' => $id,
+              'partida_id' => $partida->partida->value,
+              'sub_total' => $partida->monto,
+              'total' => $partida->monto,
+              'created_at' => $date,
+              'updated_at' => $date,
+            ]);
+        }
+
+        //  Guardar comprobante
+        $name = $id . "/comprobante-" . $date->format('Ymd-His') . "." . $request->file('file')->getClientOriginalExtension();;
+        $this->uploadFile($request->file('file'), "geco-documento", $name);
+
+        DB::table('Geco_documento_file')
+          ->updateOrInsert([
+            'geco_documento_id' => $id
+          ], [
+            'key' => $name,
+            'created_at' => $date,
+            'updated_at' => $date
+          ]);
+
+        return ['message' => 'success', 'detail' => 'Comprobante cargado exitosamente'];
+      } else {
+        //  Actualizar documento
+        DB::table('Geco_documento')
+          ->where('id', '=', $request->input('geco_documento_id'))
+          ->update([
+            'numero' => $request->input('numero'),
+            'ruc' => $request->input('ruc'),
+            'fecha' => $request->input('fecha'),
+            'retencion' => $request->input('retencion') == "" ? null : $request->input('retencion'),
+            'razon_social' => $request->input('razon_social'),
+            'estado' => 4,
+            'updated_at' => $date,
+          ]);
+
+        //  Actualizar partidas
+        $partidas = json_decode($request->input('partidas'));
+
+        DB::table('Geco_documento_item')
+          ->where('geco_documento_id', '=', $request->input('geco_documento_id'))
+          ->delete();
+
+        foreach ($partidas as $partida) {
+          DB::table('Geco_documento_item')
+            ->insert([
+              'geco_documento_id' => $request->input('geco_documento_id'),
+              'partida_id' => $partida->partida->value,
+              'sub_total' => $partida->monto,
+              'total' => $partida->monto,
+              'created_at' => $date,
+              'updated_at' => $date,
+            ]);
+        }
+
+        //  Guardar comprobante
+        $name = $request->input('geco_documento_id') . "/comprobante-" . $date->format('Ymd-His') . "." . $request->file('file')->getClientOriginalExtension();;
+        $this->uploadFile($request->file('file'), "geco-documento", $name);
+
+        DB::table('Geco_documento_file')
+          ->where('geco_documento_id', '=', $request->input('geco_documento_id'))
+          ->update([
+            'key' => $name,
+            'updated_at' => $date
+          ]);
+
+        return ['message' => 'success', 'detail' => 'Comprobante actualizado exitosamente'];
+      }
+    } else {
+      if ($request->input('geco_documento_id') != "") {
+        //  Actualizar documento
+        $id = DB::table('Geco_documento')
+          ->where('id', '=', $request->input('geco_documento_id'))
+          ->update([
+            'numero' => $request->input('numero'),
+            'ruc' => $request->input('ruc'),
+            'fecha' => $request->input('fecha'),
+            'retencion' => $request->input('retencion') == "" ? null : $request->input('retencion'),
+            'razon_social' => $request->input('razon_social'),
+            'estado' => 4,
+            'updated_at' => $date,
+          ]);
+
+        //  Actualizar partidas
+        $partidas = json_decode($request->input('partidas'));
+
+        DB::table('Geco_documento_item')
+          ->where('geco_documento_id', '=', $request->input('geco_documento_id'))
+          ->delete();
+
+        foreach ($partidas as $partida) {
+          DB::table('Geco_documento_item')
+            ->insert([
+              'geco_documento_id' => $request->input('geco_documento_id'),
+              'partida_id' => $partida->partida->value,
+              'sub_total' => $partida->monto,
+              'total' => $partida->monto,
+              'created_at' => $date,
+              'updated_at' => $date,
+            ]);
+        }
+
+        return ['message' => 'success', 'detail' => 'Comprobante actualizado exitosamente'];
+      } else {
+        return [
+          'message' => 'error',
+          'detail' => 'Error cargando comprobante'
+        ];
+      }
     }
   }
 }

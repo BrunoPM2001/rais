@@ -477,6 +477,9 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
     Route::prefix('informe_economico')->group(function () {
       Route::get('listadoProyectos', [Informe_economicoController::class, 'listadoProyectos']);
       Route::get('detalles', [Informe_economicoController::class, 'detalles']);
+      Route::get('listarPartidas', [Informe_economicoController::class, 'listarPartidas']);
+      Route::get('dataComprobante', [Informe_economicoController::class, 'dataComprobante']);
+      Route::post('subirComprobante', [Informe_economicoController::class, 'subirComprobante']);
     });
   });
 });
