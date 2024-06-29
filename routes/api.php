@@ -450,6 +450,7 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
     Route::get('searchEstudiante', [ProCTIController::class, 'searchEstudiante']);
     Route::get('verificarEstudiante', [ProCTIController::class, 'verificarEstudiante']);
     Route::post('agregarIntegrante', [ProCTIController::class, 'agregarIntegrante']);
+    Route::post('agregarIntegranteExterno', [ProCTIController::class, 'agregarIntegranteExterno']);
     Route::delete('eliminarIntegrante', [ProCTIController::class, 'eliminarIntegrante']);
 
     Route::get('getDataPaso4', [ProCTIController::class, 'getDataPaso4']);
@@ -465,6 +466,7 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
     Route::delete('eliminarPartida', [ProCTIController::class, 'eliminarPartida']);
 
     Route::put('enviarProyecto', [ProCTIController::class, 'enviarProyecto']);
+    Route::get('reportePDF', [ProCTIController::class, 'reportePDF']);
 
     //  Extras
     Route::get('getOcde', [ProCTIController::class, 'getOcde']);
@@ -480,6 +482,7 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
       Route::get('listarPartidas', [Informe_economicoController::class, 'listarPartidas']);
       Route::get('dataComprobante', [Informe_economicoController::class, 'dataComprobante']);
       Route::post('subirComprobante', [Informe_economicoController::class, 'subirComprobante']);
+      Route::put('anularComprobante', [Informe_economicoController::class, 'anularComprobante']);
       Route::post('calcularNuevoPresupuesto', [Informe_economicoController::class, 'calcularNuevoPresupuesto']);
     });
   });

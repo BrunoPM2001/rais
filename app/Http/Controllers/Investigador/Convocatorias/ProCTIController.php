@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Investigador\Convocatorias;
 
 use App\Http\Controllers\S3Controller;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -34,7 +35,7 @@ class ProCTIController extends S3Controller {
 
     if ($proyecto != null) {
       if ($proyecto->estado != 6) {
-        $errores[] = 'Ya es participante en otro proyecto PRO-CTI de este año.';
+        $errores[] = 'Su solicitud para esta convocatoria ya ha sido enviada.';
       } else {
         return ['estado' => true, 'paso' => 'paso' . $proyecto->step . '?proyecto_id=' . $proyecto->proyecto_id];
       }
@@ -356,7 +357,7 @@ class ProCTIController extends S3Controller {
     $integrantes = DB::table('Proyecto_integrante AS a')
       ->join('Proyecto_integrante_tipo AS b', 'b.id', '=', 'a.proyecto_integrante_tipo_id')
       ->join('Usuario_investigador AS c', 'c.id', '=', 'a.investigador_id')
-      ->join('Facultad AS d', 'd.id', '=', 'c.facultad_id')
+      ->leftJoin('Facultad AS d', 'd.id', '=', 'c.facultad_id')
       ->leftJoin('File AS e', function ($join) {
         $join->on('e.tabla_id', '=', 'a.id')
           ->where('e.tabla', '=', 'Proyecto_integrante')
@@ -431,7 +432,7 @@ class ProCTIController extends S3Controller {
     if (!empty($errores)) {
       return ['message' => 'error', 'detail' => $errores[0]];
     } else {
-      return ['message' => 'success', 'detail' => 'No ha participado de ningún proyecto PRO-CTIE este año'];
+      return ['message' => 'success', 'detail' => 'Cumple con los requisitos para ser incluído'];
     }
   }
 
@@ -472,6 +473,7 @@ class ProCTIController extends S3Controller {
             'apellido2' => $sumData->apellido_materno,
             'doc_tipo' => 'DNI',
             'doc_numero' => $sumData->dni,
+            'tipo' => 'Estudiante',
             'sexo' => $sumData->sexo,
             'email3' => $sumData->correo_electronico,
             'created_at' => Carbon::now(),
@@ -479,6 +481,66 @@ class ProCTIController extends S3Controller {
             'tipo_investigador' => 'Estudiante'
           ]);
       }
+
+      $id = DB::table('Proyecto_integrante')
+        ->insertGetId([
+          'proyecto_id' => $request->input('proyecto_id'),
+          'investigador_id' => $id_investigador,
+          'condicion' => 'Colaborador',
+          'proyecto_integrante_tipo_id' => 88,
+          'created_at' => $date,
+          'updated_at' => $date
+        ]);
+
+      $name = $date->format('Ymd-His') . "-" . $id;
+
+      $nameFile = $name . "." . $request->file('file')->getClientOriginalExtension();
+
+      DB::table('File')
+        ->insert([
+          'tabla_id' => $id,
+          'tabla' => 'Proyecto_integrante',
+          'bucket' => 'carta-compromiso',
+          'key' => $nameFile,
+          'recurso' => 'CARTA_COMPROMISO',
+          'estado' => 1,
+          'created_at' => $date,
+          'updated_at' => $date,
+        ]);
+
+      $this->uploadFile($request->file('file'), "carta-compromiso", $nameFile);
+
+      return ['message' => 'success', 'detail' => 'Archivo cargado correctamente'];
+    } else {
+      return ['message' => 'error', 'detail' => 'Error al cargar archivo'];
+    }
+  }
+
+  public function agregarIntegranteExterno(Request $request) {
+    if ($request->hasFile('file')) {
+      $date = Carbon::now();
+
+      DB::table('Proyecto')
+        ->where('id', '=', $request->input('proyecto_id'))
+        ->update([
+          'step' => 3,
+        ]);
+
+      $id_investigador = DB::table('Usuario_investigador')
+        ->insertGetId([
+          'codigo_orcid' => $request->input('codigo_orcid'),
+          'apellido1' => $request->input('apellido1'),
+          'apellido2' => $request->input('apellido2'),
+          'nombres' => $request->input('nombres'),
+          'sexo' => $request->input('sexo'),
+          'institucion' => $request->input('institucion'),
+          'tipo' => 'Estudiante externo',
+          'pais' => $request->input('pais'),
+          'direccion1' => $request->input('direccion1'),
+          'doc_tipo' => $request->input('doc_tipo'),
+          'doc_numero' => $request->input('doc_numero'),
+          'telefono_movil' => $request->input('telefono_movil'),
+        ]);
 
       $id = DB::table('Proyecto_integrante')
         ->insertGetId([
@@ -803,5 +865,98 @@ class ProCTIController extends S3Controller {
       ]);
 
     return ['message' => 'info', 'detail' => 'Proyecto enviado para evaluación'];
+  }
+
+  public function reportePDF(Request $request) {
+
+    //  Proyecto
+    $proyecto = DB::table('Proyecto_integrante AS pint')
+      ->join('Proyecto AS p', 'p.id', '=', 'pint.proyecto_id')
+      ->join('Grupo AS g', 'g.id', '=', 'p.grupo_id')
+      ->join('Facultad AS f', 'f.id', '=', 'g.facultad_id')
+      ->join('Area AS a', 'a.id', '=', 'f.area_id')
+      ->join('Linea_investigacion AS l', 'l.id', '=', 'p.linea_investigacion_id')
+      ->join('Linea_investigacion_ods AS lo', 'lo.linea_investigacion_id', '=', 'l.id')
+      ->join('Ods AS o', 'o.id', '=', 'lo.ods_id')
+      ->join('Ocde AS oc', 'oc.id', '=', 'lo.ods_id')
+      ->select([
+        'g.grupo_nombre',
+        'f.nombre AS facultad_nombre',
+        'a.nombre AS area_nombre',
+        'p.codigo_proyecto',
+        'p.titulo',
+        'l.nombre AS linea_nombre',
+        'o.objetivo',
+        'oc.linea',
+        'p.localizacion'
+      ])
+      ->where('pint.condicion', '=', 'Responsable')
+      ->where('pint.proyecto_id', '=', $request->query('proyecto_id'))
+      ->first();
+
+    //  Descripcion
+    $descripcion = DB::table('Proyecto AS p')
+      ->join('Proyecto_descripcion AS pd', 'p.id', '=', 'pd.proyecto_id')
+      ->select([
+        'p.id',
+        'pd.codigo',
+        'pd.detalle'
+      ])
+      ->where('p.id', '=', $request->query('proyecto_id'))
+      ->get();
+
+    //  Actividades
+    $actividades = DB::table('Proyecto AS p')
+      ->join('Proyecto_actividad AS pa', 'p.id', '=', 'pa.proyecto_id')
+      ->select([
+        'pa.actividad',
+        'pa.fecha_inicio',
+        'pa.fecha_fin'
+      ])
+      ->where('pa.proyecto_id', '=', $request->query('proyecto_id'))
+      ->get();
+
+    //  Presupuesto
+    $presupuesto = DB::table('Proyecto AS p')
+      ->join('Proyecto_presupuesto AS pp', 'pp.proyecto_id', '=', 'p.id')
+      ->join('Partida AS pt', 'pt.id', '=', 'pp.partida_id')
+      ->select([
+        'pt.partida',
+        'pp.monto',
+        'pt.tipo'
+      ])
+      ->where('p.id', '=', $request->query('proyecto_id'))
+      ->get();
+
+    //  Integrantes
+    $integrantes = DB::table('Proyecto_integrante AS pint')
+      ->join('Usuario_investigador AS i', 'i.id', '=', 'pint.investigador_id')
+      ->join('Proyecto_integrante_tipo AS pt', 'pt.id', '=', 'pint.proyecto_integrante_tipo_id')
+      ->join('Facultad AS f', 'f.id', '=', 'i.facultad_id')
+      ->leftJoin('Grupo_integrante AS gi', 'gi.investigador_id', '=', 'i.id')
+      ->select([
+        'pt.nombre AS tipo_integrante',
+        DB::raw("CONCAT(i.apellido1, ' ', i.apellido2, ' ', i.nombres) AS integrante"),
+        'f.nombre AS facultad',
+        'gi.tipo',
+        'gi.condicion'
+      ])
+      ->where('pint.proyecto_id', '=', $request->query('proyecto_id'))
+      ->where(function ($query) {
+        $query->where('gi.condicion', 'NOT LIKE', 'Ex%')
+          ->orWhereNull('gi.condicion');
+      })
+      ->get();
+
+    $pdf = Pdf::loadView('investigador.convocatorias.reportePDF', [
+      'proyecto' => $proyecto,
+      'descripcion' => $descripcion,
+      'actividades' => $actividades,
+      'presupuesto' => $presupuesto,
+      'integrantes' => $integrantes
+    ]);
+
+    $pdf->setPaper('A4', 'landscape');
+    return $pdf->stream();
   }
 }

@@ -147,7 +147,7 @@ class Informe_economicoController extends S3Controller {
       ->select([
         'd.id AS value',
         DB::raw("CONCAT(d.codigo, ' - ', d.partida) AS label"),
-        DB::raw("(e. monto - (IFNULL(e.monto_rendido_enviado, 0) + IFNULL(e.monto_rendido, 0))) AS max")
+        DB::raw("(e.monto - (IFNULL(e.monto_rendido_enviado, 0) + IFNULL(e.monto_rendido, 0))) AS max")
       ])
       ->where('a.codigo', '=', $request->query('tipo'))
       ->where('b.periodo', '=', 2018)
@@ -191,22 +191,27 @@ class Informe_economicoController extends S3Controller {
           'value' => $documento->retencion,
           'label' => $documento->retencion == 0 ? 'No afecta' : 'Retención'
         ];
+        break;
     }
 
     $partidas = DB::table('Geco_documento_item AS a')
       ->join('Partida AS b', 'b.id', '=', 'a.partida_id')
+      ->join('Geco_proyecto_presupuesto AS c', 'c.partida_id', '=', 'b.id')
       ->select([
         'b.id AS value',
         DB::raw("CONCAT(b.codigo, ' - ', b.partida) AS label"),
-        'total'
+        'a.total',
+        DB::raw("(c.monto - (IFNULL(c.monto_rendido_enviado, 0) + IFNULL(c.monto_rendido, 0)) + a.total) AS max")
       ])
-      ->where('geco_documento_id', '=', $request->input('id'))
+      ->where('a.geco_documento_id', '=', $request->input('id'))
+      ->where('c.geco_proyecto_id', '=', $request->query('geco_proyecto_id'))
       ->get()
       ->map(function ($item) {
         return [
           'partida' => [
             'value' => $item->value,
-            'label' => $item->label
+            'label' => $item->label,
+            'max' => $item->max
           ],
           'monto' => $item->total
         ];
@@ -237,13 +242,13 @@ class Informe_economicoController extends S3Controller {
             'observacion' => "[]"
           ]);
 
-        //  Crear partidas asignadas al documento
+        //  Crear partidas asignadas al documento y actualizar presupuesto
         $this->actualizarPartidas($id, $request->input('partidas'));
+        $this->calcularNuevoPresupuesto($request->input('geco_proyecto_id'));
 
         //  Guardar comprobante
         $name = $id . "/comprobante-" . $date->format('Ymd-His') . "." . $request->file('file')->getClientOriginalExtension();
         $this->uploadFile($request->file('file'), "geco-documento", $name);
-        $this->calcularNuevoPresupuesto($request);
 
         DB::table('Geco_documento_file')
           ->updateOrInsert([
@@ -269,8 +274,9 @@ class Informe_economicoController extends S3Controller {
             'updated_at' => $date,
           ]);
 
-        //  Actualizar partidas
+        //  Actualizar partidas y presupuesto
         $this->actualizarPartidas($request->input('geco_documento_id'), $request->input('partidas'));
+        $this->calcularNuevoPresupuesto($request->input('geco_proyecto_id'));
 
         //  Guardar comprobante
         $name = $request->input('geco_documento_id') . "/comprobante-" . $date->format('Ymd-His') . "." . $request->file('file')->getClientOriginalExtension();;
@@ -300,8 +306,9 @@ class Informe_economicoController extends S3Controller {
             'updated_at' => $date,
           ]);
 
-        //  Actualizar partidas
+        //  Actualizar partidas y presupuesto
         $this->actualizarPartidas($request->input('geco_documento_id'), $request->input('partidas'));
+        $this->calcularNuevoPresupuesto($request->input('geco_proyecto_id'));
 
         return ['message' => 'success', 'detail' => 'Comprobante actualizado exitosamente'];
       } else {
@@ -311,6 +318,20 @@ class Informe_economicoController extends S3Controller {
         ];
       }
     }
+  }
+
+  public function anularComprobante(Request $request) {
+    DB::table('Geco_documento')
+      ->where('id', '=', $request->input('geco_documento_id'))
+      ->update([
+        'estado' => 5,
+        'updated_at' => Carbon::now(),
+      ]);
+
+    //  Actualizar presupuesto
+    $this->calcularNuevoPresupuesto($request->input('geco_proyecto_id'));
+
+    return ['message' => 'info', 'detail' => 'Comprobante anulado'];
   }
 
   public function actualizarPartidas($id, $partidas) {
@@ -345,7 +366,7 @@ class Informe_economicoController extends S3Controller {
   }
 
   //  Recalcular rendición y envíos
-  public function calcularNuevoPresupuesto(Request $request) {
+  public function calcularNuevoPresupuesto($id) {
     $documentos = DB::table('Geco_documento AS a')
       ->join('Geco_documento_item AS b', 'b.geco_documento_id', '=', 'a.id')
       ->join('Geco_proyecto_presupuesto AS c', 'c.partida_id', '=', 'b.partida_id')
@@ -354,8 +375,8 @@ class Informe_economicoController extends S3Controller {
         'c.monto AS maximo',
         DB::raw("SUM(b.total) AS total"),
       ])
-      ->where('a.geco_proyecto_id', '=', $request->input('geco_proyecto_id'))
-      ->where('c.geco_proyecto_id', '=', $request->input('geco_proyecto_id'))
+      ->where('a.geco_proyecto_id', '=', $id)
+      ->where('c.geco_proyecto_id', '=', $id)
       ->where('a.estado', '=', 1)
       ->groupBy('b.partida_id')
       ->get();
@@ -364,11 +385,11 @@ class Informe_economicoController extends S3Controller {
       $max = floatval($documento->maximo);
       $total = floatval($documento->total);
       DB::table('Geco_proyecto_presupuesto')
-        ->where('geco_proyecto_id', '=', $request->input('geco_proyecto_id'))
+        ->where('geco_proyecto_id', '=', $id)
         ->where('partida_id', '=', $documento->partida_id)
         ->update([
           'monto_rendido' => min($max, $total),
-          'monto_excedido' => $max < $total ? $max - $total : 0
+          'monto_excedido' => $max < $total ? $total - $max : 0
         ]);
     }
 
@@ -380,8 +401,8 @@ class Informe_economicoController extends S3Controller {
         DB::raw("(c.monto - c.monto_rendido) AS maximo"),
         DB::raw("SUM(b.total) AS total"),
       ])
-      ->where('a.geco_proyecto_id', '=', $request->input('geco_proyecto_id'))
-      ->where('c.geco_proyecto_id', '=', $request->input('geco_proyecto_id'))
+      ->where('a.geco_proyecto_id', '=', $id)
+      ->where('c.geco_proyecto_id', '=', $id)
       ->whereIn('a.estado', [3, 4])
       ->groupBy('b.partida_id')
       ->get();
@@ -390,14 +411,12 @@ class Informe_economicoController extends S3Controller {
       $max = floatval($documento->maximo);
       $total = floatval($documento->total);
       DB::table('Geco_proyecto_presupuesto')
-        ->where('geco_proyecto_id', '=', $request->input('geco_proyecto_id'))
+        ->where('geco_proyecto_id', '=', $id)
         ->where('partida_id', '=', $documento->partida_id)
         ->update([
           'monto_rendido_enviado' => $total,
-          'monto_excedido' => $max < $total ? DB::raw('monto_excedido + ' . $max) : 'monto_excedido'
+          'monto_excedido' => $max < $total ? DB::raw('monto_excedido + ' . ($total - $max)) : DB::raw('monto_excedido')
         ]);
     }
-
-    return "ok";
   }
 }
