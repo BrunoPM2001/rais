@@ -50,6 +50,7 @@ use App\Http\Controllers\Investigador\Grupo\GrupoController as InvestigadorGrupo
 use App\Http\Controllers\Investigador\Informes\Informe_economicoController;
 use App\Http\Controllers\Investigador\Publicaciones\LibrosController;
 use App\Http\Controllers\Investigador\Publicaciones\PropiedadIntelectualController;
+use App\Http\Controllers\Investigador\Publicaciones\PublicacionesUtilsController;
 use App\Http\Controllers\Investigador\Publicaciones\TesisAsesoriaController;
 use App\Http\Controllers\Investigador\Publicaciones\TesisPropiasController;
 use Illuminate\Support\Facades\Route;
@@ -362,6 +363,7 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
   Route::prefix('publicaciones')->group(function () {
 
     //  Artículos en revistas de investigación
+
     Route::prefix('articulos')->group(function () {
       Route::get('listado', [ArticulosController::class, 'listado']);
       Route::post('registrarPaso1', [ArticulosController::class, 'registrarPaso1']);
@@ -373,7 +375,6 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
       Route::get('listado', [LibrosController::class, 'listado']);
       Route::post('registrarPaso1', [LibrosController::class, 'registrarPaso1']);
       Route::get('datosPaso1', [LibrosController::class, 'datosPaso1']);
-      Route::get('getPaises', [LibrosController::class, 'getPaises']);
     });
 
     //  Capítulos de libros
@@ -389,6 +390,9 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
     //  Tesis propias
     Route::prefix('tesisPropias')->group(function () {
       Route::get('listado', [TesisPropiasController::class, 'listado']);
+      Route::post('registrarPaso1', [TesisPropiasController::class, 'registrarPaso1']);
+      Route::get('datosPaso1', [TesisPropiasController::class, 'datosPaso1']);
+      Route::get('reporte', [TesisPropiasController::class, 'reporte']);
     });
 
     //  Tesis propias
@@ -401,23 +405,27 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
       Route::get('listado', [PropiedadIntelectualController::class, 'listado']);
     });
 
-    //  Paso 1
-    Route::get('listadoRevistasIndexadas', [ArticulosController::class, 'listadoRevistasIndexadas']);
-    //  Paso 2
-    Route::get('proyectos_asociados', [ArticulosController::class, 'proyectos_asociados']);
-    Route::get('proyectos_registrados', [ArticulosController::class, 'proyectos_registrados']);
-    Route::post('agregarProyecto', [ArticulosController::class, 'agregarProyecto']);
-    Route::delete('eliminarProyecto', [ArticulosController::class, 'eliminarProyecto']);
-    //  Paso 3
-    Route::get('listarAutores', [ArticulosController::class, 'listarAutores']);
-    Route::get('searchDocenteRegistrado', [ArticulosController::class, 'searchDocenteRegistrado']);
-    Route::get('searchEstudianteRegistrado', [ArticulosController::class, 'searchEstudianteRegistrado']);
-    Route::get('searchExternoRegistrado', [ArticulosController::class, 'searchExternoRegistrado']);
-    Route::post('agregarAutor', [ArticulosController::class, 'agregarAutor']);
-    Route::put('editarAutor', [ArticulosController::class, 'editarAutor']);
-    Route::delete('eliminarAutor', [ArticulosController::class, 'eliminarAutor']);
-    //  Paso 4
-    Route::post('enviarPublicacion', [ArticulosController::class, 'enviarPublicacion']);
+    //  Utils
+    Route::prefix('utils')->group(function () {
+      //  Data
+      Route::get('listadoRevistasIndexadas', [PublicacionesUtilsController::class, 'listadoRevistasIndexadas']);
+      Route::get('getPaises', [PublicacionesUtilsController::class, 'getPaises']);
+      //  Paso 2
+      Route::get('proyectos_asociados', [PublicacionesUtilsController::class, 'proyectos_asociados']);
+      Route::get('proyectos_registrados', [PublicacionesUtilsController::class, 'proyectos_registrados']);
+      Route::post('agregarProyecto', [PublicacionesUtilsController::class, 'agregarProyecto']);
+      Route::delete('eliminarProyecto', [PublicacionesUtilsController::class, 'eliminarProyecto']);
+      //  Paso 3
+      Route::get('listarAutores', [PublicacionesUtilsController::class, 'listarAutores']);
+      Route::get('searchDocenteRegistrado', [PublicacionesUtilsController::class, 'searchDocenteRegistrado']);
+      Route::get('searchEstudianteRegistrado', [PublicacionesUtilsController::class, 'searchEstudianteRegistrado']);
+      Route::get('searchExternoRegistrado', [PublicacionesUtilsController::class, 'searchExternoRegistrado']);
+      Route::post('agregarAutor', [PublicacionesUtilsController::class, 'agregarAutor']);
+      Route::put('editarAutor', [PublicacionesUtilsController::class, 'editarAutor']);
+      Route::delete('eliminarAutor', [PublicacionesUtilsController::class, 'eliminarAutor']);
+      //  Paso 4
+      Route::post('enviarPublicacion', [PublicacionesUtilsController::class, 'enviarPublicacion']);
+    });
   });
 
   //  Grupo
@@ -483,7 +491,10 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
       Route::get('dataComprobante', [Informe_economicoController::class, 'dataComprobante']);
       Route::post('subirComprobante', [Informe_economicoController::class, 'subirComprobante']);
       Route::put('anularComprobante', [Informe_economicoController::class, 'anularComprobante']);
-      Route::post('calcularNuevoPresupuesto', [Informe_economicoController::class, 'calcularNuevoPresupuesto']);
+      Route::get('movimientosTransferencia', [Informe_economicoController::class, 'movimientosTransferencia']);
+      Route::get('partidasTransferencias', [Informe_economicoController::class, 'partidasTransferencias']);
+      Route::post('addTransferenciaTemporal', [Informe_economicoController::class, 'addTransferenciaTemporal']);
+      Route::post('solicitarTransferencia', [Informe_economicoController::class, 'solicitarTransferencia']);
     });
   });
 });

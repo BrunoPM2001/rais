@@ -18,7 +18,7 @@ return new class extends Migration {
       $table->string('ruc', 20)->nullable();
       $table->date('fecha');
       $table->string('dni_pasajero', 12)->nullable();
-      $table->boolean('concepto')->nullable();
+      $table->string('concepto')->nullable();
       $table->string('razon_social')->nullable();
       $table->float('monto')->default(0);
       $table->string('tipo_moneda')->nullable();

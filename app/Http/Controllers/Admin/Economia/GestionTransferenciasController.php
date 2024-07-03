@@ -69,7 +69,7 @@ class GestionTransferenciasController extends Controller {
       ->orderByDesc('created_at')
       ->first();
 
-    //  En caso sea una operación para no evaluar se retora el presupuesto actual
+    //  En caso sea una operación para no evaluar se retorna el presupuesto actual
     if ($solicitud->estado != 3) {
       $presupuesto = DB::table('Geco_proyecto_presupuesto AS a')
         ->join('Partida AS b', 'b.id', '=', 'a.partida_id')
@@ -84,18 +84,25 @@ class GestionTransferenciasController extends Controller {
     } else {
       $presupuesto = DB::table('Geco_proyecto_presupuesto AS a')
         ->join('Partida AS b', 'b.id', '=', 'a.partida_id')
-        ->leftJoin('Geco_operacion_movimiento AS c', function ($join) use ($solicitud) {
-          $join->on('c.geco_proyecto_presupuesto_id', '=', 'a.id')
-            ->where('c.geco_operacion_id', '=', $solicitud->id);
-        })
         ->select([
           'b.tipo',
           'b.codigo',
           'b.partida',
           'a.monto',
-          'c.operacion',
-          'c.monto AS transferencia',
-          DB::raw('(a.monto + IFNULL(c.monto, 0)) AS monto_nuevo'),
+          DB::raw('CASE 
+        WHEN a.monto_temporal = 0 THEN ""
+        WHEN a.monto_temporal < a.monto THEN "-"
+        WHEN a.monto_temporal > a.monto THEN "+"
+        ELSE ""
+      END AS operacion'),
+          DB::raw('CASE 
+        WHEN a.monto_temporal = 0 THEN 0
+        WHEN a.monto_temporal < a.monto THEN (a.monto - a.monto_temporal)
+        WHEN a.monto_temporal > a.monto THEN (a.monto_temporal - a.monto)
+        ELSE ""
+      END AS transferencia'),
+          'a.monto_temporal AS monto_nuevo',
+          DB::raw('(a.monto_temporal) AS monto_nuevo'),
         ])
         ->where('a.geco_proyecto_id', '=', $request->query('geco_proyecto_id'))
         ->get();

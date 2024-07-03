@@ -112,9 +112,94 @@ class Informe_economicoController extends S3Controller {
             WHEN a.estado = 4 THEN "Enviado"
             WHEN a.estado = 5 THEN "Anulado"
             ELSE "Desconocido"
-          END AS estado')
+          END AS estado'),
+          'a.observacion'
         )
         ->where('b.id', '=', $request->query('id'))
+        ->get();
+
+      //  Transferencia o presupuesto
+      $presupuesto = [];
+      $transferenciaPendiente = DB::table('Geco_operacion')
+        ->select(['id'])
+        ->where('geco_proyecto_id', '=', $request->query('id'))
+        ->where('estado', '=', 4)
+        ->first();
+
+      if ($transferenciaPendiente == null) {
+        $presupuesto = DB::table('Geco_proyecto_presupuesto AS a')
+          ->join('Partida AS b', 'b.id', '=', 'a.partida_id')
+          ->select([
+            'b.tipo',
+            'b.codigo',
+            'b.partida',
+            'a.monto'
+          ])
+          ->where('a.geco_proyecto_id', '=', $request->query('id'))
+          ->get();
+      } else {
+        $presupuesto = DB::table('Geco_proyecto_presupuesto AS a')
+          ->join('Partida AS b', 'b.id', '=', 'a.partida_id')
+          ->select([
+            'b.tipo',
+            'b.codigo',
+            'b.partida',
+            'a.monto',
+            DB::raw('CASE 
+            WHEN a.monto_temporal = 0 THEN ""
+            WHEN a.monto_temporal < a.monto THEN "-"
+            WHEN a.monto_temporal > a.monto THEN "+"
+            ELSE ""
+          END AS operacion'),
+            DB::raw('CASE 
+            WHEN a.monto_temporal = 0 THEN 0
+            WHEN a.monto_temporal < a.monto THEN (a.monto - a.monto_temporal)
+            WHEN a.monto_temporal > a.monto THEN (a.monto_temporal - a.monto)
+            ELSE ""
+          END AS transferencia'),
+            'a.monto_temporal AS monto_nuevo',
+            DB::raw('(a.monto_temporal) AS monto_nuevo'),
+          ])
+          ->where('a.geco_proyecto_id', '=', $request->query('id'))
+          ->get();
+      }
+
+      $groupedData = $presupuesto->groupBy('tipo');
+
+      $result = $groupedData->map(function ($items, $tipo) {
+        return [
+          'tipo' => $tipo,
+          'children' => $items->map(function ($item) {
+            // Eliminar la propiedad 'tipo' de cada item
+            $itemArray = (array) $item;
+            unset($itemArray['tipo']);
+            return $itemArray;
+          })->toArray()
+        ];
+      })->values()->toArray();
+
+      //  Puede solicitar transferencias
+      $habilitado = true;
+      $count = DB::table('Geco_operacion')
+        ->where('geco_proyecto_id', '=', $request->query('id'))
+        ->where('estado', '=', 3)
+        ->count();
+
+      if ($count > 0) {
+        $habilitado = false;
+      }
+
+      //  Historial de transferencias
+      $historial = DB::table('Geco_operacion')
+        ->select([
+          'id',
+          'created_at',
+          'observacion',
+          'estado'
+        ])
+        ->where('geco_proyecto_id', '=', $request->query('id'))
+        ->where('estado', '>', 0)
+        ->orderByDesc('created_at')
         ->get();
 
       return [
@@ -126,41 +211,86 @@ class Informe_economicoController extends S3Controller {
         'datos' => $datos,
         'asignacion' => $asignacion,
         'comprobantes' => $comprobantes,
+        'transferencias' => [
+          'habilitado' => $habilitado,
+          'solicitud' => $result,
+          'historial' => $historial,
+        ]
       ];
     }
   }
 
   public function listarPartidas(Request $request) {
-    $proyecto = DB::table('Geco_proyecto AS a')
-      ->join('Proyecto AS b', 'b.id', '=', 'a.proyecto_id')
-      ->select([
-        'b.tipo_proyecto'
-      ])
-      ->where('a.id', '=', $request->query('geco_proyecto_id'))
-      ->first();
+    if (in_array($request->query('tipo'), ["RMOVILIDAD", "BVIAJE"])) {
+      $proyecto = DB::table('Geco_proyecto AS a')
+        ->join('Proyecto AS b', 'b.id', '=', 'a.proyecto_id')
+        ->select([
+          'b.tipo_proyecto'
+        ])
+        ->where('a.id', '=', $request->query('geco_proyecto_id'))
+        ->first();
 
-    $partidas = DB::table('Geco_comprobante AS a')
-      ->join('Geco_comprobante_partida AS b', 'a.id', '=', 'b.geco_comprobante_id')
-      ->join('Partida_proyecto AS c', 'c.partida_id', '=', 'b.partida_id')
-      ->join('Partida AS d', 'd.id', '=', 'c.partida_id')
-      ->join('Geco_proyecto_presupuesto AS e', 'e.partida_id', '=', 'c.partida_id')
-      ->select([
-        'd.id AS value',
-        DB::raw("CONCAT(d.codigo, ' - ', d.partida) AS label"),
-        DB::raw("(e.monto - (IFNULL(e.monto_rendido_enviado, 0) + IFNULL(e.monto_rendido, 0))) AS max")
-      ])
-      ->where('a.codigo', '=', $request->query('tipo'))
-      ->where('b.periodo', '=', 2018)
-      ->where('c.postulacion', '=', 1)
-      ->where('c.tipo_proyecto', '=', $proyecto->tipo_proyecto)
-      ->where('e.geco_proyecto_id', '=', $request->query('geco_proyecto_id'))
-      ->get();
+      $partidas = DB::table('Geco_comprobante AS a')
+        ->join('Geco_comprobante_partida AS b', 'a.id', '=', 'b.geco_comprobante_id')
+        ->join('Partida_proyecto AS c', 'c.partida_id', '=', 'b.partida_id')
+        ->join('Partida AS d', 'd.id', '=', 'c.partida_id')
+        ->join('Geco_proyecto_presupuesto AS e', 'e.partida_id', '=', 'c.partida_id')
+        ->select([
+          'd.id AS value',
+          DB::raw("CONCAT(d.codigo, ' - ', d.partida) AS label"),
+          DB::raw("(e.monto - (IFNULL(e.monto_rendido_enviado, 0) + IFNULL(e.monto_rendido, 0))) AS max")
+        ])
+        ->where('a.codigo', '=', $request->query('tipo'))
+        ->where('b.periodo', '=', 2018)
+        ->where('c.postulacion', '=', 1)
+        ->where('c.tipo_proyecto', '=', $proyecto->tipo_proyecto)
+        ->where('e.geco_proyecto_id', '=', $request->query('geco_proyecto_id'))
+        ->get();
 
-    return $partidas;
+      $integrantes = DB::table('Proyecto_integrante AS a')
+        ->join('Geco_proyecto AS b', 'b.proyecto_id', '=', 'a.proyecto_id')
+        ->join('Usuario_investigador AS c', 'c.id', '=', 'a.investigador_id')
+        ->select([
+          'a.investigador_id AS value',
+          DB::raw("CONCAT(c.apellido1, ' ', c.apellido2, ', ', c.nombres) AS label")
+        ])
+        ->where('b.id', '=', $request->query('geco_proyecto_id'))
+        ->get();
+
+      return ['partidas' => $partidas, 'integrantes' => $integrantes];
+    } else {
+      $proyecto = DB::table('Geco_proyecto AS a')
+        ->join('Proyecto AS b', 'b.id', '=', 'a.proyecto_id')
+        ->select([
+          'b.tipo_proyecto'
+        ])
+        ->where('a.id', '=', $request->query('geco_proyecto_id'))
+        ->first();
+
+      $partidas = DB::table('Geco_comprobante AS a')
+        ->join('Geco_comprobante_partida AS b', 'a.id', '=', 'b.geco_comprobante_id')
+        ->join('Partida_proyecto AS c', 'c.partida_id', '=', 'b.partida_id')
+        ->join('Partida AS d', 'd.id', '=', 'c.partida_id')
+        ->join('Geco_proyecto_presupuesto AS e', 'e.partida_id', '=', 'c.partida_id')
+        ->select([
+          'd.id AS value',
+          DB::raw("CONCAT(d.codigo, ' - ', d.partida) AS label"),
+          DB::raw("(e.monto - (IFNULL(e.monto_rendido_enviado, 0) + IFNULL(e.monto_rendido, 0))) AS max")
+        ])
+        ->where('a.codigo', '=', $request->query('tipo'))
+        ->where('b.periodo', '=', 2018)
+        ->where('c.postulacion', '=', 1)
+        ->where('c.tipo_proyecto', '=', $proyecto->tipo_proyecto)
+        ->where('e.geco_proyecto_id', '=', $request->query('geco_proyecto_id'))
+        ->get();
+
+      return $partidas;
+    }
   }
 
   public function dataComprobante(Request $request) {
     $documento = [];
+    $integrantes = [];
     switch ($request->query('tipo')) {
       case "BOLETA":
         $documento = DB::table('Geco_documento')
@@ -169,7 +299,7 @@ class Informe_economicoController extends S3Controller {
             'numero',
             'ruc',
             'fecha',
-            'razon_social'
+            'razon_social',
           ])
           ->where('id', '=', $request->query('id'))
           ->first();
@@ -191,6 +321,131 @@ class Informe_economicoController extends S3Controller {
           'value' => $documento->retencion,
           'label' => $documento->retencion == 0 ? 'No afecta' : 'Retención'
         ];
+        break;
+      case "RMOVILIDAD":
+        $documento = DB::table('Geco_documento')
+          ->select([
+            'tipo',
+            'investigador_id',
+            'fecha',
+          ])
+          ->where('id', '=', $request->query('id'))
+          ->first();
+
+        $integrantes = DB::table('Proyecto_integrante AS a')
+          ->join('Geco_proyecto AS b', 'b.proyecto_id', '=', 'a.proyecto_id')
+          ->join('Usuario_investigador AS c', 'c.id', '=', 'a.investigador_id')
+          ->select([
+            'a.investigador_id AS value',
+            DB::raw("CONCAT(c.apellido1, ' ', c.apellido2, ', ', c.nombres) AS label")
+          ])
+          ->where('b.id', '=', $request->query('geco_proyecto_id'))
+          ->get();
+        break;
+      case "RHONORARIOS":
+        $documento = DB::table('Geco_documento')
+          ->select([
+            'tipo',
+            'numero',
+            'ruc',
+            'fecha',
+            'retencion',
+            'razon_social'
+          ])
+          ->where('id', '=', $request->query('id'))
+          ->first();
+
+        $documento->retencion = [
+          'value' => $documento->retencion,
+          'label' => $documento->retencion == 0 ? 'No afecta' : 'Retención'
+        ];
+        break;
+      case "BVIAJE":
+        $documento = DB::table('Geco_documento')
+          ->select([
+            'tipo',
+            'numero',
+            'ruc',
+            'fecha',
+            'investigador_id',
+            'razon_social'
+          ])
+          ->where('id', '=', $request->query('id'))
+          ->first();
+
+        $integrantes = DB::table('Proyecto_integrante AS a')
+          ->join('Geco_proyecto AS b', 'b.proyecto_id', '=', 'a.proyecto_id')
+          ->join('Usuario_investigador AS c', 'c.id', '=', 'a.investigador_id')
+          ->select([
+            'a.investigador_id AS value',
+            DB::raw("CONCAT(c.apellido1, ' ', c.apellido2, ', ', c.nombres) AS label")
+          ])
+          ->where('b.id', '=', $request->query('geco_proyecto_id'))
+          ->get();
+
+        break;
+      case "LCOMPRA":
+        $documento = DB::table('Geco_documento')
+          ->select([
+            'tipo',
+            'numero',
+            'numero_doc',
+            'fecha',
+            'prestador'
+          ])
+          ->where('id', '=', $request->query('id'))
+          ->first();
+        break;
+      case "OTROS":
+        $documento = DB::table('Geco_documento')
+          ->select([
+            'tipo',
+            'descripcion_compra',
+            'monto_exterior',
+            'pais_emisor',
+            'tipo_moneda',
+            'fecha',
+          ])
+          ->where('id', '=', $request->query('id'))
+          ->first();
+        break;
+      case "RINGRESO":
+        $documento = DB::table('Geco_documento')
+          ->select([
+            'tipo',
+            'numero',
+            'ruc',
+            'fecha',
+            'razon_social',
+            'fecha_presentacion_solicitud_compra'
+          ])
+          ->where('id', '=', $request->query('id'))
+          ->first();
+        break;
+      case "TICKET":
+        $documento = DB::table('Geco_documento')
+          ->select([
+            'tipo',
+            'numero',
+            'ruc',
+            'fecha',
+            'razon_social'
+          ])
+          ->where('id', '=', $request->query('id'))
+          ->first();
+        break;
+      case "RBANCO":
+        $documento = DB::table('Geco_documento')
+          ->select([
+            'tipo',
+            'numero',
+            'ruc',
+            'fecha',
+            'razon_social',
+            'concepto'
+          ])
+          ->where('id', '=', $request->query('id'))
+          ->first();
         break;
     }
 
@@ -219,7 +474,7 @@ class Informe_economicoController extends S3Controller {
 
     $listaPartidas = $this->listarPartidas($request);
 
-    return ['documento' => $documento, 'partidas' => $partidas, 'lista' => $listaPartidas];
+    return ['documento' => $documento, 'partidas' => $partidas, 'lista' => $listaPartidas, 'integrantes' => $integrantes];
   }
 
   public function subirComprobante(Request $request) {
@@ -230,10 +485,19 @@ class Informe_economicoController extends S3Controller {
         $id = DB::table('Geco_documento')
           ->insertGetId([
             'geco_proyecto_id' => $request->input('geco_proyecto_id'),
-            'tipo' => 'BOLETA',
+            'investigador_id' => $request->input('investigador_id'),
+            'tipo' => $request->input('tipo'),
             'numero' => $request->input('numero'),
+            'numero_doc' => $request->input('numero_doc'),
+            'prestador' => $request->input('prestador'),
+            'descripcion_compra' => $request->input('descripcion_compra'),
+            'monto_exterior' => $request->input('monto_exterior'),
+            'pais_emisor' => $request->input('pais_emisor'),
+            'tipo_moneda' => $request->input('tipo_moneda'),
             'ruc' => $request->input('ruc'),
+            'concepto' => $request->input('concepto'),
             'fecha' => $request->input('fecha'),
+            'fecha_presentacion_solicitud_compra' => $request->input('fecha_presentacion_solicitud_compra'),
             'retencion' => $request->input('retencion') == "" ? null : $request->input('retencion'),
             'razon_social' => $request->input('razon_social'),
             'estado' => 4,
@@ -266,8 +530,13 @@ class Informe_economicoController extends S3Controller {
           ->where('id', '=', $request->input('geco_documento_id'))
           ->update([
             'numero' => $request->input('numero'),
+            'numero_doc' => $request->input('numero_doc'),
+            'prestador' => $request->input('prestador'),
+            'investigador_id' => $request->input('investigador_id'),
             'ruc' => $request->input('ruc'),
+            'concepto' => $request->input('concepto'),
             'fecha' => $request->input('fecha'),
+            'fecha_presentacion_solicitud_compra' => $request->input('fecha_presentacion_solicitud_compra'),
             'retencion' => $request->input('retencion') == "" ? null : $request->input('retencion'),
             'razon_social' => $request->input('razon_social'),
             'estado' => 4,
@@ -298,8 +567,13 @@ class Informe_economicoController extends S3Controller {
           ->where('id', '=', $request->input('geco_documento_id'))
           ->update([
             'numero' => $request->input('numero'),
+            'numero_doc' => $request->input('numero_doc'),
+            'prestador' => $request->input('prestador'),
+            'investigador_id' => $request->input('investigador_id'),
             'ruc' => $request->input('ruc'),
+            'concepto' => $request->input('concepto'),
             'fecha' => $request->input('fecha'),
+            'fecha_presentacion_solicitud_compra' => $request->input('fecha_presentacion_solicitud_compra'),
             'retencion' => $request->input('retencion') == "" ? null : $request->input('retencion'),
             'razon_social' => $request->input('razon_social'),
             'estado' => 4,
@@ -367,6 +641,16 @@ class Informe_economicoController extends S3Controller {
 
   //  Recalcular rendición y envíos
   public function calcularNuevoPresupuesto($id) {
+    //  Poner todo en 0
+    DB::table('Geco_proyecto_presupuesto')
+      ->where('geco_proyecto_id', '=', $id)
+      ->update([
+        'monto_rendido_enviado' => 0,
+        'monto_excedido' => 0,
+        'monto_rendido' => 0
+      ]);
+
+    //  Comprobantes aprobados
     $documentos = DB::table('Geco_documento AS a')
       ->join('Geco_documento_item AS b', 'b.geco_documento_id', '=', 'a.id')
       ->join('Geco_proyecto_presupuesto AS c', 'c.partida_id', '=', 'b.partida_id')
@@ -393,6 +677,7 @@ class Informe_economicoController extends S3Controller {
         ]);
     }
 
+    //  Comprobantes enviados y observados
     $documentos = DB::table('Geco_documento AS a')
       ->join('Geco_documento_item AS b', 'b.geco_documento_id', '=', 'a.id')
       ->join('Geco_proyecto_presupuesto AS c', 'c.partida_id', '=', 'b.partida_id')
@@ -418,5 +703,173 @@ class Informe_economicoController extends S3Controller {
           'monto_excedido' => $max < $total ? DB::raw('monto_excedido + ' . ($total - $max)) : DB::raw('monto_excedido')
         ]);
     }
+  }
+
+  //  Transferencias
+  public function movimientosTransferencia(Request $request) {
+    $movimientos = DB::table('Geco_operacion_movimiento AS a')
+      ->join('Geco_proyecto_presupuesto AS b', 'b.id', '=', 'a.geco_proyecto_presupuesto_id')
+      ->join('Partida AS c', 'c.id', '=', 'b.partida_id')
+      ->select([
+        'c.tipo',
+        'c.codigo',
+        'c.partida',
+        'a.monto_original',
+        'a.operacion',
+        'a.monto',
+        DB::raw('CASE 
+                    WHEN a.operacion = "+" THEN a.monto_original + a.monto 
+                    ELSE a.monto_original - a.monto 
+                 END AS monto_nuevo')
+      ])
+      ->where('geco_operacion_id', '=', $request->query('geco_operacion_id'))
+      ->get();
+
+    return $movimientos;
+  }
+
+  public function partidasTransferencias(Request $request) {
+    $partidasA = DB::table('Geco_proyecto_presupuesto AS a')
+      ->join('Partida AS b', 'b.id', '=', 'a.partida_id')
+      ->select([
+        'b.id AS value',
+        'b.tipo',
+        DB::raw("CONCAT(b.codigo, ' - ', b.partida) AS label"),
+        DB::raw("(a.monto - a.monto_rendido - a.monto_rendido_enviado) AS max"),
+        'a.monto',
+        'a.monto_temporal',
+        'a.monto_rendido_enviado',
+        'a.monto_rendido',
+      ])
+      ->where('a.geco_proyecto_id', '=', $request->query('geco_proyecto_id'))
+      ->get();
+
+    $partidasB = DB::table('Geco_proyecto AS a')
+      ->join('Proyecto AS b', 'b.id', '=', 'a.proyecto_id')
+      ->join('Partida_proyecto AS c', 'c.tipo_proyecto', '=', 'b.tipo_proyecto')
+      ->join('Partida AS d', 'd.id', '=', 'c.partida_id')
+      ->select([
+        'd.id AS value',
+        'd.tipo',
+        DB::raw("CONCAT(d.codigo, ' - ', d.partida) AS label")
+      ])
+      ->where('a.id', '=', $request->query('geco_proyecto_id'))
+      ->where('c.postulacion', '=', 1)
+      ->get();
+
+    return ['partidasA' => $partidasA, 'partidasB' => $partidasB];
+  }
+
+  public function addTransferenciaTemporal(Request $request) {
+    $temporal = DB::table('Geco_operacion')
+      ->select(['id'])
+      ->where('geco_proyecto_id', '=', $request->input('geco_proyecto_id'))
+      ->where('estado', '=', 4)
+      ->first();
+
+    $idTemporal = 0;
+    if ($temporal == null) {
+      $id = DB::table('Geco_operacion')
+        ->insertGetId([
+          'geco_proyecto_id' => $request->input('geco_proyecto_id'),
+          'estado' => 4,
+          'created_at' => Carbon::now(),
+          'updated_at' => Carbon::now(),
+        ]);
+      $idTemporal = $id;
+    } else {
+      $idTemporal = $temporal->id;
+    }
+
+    //  Suma
+    $idSuma = 0;
+    $partidaSuma = DB::table('Geco_proyecto_presupuesto')
+      ->select([
+        'id',
+        'monto_temporal',
+        'monto'
+      ])
+      ->where('partida_id', '=', $request->input('partidaB'))
+      ->where('geco_proyecto_id', '=', $request->input('geco_proyecto_id'))
+      ->first();
+
+    if ($partidaSuma == null) {
+      $idSuma = DB::table('Geco_proyecto_presupuesto')
+        ->insertGetId([
+          'geco_proyecto_id' => $request->input('geco_proyecto_id'),
+          'partida_id' => $request->input('partidaB'),
+          'partida_nueva' => 1,
+          'monto_temporal' => $request->input('monto'),
+          'estado' => 50,
+          'created_at' => Carbon::now(),
+          'updated_at' => Carbon::now(),
+        ]);
+    } else {
+      DB::table('Geco_proyecto_presupuesto')
+        ->where('id', '=', $partidaSuma->id)
+        ->update([
+          'monto_temporal' =>  $partidaSuma->monto_temporal == 0 ? DB::raw('monto + ' . $request->input('monto')) : DB::raw('monto_temporal + ' . $request->input('monto')),
+          'updated_at' => Carbon::now()
+        ]);
+      $idSuma = $partidaSuma->id;
+    }
+
+    DB::table('Geco_operacion_movimiento')
+      ->insert([
+        'geco_operacion_id' => $idTemporal,
+        'geco_proyecto_presupuesto_id' => $idSuma,
+        'operacion' => '+',
+        'monto' => $request->input('monto'),
+        'monto_original' => $partidaSuma == null ? 0 : ($partidaSuma->monto_temporal == 0 ? $partidaSuma->monto : $partidaSuma->monto_temporal),
+        'estado' => 40,
+        'created_at' => Carbon::now(),
+        'updated_at' => Carbon::now()
+      ]);
+
+    //  Resta
+    $partidaResta = DB::table('Geco_proyecto_presupuesto')
+      ->select([
+        'id',
+        'monto_temporal',
+        'monto'
+      ])
+      ->where('partida_id', '=', $request->input('partidaA'))
+      ->where('geco_proyecto_id', '=', $request->input('geco_proyecto_id'))
+      ->first();
+
+    DB::table('Geco_proyecto_presupuesto')
+      ->where('partida_id', '=', $request->input('partidaA'))
+      ->where('geco_proyecto_id', '=', $request->input('geco_proyecto_id'))
+      ->update([
+        'monto_temporal' =>  $partidaResta->monto_temporal == 0 ? DB::raw('monto - ' . $request->input('monto')) : DB::raw('monto_temporal - ' . $request->input('monto')),
+        'updated_at' => Carbon::now()
+      ]);
+
+    DB::table('Geco_operacion_movimiento')
+      ->insert([
+        'geco_operacion_id' => $idTemporal,
+        'geco_proyecto_presupuesto_id' => $partidaResta->id,
+        'operacion' => '-',
+        'monto' => $request->input('monto'),
+        'monto_original' => $partidaResta == null ? 0 : ($partidaResta->monto_temporal == 0 ? $partidaResta->monto : $partidaResta->monto_temporal),
+        'estado' => 40,
+        'created_at' => Carbon::now(),
+        'updated_at' => Carbon::now()
+      ]);
+
+    return ['message' => 'info', 'detail' => 'Movimiento de transferencia agregado'];
+  }
+
+  public function solicitarTransferencia(Request $request) {
+    DB::table('Geco_operacion')
+      ->where('geco_proyecto_id', '=', $request->input('geco_proyecto_id'))
+      ->where('estado', '=', 4)
+      ->update([
+        'estado' => 3,
+        'justificacion' => $request->input('justificacion'),
+        'updated_at' => Carbon::now(),
+      ]);
+
+    return ['message' => 'info', 'detail' => 'Transferencia solicitada'];
   }
 }

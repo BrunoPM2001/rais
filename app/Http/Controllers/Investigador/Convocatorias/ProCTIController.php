@@ -198,58 +198,86 @@ class ProCTIController extends S3Controller {
   }
 
   public function registrarPaso1(Request $request) {
-    $data = DB::table('Grupo_integrante')
-      ->select([
-        'facultad_id',
-        'grupo_id'
-      ])
-      ->where('investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
-      ->whereNot('condicion', 'LIKE', 'Ex%')
-      ->first();
+    if ($request->input('proyecto_id') == null) {
 
-    $id = DB::table('Proyecto')
-      ->insertGetId([
-        'facultad_id' => $data->facultad_id,
-        'grupo_id' => $data->grupo_id,
-        'linea_investigacion_id' => $request->input('linea_investigacion_id')["value"],
-        'ocde_id' => $request->input('ocde_3')["value"],
-        'titulo' => $request->input('titulo'),
-        'tipo_proyecto' => 'PRO-CTIE',
-        'fecha_inscripcion' => Carbon::now(),
-        'localizacion' => $request->input('localizacion')["value"],
-        'periodo' => 2024,
-        'convocatoria' => 1,
-        'step' => 2,
-        'estado' => 6,
-        'created_at' => Carbon::now(),
-        'updated_at' => Carbon::now(),
-      ]);
+      $data = DB::table('Grupo_integrante')
+        ->select([
+          'facultad_id',
+          'grupo_id'
+        ])
+        ->where('investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+        ->whereNot('condicion', 'LIKE', 'Ex%')
+        ->first();
 
-    DB::table('Proyecto_descripcion')
-      ->insert([
-        'proyecto_id' => $id,
-        'codigo' => 'objetivo_ods',
-        'detalle' => $request->input('ods')["value"]
-      ]);
+      $id = DB::table('Proyecto')
+        ->insertGetId([
+          'facultad_id' => $data->facultad_id,
+          'grupo_id' => $data->grupo_id,
+          'linea_investigacion_id' => $request->input('linea_investigacion_id')["value"],
+          'ocde_id' => $request->input('ocde_3')["value"],
+          'titulo' => $request->input('titulo'),
+          'tipo_proyecto' => 'PRO-CTIE',
+          'fecha_inscripcion' => Carbon::now(),
+          'localizacion' => $request->input('localizacion')["value"],
+          'periodo' => 2024,
+          'convocatoria' => 1,
+          'step' => 2,
+          'estado' => 6,
+          'created_at' => Carbon::now(),
+          'updated_at' => Carbon::now(),
+        ]);
 
-    DB::table('Proyecto_descripcion')
-      ->insert([
-        'proyecto_id' => $id,
-        'codigo' => 'tipo_investigacion',
-        'detalle' => $request->input('tipo_investigacion')["value"]
-      ]);
+      DB::table('Proyecto_descripcion')
+        ->insert([
+          'proyecto_id' => $id,
+          'codigo' => 'objetivo_ods',
+          'detalle' => $request->input('ods')["value"]
+        ]);
 
-    DB::table('Proyecto_integrante')
-      ->insert([
-        'proyecto_id' => $id,
-        'investigador_id' => $request->attributes->get('token_decoded')->investigador_id,
-        'condicion' => 'Responsable',
-        'proyecto_integrante_tipo_id' => 86,
-        'created_at' => Carbon::now(),
-        'updated_at' => Carbon::now(),
-      ]);
+      DB::table('Proyecto_descripcion')
+        ->insert([
+          'proyecto_id' => $id,
+          'codigo' => 'tipo_investigacion',
+          'detalle' => $request->input('tipo_investigacion')["value"]
+        ]);
 
-    return ['message' => 'success', 'detail' => 'Datos de la publicación registrados', 'proyecto_id' => $id];
+      DB::table('Proyecto_integrante')
+        ->insert([
+          'proyecto_id' => $id,
+          'investigador_id' => $request->attributes->get('token_decoded')->investigador_id,
+          'condicion' => 'Responsable',
+          'proyecto_integrante_tipo_id' => 86,
+          'created_at' => Carbon::now(),
+          'updated_at' => Carbon::now(),
+        ]);
+
+      return ['message' => 'success', 'detail' => 'Datos del proyecto registrados', 'proyecto_id' => $id];
+    } else {
+      DB::table('Proyecto')
+        ->where('id', '=', $request->input('proyecto_id'))
+        ->update([
+          'linea_investigacion_id' => $request->input('linea_investigacion_id')["value"],
+          'ocde_id' => $request->input('ocde_3')["value"],
+          'titulo' => $request->input('titulo'),
+          'localizacion' => $request->input('localizacion')["value"],
+          'step' => 2,
+          'updated_at' => Carbon::now(),
+        ]);
+
+      DB::table('Proyecto_descripcion')
+        ->where('proyecto_id', '=', $request->input('proyecto_id'))
+        ->where('codigo', '=', 'objetivo_ods',)
+        ->update([
+          'detalle' => $request->input('ods')["value"]
+        ]);
+
+      DB::table('Proyecto_descripcion')
+        ->where('proyecto_id', '=', $request->input('proyecto_id'))
+        ->where('codigo', '=', 'tipo_investigacion')
+        ->update([
+          'detalle' => $request->input('tipo_investigacion')["value"]
+        ]);
+    }
   }
 
   //  Paso 2
