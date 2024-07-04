@@ -66,10 +66,9 @@ class PublicacionesUtilsController extends S3Controller {
   }
 
   public function agregarProyecto(Request $request) {
-
     $count = DB::table('Publicacion')
       ->where('id', '=', $request->input('publicacion_id'))
-      ->where('estado', '!=', 5)
+      ->whereIn('estado', [2, 6])
       ->count();
 
     if ($count == 0) {
@@ -103,7 +102,7 @@ class PublicacionesUtilsController extends S3Controller {
   public function eliminarProyecto(Request $request) {
     $count = DB::table('Publicacion_proyecto')
       ->where('id', '=', $request->query('proyecto_id'))
-      ->where('estado', '!=', 5)
+      ->whereIn('estado', [2, 6])
       ->delete();
 
     if ($count == 0) {
@@ -200,7 +199,7 @@ class PublicacionesUtilsController extends S3Controller {
 
     $count = DB::table('Publicacion')
       ->where('id', '=', $request->input('publicacion_id'))
-      ->where('estado', '!=', 5)
+      ->whereIn('estado', [2, 6])
       ->count();
 
     if ($count == 0) {
@@ -251,9 +250,17 @@ class PublicacionesUtilsController extends S3Controller {
   }
 
   public function editarAutor(Request $request) {
-    $count = DB::table('Publicacion_autor')
+    $count = DB::table('Publicacion')
+      ->where('id', '=', $request->input('publicacion_id'))
+      ->whereIn('estado', [2, 6])
+      ->count();
+
+    if ($count == 0) {
+      return ['message' => 'error', 'detail' => 'Esta publicación ya ha sido enviada, no se pueden hacer más cambios'];
+    }
+
+    DB::table('Publicacion_autor')
       ->where('id', '=', $request->input('id'))
-      ->where('estado', '=', 5)
       ->update([
         'autor' => $request->input('autor'),
         'categoria' => $request->input('categoria'),
@@ -261,22 +268,22 @@ class PublicacionesUtilsController extends S3Controller {
         'updated_at' => Carbon::now()
       ]);
 
-    if ($count == 0) {
-      return ['message' => 'error', 'detail' => 'Esta publicación ya ha sido enviada, no se pueden hacer más cambios'];
-    }
-
     return ['message' => 'info', 'detail' => 'Datos del autor editado exitosamente'];
   }
 
   public function eliminarAutor(Request $request) {
-    $count = DB::table('Publicacion_autor')
-      ->where('estado', '=', 5)
-      ->where('id', '=', $request->query('id'))
-      ->delete();
+    $count = DB::table('Publicacion')
+      ->where('id', '=', $request->input('publicacion_id'))
+      ->whereIn('estado', [2, 6])
+      ->count();
 
     if ($count == 0) {
       return ['message' => 'error', 'detail' => 'Esta publicación ya ha sido enviada, no se pueden hacer más cambios'];
     }
+
+    DB::table('Publicacion_autor')
+      ->where('id', '=', $request->query('id'))
+      ->delete();
 
     return ['message' => 'info', 'detail' => 'Autor eliminado de la lista exitosamente'];
   }
@@ -286,7 +293,7 @@ class PublicacionesUtilsController extends S3Controller {
     if ($request->hasFile('file')) {
       $count = DB::table('Publicacion')
         ->where('id', '=', $request->input('publicacion_id'))
-        ->where('estado', '!=', '5')
+        ->whereIn('estado', [2, 6])
         ->update([
           'step' => 4,
           'estado' => 5
@@ -317,6 +324,18 @@ class PublicacionesUtilsController extends S3Controller {
 
     if ($esAutor > 0) {
       switch ($request->query('tipo')) {
+        case "articulo":
+          $util = new ArticulosController();
+          return $util->reporte($request);
+          break;
+        case "libro":
+          $util = new LibrosController();
+          return $util->reporte($request);
+          break;
+        case "capitulo_libro":
+          $util = new CapitulosLibrosController();
+          return $util->reporte($request);
+          break;
         case "tesis_propia":
           $util = new TesisPropiasController();
           return $util->reporte($request);

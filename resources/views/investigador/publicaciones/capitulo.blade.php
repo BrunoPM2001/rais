@@ -117,7 +117,7 @@
   <div class="div"></div>
   <div class="foot-1">RAIS - Registro de Actividades de Investigación de San Marcos</div>
 
-  <p class="titulo"><strong>Reporte de publicación - Tesis propia</strong></p>
+  <p class="titulo"><strong>Reporte de publicación - Capítulo de libro</strong></p>
   <div class="cuerpo">
 
     <h5>I. Información general:</h5>
@@ -131,32 +131,56 @@
       {{ $publicacion->titulo }}
     </p>
     <p>
-      <b>Repositorio de la tesis(Link): </b>
-      {{ $publicacion->url }}
+      <b>Doi: </b>
+      {{ $publicacion->doi }}
     </p>
     <p>
-      <b>Tipo de tesis: </b>
-      {{ $publicacion->tipo_tesis }}
+      <b>Página inicial: </b>
+      {{ $publicacion->pagina_inicial }}
+    </p>
+    <p>
+      <b>Página final: </b>
+      {{ $publicacion->pagina_final }}
     </p>
     <p>
       <b>Fecha de publicación: </b>
       {{ $publicacion->fecha_publicacion }}
     </p>
     <p>
+      <b>Nombre de la publicación: </b>
+      {{ $publicacion->publicacion_nombre }}
+    </p>
+    <p>
+      <b>Isbn: </b>
+      {{ $publicacion->isbn }}
+    </p>
+    <p>
+      <b>Editorial: </b>
+      {{ $publicacion->editorial }}
+    </p>
+    <p>
+      <b>Edición: </b>
+      {{ $publicacion->edicion }}
+    </p>
+    <p>
+      <b>Volumen: </b>
+      {{ $publicacion->volumen }}
+    </p>
+    <p>
       <b>Total de páginas: </b>
       {{ $publicacion->pagina_total }}
     </p>
     <p>
-      <b>Universidad: </b>
-      {{ $publicacion->universidad }}
-    </p>
-    <p>
       <b>Ciudad: </b>
-      {{ $publicacion->lugar_publicacion }}
+      {{ $publicacion->ciudad }}
     </p>
     <p>
       <b>País: </b>
       {{ $publicacion->pais }}
+    </p>
+    <p>
+      <b>Url: </b>
+      {{ $publicacion->url }}
     </p>
     <p>
       <b>Palabras clave: </b>

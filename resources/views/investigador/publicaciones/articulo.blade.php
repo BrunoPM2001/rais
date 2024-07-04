@@ -117,7 +117,7 @@
   <div class="div"></div>
   <div class="foot-1">RAIS - Registro de Actividades de Investigación de San Marcos</div>
 
-  <p class="titulo"><strong>Reporte de publicación - Tesis propia</strong></p>
+  <p class="titulo"><strong>Reporte de publicación - Artículo</strong></p>
   <div class="cuerpo">
 
     <h5>I. Información general:</h5>
@@ -127,40 +127,60 @@
       {{ $publicacion->codigo_registro == null ? 'No tiene código' : $publicacion->codigo_registro }}
     </p>
     <p>
+      <b>Doi: </b>
+      {{ $publicacion->doi }}
+    </p>
+    <p>
+      <b>Tipo de artículo: </b>
+      {{ $publicacion->art_tipo }}
+    </p>
+    <p>
       <b>Título: </b>
       {{ $publicacion->titulo }}
     </p>
     <p>
-      <b>Repositorio de la tesis(Link): </b>
-      {{ $publicacion->url }}
+      <b>Página inicial: </b>
+      {{ $publicacion->pagina_inicial }}
     </p>
     <p>
-      <b>Tipo de tesis: </b>
-      {{ $publicacion->tipo_tesis }}
+      <b>Página final: </b>
+      {{ $publicacion->pagina_final }}
     </p>
     <p>
       <b>Fecha de publicación: </b>
       {{ $publicacion->fecha_publicacion }}
     </p>
     <p>
-      <b>Total de páginas: </b>
-      {{ $publicacion->pagina_total }}
+      <b>Nombre de publicación: </b>
+      {{ $publicacion->publicacion_nombre }}
     </p>
     <p>
-      <b>Universidad: </b>
-      {{ $publicacion->universidad }}
+      <b>Issn: </b>
+      {{ $publicacion->issn }}
     </p>
     <p>
-      <b>Ciudad: </b>
-      {{ $publicacion->lugar_publicacion }}
+      <b>Issn-e: </b>
+      {{ $publicacion->issn_e }}
     </p>
     <p>
-      <b>País: </b>
-      {{ $publicacion->pais }}
+      <b>Volumen: </b>
+      {{ $publicacion->volumen }}
+    </p>
+    <p>
+      <b>Edición: </b>
+      {{ $publicacion->edicion }}
+    </p>
+    <p>
+      <b>Url: </b>
+      {{ $publicacion->url }}
     </p>
     <p>
       <b>Palabras clave: </b>
       {{ $palabras_clave }}
+    </p>
+    <p>
+      <b>Revistas indexadas: </b>
+      {{ $indexada }}
     </p>
     <p>
       <b>Estado: </b>

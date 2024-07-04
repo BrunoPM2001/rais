@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Investigador\Publicaciones;
 
 use App\Http\Controllers\S3Controller;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -121,6 +122,7 @@ class ArticulosController extends S3Controller {
       DB::table('Publicacion_palabra_clave')
         ->where('publicacion_id', '=', $publicacion_id)
         ->delete();
+
       foreach ($request->input('palabras_clave') as $palabra) {
         DB::table('Publicacion_palabra_clave')->insert([
           'publicacion_id' => $publicacion_id,
@@ -131,6 +133,7 @@ class ArticulosController extends S3Controller {
       DB::table('Publicacion_index')
         ->where('publicacion_id', '=', $publicacion_id)
         ->delete();
+
       foreach ($request->input('indexada') as $indexada) {
         DB::table('Publicacion_index')->insert([
           'publicacion_id' => $publicacion_id,
@@ -185,8 +188,8 @@ class ArticulosController extends S3Controller {
         ->where('a.publicacion_id', '=', $request->query('publicacion_id'))
         ->get();
 
-      $ctrl =  new PublicacionesUtilsController();
-      $revistas = $ctrl->listadoRevistasIndexadas();
+      $utils =  new PublicacionesUtilsController();
+      $revistas = $utils->listadoRevistasIndexadas();
 
       return [
         'data' => $publicacion,
@@ -197,5 +200,57 @@ class ArticulosController extends S3Controller {
     } else {
       return response()->json(['error' => 'Unauthorized'], 401);
     }
+  }
+
+  public function reporte(Request $request) {
+    $publicacion = DB::table('Publicacion')
+      ->select([
+        'codigo_registro',
+        'doi',
+        'art_tipo',
+        'titulo',
+        'pagina_inicial',
+        'pagina_final',
+        'fecha_publicacion',
+        'publicacion_nombre',
+        'issn',
+        'issn_e',
+        'volumen',
+        'edicion',
+        'url',
+        'estado'
+      ])
+      ->where('id', '=', $request->query('publicacion_id'))
+      ->first();
+
+    $palabras_clave = DB::table('Publicacion_palabra_clave')
+      ->select([
+        'clave'
+      ])
+      ->where('publicacion_id', '=', $request->query('publicacion_id'))
+      ->pluck('clave')
+      ->implode(', ');
+
+    $indexada = DB::table('Publicacion_index AS a')
+      ->join('Publicacion_db_indexada AS b', 'b.id', '=', 'a.publicacion_db_indexada_id')
+      ->select([
+        'b.nombre AS label'
+      ])
+      ->where('a.publicacion_id', '=', $request->query('publicacion_id'))
+      ->pluck('label')
+      ->implode(', ');
+
+    $utils = new PublicacionesUtilsController();
+    $proyectos = $utils->proyectos_asociados($request);
+    $autores = $utils->listarAutores($request);
+
+    $pdf = Pdf::loadView('investigador.publicaciones.articulo', [
+      'publicacion' => $publicacion,
+      'palabras_clave' => $palabras_clave,
+      'indexada' => $indexada,
+      'proyectos' => $proyectos,
+      'autores' => $autores,
+    ]);
+    return $pdf->stream();
   }
 }

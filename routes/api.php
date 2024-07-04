@@ -380,6 +380,8 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
     //  Capítulos de libros
     Route::prefix('capitulos')->group(function () {
       Route::get('listado', [CapitulosLibrosController::class, 'listado']);
+      Route::post('registrarPaso1', [CapitulosLibrosController::class, 'registrarPaso1']);
+      Route::get('datosPaso1', [CapitulosLibrosController::class, 'datosPaso1']);
     });
 
     //  Participación en eventos

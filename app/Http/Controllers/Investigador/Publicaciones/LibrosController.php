@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Investigador\Publicaciones;
 
 use App\Http\Controllers\Controller;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -102,6 +103,7 @@ class LibrosController extends Controller {
       DB::table('Publicacion_palabra_clave')
         ->where('publicacion_id', '=', $publicacion_id)
         ->delete();
+
       foreach ($request->input('palabras_clave') as $palabra) {
         DB::table('Publicacion_palabra_clave')->insert([
           'publicacion_id' => $publicacion_id,
@@ -157,5 +159,45 @@ class LibrosController extends Controller {
     } else {
       return response()->json(['error' => 'Unauthorized'], 401);
     }
+  }
+
+  public function reporte(Request $request) {
+    $publicacion = DB::table('Publicacion')
+      ->select([
+        'codigo_registro',
+        'isbn',
+        'titulo',
+        'editorial',
+        'ciudad',
+        'pais',
+        'edicion',
+        'volumen',
+        'pagina_total',
+        'fecha_publicacion',
+        'url',
+        'estado'
+      ])
+      ->where('id', '=', $request->query('publicacion_id'))
+      ->first();
+
+    $palabras_clave = DB::table('Publicacion_palabra_clave')
+      ->select([
+        'clave'
+      ])
+      ->where('publicacion_id', '=', $request->query('publicacion_id'))
+      ->pluck('clave')
+      ->implode(', ');
+
+    $utils = new PublicacionesUtilsController();
+    $proyectos = $utils->proyectos_asociados($request);
+    $autores = $utils->listarAutores($request);
+
+    $pdf = Pdf::loadView('investigador.publicaciones.libro', [
+      'publicacion' => $publicacion,
+      'palabras_clave' => $palabras_clave,
+      'proyectos' => $proyectos,
+      'autores' => $autores,
+    ]);
+    return $pdf->stream();
   }
 }
