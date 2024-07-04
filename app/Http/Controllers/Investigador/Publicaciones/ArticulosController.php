@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Investigador\Publicaciones;
 
 use App\Http\Controllers\S3Controller;
-use App\Http\Controllers\Investigador\Publicaciones\PublicacionesUtilsController;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;

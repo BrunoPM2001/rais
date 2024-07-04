@@ -17,7 +17,8 @@ class PropiedadIntelectualController extends Controller {
         'a.titulo',
         'a.updated_at',
         'a.estado',
-        'b.puntaje'
+        'b.puntaje',
+        'a.step'
       )
       ->where('a.estado', '>', 0)
       ->where('b.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)

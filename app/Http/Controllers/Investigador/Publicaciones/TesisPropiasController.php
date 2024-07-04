@@ -20,7 +20,8 @@ class TesisPropiasController extends Controller {
         'a.observaciones_usuario',
         DB::raw('YEAR(a.fecha_publicacion) AS año_publicacion'),
         'b.puntaje',
-        'a.estado'
+        'a.estado',
+        'a.step'
       )
       ->where('a.estado', '>', 0)
       ->where('b.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
@@ -108,7 +109,7 @@ class TesisPropiasController extends Controller {
     }
   }
 
-  public function reporte(Request $request) {
+  public function datosPaso1(Request $request) {
     $esAutor = DB::table('Publicacion_autor')
       ->where('publicacion_id', '=', $request->query('publicacion_id'))
       ->where('investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
@@ -117,7 +118,7 @@ class TesisPropiasController extends Controller {
     if ($esAutor > 0) {
       $publicacion = DB::table('Publicacion')
         ->select([
-          'codigo_registro',
+          'id',
           'titulo',
           'url',
           'tipo_tesis',
@@ -126,25 +127,61 @@ class TesisPropiasController extends Controller {
           'universidad',
           'lugar_publicacion',
           'pais',
-          'estado'
         ])
         ->where('id', '=', $request->query('publicacion_id'))
         ->first();
 
       $palabras_clave = DB::table('Publicacion_palabra_clave')
         ->select([
-          'clave'
+          'clave AS label'
         ])
         ->where('publicacion_id', '=', $request->query('publicacion_id'))
         ->get();
 
-      $pdf = Pdf::loadView('investigador.publicaciones.reporte', [
-        'publicacion' => $publicacion,
+      return [
+        'data' => $publicacion,
         'palabras_clave' => $palabras_clave,
-      ]);
-      return $pdf->stream();
+      ];
     } else {
       return response()->json(['error' => 'Unauthorized'], 401);
     }
+  }
+
+  public function reporte(Request $request) {
+    $publicacion = DB::table('Publicacion')
+      ->select([
+        'codigo_registro',
+        'titulo',
+        'url',
+        'tipo_tesis',
+        'fecha_publicacion',
+        'pagina_total',
+        'universidad',
+        'lugar_publicacion',
+        'pais',
+        'estado'
+      ])
+      ->where('id', '=', $request->query('publicacion_id'))
+      ->first();
+
+    $palabras_clave = DB::table('Publicacion_palabra_clave')
+      ->select([
+        'clave'
+      ])
+      ->where('publicacion_id', '=', $request->query('publicacion_id'))
+      ->pluck('clave')
+      ->implode(', ');
+
+    $utils = new PublicacionesUtilsController();
+    $proyectos = $utils->proyectos_asociados($request);
+    $autores = $utils->listarAutores($request);
+
+    $pdf = Pdf::loadView('investigador.publicaciones.tesis_propia', [
+      'publicacion' => $publicacion,
+      'palabras_clave' => $palabras_clave,
+      'proyectos' => $proyectos,
+      'autores' => $autores,
+    ]);
+    return $pdf->stream();
   }
 }

@@ -392,7 +392,6 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
       Route::get('listado', [TesisPropiasController::class, 'listado']);
       Route::post('registrarPaso1', [TesisPropiasController::class, 'registrarPaso1']);
       Route::get('datosPaso1', [TesisPropiasController::class, 'datosPaso1']);
-      Route::get('reporte', [TesisPropiasController::class, 'reporte']);
     });
 
     //  Tesis propias
@@ -425,6 +424,7 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
       Route::delete('eliminarAutor', [PublicacionesUtilsController::class, 'eliminarAutor']);
       //  Paso 4
       Route::post('enviarPublicacion', [PublicacionesUtilsController::class, 'enviarPublicacion']);
+      Route::get('reporte', [PublicacionesUtilsController::class, 'reporte']);
     });
   });
 

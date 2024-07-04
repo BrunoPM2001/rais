@@ -196,22 +196,90 @@
   <div class="div"></div>
   <div class="foot-1">RAIS - Registro de Actividades de Investigación de San Marcos</div>
 
-  <p class="titulo"><strong>Reporte de publicación</strong></p>
+  <p class="titulo"><strong>Reporte de publicación - Tesis propia</strong></p>
   <div class="cuerpo">
 
     <h5>I. Información general:</h5>
 
-    <p><b>Código de publicación: </b> $proyecto->grupo_nombre</p>
-    <p><b>Título: </b>proyecto->facultad_nombre</p>
-    <p><b>Repositorio de la tesis(Link): </b>$proyecto->area_nombre</p>
-    <p><b>Tipo de tesis: </b>$proyecto->codigo_proyect</p>
-    <p><b>Año de publicación: </b>$proyecto->linea_nombre</p>
-    <p><b>Total de páginas: </b>$proyecto->objetivo</p>
-    <p><b>Universidad: </b>$proyecto->linea </p>
-    <p><b>Ciudad: </b>$proyecto->localizacion </p>
-    <p><b>País: </b>$proyecto->localizacion </p>
-    <p><b>Palabras clave: </b>$proyecto->localizacion </p>
-    <p><b>Estado: </b>$proyecto->localizacion </p>
+    <p>
+      <b>Código de publicación:</b>
+      {{ $publicacion->codigo_registro == null ? 'No tiene código' : $publicacion->codigo_registro }}
+    </p>
+    <p>
+      <b>Título: </b>
+      {{ $publicacion->titulo }}
+    </p>
+    <p>
+      <b>Repositorio de la tesis(Link): </b>
+      {{ $publicacion->url }}
+    </p>
+    <p>
+      <b>Tipo de tesis: </b>
+      {{ $publicacion->tipo_tesis }}
+    </p>
+    <p>
+      <b>Año de publicación: </b>
+      {{ $publicacion->fecha_publicacion }}
+    </p>
+    <p>
+      <b>Total de páginas: </b>
+      {{ $publicacion->pagina_total }}
+    </p>
+    <p>
+      <b>Universidad: </b>
+      {{ $publicacion->universidad }}
+    </p>
+    <p>
+      <b>Ciudad: </b>
+      {{ $publicacion->lugar_publicacion }}
+    </p>
+    <p>
+      <b>País: </b>
+      {{ $publicacion->pais }}
+    </p>
+    <p>
+      <b>Palabras clave: </b>
+      {{ $palabras_clave }}
+    </p>
+    <p>
+      <b>Estado: </b>
+      @switch($publicacion->estado)
+        @case(-1)
+          Eliminado
+        @break
+
+        @case(1)
+          Registrado
+        @break
+
+        @case(2)
+          Observado
+        @break
+
+        @case(5)
+          Enviado
+        @break
+
+        @case(6)
+          En proceso
+        @break
+
+        @case(7)
+          Anulado
+        @break
+
+        @case(8)
+          No registrado
+        @break
+
+        @case(9)
+          Duplicado
+        @break
+
+        @default
+          Sin estado
+      @endswitch
+    </p>
 
     <h5>II. Resultado de proyectos de investigación financiados por:</h5>
 
@@ -224,11 +292,20 @@
         </tr>
       </thead>
       <tbody>
-        <tr>
-          <td>C234234ASD</td>
-          <td>El proyecto más grande gaa</td>
-          <td>UNMSM</td>
-        </tr>
+        @if (sizeof($proyectos) == 0)
+          <tr>
+            <td colspan="3" align="center">
+              No hay proyectos registrados
+            </td>
+          </tr>
+        @endif
+        @foreach ($proyectos as $proyecto)
+          <tr>
+            <td>{{ $proyecto->codigo_proyecto }}</td>
+            <td>{{ $proyecto->nombre_proyecto }}</td>
+            <td>{{ $proyecto->entidad_financiadora }}</td>
+          </tr>
+        @endforeach
       </tbody>
     </table>
 
@@ -244,12 +321,21 @@
         </tr>
       </thead>
       <tbody>
-        <tr>
-          <td>Asesor</td>
-          <td>Jgamboa</td>
-          <td>GUZMAN DUXTAN ALDO JAVIER </td>
-          <td>DOCENTE PERMANENTE</td>
-        </tr>
+        @if (sizeof($autores) == 0)
+          <tr>
+            <td colspan="4" align="center">
+              No hay autores registrados
+            </td>
+          </tr>
+        @endif
+        @foreach ($autores as $autor)
+          <tr>
+            <td>{{ $autor->categoria }}</td>
+            <td>{{ $autor->autor }}</td>
+            <td>{{ $autor->nombres }}</td>
+            <td>{{ $autor->tipo }}</td>
+          </tr>
+        @endforeach
       </tbody>
     </table>
   </div>

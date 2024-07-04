@@ -19,7 +19,8 @@ class TesisAsesoriaController extends Controller {
         'a.observaciones_usuario',
         DB::raw('YEAR(a.fecha_publicacion) AS año_publicacion'),
         'b.puntaje',
-        'a.estado'
+        'a.estado',
+        'a.step'
       )
       ->where('a.estado', '>', 0)
       ->where('b.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)

@@ -146,7 +146,8 @@ class LibrosController extends Controller {
         ->where('publicacion_id', '=', $request->query('publicacion_id'))
         ->get();
 
-      $paises = $this->getPaises();
+      $utils = new PublicacionesUtilsController();
+      $paises = $utils->getPaises();
 
       return [
         'data' => $publicacion,
@@ -156,14 +157,5 @@ class LibrosController extends Controller {
     } else {
       return response()->json(['error' => 'Unauthorized'], 401);
     }
-  }
-
-  public function getPaises() {
-    $paises = DB::table('Pais')
-      ->select([
-        'name AS value'
-      ])->get();
-
-    return $paises;
   }
 }

@@ -309,6 +309,26 @@ class PublicacionesUtilsController extends S3Controller {
     }
   }
 
+  public function reporte(Request $request) {
+    $esAutor = DB::table('Publicacion_autor')
+      ->where('publicacion_id', '=', $request->query('publicacion_id'))
+      ->where('investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+      ->count();
+
+    if ($esAutor > 0) {
+      switch ($request->query('tipo')) {
+        case "tesis_propia":
+          $util = new TesisPropiasController();
+          return $util->reporte($request);
+          break;
+        default:
+          break;
+      }
+    } else {
+      return response()->json(['error' => 'Unauthorized'], 401);
+    }
+  }
+
   /*
   |-----------------------------------------------------------
   | Listado de data
