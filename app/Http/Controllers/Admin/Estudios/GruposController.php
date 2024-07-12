@@ -508,7 +508,8 @@ class GruposController extends S3Controller {
           }
         }
         break;
-      case "estudiante" || "egresado":
+      case "estudiante":
+      case "egresado":
         $investigador = DB::table('Usuario_investigador AS a')
           ->leftJoin('Grupo_integrante AS b', 'b.investigador_id', '=', 'a.id')
           ->leftJoin('Grupo AS c', function ($join) {
@@ -560,51 +561,6 @@ class GruposController extends S3Controller {
       $this->uploadFile($request->file('file'), "grupo-integrante-doc", $nameFile);
 
       switch ($request->input('tipo_registro')) {
-        case 'titular':
-          $investigador = DB::table('Usuario_investigador AS a')
-            ->select(
-              'a.codigo',
-              'a.dependencia_id',
-              'a.facultad_id',
-              'a.instituto_id',
-            )
-            ->where('a.id', '=', $request->input('investigador_id'))
-            ->first();
-
-          DB::table('Grupo_integrante')
-            ->insert([
-              'grupo_id' => $request->input('grupo_id'),
-              'facultad_id' => $investigador->facultad_id,
-              'dependencia_id' => $investigador->dependencia_id,
-              'instituto_id' => $investigador->instituto_id,
-              'investigador_id' => $request->input('investigador_id'),
-              'codigo' => $investigador->codigo,
-              'tipo' => $request->input('tipo'),
-              'condicion' => $request->input('condicion'),
-              'fecha_inclusion' => $request->input('fecha_inclusion'),
-              'resolucion_oficina' => $request->input('resolucion_oficina'),
-              'resolucion' => $request->input('resolucion'),
-              'resolucion_fecha' => $request->input('resolucion_fecha'),
-              'estado' => '1',
-              'created_at' => $date,
-              'updated_at' => $date
-            ]);
-
-          DB::table('Grupo_integrante_doc')
-            ->insert([
-              'grupo_id' => $request->input('grupo_id'),
-              'investigador_id' => $request->input('investigador_id'),
-              'nombre' => 'Formato de adhesión',
-              'key' => $name,
-              'fecha' => $date,
-              'estado' => 1
-            ]);
-
-          return [
-            'message' => 'success',
-            'detail' => 'Miembro registrado exitosamente'
-          ];
-          break;
         case 'externo':
           $investigador_id = DB::table('Usuario_investigador')
             ->insertGetId([
@@ -657,7 +613,8 @@ class GruposController extends S3Controller {
             'detail' => 'Miembro registrado exitosamente'
           ];
           break;
-        case 'estudiante' || 'egresado':
+        case 'estudiante':
+        case 'egresado':
 
           $id_investigador = $request->input('investigador_id');
 
@@ -722,10 +679,46 @@ class GruposController extends S3Controller {
           break;
       }
     } else {
-      return [
-        'message' => 'error',
-        'detail' => 'Error cargando formato de adhesión'
-      ];
+      if ($request->input('tipo_registro') == 'titular') {
+        $investigador = DB::table('Usuario_investigador AS a')
+          ->select(
+            'a.codigo',
+            'a.dependencia_id',
+            'a.facultad_id',
+            'a.instituto_id',
+          )
+          ->where('a.id', '=', $request->input('investigador_id'))
+          ->first();
+
+        DB::table('Grupo_integrante')
+          ->insert([
+            'grupo_id' => $request->input('grupo_id'),
+            'facultad_id' => $investigador->facultad_id,
+            'dependencia_id' => $investigador->dependencia_id,
+            'instituto_id' => $investigador->instituto_id,
+            'investigador_id' => $request->input('investigador_id'),
+            'codigo' => $investigador->codigo,
+            'tipo' => $request->input('tipo'),
+            'condicion' => $request->input('condicion'),
+            'fecha_inclusion' => $request->input('fecha_inclusion'),
+            'resolucion_oficina' => $request->input('resolucion_oficina'),
+            'resolucion' => $request->input('resolucion'),
+            'resolucion_fecha' => $request->input('resolucion_fecha'),
+            'estado' => '1',
+            'created_at' => $date,
+            'updated_at' => $date
+          ]);
+
+        return [
+          'message' => 'success',
+          'detail' => 'Miembro registrado exitosamente'
+        ];
+      } else {
+        return [
+          'message' => 'error',
+          'detail' => 'Error cargando formato de adhesión'
+        ];
+      }
     }
   }
 

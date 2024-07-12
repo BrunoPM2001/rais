@@ -57,6 +57,23 @@ class Informe_economicoController extends S3Controller {
         ->first();
 
       //  Cifras
+      $porcentaje = 0;
+      $rendido = DB::table('Geco_proyecto_presupuesto AS a')
+        ->join('Partida AS b', 'b.id', '=', 'a.partida_id')
+        ->select([
+          DB::raw("SUM(a.monto) AS total"),
+          DB::raw("SUM(a.monto_rendido) AS rendido")
+        ])
+        ->whereIn('b.tipo', ['Bienes', 'Servicios'])
+        ->where('geco_proyecto_id', '=', $request->query('id'))
+        ->first();
+
+      if ($rendido->total <= $rendido->rendido) {
+        $porcentaje = 100;
+      } else {
+        $porcentaje = round(($rendido->rendido / $rendido->total) * 100, 2);
+      }
+
       $partidas = DB::table('Geco_proyecto_presupuesto AS a')
         ->join('Partida AS b', 'b.id', '=', 'a.partida_id')
         ->where('a.geco_proyecto_id', '=', $request->query('id'))
@@ -204,6 +221,7 @@ class Informe_economicoController extends S3Controller {
 
       return [
         'cifras' => [
+          'rendido' => $porcentaje,
           'partidas' => $partidas,
           'comprobantes' => $comprobantes_aprobados,
           'transferencias' => $transferencias_aprobadas
@@ -221,7 +239,7 @@ class Informe_economicoController extends S3Controller {
   }
 
   public function listarPartidas(Request $request) {
-    if (in_array($request->query('tipo'), ["RMOVILIDAD", "BVIAJE"])) {
+    if (in_array($request->query('tipo'), ["RMOVILIDAD", "BVIAJE", "DJURADA"])) {
       $proyecto = DB::table('Geco_proyecto AS a')
         ->join('Proyecto AS b', 'b.id', '=', 'a.proyecto_id')
         ->select([
@@ -446,6 +464,29 @@ class Informe_economicoController extends S3Controller {
           ])
           ->where('id', '=', $request->query('id'))
           ->first();
+        break;
+      case "DJURADA":
+        $documento = DB::table('Geco_documento')
+          ->select([
+            'tipo',
+            'viatico',
+            'ciudad_origen',
+            'fecha',
+            'investigador_id',
+          ])
+          ->where('id', '=', $request->query('id'))
+          ->first();
+
+        $integrantes = DB::table('Proyecto_integrante AS a')
+          ->join('Geco_proyecto AS b', 'b.proyecto_id', '=', 'a.proyecto_id')
+          ->join('Usuario_investigador AS c', 'c.id', '=', 'a.investigador_id')
+          ->select([
+            'a.investigador_id AS value',
+            DB::raw("CONCAT(c.apellido1, ' ', c.apellido2, ', ', c.nombres) AS label")
+          ])
+          ->where('b.id', '=', $request->query('geco_proyecto_id'))
+          ->get();
+
         break;
     }
 

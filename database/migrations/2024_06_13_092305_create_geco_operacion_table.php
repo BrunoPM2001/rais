@@ -16,6 +16,7 @@ return new class extends Migration {
       $table->text('observacion');
       $table->text('justificacion');
       $table->dateTime('fecha_aprobado');
+      $table->longText('audit')->nullable();
       $table->timestamps();
 
       //  Fks

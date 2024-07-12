@@ -253,4 +253,26 @@ class ArticulosController extends S3Controller {
     ]);
     return $pdf->stream();
   }
+
+  public function validarPublicacion(Request $request) {
+    $investigador_id = $request->attributes->get('token_decoded')->investigador_id;
+    $query = $request->query('query');
+
+    $subquery = DB::table('Publicacion_autor')
+      ->select('publicacion_id')
+      ->where('investigador_id', '=', $investigador_id);
+
+    $publicaciones = DB::table('Publicacion AS a')
+      ->whereNotIn('a.id', $subquery)
+      ->select(
+        'a.id',
+        'a.titulo AS value'
+      )
+      ->where('a.titulo', 'LIKE', '%' . $query . '%')
+      ->groupBy('a.id')
+      ->limit(10)
+      ->get();
+
+    return $publicaciones;
+  }
 }

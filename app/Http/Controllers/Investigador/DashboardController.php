@@ -3,12 +3,17 @@
 namespace App\Http\Controllers\Investigador;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Investigador\Perfil\OrcidController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller {
 
   public function getData(Request $request) {
+    //  Detalles
+    $orcid = new OrcidController();
+    $isOrcidValid = $orcid->validarRegistro($request);
+
     //  Métricas
     $grupos = DB::table('Grupo_integrante')
       ->where('investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
@@ -62,6 +67,9 @@ class DashboardController extends Controller {
       ->get();
 
     return [
+      'detalles' => [
+        'orcid' => $isOrcidValid
+      ],
       'metricas' => [
         'grupos' => $grupos,
         'proyectos' => $proyectos,

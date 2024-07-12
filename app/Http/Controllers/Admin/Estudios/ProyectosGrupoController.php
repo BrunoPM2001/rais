@@ -2,15 +2,19 @@
 
 namespace App\Http\Controllers\Admin\Estudios;
 
+use App\Http\Controllers\Admin\Estudios\Proyectos\EciController;
 use App\Http\Controllers\S3Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use PhpOffice\PhpWord\IOFactory;
+use PhpOffice\PhpWord\PhpWord;
+use PhpOffice\PhpWord\Shared\Html;
 
 class ProyectosGrupoController extends S3Controller {
   public function listado($periodo) {
     $proyectos = DB::table('Proyecto AS a')
       ->join('Grupo AS b', 'b.id', '=', 'a.grupo_id')
-      ->join('Linea_investigacion AS c', 'c.id', '=', 'a.linea_investigacion_id')
+      ->leftJoin('Linea_investigacion AS c', 'c.id', '=', 'a.linea_investigacion_id')
       ->leftJoin('Proyecto_integrante AS d', 'd.proyecto_id', '=', 'a.id')
       ->join('Facultad AS e', 'e.id', '=', 'b.facultad_id')
       ->leftJoin('Proyecto_presupuesto AS f', 'f.proyecto_id', '=', 'a.id')
@@ -37,10 +41,49 @@ class ProyectosGrupoController extends S3Controller {
     return ['data' => $proyectos];
   }
 
-  public function detalle($proyecto_id) {
+  public function dataProyecto(Request $request) {
+    $tipo = DB::table('Proyecto')
+      ->select(['tipo_proyecto'])
+      ->where('id', '=', $request->query('proyecto_id'))
+      ->first();
+
+    switch ($tipo->tipo_proyecto) {
+      case "PCONFIGI":
+        $detalle = $this->detalle($request);
+        $miembros = $this->miembros($request);
+        $descripcion = $this->descripcion($request);
+        $actividades = $this->actividades($request);
+        $presupuesto = $this->presupuesto($request);
+
+        return [
+          'detalle' => $detalle,
+          'miembros' => $miembros,
+          'descripcion' => $descripcion,
+          'actividades' => $actividades,
+          'presupuesto' => $presupuesto,
+        ];
+      case "ECI":
+        $ctrl = new EciController();
+        $detalle = $ctrl->detalle($request);
+        $especificaciones = $ctrl->especificaciones($request);
+        $impacto = $ctrl->impacto($request);
+        $descripcion = $this->descripcion($request);
+        $presupuesto = $this->presupuesto($request);
+
+        return [
+          'detalle' => $detalle,
+          'descripcion' => $descripcion,
+          'especificaciones' => $especificaciones,
+          'impacto' => $impacto,
+          'presupuesto' => $presupuesto,
+        ];
+    }
+  }
+
+  public function detalle(Request $request) {
     $detalle = DB::table('Proyecto AS a')
-      ->join('Linea_investigacion AS b', 'b.id', '=', 'a.linea_investigacion_id')
-      ->join('Ocde AS c', 'c.id', '=', 'a.ocde_id')
+      ->leftJoin('Linea_investigacion AS b', 'b.id', '=', 'a.linea_investigacion_id')
+      ->leftJoin('Ocde AS c', 'c.id', '=', 'a.ocde_id')
       ->select(
         'a.titulo',
         'a.codigo_proyecto',
@@ -57,10 +100,10 @@ class ProyectosGrupoController extends S3Controller {
         'c.linea AS ocde',
         'a.localizacion'
       )
-      ->where('a.id', '=', $proyecto_id)
+      ->where('a.id', '=', $request->query('proyecto_id'))
       ->get();
 
-    return ['data' => $detalle];
+    return $detalle;
   }
 
   public function updateDetalle(Request $request) {
@@ -88,97 +131,61 @@ class ProyectosGrupoController extends S3Controller {
     }
   }
 
-  public function miembros($proyecto_id) {
+  public function miembros(Request $request) {
     $miembros = DB::table('Proyecto_integrante AS a')
       ->join('Proyecto_integrante_tipo AS b', 'b.id', '=', 'a.proyecto_integrante_tipo_id')
       ->join('Usuario_investigador AS c', 'c.id', '=', 'a.investigador_id')
       ->select(
+        'a.id',
         'b.nombre AS tipo_integrante',
         DB::raw('CONCAT(c.apellido1, " ", c.apellido2, " ", c.nombres) AS nombre'),
         'c.tipo AS tipo_investigador'
       )
-      ->where('a.proyecto_id', '=', $proyecto_id)
+      ->where('a.proyecto_id', '=', $request->query('proyecto_id'))
       ->orderBy('b.id')
       ->get();
 
-    return ['data' => $miembros];
+    return $miembros;
   }
 
-  public function cartas($proyecto_id) {
-    $s3 = $this->s3Client;
-
+  public function cartas(Request $request) {
     $cartas = DB::table('Proyecto_doc')
       ->select(
         'id',
         'nombre',
         'archivo'
       )
-      ->where('proyecto_id', '=', $proyecto_id)
-      ->get();
+      ->where('proyecto_id', '=', $request->query('proyecto_id'))
+      ->get()
+      ->map(function ($item) {
+        $item->archivo = "/minio/proyecto-doc/" . $item->archivo;
+        return $item;
+      });
 
-    //  Obtener objetos del bucket
-    foreach ($cartas as $carta) {
-      $url = null;
-      if ($carta->archivo != null) {
-        $cmd = $s3->getCommand('GetObject', [
-          'Bucket' => 'proyecto-doc',
-          'Key' => $carta->archivo
-        ]);
-        //  Generar url temporal
-        $url = (string) $s3->createPresignedRequest($cmd, '+5 minutes')->getUri();
-      }
-      $carta->url = $url;
-    }
-
-    return ['data' => $cartas];
+    return $cartas;
   }
 
-  public function descripcion($proyecto_id) {
+  public function descripcion(Request $request) {
     $descripcion = DB::table('Proyecto_descripcion')
       ->select(
         'id',
         'codigo',
         'detalle'
       )
-      ->where('proyecto_id', '=', $proyecto_id)
+      ->where('proyecto_id', '=', $request->query('proyecto_id'))
       ->get();
 
     $detalles = [];
-    foreach ($descripcion  as $data) {
-      switch ($data->codigo) {
-        case "resumen_ejecutivo":
-          $detalles["resumen_ejecutivo"] = $data->detalle;
-          break;
-        case "antecedentes":
-          $detalles["antecedentes"] = $data->detalle;
-          break;
-        case "objetivos":
-          $detalles["objetivos"] = $data->detalle;
-          break;
-        case "justificacion":
-          $detalles["justificacion"] = $data->detalle;
-          break;
-        case "hipotesis":
-          $detalles["hipotesis"] = $data->detalle;
-          break;
-        case "metodologia_trabajo":
-          $detalles["metodologia_trabajo"] = $data->detalle;
-          break;
-        case "referencias_bibliograficas":
-          $detalles["referencias_bibliograficas"] = $data->detalle;
-          break;
-        case "contribucion_impacto":
-          $detalles["contribucion_impacto"] = $data->detalle;
-          break;
-        default:
-          break;
+    foreach ($descripcion as $data) {
+      if (isset($data->codigo)) {
+        $detalles[$data->codigo] = $data->detalle;
       }
     }
 
-    return ['data' => $detalles];
+    return $detalles;
   }
 
-  public function actividades($proyecto_id) {
+  public function actividades(Request $request) {
     $actividades = DB::table('Proyecto_actividad')
       ->select(
         'id',
@@ -186,13 +193,13 @@ class ProyectosGrupoController extends S3Controller {
         'fecha_inicio',
         'fecha_fin'
       )
-      ->where('proyecto_id', '=', $proyecto_id)
+      ->where('proyecto_id', '=', $request->query('proyecto_id'))
       ->get();
 
-    return ['data' => $actividades];
+    return $actividades;
   }
 
-  public function presupuesto($proyecto_id) {
+  public function presupuesto(Request $request) {
     $presupuesto = DB::table('Proyecto_presupuesto AS a')
       ->join('Partida AS b', 'b.id', '=', 'a.partida_id')
       ->select(
@@ -201,7 +208,7 @@ class ProyectosGrupoController extends S3Controller {
         'a.justificacion',
         'a.monto',
       )
-      ->where('a.proyecto_id', '=', $proyecto_id)
+      ->where('a.proyecto_id', '=', $request->query('proyecto_id'))
       ->orderBy('a.tipo')
       ->get();
 
@@ -227,46 +234,106 @@ class ProyectosGrupoController extends S3Controller {
       }
     }
 
-    $info["bienes_porcentaje"] = number_format(($info["bienes_monto"] / ($info["bienes_monto"] + $info["servicios_monto"] + $info["otros_monto"])) * 100, 2);
-    $info["servicios_porcentaje"] = number_format(($info["servicios_monto"] / ($info["bienes_monto"] + $info["servicios_monto"] + $info["otros_monto"])) * 100, 2);
-    $info["otros_porcentaje"] = number_format(($info["otros_monto"] / ($info["bienes_monto"] + $info["servicios_monto"] + $info["otros_monto"])) * 100, 2);
+    $div = ($info["bienes_monto"] + $info["servicios_monto"] + $info["otros_monto"]);
+
+    if ($div != 0) {
+      $info["bienes_porcentaje"] = number_format(($info["bienes_monto"] / $div) * 100, 2);
+      $info["servicios_porcentaje"] = number_format(($info["servicios_monto"] / $div) * 100, 2);
+      $info["otros_porcentaje"] = number_format(($info["otros_monto"] / $div) * 100, 2);
+    } else {
+      $info["bienes_porcentaje"] = 0;
+      $info["servicios_porcentaje"] = 0;
+      $info["otros_porcentaje"] = 0;
+    }
 
     return ['data' => $presupuesto, 'info' => $info];
   }
 
-  public function responsable($proyecto_id) {
-    $responsable = DB::table('Proyecto_integrante AS a')
-      ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
-      ->leftJoin('Docente_categoria AS c', 'c.categoria_id', '=', 'b.docente_categoria')
-      ->leftJoin('Facultad AS d', 'd.id', '=', 'b.facultad_id')
-      ->leftJoin('Dependencia AS e', 'e.id', '=', 'b.dependencia_id')
-      ->leftJoin('Grupo AS f', 'f.id', '=', 'a.grupo_id')
+  public function exportToWord(Request $request) {
+    $descripcion = DB::table('Proyecto_descripcion')
       ->select(
-        # Datos personales
-        DB::raw('CONCAT(b.apellido1, " " , b.apellido2) AS apellidos'),
-        'b.nombres',
-        'b.doc_numero',
-        'b.telefono_movil',
-        'b.telefono_trabajo',
-        # Datos profesionales
-        'b.especialidad',
-        'b.titulo_profesional',
-        'b.grado',
-        'b.tipo',
-        DB::raw('CONCAT(c.categoria, " | ", c.clase) AS docente_categoria'),
-        # Datos institucionales
-        'b.codigo',
-        'd.nombre AS facultad',
-        'e.dependencia',
-        'b.email3',
-        # Datos grupo
-        'f.grupo_nombre',
-        'f.grupo_nombre_corto'
+        'id',
+        'codigo',
+        'detalle'
       )
-      ->where('a.condicion', '=', 'Responsable')
-      ->where('a.proyecto_id', '=', $proyecto_id)
+      ->where('proyecto_id', '=', $request->query('proyecto_id'))
       ->get();
 
-    return ['data' => $responsable];
+    $detalles = [];
+    foreach ($descripcion  as $data) {
+      switch ($data->codigo) {
+        case "resumen_ejecutivo":
+          $detalles["resumen_ejecutivo"] = $data->detalle;
+          break;
+        case "antecedentes":
+          $detalles["antecedentes"] = $data->detalle;
+          break;
+        case "objetivos":
+          $detalles["objetivos"] = $data->detalle;
+          break;
+        case "justificacion":
+          $detalles["justificacion"] = $data->detalle;
+          break;
+        case "hipotesis":
+          $detalles["hipotesis"] = $data->detalle;
+          break;
+        case "metodologia_trabajo":
+          $detalles["metodologia_trabajo"] = $data->detalle;
+          break;
+        case "contribucion_impacto":
+          $detalles["contribucion_impacto"] = $data->detalle;
+          break;
+        default:
+          break;
+      }
+    }
+
+    $phpWord = new PhpWord();
+    $section = $phpWord->addSection();
+
+    $section->addText("Resumen ejecutivo:", array('name' => 'Calibri', 'size' => 12, 'bold' => true), array('alignment' => 'center'));
+    $resumen_ejecutivo = htmlspecialchars($detalles["resumen_ejecutivo"], ENT_QUOTES, 'UTF-8');
+    // Html::addHtml($section, $resumen_ejecutivo);
+    $section->addText($resumen_ejecutivo);
+
+    $section->addText("Antecedentes:", array('name' => 'Calibri', 'size' => 12, 'bold' => true), array('alignment' => 'center'));
+    $antecedentes = htmlspecialchars($detalles["antecedentes"], ENT_QUOTES, 'UTF-8');
+    // Html::addHtml($section, $antecedentes);
+    $section->addText($antecedentes);
+
+    $section->addText("Objetivos:", array('name' => 'Calibri', 'size' => 12, 'bold' => true), array('alignment' => 'center'));
+    $objetivos = htmlspecialchars($detalles["objetivos"], ENT_QUOTES, 'UTF-8');
+    // Html::addHtml($section, $objetivos);
+    $section->addText($objetivos);
+
+    $section->addText("Justificación:", array('name' => 'Calibri', 'size' => 12, 'bold' => true), array('alignment' => 'center'));
+    $justificacion = htmlspecialchars($detalles["justificacion"], ENT_QUOTES, 'UTF-8');
+    // Html::addHtml($section, $justificacion);
+    $section->addText($justificacion);
+
+    $section->addText("Hipótesis:", array('name' => 'Calibri', 'size' => 12, 'bold' => true), array('alignment' => 'center'));
+    $hipotesis = htmlspecialchars($detalles["hipotesis"], ENT_QUOTES, 'UTF-8');
+    // Html::addHtml($section, $hipotesis);
+    $section->addText($hipotesis);
+
+    $section->addText("Metodología de trabajo:", array('name' => 'Calibri', 'size' => 12, 'bold' => true), array('alignment' => 'center'));
+    $metodologia_trabajo = htmlspecialchars($detalles["metodologia_trabajo"], ENT_QUOTES, 'UTF-8');
+    // Html::addHtml($section, $metodologia_trabajo);
+    $section->addText($metodologia_trabajo);
+
+    $section->addText("Contribución:", array('name' => 'Calibri', 'size' => 12, 'bold' => true), array('alignment' => 'center'));
+    $contribucion_impacto = htmlspecialchars($detalles["contribucion_impacto"], ENT_QUOTES, 'UTF-8');
+    // Html::addHtml($section, $contribucion_impacto);
+    $section->addText($contribucion_impacto);
+
+    $objWriter = IOFactory::createWriter($phpWord, 'Word2007');
+
+    // Crear un archivo temporal en el almacenamiento
+    $fileName = 'formato_word.docx';
+    $tempPath = storage_path('app/' . $fileName);
+    $objWriter->save($tempPath);
+
+    // Devolver el archivo como una respuesta de descarga
+    return response()->download($tempPath)->deleteFileAfterSend();
   }
 }

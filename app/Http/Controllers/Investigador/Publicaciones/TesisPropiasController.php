@@ -138,9 +138,13 @@ class TesisPropiasController extends Controller {
         ->where('publicacion_id', '=', $request->query('publicacion_id'))
         ->get();
 
+      $utils = new PublicacionesUtilsController();
+      $paises = $utils->getPaises();
+
       return [
         'data' => $publicacion,
         'palabras_clave' => $palabras_clave,
+        'paises' => $paises
       ];
     } else {
       return response()->json(['error' => 'Unauthorized'], 401);

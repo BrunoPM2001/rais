@@ -187,7 +187,7 @@
           <h6>Justificación</h6>
         @break
 
-        @case('contribucion')
+        @case('contribucion_impacto')
           <h6>Contribucion e impacto</h6>
         @break
 

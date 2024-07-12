@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Admin\Economia;
 
 use App\Http\Controllers\Controller;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -157,5 +159,180 @@ class GestionTransferenciasController extends Controller {
       ->get();
 
     return $movimientos;
+  }
+
+  public function calificar(Request $request) {
+    $solicitud = DB::table('Geco_operacion')
+      ->select([
+        'id',
+        'created_at'
+      ])
+      ->where('geco_proyecto_id', '=', $request->input('geco_proyecto_id'))
+      ->orderByDesc('created_at')
+      ->first();
+
+    $audit = [
+      'admin' => [
+        'nombre' => $request->attributes->get('token_decoded')->nombre,
+        'apellidos' => $request->attributes->get('token_decoded')->apellidos,
+        'autoridad_nombre' => $request->input('autoridad')
+      ]
+    ];
+
+    $audit = json_encode($audit);
+
+    if ($request->input('estado') == 1) {
+      DB::table('Geco_operacion')
+        ->where('id', '=', $solicitud->id)
+        ->update([
+          'estado' => $request->input('estado'),
+          'observacion' => $request->input('observacion'),
+          'audit' => $audit,
+          'fecha_aprobado' => Carbon::now(),
+          'updated_at' => Carbon::now(),
+        ]);
+
+      DB::table('Geco_proyecto_presupuesto')
+        ->where('geco_proyecto_id', '=', $request->input('geco_proyecto_id'))
+        ->whereNotNull('monto_temporal')
+        ->where('monto_temporal', '>', '0')
+        ->update([
+          'monto' => DB::raw('monto_temporal'),
+        ]);
+    } else {
+      DB::table('Geco_operacion')
+        ->where('id', '=', $solicitud->id)
+        ->update([
+          'estado' => $request->input('estado'),
+          'observacion' => $request->input('observacion'),
+          'audit' => $audit,
+          'updated_at' => Carbon::now()
+        ]);
+    }
+
+    DB::table('Geco_proyecto_presupuesto')
+      ->where('geco_proyecto_id', '=', $request->input('geco_proyecto_id'))
+      ->update([
+        'monto_temporal' => null,
+        'updated_at' => Carbon::now()
+      ]);
+
+    return ['message' => 'success', 'detail' => 'Transferencia calificada con éxito con éxito'];
+  }
+
+  public function reporte(Request $request) {
+
+    $responsable = DB::table('Proyecto_integrante AS a')
+      ->leftJoin('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
+      ->select(
+        'a.proyecto_id',
+        DB::raw('CONCAT(b.apellido1, " " , b.apellido2, ", ", b.nombres) AS responsable')
+      )
+      ->where('condicion', '=', 'Responsable');
+
+    $proyecto = DB::table('Geco_proyecto AS a')
+      ->join('Proyecto AS b', 'b.id', '=', 'a.proyecto_id')
+      ->join('Facultad AS c', 'c.id', '=', 'b.facultad_id')
+      ->leftJoinSub($responsable, 'res', 'res.proyecto_id', '=', 'b.id')
+      ->select([
+        'b.periodo',
+        'b.tipo_proyecto',
+        'b.codigo_proyecto',
+        'b.titulo',
+        'c.nombre AS facultad',
+        DB::raw('CASE 
+            WHEN b.estado = 0 THEN "No Aprobado"
+            WHEN b.estado = 1 THEN "Aprobado"
+            WHEN b.estado = 3 THEN "En evaluación"
+            WHEN b.estado = 5 THEN "Enviado"
+            WHEN b.estado = 5 THEN "En proceso"
+            WHEN b.estado = 8 THEN "Sustentado"
+            WHEN b.estado = 9 THEN "En ejecución"
+            WHEN b.estado = 10 THEN "Ejecutado"
+            WHEN b.estado = 11 THEN "Concluido"
+            ELSE "Desconocido"
+          END AS estado'),
+        'res.responsable',
+      ])
+      ->where('a.id', '=', $request->query('geco_proyecto_id'))
+      ->first();
+
+    $solicitud = DB::table('Geco_operacion')
+      ->select([
+        'id',
+        'justificacion',
+        DB::raw("CASE 
+            WHEN estado = 1 THEN 'Completado'
+            WHEN estado = 2 THEN 'Rechazado'
+            WHEN estado = '-1' THEN 'Rechazado'
+            WHEN estado = 3 THEN 'Nueva operación'
+            ELSE 'Desconocido'
+          END AS estado"),
+        'created_at'
+      ])
+      ->where('geco_proyecto_id', '=', $request->query('geco_proyecto_id'))
+      ->orderByDesc('created_at')
+      ->first();
+
+    $subQuery = DB::table('Geco_operacion')
+      ->select([
+        'id',
+        'geco_proyecto_id',
+        'estado'
+      ])
+      ->where('geco_proyecto_id', '=', $request->query('geco_proyecto_id'))
+      ->orderByDesc('created_at')
+      ->limit(1);
+
+    $subQuery1 = DB::table('Geco_operacion_movimiento')
+      ->select([
+        'id',
+        'geco_proyecto_presupuesto_id',
+        'geco_operacion_id',
+        'operacion',
+        'monto',
+        'monto_original'
+      ]);
+
+    if ($solicitud->estado == "Nueva operación") {
+      $partidas = DB::table('Geco_proyecto_presupuesto AS a')
+        ->join('Partida AS b', 'b.id', '=', 'a.partida_id')
+        ->select([
+          'b.tipo',
+          'b.codigo',
+          'b.partida',
+          'a.monto AS presupuesto',
+          'a.monto_temporal AS nuevo_presupuesto'
+        ])
+        ->where('a.geco_proyecto_id', '=', $request->query('geco_proyecto_id'))
+        ->groupBy('a.id')
+        ->orderBy('b.tipo')
+        ->get();
+    } else {
+      $partidas = DB::table('Geco_proyecto_presupuesto AS a')
+        ->join('Partida AS b', 'b.id', '=', 'a.partida_id')
+        ->leftJoinSub($subQuery, 'c', function ($join) {
+          $join->on('c.geco_proyecto_id', '=', 'a.geco_proyecto_id');
+        })
+        ->leftJoinSub($subQuery1, 'd', function ($join) {
+          $join->on('d.geco_operacion_id', '=', 'c.id')
+            ->on('d.geco_proyecto_presupuesto_id', '=', 'a.id');
+        })
+        ->select([
+          'b.tipo',
+          'b.codigo',
+          'b.partida',
+          DB::raw("COALESCE(d.monto_original, a.monto) AS presupuesto"),
+          'd.operacion',
+          'a.monto AS nuevo_presupuesto'
+        ])
+        ->where('a.geco_proyecto_id', '=', $request->query('geco_proyecto_id'))
+        ->groupBy('a.id')
+        ->orderBy('b.tipo')
+        ->get();
+    }
+
+    $pdf = Pdf::loadView('admin.economia.transferencia', ['proyecto' => $proyecto, 'solicitud' => $solicitud, 'partidas' => $partidas]);
+    return $pdf->stream();
   }
 }

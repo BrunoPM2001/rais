@@ -697,11 +697,11 @@ class ProCTIController extends S3Controller {
 
     DB::table('Proyecto_descripcion')
       ->where('proyecto_id', '=', $request->input('proyecto_id'))
-      ->where('codigo', '=', 'contribucion')
+      ->where('codigo', '=', 'contribucion_impacto')
       ->updateOrInsert(
         [
           'proyecto_id' => $request->input('proyecto_id'),
-          'codigo' => 'contribucion'
+          'codigo' => 'contribucion_impacto'
         ],
         [
           'detalle' => $request->input('contribucion')

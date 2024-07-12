@@ -160,16 +160,18 @@ class PublicacionesUtilsController extends S3Controller {
   }
 
   public function searchEstudianteRegistrado(Request $request) {
-    $investigadores = DB::table('Usuario_investigador')
+    $investigadores = DB::table('Repo_sum AS a')
+      ->leftJoin('Usuario_investigador AS b', 'b.codigo', '=', 'a.codigo_alumno')
       ->select(
-        DB::raw("CONCAT(doc_numero, ' | ', codigo, ' | ', apellido1, ' ', apellido2, ' ', nombres) AS value"),
-        'id',
-        'nombres',
-        'apellido1',
-        'apellido2',
-        'tipo'
+        DB::raw("CONCAT(TRIM(a.codigo_alumno), ' | ', a.dni, ' | ', a.apellido_paterno, ' ', a.apellido_materno, ', ', a.nombres, ' | ', a.programa) AS value"),
+        'a.id',
+        'b.id AS investigador_id',
+        'a.codigo_alumno',
+        'a.apellido_paterno',
+        'a.apellido_materno',
+        'a.nombres',
+        'a.programa',
       )
-      ->where('tipo', 'LIKE', 'ESTUDIANTE%')
       ->having('value', 'LIKE', '%' . $request->query('query') . '%')
       ->limit(10)
       ->get();
@@ -223,11 +225,46 @@ class PublicacionesUtilsController extends S3Controller {
           'updated_at' => Carbon::now()
         ]);
         break;
-      default:
+      case "estudiante":
+        $id_investigador = $request->input('investigador_id');
+
+        if ($id_investigador == null) {
+          $sumData = DB::table('Repo_sum')
+            ->select([
+              'id_facultad',
+              'codigo_alumno',
+              'nombres',
+              'apellido_paterno',
+              'apellido_materno',
+              'dni',
+              'sexo',
+              'correo_electronico',
+            ])
+            ->where('id', '=', $request->input('sum_id'))
+            ->first();
+
+          $id_investigador = DB::table('Usuario_investigador')
+            ->insertGetId([
+              'facultad_id' => $sumData->id_facultad,
+              'codigo' => $sumData->codigo_alumno,
+              'nombres' => $sumData->nombres,
+              'apellido1' => $sumData->apellido_paterno,
+              'apellido2' => $sumData->apellido_materno,
+              'doc_tipo' => 'DNI',
+              'doc_numero' => $sumData->dni,
+              'sexo' => $sumData->sexo,
+              'email3' => $sumData->correo_electronico,
+              'created_at' => Carbon::now(),
+              'updated_at' => Carbon::now(),
+              'tipo_investigador' => 'Estudiante',
+              'tipo' => 'Estudiante'
+            ]);
+        }
+
         DB::table('Publicacion_autor')->insert([
           'publicacion_id' => $request->input('publicacion_id'),
-          'investigador_id' => $request->input('investigador_id'),
-          'tipo' => $request->input('tipo'),
+          'investigador_id' => $id_investigador,
+          'tipo' => "interno",
           'autor' => $request->input('autor'),
           'categoria' => $request->input('categoria'),
           'filiacion' => $request->input('filiacion'),
@@ -236,6 +273,8 @@ class PublicacionesUtilsController extends S3Controller {
           'created_at' => Carbon::now(),
           'updated_at' => Carbon::now()
         ]);
+        break;
+      default:
         break;
     }
 
@@ -338,6 +377,14 @@ class PublicacionesUtilsController extends S3Controller {
           break;
         case "tesis_propia":
           $util = new TesisPropiasController();
+          return $util->reporte($request);
+          break;
+        case "tesis_asesoria":
+          $util = new TesisAsesoriaController();
+          return $util->reporte($request);
+          break;
+        case "evento":
+          $util = new EventoController();
           return $util->reporte($request);
           break;
         default:

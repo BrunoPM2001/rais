@@ -17,6 +17,7 @@ use App\Http\Controllers\Admin\Estudios\InformesTecnicosController;
 use App\Http\Controllers\Admin\Estudios\InvestigadoresController;
 use App\Http\Controllers\Admin\Estudios\LaboratoriosController;
 use App\Http\Controllers\Admin\Estudios\MonitoreoController;
+use App\Http\Controllers\Admin\Estudios\Proyectos\EciController;
 use App\Http\Controllers\Admin\Estudios\ProyectosFEXController;
 use App\Http\Controllers\Admin\Estudios\ProyectosGrupoController;
 use App\Http\Controllers\Admin\Estudios\PublicacionesController;
@@ -28,6 +29,7 @@ use App\Http\Controllers\Admin\Reportes\EstudioController;
 use App\Http\Controllers\Admin\Reportes\GrupoController;
 use App\Http\Controllers\Admin\Reportes\PresupuestoController;
 use App\Http\Controllers\Admin\Reportes\ProyectoController;
+use App\Http\Controllers\Evaluador\Evaluaciones\EvaluadorProyectosController;
 use App\Http\Controllers\Investigador\Actividades\AsesoriaTesisPosController;
 use App\Http\Controllers\Investigador\Actividades\AsesoriaTesisPreController;
 use App\Http\Controllers\Investigador\Actividades\ComiteEditorialController;
@@ -48,6 +50,8 @@ use App\Http\Controllers\Investigador\Publicaciones\CapitulosLibrosController;
 use App\Http\Controllers\Investigador\Publicaciones\EventoController;
 use App\Http\Controllers\Investigador\Grupo\GrupoController as InvestigadorGrupoController;
 use App\Http\Controllers\Investigador\Informes\Informe_economicoController;
+use App\Http\Controllers\Investigador\Perfil\OrcidController;
+use App\Http\Controllers\Investigador\Perfil\PerfilController;
 use App\Http\Controllers\Investigador\Publicaciones\LibrosController;
 use App\Http\Controllers\Investigador\Publicaciones\PropiedadIntelectualController;
 use App\Http\Controllers\Investigador\Publicaciones\PublicacionesUtilsController;
@@ -126,15 +130,17 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
     Route::prefix('proyectosGrupo')->group(function () {
       Route::get('listado/{periodo}', [ProyectosGrupoController::class, 'listado']);
       Route::get('detalle/{proyecto_id}', [ProyectosGrupoController::class, 'detalle']);
+      Route::get('dataProyecto', [ProyectosGrupoController::class, 'dataProyecto']);
 
       Route::put('updateDetalle', [ProyectosGrupoController::class, 'updateDetalle']);
 
-      Route::get('miembros/{proyecto_id}', [ProyectosGrupoController::class, 'miembros']);
-      Route::get('cartas/{proyecto_id}', [ProyectosGrupoController::class, 'cartas']);
-      Route::get('descripcion/{proyecto_id}', [ProyectosGrupoController::class, 'descripcion']);
-      Route::get('actividades/{proyecto_id}', [ProyectosGrupoController::class, 'actividades']);
-      Route::get('presupuesto/{proyecto_id}', [ProyectosGrupoController::class, 'presupuesto']);
-      Route::get('responsable/{proyecto_id}', [ProyectosGrupoController::class, 'responsable']);
+      Route::get('miembros', [ProyectosGrupoController::class, 'miembros']);
+      Route::get('cartas', [ProyectosGrupoController::class, 'cartas']);
+      Route::get('descripcion', [ProyectosGrupoController::class, 'descripcion']);
+      Route::get('actividades', [ProyectosGrupoController::class, 'actividades']);
+      Route::get('presupuesto', [ProyectosGrupoController::class, 'presupuesto']);
+      Route::get('responsable', [ProyectosGrupoController::class, 'responsable']);
+      Route::get('exportToWord', [ProyectosGrupoController::class, 'exportToWord']);
     });
 
     //  Proyectos FEX
@@ -238,6 +244,8 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
       Route::get('listadoProyectos', [GestionTransferenciasController::class, 'listadoProyectos']);
       Route::get('getSolicitudData', [GestionTransferenciasController::class, 'getSolicitudData']);
       Route::get('movimientosTransferencia', [GestionTransferenciasController::class, 'movimientosTransferencia']);
+      Route::post('calificar', [GestionTransferenciasController::class, 'calificar']);
+      Route::get('reporte', [GestionTransferenciasController::class, 'reporte']);
     });
   });
 
@@ -298,6 +306,11 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
 });
 
 Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->group(function () {
+  //  Perfil
+  Route::prefix('perfil')->group(function () {
+    Route::get('getData', [PerfilController::class, 'getData']);
+    Route::put('updateData', [PerfilController::class, 'updateData']);
+  });
 
   //  Main dashboard
   Route::prefix('dashboard')->group(function () {
@@ -363,11 +376,11 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
   Route::prefix('publicaciones')->group(function () {
 
     //  Artículos en revistas de investigación
-
     Route::prefix('articulos')->group(function () {
       Route::get('listado', [ArticulosController::class, 'listado']);
       Route::post('registrarPaso1', [ArticulosController::class, 'registrarPaso1']);
       Route::get('datosPaso1', [ArticulosController::class, 'datosPaso1']);
+      Route::get('validarPublicacion', [ArticulosController::class, 'validarPublicacion']);
     });
 
     //  Libros
@@ -387,6 +400,8 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
     //  Participación en eventos
     Route::prefix('eventos')->group(function () {
       Route::get('listado', [EventoController::class, 'listado']);
+      Route::post('registrarPaso1', [EventoController::class, 'registrarPaso1']);
+      Route::get('datosPaso1', [EventoController::class, 'datosPaso1']);
     });
 
     //  Tesis propias
@@ -399,6 +414,8 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
     //  Tesis propias
     Route::prefix('tesisAsesoria')->group(function () {
       Route::get('listado', [TesisAsesoriaController::class, 'listado']);
+      Route::post('registrarPaso1', [TesisAsesoriaController::class, 'registrarPaso1']);
+      Route::get('datosPaso1', [TesisAsesoriaController::class, 'datosPaso1']);
     });
 
     //  Propiedad intelectual
@@ -432,6 +449,33 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
 
   //  Grupo
   Route::prefix('grupo')->group(function () {
+    //  Solicitar
+    Route::prefix('solicitar')->group(function () {
+      Route::get('dataPaso1', [InvestigadorGrupoController::class, 'dataPaso1']);
+      Route::post('paso1', [InvestigadorGrupoController::class, 'paso1']);
+
+      Route::get('dataPaso2', [InvestigadorGrupoController::class, 'dataPaso2']);
+      Route::put('paso2', [InvestigadorGrupoController::class, 'paso2']);
+
+      Route::get('dataPaso3', [InvestigadorGrupoController::class, 'dataPaso3']);
+      Route::get('searchDocenteRrhh', [InvestigadorGrupoController::class, 'searchDocenteRrhh']);
+
+      Route::get('dataPaso4', [InvestigadorGrupoController::class, 'dataPaso4']);
+      Route::post('agregarLinea', [InvestigadorGrupoController::class, 'agregarLinea']);
+      Route::delete('eliminarLinea', [InvestigadorGrupoController::class, 'eliminarLinea']);
+      Route::put('paso4', [InvestigadorGrupoController::class, 'paso4']);
+
+      Route::get('dataPaso5', [InvestigadorGrupoController::class, 'dataPaso5']);
+
+      Route::get('dataPaso6', [InvestigadorGrupoController::class, 'dataPaso6']);
+
+      Route::get('dataPaso7', [InvestigadorGrupoController::class, 'dataPaso7']);
+      Route::get('searchLaboratorio', [InvestigadorGrupoController::class, 'searchLaboratorio']);
+      Route::post('agregarLaboratorio', [InvestigadorGrupoController::class, 'agregarLaboratorio']);
+      Route::delete('eliminarLaboratorio', [InvestigadorGrupoController::class, 'eliminarLaboratorio']);
+    });
+
+    //  Grupos
     Route::get('listadoGrupos', [InvestigadorGrupoController::class, 'listadoGrupos']);
     Route::get('listadoSolicitudes', [InvestigadorGrupoController::class, 'listadoSolicitudes']);
     Route::get('detalle', [InvestigadorGrupoController::class, 'detalle']);
@@ -498,5 +542,22 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
       Route::post('addTransferenciaTemporal', [Informe_economicoController::class, 'addTransferenciaTemporal']);
       Route::post('solicitarTransferencia', [Informe_economicoController::class, 'solicitarTransferencia']);
     });
+  });
+
+  //  Orcid
+  Route::prefix('orcid')->group(function () {
+    Route::post('obtenerTokens', [OrcidController::class, 'obtenerTokens']);
+  });
+});
+
+Route::prefix('evaluador')->middleware('checkRole:Usuario_evaluador')->group(function () {
+  //  Evaluaciones
+  Route::prefix('evaluaciones')->group(function () {
+    Route::get('listado', [EvaluadorProyectosController::class, 'listado']);
+    Route::get('criteriosEvaluacion', [EvaluadorProyectosController::class, 'criteriosEvaluacion']);
+    Route::put('updateItem', [EvaluadorProyectosController::class, 'updateItem']);
+    Route::put('finalizarEvaluacion', [EvaluadorProyectosController::class, 'finalizarEvaluacion']);
+    Route::get('fichaEvaluacion', [EvaluadorProyectosController::class, 'fichaEvaluacion']);
+    Route::post('cargarFicha', [EvaluadorProyectosController::class, 'cargarFicha']);
   });
 });

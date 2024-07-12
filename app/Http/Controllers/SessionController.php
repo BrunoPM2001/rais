@@ -30,7 +30,8 @@ class SessionController extends Controller {
         //  Nombres
         $usuario = DB::table('Usuario_admin')
           ->select([
-            DB::raw("CONCAT(nombres, ' ', apellido1, ' ', apellido2) AS nombre")
+            DB::raw("CONCAT(apellido1, ' ', apellido2) AS apellidos"),
+            "nombres",
           ])
           ->where('id', '=', $table->tabla_id)
           ->first();
@@ -38,13 +39,16 @@ class SessionController extends Controller {
         $jwt = JWT::encode([
           'id' => $table->tabla_id,
           'tabla' => $table->tabla,
+          'nombre' => $usuario->nombres,
+          'apellidos' => $usuario->apellidos,
           'exp' => time() + 7200
         ], env('JWT_SECRET'), 'HS256');
       } else if ($table->tabla == "Usuario_investigador") {
         //  Nombres
         $usuario = DB::table('Usuario_investigador')
           ->select([
-            DB::raw("CONCAT(nombres, ' ', apellido1, ' ', apellido2) AS nombre")
+            DB::raw("CONCAT(apellido1, ' ', apellido2) AS apellidos"),
+            "nombres",
           ])
           ->where('id', '=', $table->tabla_id)
           ->first();
@@ -54,9 +58,24 @@ class SessionController extends Controller {
           'investigador_id' => $table->tabla_id,
           'exp' => time() + 7200
         ], env('JWT_SECRET'), 'HS256');
+      } else if ($table->tabla == "Usuario_evaluador") {
+        //  Nombres
+        $usuario = DB::table('Usuario_evaluador')
+          ->select([
+            "apellidos",
+            "nombres",
+          ])
+          ->where('id', '=', $table->tabla_id)
+          ->first();
+        $jwt = JWT::encode([
+          'id' => $table->id,
+          'tabla' => $table->tabla,
+          'evaluador_id' => $table->tabla_id,
+          'exp' => time() + 7200
+        ], env('JWT_SECRET'), 'HS256');
       }
       return ['data' => [
-        'usuario' => $usuario->nombre,
+        'usuario' => $usuario->apellidos  . ", " . $usuario->nombres,
         'tabla' => $table->tabla,
         'token' => $jwt
       ]];
