@@ -163,19 +163,18 @@ class Informe_economicoController extends S3Controller {
             'b.partida',
             'a.monto',
             DB::raw('CASE 
-            WHEN a.monto_temporal = 0 THEN ""
+            WHEN a.monto_temporal = 0 THEN "-"
             WHEN a.monto_temporal < a.monto THEN "-"
             WHEN a.monto_temporal > a.monto THEN "+"
             ELSE ""
           END AS operacion'),
             DB::raw('CASE 
-            WHEN a.monto_temporal = 0 THEN 0
+            WHEN a.monto_temporal = 0 THEN (a.monto - a.monto_temporal)
             WHEN a.monto_temporal < a.monto THEN (a.monto - a.monto_temporal)
             WHEN a.monto_temporal > a.monto THEN (a.monto_temporal - a.monto)
             ELSE ""
           END AS transferencia'),
             'a.monto_temporal AS monto_nuevo',
-            DB::raw('(a.monto_temporal) AS monto_nuevo'),
           ])
           ->where('a.geco_proyecto_id', '=', $request->query('id'))
           ->get();

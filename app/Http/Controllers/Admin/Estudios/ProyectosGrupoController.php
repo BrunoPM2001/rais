@@ -77,6 +77,20 @@ class ProyectosGrupoController extends S3Controller {
           'impacto' => $impacto,
           'presupuesto' => $presupuesto,
         ];
+      default:
+        $detalle = $this->detalle($request);
+        $miembros = $this->miembros($request);
+        $descripcion = $this->descripcion($request);
+        $actividades = $this->actividades($request);
+        $presupuesto = $this->presupuesto($request);
+
+        return [
+          'detalle' => $detalle,
+          'miembros' => $miembros,
+          'descripcion' => $descripcion,
+          'actividades' => $actividades,
+          'presupuesto' => $presupuesto,
+        ];
     }
   }
 
@@ -101,7 +115,7 @@ class ProyectosGrupoController extends S3Controller {
         'a.localizacion'
       )
       ->where('a.id', '=', $request->query('proyecto_id'))
-      ->get();
+      ->first();
 
     return $detalle;
   }

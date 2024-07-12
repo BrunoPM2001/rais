@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\DB;
 
 class EvaluadorProyectosController extends S3Controller {
   public function listado(Request $request) {
+    $date = Carbon::now();
+
     $proyectos = DB::table('Proyecto_evaluacion AS a')
       ->leftJoin('Usuario_evaluador AS b', 'b.id', '=', 'a.evaluador_id')
       ->leftJoin('Proyecto AS c', 'c.id', '=', 'a.proyecto_id')
@@ -19,6 +21,13 @@ class EvaluadorProyectosController extends S3Controller {
           ->on('e.periodo', '=', 'c.periodo');
       })
       ->leftJoin('Evaluacion_proyecto AS f', 'f.proyecto_id', '=', 'c.id')
+      ->join('Convocatoria AS g', function ($join) use ($date) {
+        $join->on('g.tipo', '=', 'c.tipo_proyecto')
+          ->on('g.periodo', '=', 'c.periodo')
+          ->where('g.evento', '=', 'evaluacion')
+          ->where('g.fecha_inicial', '<', $date)
+          ->where('g.fecha_final', '>', $date);
+      })
       ->select([
         'c.id',
         'c.tipo_proyecto',
@@ -46,6 +55,9 @@ class EvaluadorProyectosController extends S3Controller {
   }
 
   public function criteriosEvaluacion(Request $request) {
+    //  Calculo de criterios
+    $this->criteriosAutomaticos($request);
+
     $criterios = DB::table('Proyecto_evaluacion AS a')
       ->leftJoin('Usuario_evaluador AS b', 'b.id', '=', 'a.evaluador_id')
       ->leftJoin('Proyecto AS c', 'c.id', '=', 'a.proyecto_id')
@@ -196,6 +208,24 @@ class EvaluadorProyectosController extends S3Controller {
       return ['message' => 'success', 'detail' => 'Ficha cargada correctamente'];
     } else {
       return ['message' => 'error', 'detail' => 'Error al cargar ficha'];
+    }
+  }
+
+  public function criteriosAutomaticos(Request $request) {
+    $proyecto = DB::table('Proyecto')
+      ->select(['tipo_proyecto'])
+      ->where('id', '=', $request->query('proyecto_id'))
+      ->first();
+
+    $utils = new CriteriosUtilsController();
+
+    switch ($proyecto->tipo_proyecto) {
+      case "PMULTI":
+        $utils->fetchPuntajeFormacionRrhh($request);
+        $utils->AddExperienciaResponsable($request);
+        $utils->experienciaOtros($request);
+        $utils->addgiTotal($request);
+        break;
     }
   }
 }

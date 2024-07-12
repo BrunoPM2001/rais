@@ -17,11 +17,11 @@ use App\Http\Controllers\Admin\Estudios\InformesTecnicosController;
 use App\Http\Controllers\Admin\Estudios\InvestigadoresController;
 use App\Http\Controllers\Admin\Estudios\LaboratoriosController;
 use App\Http\Controllers\Admin\Estudios\MonitoreoController;
-use App\Http\Controllers\Admin\Estudios\Proyectos\EciController;
 use App\Http\Controllers\Admin\Estudios\ProyectosFEXController;
 use App\Http\Controllers\Admin\Estudios\ProyectosGrupoController;
 use App\Http\Controllers\Admin\Estudios\PublicacionesController;
 use App\Http\Controllers\Admin\Estudios\RevistasController;
+use App\Http\Controllers\Admin\Facultad\AsignacionEvaluadorController;
 use App\Http\Controllers\Admin\Facultad\ConvocatoriasController as FacultadConvocatoriasController;
 use App\Http\Controllers\Admin\Reportes\ConsolidadoGeneralController;
 use App\Http\Controllers\Admin\Reportes\DocenteController;
@@ -273,6 +273,14 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
       Route::get('getConvocatorias', [FacultadConvocatoriasController::class, 'getConvocatorias']);
       Route::get('getDetalleConvocatoria/{periodo}/{tipo_proyecto}', [FacultadConvocatoriasController::class, 'getDetalleConvocatoria']);
       Route::get('getEvaluadoresConvocatoria/{id}', [FacultadConvocatoriasController::class, 'getEvaluadoresConvocatoria']);
+    });
+
+    //  Evaluadores de proyectos
+    Route::prefix('evaluadores')->group(function () {
+      Route::get('listado', [AsignacionEvaluadorController::class, 'listado']);
+      Route::get('evaluadoresProyecto', [AsignacionEvaluadorController::class, 'evaluadoresProyecto']);
+      Route::get('searchEvaluadorBy', [AsignacionEvaluadorController::class, 'searchEvaluadorBy']);
+      Route::put('updateEvaluadores', [AsignacionEvaluadorController::class, 'updateEvaluadores']);
     });
   });
 

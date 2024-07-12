@@ -92,13 +92,13 @@ class GestionTransferenciasController extends Controller {
           'b.partida',
           'a.monto',
           DB::raw('CASE 
-        WHEN a.monto_temporal = 0 THEN ""
+        WHEN a.monto_temporal = 0 THEN "-"
         WHEN a.monto_temporal < a.monto THEN "-"
         WHEN a.monto_temporal > a.monto THEN "+"
         ELSE ""
       END AS operacion'),
           DB::raw('CASE 
-        WHEN a.monto_temporal = 0 THEN 0
+        WHEN a.monto_temporal = 0 THEN (a.monto - a.monto_temporal)
         WHEN a.monto_temporal < a.monto THEN (a.monto - a.monto_temporal)
         WHEN a.monto_temporal > a.monto THEN (a.monto_temporal - a.monto)
         ELSE ""
