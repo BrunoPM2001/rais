@@ -228,4 +228,65 @@ class EvaluadorProyectosController extends S3Controller {
         break;
     }
   }
+
+  public function visualizarProyecto(Request $request) {
+    $proyecto = DB::table('Proyecto AS a')
+      ->leftJoin('Ocde AS b', 'b.id', '=', 'a.ocde_id')
+      ->select([
+        'a.titulo',
+        'b.linea',
+        'a.localizacion',
+        'a.palabras_clave'
+      ])
+      ->where('a.id', '=', $request->query('proyecto_id'))
+      ->first();
+
+    $descripciones = DB::table('Proyecto_descripcion')
+      ->select([
+        'codigo',
+        'detalle'
+      ])
+      ->where('proyecto_id', '=', $request->query('proyecto_id'))
+      ->pluck('detalle', 'codigo')
+      ->toArray();
+
+    $calendario = DB::table('Proyecto_actividad')
+      ->select([
+        'actividad',
+        'justificacion',
+        'fecha_inicio',
+        'fecha_fin',
+      ])
+      ->where('proyecto_id', '=', $request->query('proyecto_id'))
+      ->get();
+
+    $presupuesto = DB::table('Proyecto_presupuesto AS a')
+      ->join('Partida AS b', 'b.id', '=', 'a.partida_id')
+      ->select(
+        'b.codigo',
+        'b.partida',
+        'a.justificacion',
+        'a.monto',
+        'a.tipo',
+      )
+      ->where('a.proyecto_id', '=', $request->query('proyecto_id'))
+      ->orderBy('a.tipo')
+      ->get();
+
+    // $tesistas = DB::table('Proyecto_integrante AS a')
+    //   ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
+    //   ->select([
+    //     'a.'
+    //   ])
+    //   ->where('a.proyecto_id', '=', $request->query('proyecto_id'))
+    //   ->whereNotNull('a.tipo_tesis')
+    //   ->get();
+
+    return [
+      'proyecto' => $proyecto,
+      'detalles' => $descripciones,
+      'calendario' => $calendario,
+      'presupuesto' => $presupuesto
+    ];
+  }
 }

@@ -39,7 +39,7 @@ class CriteriosUtilsController extends Controller {
       ->whereNotNull('t1.tipo_tesis')
       ->where('t2.nombre', 'Tesista')
       ->groupBy('t1.proyecto_id')
-      ->firts();
+      ->firs();
 
 
     $cantidadTipoTesis = $rrhhTesistas ? $rrhhTesistas : null;
@@ -178,7 +178,7 @@ class CriteriosUtilsController extends Controller {
     foreach ($grupos as $grupo) {
       $grupoCat = DB::table('Grupo')
         ->select('grupo_categoria')
-        ->where('id', $grupo->id)
+        ->where('id', $grupo)
         ->first();
 
       switch ($grupoCat->grupo_categoria) {

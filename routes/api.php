@@ -10,7 +10,7 @@ use App\Http\Controllers\Admin\Economia\GestionComprobantesController;
 use App\Http\Controllers\Admin\Economia\GestionTransferenciasController;
 use App\Http\Controllers\Admin\Estudios\ConvocatoriasController;
 use App\Http\Controllers\Admin\Estudios\DeudaProyectosController;
-use App\Http\Controllers\Admin\Estudios\DocentesController;
+use App\Http\Controllers\Admin\Estudios\DocenteInvestigadorController;
 use App\Http\Controllers\Admin\Estudios\GestionSUMController;
 use App\Http\Controllers\Admin\Estudios\GruposController;
 use App\Http\Controllers\Admin\Estudios\InformesTecnicosController;
@@ -217,8 +217,7 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
 
     //  Gestión de docentes investigadores
     Route::prefix('docentes')->group(function () {
-      Route::get('listadoSolicitudes', [DocentesController::class, 'listadoSolicitudes']);
-      Route::get('listadoConstancias', [DocentesController::class, 'listadoConstancias']);
+      Route::get('listado', [DocenteInvestigadorController::class, 'listado']);
     });
 
     //  Gestión de SUM
@@ -567,5 +566,6 @@ Route::prefix('evaluador')->middleware('checkRole:Usuario_evaluador')->group(fun
     Route::put('finalizarEvaluacion', [EvaluadorProyectosController::class, 'finalizarEvaluacion']);
     Route::get('fichaEvaluacion', [EvaluadorProyectosController::class, 'fichaEvaluacion']);
     Route::post('cargarFicha', [EvaluadorProyectosController::class, 'cargarFicha']);
+    Route::get('visualizarProyecto', [EvaluadorProyectosController::class, 'visualizarProyecto']);
   });
 });
