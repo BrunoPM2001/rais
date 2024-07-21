@@ -274,6 +274,21 @@ class PublicacionesUtilsController extends S3Controller {
           'updated_at' => Carbon::now()
         ]);
         break;
+      case "interno":
+
+        DB::table('Publicacion_autor')->insert([
+          'publicacion_id' => $request->input('publicacion_id'),
+          'investigador_id' => $request->input('investigador_id'),
+          'tipo' => "interno",
+          'autor' => $request->input('autor'),
+          'categoria' => $request->input('categoria'),
+          'filiacion' => $request->input('filiacion'),
+          'presentado' => 0,
+          'estado' => 0,
+          'created_at' => Carbon::now(),
+          'updated_at' => Carbon::now()
+        ]);
+        break;
       default:
         break;
     }

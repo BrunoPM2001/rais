@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin\Estudios;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Database\Query\JoinClause;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class DocenteInvestigadorController extends Controller {
@@ -57,5 +58,43 @@ class DocenteInvestigadorController extends Controller {
       ->get();
 
     return $evaluaciones;
+  }
+
+  public function evaluarData(Request $request) {
+    $detalles = DB::table('Eval_docente_investigador AS a')
+      ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
+      ->join('Repo_rrhh AS c', 'c.ser_cod_ant', '=', 'b.codigo')
+      ->select([
+        'a.nombres',
+        DB::raw("CASE 
+                WHEN a.estado = 'ENVIADO' THEN 'Enviado'
+                WHEN a.estado = 'TRAMITE' THEN 'En trámite'
+                WHEN a.estado = 'CONSTANCIA' THEN 'Constancia'
+                WHEN a.estado = 'NO_APROBADO' THEN 'No aprobado'
+                WHEN a.estado = 'PROCESO ' THEN 'Observado'
+                ELSE ''
+            END AS estado"),
+        'a.doc_numero',
+        'c.ser_fech_in_unmsm',
+        'b.email3',
+        'a.cti_vitae',
+        'a.renacyt',
+        'a.renacyt_nivel',
+        'a.orcid',
+        'a.google_scholar',
+        'a.created_at',
+        'a.tipo_docente',
+        'a.docente_categoria',
+        'a.clase',
+        'a.horas',
+      ])
+      ->where('a.id', '=', $request->query('id'))
+      ->first();
+
+    //  Requisito 1
+    $req1 = DB::table('')
+    ;
+
+    return ['detalles' => $detalles];
   }
 }

@@ -4,11 +4,11 @@ namespace App\Http\Controllers\Admin\Estudios;
 
 use App\Http\Controllers\Admin\Estudios\Proyectos\EciController;
 use App\Http\Controllers\S3Controller;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use PhpOffice\PhpWord\IOFactory;
 use PhpOffice\PhpWord\PhpWord;
-use PhpOffice\PhpWord\Shared\Html;
 
 class ProyectosGrupoController extends S3Controller {
   public function listado($periodo) {
@@ -133,16 +133,43 @@ class ProyectosGrupoController extends S3Controller {
         'estado' => $request->input('estado')["value"],
       ]);
 
-    if ($count > 0) {
-      //  Relacionar proyecto a economía
-      if ($request->input('resolucion_rectoral') != "" && $request->input('resolucion_fecha') != "" && $request->input('resolucion_decanal') != "") {
 
+    //  Relacionar proyecto a economía
+    if ($request->input('resolucion_rectoral') != "") {
+      $count = DB::table('Geco_proyecto')
+        ->where('proyecto_id', '=', $request->input('proyecto_id'))
+        ->count();
+
+      if ($count == 0) {
+        $id = DB::table('Geco_proyecto')
+          ->insertGetId([
+            'proyecto_id' => $request->input('proyecto_id'),
+            'total' => 0,
+            'estado' => 0,
+            'created_at' => Carbon::now(),
+            'updated_at' => Carbon::now(),
+          ]);
+
+        $presupuesto = DB::table('Proyecto_presupuesto')
+          ->select()
+          ->where('proyecto_id', '=', $request->input('proyecto_id'))
+          ->get();
+
+        foreach ($presupuesto as $item) {
+          DB::table('Geco_proyecto_presupuesto')
+            ->insert([
+              'geco_proyecto_id' => $id,
+              'partida_id' => $item->partida_id,
+              'monto' => $item->monto,
+              'created_at' => Carbon::now(),
+              'updated_at' => Carbon::now(),
+            ]);
+        }
         return ['message' => 'success', 'detail' => 'Datos del proyecto actualizados y proyecto incluído al módulo de economía'];
       }
-      return ['message' => 'success', 'detail' => 'Datos del proyecto actualizados correctamente'];
-    } else {
-      return ['message' => 'warning', 'detail' => 'No se pudo actualizar la información'];
+      return ['message' => 'success', 'detail' => 'Datos del proyecto actualizados'];
     }
+    return ['message' => 'success', 'detail' => 'Datos del proyecto actualizados correctamente'];
   }
 
   public function miembros(Request $request) {

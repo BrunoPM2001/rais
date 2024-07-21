@@ -30,9 +30,16 @@ return new class extends Migration {
       $table->string('cti_vitae');
       $table->string('renacyt');
       $table->string('renacyt_nivel');
+      $table->string('d1')->default('');
+      $table->string('d2')->default('');
+      $table->text('d3')->default('');
+      $table->text('d4')->default('');
+      $table->text('d5')->default('');
+      $table->string('d6')->default('');
       $table->boolean('confirmar')->nullable();
       $table->text('confirmar_descripcion')->nullable();
       $table->string('estado')->nullable();
+      $table->string('estado_tecnico')->nullable();
       $table->string('estado_real')->nullable();
       $table->date('fecha_envio_mail')->nullable();
       $table->timestamps();

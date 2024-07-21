@@ -16,37 +16,49 @@ class GestionComprobantesController extends S3Controller {
       )
       ->where('condicion', '=', 'Responsable');
 
-    $latestEntries = DB::table('Geco_documento AS a')
+    $pendientes = DB::table('Geco_documento AS a')
       ->select([
-        'a.geco_proyecto_id',
-        DB::raw('MAX(a.created_at) AS max_created_at'),
-        DB::raw("SUM(IF(a.estado = 4, 1, 0)) AS cuenta")
+        'geco_proyecto_id',
+        DB::raw('COUNT(*) AS cuenta')
       ])
-      ->groupBy('a.geco_proyecto_id');
+      ->where('estado', '=', 4)
+      ->groupBy('geco_proyecto_id');
 
-    $proyectos = DB::table('Geco_proyecto AS b')
-      ->leftJoin('Geco_documento AS a', 'b.id', '=', 'a.geco_proyecto_id')
-      ->join('Proyecto AS c', 'c.id', '=', 'b.proyecto_id')
-      ->join('Facultad AS d', 'd.id', '=', 'c.facultad_id')
-      ->leftJoinSub($responsable, 'res', 'res.proyecto_id', '=', 'c.id')
-      ->leftJoinSub($latestEntries, 'latest', function ($join) {
-        $join->on('a.geco_proyecto_id', '=', 'latest.geco_proyecto_id')
-          ->on('a.created_at', '=', 'latest.max_created_at');
-      })
+    $revisados = DB::table('Geco_documento AS a')
       ->select([
-        'b.id',
-        'c.codigo_proyecto',
-        'latest.max_created_at AS fecha_ultimo_comprobante',
-        'res.responsable',
-        'd.nombre AS facultad',
-        'c.tipo_proyecto',
-        'c.periodo',
-        'a.estado',
-        'latest.cuenta AS cuenta',
+        'geco_proyecto_id',
+        DB::raw('COUNT(*) AS cuenta')
       ])
-      ->where('c.estado', '>', 0)
+      ->where('estado', '!=', 4)
+      ->groupBy('geco_proyecto_id');
+
+    $total = DB::table('Geco_documento AS a')
+      ->select([
+        'geco_proyecto_id',
+        DB::raw('COUNT(*) AS cuenta')
+      ])
+      ->groupBy('geco_proyecto_id');
+
+    $proyectos = DB::table('Geco_proyecto AS a')
+      ->join('Proyecto AS b', 'b.id', '=', 'a.proyecto_id')
+      ->join('Facultad AS c', 'c.id', '=', 'b.facultad_id')
+      ->leftJoinSub($responsable, 'res', 'res.proyecto_id', '=', 'b.id')
+      ->leftJoinSub($pendientes, 'd', 'd.geco_proyecto_id', '=', 'a.id')
+      ->leftJoinSub($revisados, 'e', 'e.geco_proyecto_id', '=', 'a.id')
+      ->leftJoinSub($total, 'f', 'f.geco_proyecto_id', '=', 'a.id')
+      ->select([
+        'a.id',
+        'b.codigo_proyecto',
+        'res.responsable',
+        'c.nombre AS facultad',
+        'b.tipo_proyecto',
+        'b.periodo',
+        'd.cuenta AS pendientes',
+        'e.cuenta AS revisados',
+        'f.cuenta AS total',
+      ])
       ->groupBy('b.id')
-      ->orderByDesc('latest.max_created_at')
+      ->orderByDesc('d.cuenta')
       ->get();
 
     return $proyectos;

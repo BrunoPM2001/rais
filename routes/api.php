@@ -23,6 +23,7 @@ use App\Http\Controllers\Admin\Estudios\PublicacionesController;
 use App\Http\Controllers\Admin\Estudios\RevistasController;
 use App\Http\Controllers\Admin\Facultad\AsignacionEvaluadorController;
 use App\Http\Controllers\Admin\Facultad\ConvocatoriasController as FacultadConvocatoriasController;
+use App\Http\Controllers\Admin\Facultad\GestionEvaluadoresController;
 use App\Http\Controllers\Admin\Reportes\ConsolidadoGeneralController;
 use App\Http\Controllers\Admin\Reportes\DocenteController;
 use App\Http\Controllers\Admin\Reportes\EstudioController;
@@ -218,6 +219,7 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
     //  Gestión de docentes investigadores
     Route::prefix('docentes')->group(function () {
       Route::get('listado', [DocenteInvestigadorController::class, 'listado']);
+      Route::get('evaluarData', [DocenteInvestigadorController::class, 'evaluarData']);
     });
 
     //  Gestión de SUM
@@ -274,6 +276,12 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
       Route::get('getEvaluadoresConvocatoria/{id}', [FacultadConvocatoriasController::class, 'getEvaluadoresConvocatoria']);
     });
 
+    //  Gestión de evaluadores
+    Route::prefix('gestionEvaluadores')->group(function () {
+      Route::get('listado', [GestionEvaluadoresController::class, 'listado']);
+      Route::get('searchInvestigador', [GestionEvaluadoresController::class, 'searchInvestigador']);
+    });
+
     //  Evaluadores de proyectos
     Route::prefix('evaluadores')->group(function () {
       Route::get('listado', [AsignacionEvaluadorController::class, 'listado']);
@@ -317,6 +325,8 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
   Route::prefix('perfil')->group(function () {
     Route::get('getData', [PerfilController::class, 'getData']);
     Route::put('updateData', [PerfilController::class, 'updateData']);
+    Route::get('cdiEstado', [PerfilController::class, 'cdiEstado']);
+    Route::post('presentarDJ', [PerfilController::class, 'presentarDJ']);
   });
 
   //  Main dashboard

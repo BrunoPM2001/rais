@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Evaluador\Evaluaciones;
 use App\Http\Controllers\S3Controller;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
+use Illuminate\Database\Query\JoinClause;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -16,12 +17,15 @@ class EvaluadorProyectosController extends S3Controller {
       ->leftJoin('Usuario_evaluador AS b', 'b.id', '=', 'a.evaluador_id')
       ->leftJoin('Proyecto AS c', 'c.id', '=', 'a.proyecto_id')
       ->leftJoin('Facultad AS d', 'd.id', '=', 'c.facultad_id')
-      ->leftJoin('Evaluacion_opcion AS e', function ($join) {
+      ->leftJoin('Evaluacion_opcion AS e', function (JoinClause $join) {
         $join->on('e.tipo', '=', 'c.tipo_proyecto')
           ->on('e.periodo', '=', 'c.periodo');
       })
-      ->leftJoin('Evaluacion_proyecto AS f', 'f.proyecto_id', '=', 'c.id')
-      ->join('Convocatoria AS g', function ($join) use ($date) {
+      ->leftJoin('Evaluacion_proyecto AS f', function (JoinClause $join) {
+        $join->on('f.proyecto_id', '=', 'c.id')
+          ->whereNotNull('f.evaluacion_opcion_id');
+      })
+      ->join('Convocatoria AS g', function (JoinClause $join) use ($date) {
         $join->on('g.tipo', '=', 'c.tipo_proyecto')
           ->on('g.periodo', '=', 'c.periodo')
           ->where('g.evento', '=', 'evaluacion')
@@ -46,7 +50,6 @@ class EvaluadorProyectosController extends S3Controller {
         END as ficha"),
       ])
       ->where('a.evaluador_id', '=', $request->attributes->get('token_decoded')->evaluador_id)
-      ->whereNotNull('f.evaluacion_opcion_id')
       ->where('e.nivel', '=', 1)
       ->groupBy('c.id')
       ->get();
@@ -223,8 +226,8 @@ class EvaluadorProyectosController extends S3Controller {
       case "PMULTI":
         $utils->fetchPuntajeFormacionRrhh($request);
         $utils->AddExperienciaResponsable($request);
-        $utils->experienciaOtros($request);
         $utils->addgiTotal($request);
+        $utils->totalpuntajeIntegrantes($request);
         break;
     }
   }

@@ -53,4 +53,21 @@ class S3Controller extends Controller {
       ], 500);
     }
   }
+
+  public function loadFile($file, $bucket, $dir) {
+    try {
+      $this->s3ClientPut->putObject([
+        'Bucket' => $bucket,
+        'Key'    => $dir,
+        'Body'   => $file,
+      ]);
+
+      return true;
+    } catch (Exception $e) {
+      return response()->json([
+        'message' => 'Error al subir el archivo',
+        'error' => $e->getMessage(),
+      ], 500);
+    }
+  }
 }
