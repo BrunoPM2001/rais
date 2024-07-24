@@ -95,8 +95,17 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
       Route::delete('deleteConvocatoria', [ConvocatoriasController::class, 'deleteConvocatoria']);
       Route::get('listarConvocatorias', [ConvocatoriasController::class, 'listarConvocatorias']);
       Route::get('getOneConvocatoria/{parent_id}', [ConvocatoriasController::class, 'getOneConvocatoria']);
+
+      //  Evaluaciones
       Route::get('listaEvaluaciones', [ConvocatoriasController::class, 'listaEvaluaciones']);
-      Route::get('verCriteriosEvaluacion/{evaluacion_id}', [ConvocatoriasController::class, 'verCriteriosEvaluacion']);
+      Route::get('listadoProyectosCopia', [ConvocatoriasController::class, 'listadoProyectosCopia']);
+      Route::post('createEvaluacion', [ConvocatoriasController::class, 'createEvaluacion']);
+
+      //  Criterios
+      Route::get('detalleCriterios', [ConvocatoriasController::class, 'detalleCriterios']);
+      Route::post('createCriterio', [ConvocatoriasController::class, 'createCriterio']);
+      Route::put('editCriterio', [ConvocatoriasController::class, 'editCriterio']);
+      Route::put('aprobarCriterios', [ConvocatoriasController::class, 'aprobarCriterios']);
     });
 
     //  Grupos
@@ -178,7 +187,9 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
     //  Gestión de publicaciones
     Route::prefix('publicaciones')->group(function () {
       Route::get('listado', [PublicacionesController::class, 'listado']);
-      Route::get('listadoInvestigador/{investigador_id}', [PublicacionesController::class, 'listadoInvestigador']);
+      Route::get('detalle', [PublicacionesController::class, 'detalle']);
+      Route::put('updateDetalle', [PublicacionesController::class, 'updateDetalle']);
+      Route::get('getTabs', [PublicacionesController::class, 'getTabs']);
     });
 
     Route::prefix('sincronizarPub')->group(function () {
@@ -326,7 +337,10 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
     Route::get('getData', [PerfilController::class, 'getData']);
     Route::put('updateData', [PerfilController::class, 'updateData']);
     Route::get('cdiEstado', [PerfilController::class, 'cdiEstado']);
-    Route::post('presentarDJ', [PerfilController::class, 'presentarDJ']);
+    Route::get('actividadesExtra', [PerfilController::class, 'actividadesExtra']);
+    Route::post('addActividad', [PerfilController::class, 'addActividad']);
+    Route::delete('deleteActividad', [PerfilController::class, 'deleteActividad']);
+    Route::post('solicitarCDI', [PerfilController::class, 'solicitarCDI']);
   });
 
   //  Main dashboard

@@ -44,6 +44,7 @@ return new class extends Migration {
       $table->date('fecha_envio_mail')->nullable();
       $table->timestamps();
 
+      //  Fks
       $table->foreign('investigador_id')->references('id')->on('Usuario_investigador');
       $table->foreign('facultad_id')->references('id')->on('Facultad');
     });
