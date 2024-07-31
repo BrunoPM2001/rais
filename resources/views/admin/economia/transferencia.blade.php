@@ -228,6 +228,9 @@
       </thead>
       <tbody>
         @foreach ($partidas as $item)
+          @php
+            $op = '';
+          @endphp
           @if ($currentTipo != $item->tipo)
             <tr>
               <td class="row-left" colspan="5">
@@ -236,25 +239,20 @@
             </tr>
           @endif
           @php
-            if ($item->nuevo_presupuesto != 0) {
-                if ($item->presupuesto > $item->nuevo_presupuesto) {
-                    $item->monto = '- ' . number_format($item->presupuesto - $item->nuevo_presupuesto, 2);
-                } elseif ($item->presupuesto < $item->nuevo_presupuesto) {
-                    $item->monto = '+ ' . number_format($item->nuevo_presupuesto - $item->presupuesto, 2);
-                } else {
-                    $item->monto = '';
-                }
+            if ($item->monto > $item->monto_nuevo) {
+                $op = '- ' . number_format($item->monto - $item->monto_nuevo, 2);
+            } elseif ($item->monto < $item->monto_nuevo) {
+                $op = '+ ' . number_format($item->monto_nuevo - $item->monto, 2);
             } else {
-                $item->monto = '';
-                $item->nuevo_presupuesto = $item->presupuesto;
+                $op = '';
             }
           @endphp
           <tr>
             <td class="row-left">{{ $item->codigo }}</td>
             <td class="row-left">{{ $item->partida }}</td>
-            <td class="row-right">{{ $item->presupuesto }}</td>
             <td class="row-right">{{ $item->monto }}</td>
-            <td class="row-right">{{ $item->nuevo_presupuesto }}</td>
+            <td class="row-right">{{ $op }}</td>
+            <td class="row-right">{{ $item->monto_nuevo }}</td>
           </tr>
           @php
             $currentTipo = $item->tipo;

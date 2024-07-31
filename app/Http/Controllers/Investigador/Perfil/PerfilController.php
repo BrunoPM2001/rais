@@ -422,11 +422,35 @@ class PerfilController extends S3Controller {
 
     $d3 = json_decode($solicitud->d3, true);
 
+    $d3Extra = DB::table('Actividad_investigador AS a')
+      ->join('Eval_docente_actividad AS b', 'b.id', '=', 'a.eval_docente_actividad_id')
+      ->select([
+        'a.id',
+        'b.tipo AS categoria',
+        'a.periodo'
+      ])
+      ->where('b.eval_docente_investigador_id', '=', $solicitud->id)
+      ->whereIn('a.periodo', $lastTwoYears)
+      ->get();
+
+    $d3Complete = [];
+    foreach ($d3 as $element) {
+      $d3Complete[] = $element;
+    }
+
+    foreach ($d3Extra as $element) {
+      $d3Complete[] = [
+        'id' => $element->id,
+        'categoria' => $element->categoria,
+        'periodo' => $element->periodo,
+      ];
+    }
+
     // Inicializar un array para verificar la presencia de los años
     $yearsFound = array_fill_keys($lastTwoYears, false);
 
     // Recorrer el array y marcar los años encontrados
-    foreach ($d3 as $element) {
+    foreach ($d3Complete as $element) {
       if (in_array((int)$element["periodo"], $lastTwoYears)) {
         $yearsFound[(int)$element["periodo"]] = true;
       }
@@ -484,7 +508,7 @@ class PerfilController extends S3Controller {
       'd2' => $d2,
       'd3' => [
         'cumple' => $allYearsFound,
-        'lista' => $d3
+        'lista' => $d3Complete
       ],
       'd4' => [
         'cumple' => $filiacion,
@@ -663,7 +687,7 @@ class PerfilController extends S3Controller {
       ->join('Proyecto_integrante AS b', 'b.proyecto_id', '=', 'a.id')
       ->select([
         'a.id',
-        DB::raw("'A.' AS categoria"),
+        DB::raw("'A. Proyectos de investigación con financiamiento Institucional' AS categoria"),
         DB::raw("'a' AS sub_categoria"),
         'a.tipo_proyecto',
         'a.codigo_proyecto',
@@ -681,7 +705,7 @@ class PerfilController extends S3Controller {
       ->join('Proyecto_integrante AS b', 'b.proyecto_id', '=', 'a.id')
       ->select([
         'a.id',
-        DB::raw("'B.' AS categoria"),
+        DB::raw("'B. Proyectos de investigación con financiamiento externo' AS categoria"),
         DB::raw("'a' AS sub_categoria"),
         'a.tipo_proyecto',
         'a.codigo_proyecto',
@@ -699,7 +723,7 @@ class PerfilController extends S3Controller {
       ->join('Publicacion_autor AS b', 'b.publicacion_id', '=', 'a.id')
       ->select([
         'a.id',
-        DB::raw("'C.' AS categoria"),
+        DB::raw("'C. Asesoría de trabajo de investigación o tesis' AS categoria"),
         DB::raw("'c' AS sub_categoria"),
         'a.tipo_publicacion AS tipo_proyecto',
         'a.codigo_registro AS codigo_proyecto',
@@ -737,8 +761,8 @@ class PerfilController extends S3Controller {
 
     $rrhh = $this->rrhhCdi($request);
 
-    DB::table('Eval_docente_investigador')
-      ->insert([
+    $eval_id = DB::table('Eval_docente_investigador')
+      ->insertGetId([
         'investigador_id' => $request->attributes->get('token_decoded')->investigador_id,
         'facultad_id' => $rrhh->facultad_id,
         'tipo_eval' => 'Solicitud',
@@ -762,6 +786,13 @@ class PerfilController extends S3Controller {
         'estado' => 'ENVIADO',
         'created_at' => Carbon::now(),
         'updated_at' => Carbon::now(),
+      ]);
+
+    DB::table('Eval_docente_actividad')
+      ->whereNull('eval_docente_investigador_id')
+      ->where('investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+      ->update([
+        'eval_docente_investigador_id' => $eval_id
       ]);
 
     return ['message' => 'success', 'detail' => 'Solicitud enviada con éxito'];

@@ -41,4 +41,49 @@ class GestionEvaluadoresController extends Controller {
 
     return $investigadores;
   }
+
+  public function crearEvaluador(Request $request) {
+    $id = 0;
+    $cuenta = 0;
+
+    if ($request->input('investigador_id') != null) {
+      $cuenta = DB::table('Usuario_evaluador')
+        ->where('usuario_investigador_id', '=', $request->input('investigador_id'))
+        ->count();
+    }
+
+    if ($cuenta == 0) {
+      if ($request->input('investigador_id') == null) {
+        $id = DB::table('Usuario_evaluador')
+          ->insertGetId([
+            'tipo' => 'Externo',
+            'apellidos' => $request->input('apellidos'),
+            'nombres' => $request->input('nombres'),
+            'institucion' => $request->input('institucion'),
+          ]);
+      } else {
+        $id = DB::table('Usuario_evaluador')
+          ->insertGetId([
+            'tipo' => 'Interno',
+            'usuario_investigador_id' => $request->input('investigador_id'),
+            'apellidos' => $request->input('apellidos'),
+            'nombres' => $request->input('nombres'),
+            'institucion' => $request->input('institucion'),
+          ]);
+      }
+
+      DB::table('Usuario')
+        ->insert([
+          'username' => $request->input('username'),
+          'password' => bcrypt($request->password),
+          'tabla' => 'Usuario_evaluador',
+          'tabla_id' => $id,
+          'estado' => 1
+        ]);
+
+      return ['message' => 'success', 'detail' => 'Evaluador registrado correctamente'];
+    } else {
+      return ['message' => 'error', 'detail' => 'Este investigador ya está registrado como evaluador'];
+    }
+  }
 }

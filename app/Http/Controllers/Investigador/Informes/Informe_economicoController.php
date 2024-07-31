@@ -138,23 +138,11 @@ class Informe_economicoController extends S3Controller {
       //  Transferencia o presupuesto
       $presupuesto = [];
       $transferenciaPendiente = DB::table('Geco_operacion')
-        ->select(['id'])
         ->where('geco_proyecto_id', '=', $request->query('id'))
-        ->where('estado', '=', 4)
-        ->first();
+        ->whereIn('estado', [3, 4])
+        ->count();
 
-      if ($transferenciaPendiente == null) {
-        $presupuesto = DB::table('Geco_proyecto_presupuesto AS a')
-          ->join('Partida AS b', 'b.id', '=', 'a.partida_id')
-          ->select([
-            'b.tipo',
-            'b.codigo',
-            'b.partida',
-            'a.monto'
-          ])
-          ->where('a.geco_proyecto_id', '=', $request->query('id'))
-          ->get();
-      } else {
+      if ($transferenciaPendiente == 0) {
         $presupuesto = DB::table('Geco_proyecto_presupuesto AS a')
           ->join('Partida AS b', 'b.id', '=', 'a.partida_id')
           ->select([
@@ -162,22 +150,53 @@ class Informe_economicoController extends S3Controller {
             'b.codigo',
             'b.partida',
             'a.monto',
-            DB::raw('CASE 
-            WHEN a.monto_temporal = 0 THEN "-"
-            WHEN a.monto_temporal < a.monto THEN "-"
-            WHEN a.monto_temporal > a.monto THEN "+"
-            ELSE ""
-          END AS operacion'),
-            DB::raw('CASE 
-            WHEN a.monto_temporal = 0 THEN (a.monto - a.monto_temporal)
-            WHEN a.monto_temporal < a.monto THEN (a.monto - a.monto_temporal)
-            WHEN a.monto_temporal > a.monto THEN (a.monto_temporal - a.monto)
-            ELSE ""
-          END AS transferencia'),
-            'a.monto_temporal AS monto_nuevo',
           ])
           ->where('a.geco_proyecto_id', '=', $request->query('id'))
           ->get();
+      } else {
+        $operacion = DB::table('Geco_operacion')
+          ->select([
+            'id'
+          ])
+          ->where('geco_proyecto_id', '=', $request->query('id'))
+          ->orderByDesc('created_at')
+          ->first();
+
+        $movimientos = DB::table('Geco_operacion_movimiento')
+          ->select([
+            'geco_proyecto_presupuesto_id',
+            'operacion',
+            'monto',
+          ])
+          ->where('geco_operacion_id', '=', $operacion->id)
+          ->get();
+
+        $presupuesto = DB::table('Geco_proyecto_presupuesto AS a')
+          ->join('Partida AS b', 'b.id', '=', 'a.partida_id')
+          ->select([
+            'a.id',
+            'b.tipo',
+            'b.codigo',
+            'b.partida',
+            'a.monto',
+            DB::raw("0 AS monto_nuevo")
+          ])
+          ->where('a.geco_proyecto_id', '=', $request->query('id'))
+          ->get()
+          ->map(function ($item) use ($movimientos) {
+            $monto_nuevo = $item->monto;
+            foreach ($movimientos as $movimiento) {
+              if ($movimiento->geco_proyecto_presupuesto_id == $item->id) {
+                if ($movimiento->operacion == "+") {
+                  $monto_nuevo = $monto_nuevo + $movimiento->monto;
+                } else {
+                  $monto_nuevo = $monto_nuevo - $movimiento->monto;
+                }
+              }
+            }
+            $item->monto_nuevo = $monto_nuevo;
+            return $item;
+          });
       }
 
       $groupedData = $presupuesto->groupBy('tipo');
@@ -775,11 +794,11 @@ class Informe_economicoController extends S3Controller {
         'b.id AS value',
         'b.tipo',
         DB::raw("CONCAT(b.codigo, ' - ', b.partida) AS label"),
-        DB::raw("(a.monto - a.monto_rendido - a.monto_rendido_enviado) AS max"),
+        DB::raw("(a.monto - COALESCE(a.monto_rendido, 0) - COALESCE(a.monto_rendido_enviado, 0)) AS max"),
         'a.monto',
-        'a.monto_temporal',
-        'a.monto_rendido_enviado',
-        'a.monto_rendido',
+        'monto_temporal',
+        DB::raw("COALESCE(a.monto_rendido_enviado, 0) AS monto_rendido_enviado"),
+        DB::raw("COALESCE(a.monto_rendido, 0) AS monto_rendido"),
       ])
       ->where('a.geco_proyecto_id', '=', $request->query('geco_proyecto_id'))
       ->get();

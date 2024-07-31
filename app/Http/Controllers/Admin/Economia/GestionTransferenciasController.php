@@ -84,30 +84,49 @@ class GestionTransferenciasController extends Controller {
         ->where('a.geco_proyecto_id', '=', $request->query('geco_proyecto_id'))
         ->get();
     } else {
+      $operacion = DB::table('Geco_operacion')
+        ->select([
+          'id'
+        ])
+        ->where('geco_proyecto_id', '=', $request->query('geco_proyecto_id'))
+        ->orderByDesc('created_at')
+        ->first();
+
+      $movimientos = DB::table('Geco_operacion_movimiento')
+        ->select([
+          'geco_proyecto_presupuesto_id',
+          'operacion',
+          'monto',
+        ])
+        ->where('geco_operacion_id', '=', $operacion->id)
+        ->get();
+
       $presupuesto = DB::table('Geco_proyecto_presupuesto AS a')
         ->join('Partida AS b', 'b.id', '=', 'a.partida_id')
         ->select([
+          'a.id',
           'b.tipo',
           'b.codigo',
           'b.partida',
           'a.monto',
-          DB::raw('CASE 
-        WHEN a.monto_temporal = 0 THEN "-"
-        WHEN a.monto_temporal < a.monto THEN "-"
-        WHEN a.monto_temporal > a.monto THEN "+"
-        ELSE ""
-      END AS operacion'),
-          DB::raw('CASE 
-        WHEN a.monto_temporal = 0 THEN (a.monto - a.monto_temporal)
-        WHEN a.monto_temporal < a.monto THEN (a.monto - a.monto_temporal)
-        WHEN a.monto_temporal > a.monto THEN (a.monto_temporal - a.monto)
-        ELSE ""
-      END AS transferencia'),
-          'a.monto_temporal AS monto_nuevo',
-          DB::raw('(a.monto_temporal) AS monto_nuevo'),
+          DB::raw("0 AS monto_nuevo")
         ])
         ->where('a.geco_proyecto_id', '=', $request->query('geco_proyecto_id'))
-        ->get();
+        ->get()
+        ->map(function ($item) use ($movimientos) {
+          $monto_nuevo = $item->monto;
+          foreach ($movimientos as $movimiento) {
+            if ($movimiento->geco_proyecto_presupuesto_id == $item->id) {
+              if ($movimiento->operacion == "+") {
+                $monto_nuevo = $monto_nuevo + $movimiento->monto;
+              } else {
+                $monto_nuevo = $monto_nuevo - $movimiento->monto;
+              }
+            }
+          }
+          $item->monto_nuevo = $monto_nuevo;
+          return $item;
+        });
     }
 
     $groupedData = $presupuesto->groupBy('tipo');
@@ -192,13 +211,58 @@ class GestionTransferenciasController extends Controller {
           'updated_at' => Carbon::now(),
         ]);
 
-      DB::table('Geco_proyecto_presupuesto')
+      //  Actualización del presupuesto
+      $operacion = DB::table('Geco_operacion')
+        ->select([
+          'id'
+        ])
         ->where('geco_proyecto_id', '=', $request->input('geco_proyecto_id'))
-        ->whereNotNull('monto_temporal')
-        ->where('monto_temporal', '>', '0')
-        ->update([
-          'monto' => DB::raw('monto_temporal'),
-        ]);
+        ->orderByDesc('created_at')
+        ->first();
+
+      $movimientos = DB::table('Geco_operacion_movimiento')
+        ->select([
+          'geco_proyecto_presupuesto_id',
+          'operacion',
+          'monto',
+        ])
+        ->where('geco_operacion_id', '=', $operacion->id)
+        ->get();
+
+      $presupuesto = DB::table('Geco_proyecto_presupuesto AS a')
+        ->join('Partida AS b', 'b.id', '=', 'a.partida_id')
+        ->select([
+          'a.id',
+          'b.tipo',
+          'b.codigo',
+          'b.partida',
+          'a.monto',
+          DB::raw("0 AS monto_nuevo")
+        ])
+        ->where('a.geco_proyecto_id', '=', $request->input('geco_proyecto_id'))
+        ->get()
+        ->map(function ($item) use ($movimientos) {
+          $monto_nuevo = $item->monto;
+          foreach ($movimientos as $movimiento) {
+            if ($movimiento->geco_proyecto_presupuesto_id == $item->id) {
+              if ($movimiento->operacion == "+") {
+                $monto_nuevo = $monto_nuevo + $movimiento->monto;
+              } else {
+                $monto_nuevo = $monto_nuevo - $movimiento->monto;
+              }
+            }
+          }
+          $item->monto_nuevo = $monto_nuevo;
+          return $item;
+        });
+
+      foreach ($presupuesto as $element) {
+        DB::table('Geco_proyecto_presupuesto')
+          ->where('id', '=', $element->id)
+          ->update([
+            'monto' => $element->monto_nuevo,
+          ]);
+      }
     } else {
       DB::table('Geco_operacion')
         ->where('id', '=', $solicitud->id)
@@ -295,39 +359,61 @@ class GestionTransferenciasController extends Controller {
       ]);
 
     if ($solicitud->estado == "Nueva operación") {
+      $operacion = DB::table('Geco_operacion')
+        ->select([
+          'id'
+        ])
+        ->where('geco_proyecto_id', '=', $request->query('geco_proyecto_id'))
+        ->orderByDesc('created_at')
+        ->first();
+
+      $movimientos = DB::table('Geco_operacion_movimiento')
+        ->select([
+          'geco_proyecto_presupuesto_id',
+          'operacion',
+          'monto',
+        ])
+        ->where('geco_operacion_id', '=', $operacion->id)
+        ->get();
+
       $partidas = DB::table('Geco_proyecto_presupuesto AS a')
         ->join('Partida AS b', 'b.id', '=', 'a.partida_id')
         ->select([
+          'a.id',
           'b.tipo',
           'b.codigo',
           'b.partida',
-          'a.monto AS presupuesto',
-          'a.monto_temporal AS nuevo_presupuesto'
+          'a.monto',
+          DB::raw("0 AS monto_nuevo")
         ])
         ->where('a.geco_proyecto_id', '=', $request->query('geco_proyecto_id'))
-        ->groupBy('a.id')
         ->orderBy('b.tipo')
-        ->get();
+        ->get()
+        ->map(function ($item) use ($movimientos) {
+          $monto_nuevo = $item->monto;
+          foreach ($movimientos as $movimiento) {
+            if ($movimiento->geco_proyecto_presupuesto_id == $item->id) {
+              if ($movimiento->operacion == "+") {
+                $monto_nuevo = $monto_nuevo + $movimiento->monto;
+              } else {
+                $monto_nuevo = $monto_nuevo - $movimiento->monto;
+              }
+            }
+          }
+          $item->monto_nuevo = $monto_nuevo;
+          return $item;
+        });
     } else {
       $partidas = DB::table('Geco_proyecto_presupuesto AS a')
         ->join('Partida AS b', 'b.id', '=', 'a.partida_id')
-        ->leftJoinSub($subQuery, 'c', function ($join) {
-          $join->on('c.geco_proyecto_id', '=', 'a.geco_proyecto_id');
-        })
-        ->leftJoinSub($subQuery1, 'd', function ($join) {
-          $join->on('d.geco_operacion_id', '=', 'c.id')
-            ->on('d.geco_proyecto_presupuesto_id', '=', 'a.id');
-        })
         ->select([
           'b.tipo',
           'b.codigo',
           'b.partida',
-          DB::raw("COALESCE(d.monto_original, a.monto) AS presupuesto"),
-          'd.operacion',
-          'a.monto AS nuevo_presupuesto'
+          'a.monto',
+          'a.monto AS monto_nuevo'
         ])
         ->where('a.geco_proyecto_id', '=', $request->query('geco_proyecto_id'))
-        ->groupBy('a.id')
         ->orderBy('b.tipo')
         ->get();
     }

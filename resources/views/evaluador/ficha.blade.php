@@ -182,8 +182,16 @@
             <td valign="top">{{ $item->comentario }}</td>
           </tr>
         @endforeach
+        <tr>
+          <td valign="top">TOTAL</td>
+          <td class="row-center" valign="top">100</td>
+          <td class="row-center" valign="top">{{ $total }}</td>
+          <td valign="top"></td>
+        </tr>
       </tbody>
     </table>
+
+    <p><strong>Para aprobar este proyecto se necesita como mínimo 50 puntos</strong></p>
 
     <h6>Comentario</h5>
 

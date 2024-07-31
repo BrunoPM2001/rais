@@ -60,7 +60,7 @@ class EvaluadorProyectosController extends S3Controller {
   public function criteriosEvaluacion(Request $request) {
     //  Calculo de criterios
     $this->criteriosAutomaticos($request);
-
+    $total = 0;
     $criterios = DB::table('Proyecto_evaluacion AS a')
       ->leftJoin('Usuario_evaluador AS b', 'b.id', '=', 'a.evaluador_id')
       ->leftJoin('Proyecto AS c', 'c.id', '=', 'a.proyecto_id')
@@ -88,6 +88,12 @@ class EvaluadorProyectosController extends S3Controller {
       ->orderBy('d.orden')
       ->get();
 
+    foreach ($criterios as $item) {
+      if ($item->nivel == 1) {
+        $total = $total + $item->puntaje;
+      }
+    }
+
     $estado = DB::table('Evaluacion_proyecto')
       ->where('proyecto_id', '=', $request->query('proyecto_id'))
       ->where('evaluador_id', '=', $request->attributes->get('token_decoded')->evaluador_id)
@@ -103,7 +109,7 @@ class EvaluadorProyectosController extends S3Controller {
       ->where('evaluador_id', '=', $request->attributes->get('token_decoded')->evaluador_id)
       ->first();
 
-    return ['criterios' => $criterios, 'comentario' => $comentario, 'cerrado' => $estado > 0 ? true : false];
+    return ['criterios' => $criterios, 'comentario' => $comentario, 'cerrado' => $estado > 0 ? true : false, 'total' => $total];
   }
 
   public function updateItem(Request $request) {
@@ -128,7 +134,111 @@ class EvaluadorProyectosController extends S3Controller {
         ]);
     }
 
+    $criterios = DB::table('Proyecto_evaluacion AS a')
+      ->leftJoin('Usuario_evaluador AS b', 'b.id', '=', 'a.evaluador_id')
+      ->leftJoin('Proyecto AS c', 'c.id', '=', 'a.proyecto_id')
+      ->leftJoin('Evaluacion_opcion AS d', function ($join) {
+        $join->on('d.tipo', '=', 'c.tipo_proyecto')
+          ->on('d.periodo', '=', 'c.periodo');
+      })
+      ->leftJoin('Evaluacion_proyecto AS e', function ($join) {
+        $join->on('e.proyecto_id', '=', 'c.id')
+          ->on('e.evaluador_id', '=', 'b.id')
+          ->on('e.evaluacion_opcion_id', '=', 'd.id');
+      })
+      ->select([
+        'd.id',
+        'd.opcion',
+        'd.puntaje_max',
+        'd.nivel',
+        'd.editable',
+        DB::raw("COALESCE(e.puntaje, 0.00) AS puntaje"),
+        'e.comentario',
+        'e.id AS id_edit'
+      ])
+      ->where('a.proyecto_id', '=', $request->input('proyecto_id'))
+      ->where('a.evaluador_id', '=', $request->attributes->get('token_decoded')->evaluador_id)
+      ->orderBy('d.orden')
+      ->get();
+
+    $suma = 0;
+    foreach ($criterios as $item) {
+      if ($item->nivel == 2 && $item->opcion == "SUB TOTAL") {
+        if ($item->id_edit == null) {
+          DB::table('Evaluacion_proyecto')
+            ->insert([
+              'evaluacion_opcion_id' => $item->id,
+              'proyecto_id' => $request->input('proyecto_id'),
+              'evaluador_id' => $request->attributes->get('token_decoded')->evaluador_id,
+              'puntaje' => $suma,
+              'created_at' => Carbon::now(),
+              'updated_at' => Carbon::now()
+            ]);
+        } else {
+          DB::table('Evaluacion_proyecto')
+            ->where('id', '=', $item->id_edit)
+            ->update([
+              'puntaje' => $suma,
+              'updated_at' => Carbon::now()
+            ]);
+        }
+        $suma = 0;
+      }
+      if ($item->nivel == 1) {
+        $suma = $suma + $item->puntaje;
+      }
+    }
+
     return ['message' => 'success', 'detail' => 'Datos actualizados con éxito'];
+  }
+
+  public function preFinalizarEvaluacion(Request $request) {
+    //  Verificación de puntaje 0 y comentarios
+    $verificar1 = true;
+    $verificar2 = true;
+
+    $criterios = DB::table('Proyecto_evaluacion AS a')
+      ->leftJoin('Usuario_evaluador AS b', 'b.id', '=', 'a.evaluador_id')
+      ->leftJoin('Proyecto AS c', 'c.id', '=', 'a.proyecto_id')
+      ->leftJoin('Evaluacion_opcion AS d', function ($join) {
+        $join->on('d.tipo', '=', 'c.tipo_proyecto')
+          ->on('d.periodo', '=', 'c.periodo');
+      })
+      ->leftJoin('Evaluacion_proyecto AS e', function ($join) {
+        $join->on('e.proyecto_id', '=', 'c.id')
+          ->on('e.evaluador_id', '=', 'b.id')
+          ->on('e.evaluacion_opcion_id', '=', 'd.id');
+      })
+      ->select([
+        'd.id',
+        'd.opcion',
+        'd.puntaje_max',
+        'd.nivel',
+        'd.editable',
+        DB::raw("COALESCE(e.puntaje, 0.00) AS puntaje"),
+        'e.comentario',
+        'e.id AS id_edit'
+      ])
+      ->where('a.proyecto_id', '=', $request->input('proyecto_id'))
+      ->where('d.nivel', '=', 1)
+      ->where('d.editable', '!=', 0)
+      ->where('a.evaluador_id', '=', $request->attributes->get('token_decoded')->evaluador_id)
+      ->orderBy('d.orden')
+      ->get();
+
+    foreach ($criterios as $item) {
+      if ($item->puntaje == 0) {
+        $verificar1 = false;
+      }
+      if ($item->comentario == "" || $item->comentario == null) {
+        $verificar2 = false;
+      }
+    }
+
+    return [
+      'puntajesValidos' => $verificar1,
+      'comentariosValidos' => $verificar2,
+    ];
   }
 
   public function finalizarEvaluacion(Request $request) {
@@ -150,6 +260,8 @@ class EvaluadorProyectosController extends S3Controller {
   }
 
   public function fichaEvaluacion(Request $request) {
+    $total = 0;
+
     $criterios = DB::table('Proyecto_evaluacion AS a')
       ->leftJoin('Usuario_evaluador AS b', 'b.id', '=', 'a.evaluador_id')
       ->leftJoin('Proyecto AS c', 'c.id', '=', 'a.proyecto_id')
@@ -175,6 +287,12 @@ class EvaluadorProyectosController extends S3Controller {
       ->orderBy('d.orden')
       ->get();
 
+    foreach ($criterios as $item) {
+      if ($item->nivel == 1) {
+        $total = $total + $item->puntaje;
+      }
+    }
+
     $extra = DB::table('Proyecto_evaluacion AS a')
       ->join('Usuario_evaluador AS b', 'a.evaluador_id', '=', 'b.id')
       ->join('Proyecto AS c', 'c.id', '=', 'a.proyecto_id')
@@ -187,7 +305,7 @@ class EvaluadorProyectosController extends S3Controller {
       ->where('a.evaluador_id', '=', $request->attributes->get('token_decoded')->evaluador_id)
       ->first();
 
-    $pdf = Pdf::loadView('evaluador.ficha', ['evaluacion' => $criterios, 'extra' => $extra]);
+    $pdf = Pdf::loadView('evaluador.ficha', ['evaluacion' => $criterios, 'extra' => $extra, 'total' => $total]);
     return $pdf->stream();
   }
 

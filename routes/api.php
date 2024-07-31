@@ -231,6 +231,15 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
     Route::prefix('docentes')->group(function () {
       Route::get('listado', [DocenteInvestigadorController::class, 'listado']);
       Route::get('evaluarData', [DocenteInvestigadorController::class, 'evaluarData']);
+      Route::get('opcionesSubCategorias', [DocenteInvestigadorController::class, 'opcionesSubCategorias']);
+      Route::post('aprobarActividad', [DocenteInvestigadorController::class, 'aprobarActividad']);
+      //  Cambios de estado admin
+      Route::put('evaluar', [DocenteInvestigadorController::class, 'evaluar']);
+      Route::put('tramite', [DocenteInvestigadorController::class, 'tramite']);
+      Route::post('subirCDI', [DocenteInvestigadorController::class, 'subirCDI']);
+
+      Route::get('fichaEvaluacion', [DocenteInvestigadorController::class, 'fichaEvaluacion']);
+      Route::get('constanciaCDI', [DocenteInvestigadorController::class, 'constanciaCDI']);
     });
 
     //  Gestión de SUM
@@ -291,6 +300,7 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
     Route::prefix('gestionEvaluadores')->group(function () {
       Route::get('listado', [GestionEvaluadoresController::class, 'listado']);
       Route::get('searchInvestigador', [GestionEvaluadoresController::class, 'searchInvestigador']);
+      Route::post('crearEvaluador', [GestionEvaluadoresController::class, 'crearEvaluador']);
     });
 
     //  Evaluadores de proyectos
@@ -587,6 +597,7 @@ Route::prefix('evaluador')->middleware('checkRole:Usuario_evaluador')->group(fun
     Route::get('listado', [EvaluadorProyectosController::class, 'listado']);
     Route::get('criteriosEvaluacion', [EvaluadorProyectosController::class, 'criteriosEvaluacion']);
     Route::put('updateItem', [EvaluadorProyectosController::class, 'updateItem']);
+    Route::put('preFinalizarEvaluacion', [EvaluadorProyectosController::class, 'preFinalizarEvaluacion']);
     Route::put('finalizarEvaluacion', [EvaluadorProyectosController::class, 'finalizarEvaluacion']);
     Route::get('fichaEvaluacion', [EvaluadorProyectosController::class, 'fichaEvaluacion']);
     Route::post('cargarFicha', [EvaluadorProyectosController::class, 'cargarFicha']);
