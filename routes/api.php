@@ -238,8 +238,13 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
       Route::put('tramite', [DocenteInvestigadorController::class, 'tramite']);
       Route::post('subirCDI', [DocenteInvestigadorController::class, 'subirCDI']);
 
+      //  Observaciones
+      Route::post('observar', [DocenteInvestigadorController::class, 'observar']);
+      Route::get('observaciones', [DocenteInvestigadorController::class, 'observaciones']);
+
       Route::get('fichaEvaluacion', [DocenteInvestigadorController::class, 'fichaEvaluacion']);
       Route::get('constanciaCDI', [DocenteInvestigadorController::class, 'constanciaCDI']);
+      Route::post('enviarCorreo', [DocenteInvestigadorController::class, 'enviarCorreo']);
     });
 
     //  Gestión de SUM
@@ -259,6 +264,8 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
       Route::get('listadoPartidasComprobante', [GestionComprobantesController::class, 'listadoPartidasComprobante']);
       Route::put('updateEstadoComprobante', [GestionComprobantesController::class, 'updateEstadoComprobante']);
       Route::get('listadoPartidasProyecto', [GestionComprobantesController::class, 'listadoPartidasProyecto']);
+      Route::get('recalcularMontos', [GestionComprobantesController::class, 'recalcularMontos']);
+      Route::get('verAuditoria', [GestionComprobantesController::class, 'verAuditoria']);
     });
 
     Route::prefix('transferencias')->group(function () {

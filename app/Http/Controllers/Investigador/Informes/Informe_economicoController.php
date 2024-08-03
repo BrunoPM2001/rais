@@ -540,6 +540,12 @@ class Informe_economicoController extends S3Controller {
     $date = Carbon::now();
     if ($request->hasFile('file')) {
       if ($request->input('geco_documento_id') == "") {
+
+        //  Verificar que no hayan duplicados
+        // $verificar = DB::table('Geco_documento')
+        // ->where('geco_proyecto_id', '=', $request->input('geco_proyecto_id'))
+        // ->where('')
+
         //  Crear documento
         $id = DB::table('Geco_documento')
           ->insertGetId([

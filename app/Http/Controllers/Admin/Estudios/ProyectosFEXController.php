@@ -64,6 +64,6 @@ class ProyectosFEXController extends Controller {
       ->groupBy('a.id')
       ->get();
 
-    return ['data' => $proyectos];
+    return $proyectos;
   }
 }

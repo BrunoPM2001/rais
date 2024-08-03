@@ -3,11 +3,13 @@
 namespace App\Http\Controllers\Admin\Estudios;
 
 use App\Http\Controllers\Controller;
+use App\Mail\SampleMailable;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Database\Query\JoinClause;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
 class DocenteInvestigadorController extends Controller {
@@ -305,21 +307,43 @@ class DocenteInvestigadorController extends Controller {
 
   //  Observar
   public function observar(Request $request) {
-    $date = Carbon::now();
-
-    DB::table('Eval_docente_investigador_obs')
-      ->insert([
-        'eval_investigador_id' => $request->input('id'),
-        'observacion' => $request->input('observacion'),
-        'created_at' => $date,
-        'updated_at' => $date
-      ]);
-
-    DB::table('Eval_docente_investigador')
+    $count = DB::table('Eval_docente_investigador')
       ->where('id', '=', $request->input('id'))
-      ->update([
-        'estado' => 'PROCESO'
-      ]);
+      ->where('estado', '=', 'PROCESO')
+      ->count();
+
+    if ($count == 1) {
+      return ['message' => 'warning', 'detail' => 'Esta solicitud ya figura como observada, no puede añadir observaciones mientras el docente no subsane la última observación ingresada'];
+    } else {
+      $date = Carbon::now();
+
+      DB::table('Eval_docente_investigador_obs')
+        ->insert([
+          'eval_investigador_id' => $request->input('id'),
+          'observacion' => $request->input('observacion'),
+          'created_at' => $date,
+          'updated_at' => $date
+        ]);
+
+      DB::table('Eval_docente_investigador')
+        ->where('id', '=', $request->input('id'))
+        ->update([
+          'estado' => 'PROCESO'
+        ]);
+      return ['message' => 'info', 'detail' => 'Solicitud observada correctamente'];
+    }
+  }
+
+  public function observaciones(Request $request) {
+    $observaciones = DB::table('Eval_docente_investigador_obs')
+      ->select([
+        'observacion',
+        'created_at'
+      ])
+      ->where('eval_investigador_id', '=', $request->query('id'))
+      ->get();
+
+    return $observaciones;
   }
 
   //  Iniciar evaluación
@@ -544,5 +568,29 @@ class DocenteInvestigadorController extends Controller {
 
     $pdf = Pdf::loadView('admin.estudios.docentes.constancia_no_firmada', ['detalles' => $detalles]);
     return $pdf->stream();
+  }
+
+  public function enviarCorreo(Request $request) {
+    //  Generar constancia
+    $detalles = DB::table('Eval_docente_investigador AS a')
+      ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
+      ->join('Repo_rrhh AS c', 'c.ser_cod_ant', '=', 'b.codigo')
+      ->join('Grupo AS d', 'd.id', '=', 'a.d2')
+      ->join('Facultad AS e', 'e.id', '=', 'b.facultad_id')
+      ->select([
+        DB::raw("CONCAT(c.ser_ape_pat, ' ', c.ser_ape_mat, ', ', c.ser_nom) AS nombres"),
+        'c.ser_cod_ant',
+        'a.fecha_constancia',
+        'a.fecha_fin',
+      ])
+      ->where('a.id', '=', $request->input('id'))
+      ->first();
+
+    $pdf = Pdf::loadView('admin.estudios.docentes.constancia_no_firmada', ['detalles' => $detalles]);
+    $adjunto = $pdf->output();
+
+    Mail::to('alefran2020@gmail.com')->send(new SampleMailable($adjunto));
+
+    return ['message' => 'info', 'detail' => 'Correo enviado exitosamente'];
   }
 }

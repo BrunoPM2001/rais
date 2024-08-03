@@ -42,8 +42,8 @@ return new class extends Migration {
       $table->tinyInteger('estado');
       $table->timestamps();
       //  Columna temporal
-      $table->string('observacion', 1500);
-
+      $table->text('observacion');
+      $table->text('audit');
       //  Fks
       $table->foreign('geco_proyecto_id')->references('id')->on('Geco_proyecto');
       $table->foreign('investigador_id')->references('id')->on('Usuario_investigador');

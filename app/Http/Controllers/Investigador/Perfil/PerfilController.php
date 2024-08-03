@@ -666,7 +666,7 @@ class PerfilController extends S3Controller {
       ->where('id', '=', $request->attributes->get('token_decoded')->investigador_id)
       ->first();
 
-    $d1 = $req1->renacyt;
+    $d1 = $req1->renacyt ?? "";
 
     $req2 = DB::table('Grupo_integrante AS a')
       ->join('Grupo AS b', function (JoinClause $join) {

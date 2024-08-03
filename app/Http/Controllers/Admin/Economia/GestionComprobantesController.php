@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin\Economia;
 
 use App\Http\Controllers\S3Controller;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -157,7 +158,21 @@ class GestionComprobantesController extends S3Controller {
           'observacion' => $request->input('observacion')
         ]);
 
+      $proyecto = DB::table('Geco_documento')
+        ->select([
+          'geco_proyecto_id'
+        ])
+        ->where('id', '=', $request->input('geco_documento_id'))
+        ->first();
+
+      //  Cálculos previos - Eliminar cuando todo esté normal
+      $this->limpiarMontos($proyecto->geco_proyecto_id);
+      $this->calcularEnviado($proyecto->geco_proyecto_id);
+      $this->calcularRendicion($proyecto->geco_proyecto_id);
+      $this->calcularExceso($proyecto->geco_proyecto_id);
+
       if ($count > 0) {
+        $this->agregarAudit($request);
         return ['message' => 'info', 'detail' => 'Estado del comprobante actualizado'];
       } else {
         return ['message' => 'warning', 'detail' => 'No se pudo actualizar la información'];
@@ -169,7 +184,21 @@ class GestionComprobantesController extends S3Controller {
           'estado' => $request->input('estado')["value"]
         ]);
 
+      $proyecto = DB::table('Geco_documento')
+        ->select([
+          'geco_proyecto_id'
+        ])
+        ->where('id', '=', $request->input('geco_documento_id'))
+        ->first();
+
+      //  Cálculos previos - Eliminar cuando todo esté normal
+      $this->limpiarMontos($proyecto->geco_proyecto_id);
+      $this->calcularEnviado($proyecto->geco_proyecto_id);
+      $this->calcularRendicion($proyecto->geco_proyecto_id);
+      $this->calcularExceso($proyecto->geco_proyecto_id);
+
       if ($count > 0) {
+        $this->agregarAudit($request);
         return ['message' => 'info', 'detail' => 'Estado del comprobante actualizado'];
       } else {
         return ['message' => 'warning', 'detail' => 'No se pudo actualizar la información'];
@@ -199,5 +228,163 @@ class GestionComprobantesController extends S3Controller {
       ->get();
 
     return $partidas;
+  }
+
+  public function recalcularMontos(Request $request) {
+    //  Cálculos previos - Eliminar cuando todo esté normal
+    $this->limpiarMontos($request->query('geco_proyecto_id'));
+    $this->calcularEnviado($request->query('geco_proyecto_id'));
+    $this->calcularRendicion($request->query('geco_proyecto_id'));
+    $this->calcularExceso($request->query('geco_proyecto_id'));
+
+    return ['message' => 'success', 'detail' => 'Montos rendidos, excedidos y de envío actualizados'];
+  }
+
+  /**
+   * Métodos para el cálculo de las operaciones al aprobar y enviar comprobantes
+   * - limpiarMontos:
+   * ELimina los valores de las columnas monto_rendido, monto_rendido_enviado y
+   * monto_excedido, este método se debe ejecutar previo al resto para volver a
+   * calcular todo de manera correcta en base a los comprobantes y presupuesto
+   * actual
+   * 
+   * - calcularRendicion: 
+   * Calcula el valor de la columna monto_rendido en base a las partidas de los
+   * comprobantes aprobados de un proyecto (ESTADO = 1).
+   * 
+   * - calcularEnviado:
+   * Calcula el valor de la columna monto_rendido_enviado en base a las partidas
+   * de los comprobantes enviados por los docentes en un proyecto (ESTADO = 4).
+   * 
+   * - calcularExceso:
+   * Calcula el valor de la columna monto_excedido en base a la siguiente operación
+   * siempre y cuando su resultado sea > a 0.
+   * (monto_rendido + monto_rendido_enviado) - monto 
+   */
+
+  public function limpiarMontos($geco_proyecto_id) {
+    DB::table('Geco_proyecto_presupuesto')
+      ->where('geco_proyecto_id', '=', $geco_proyecto_id)
+      ->update([
+        'monto_rendido_enviado' => 0,
+        'monto_rendido' => 0,
+        'monto_excedido' => 0,
+      ]);
+
+    return true;
+  }
+
+  public function calcularRendicion($geco_proyecto_id) {
+    $comprobantes = DB::table('Geco_documento AS a')
+      ->join('Geco_documento_item AS b', 'b.geco_documento_id', '=', 'a.id')
+      ->select([
+        DB::raw("SUM(b.total) AS monto_rendido"),
+        'b.partida_id',
+      ])
+      ->where('geco_proyecto_id', '=', $geco_proyecto_id)
+      ->where('estado', '=', 1)
+      ->groupBy('b.partida_id')
+      ->get();
+
+    foreach ($comprobantes as $item) {
+      DB::table('Geco_proyecto_presupuesto')
+        ->where('geco_proyecto_id', '=', $geco_proyecto_id)
+        ->where('partida_id', '=', $item->partida_id)
+        ->update([
+          'monto_rendido' => $item->monto_rendido
+        ]);
+    }
+  }
+
+  public function calcularEnviado($geco_proyecto_id) {
+    $comprobantes = DB::table('Geco_documento AS a')
+      ->join('Geco_documento_item AS b', 'b.geco_documento_id', '=', 'a.id')
+      ->select([
+        DB::raw("SUM(b.total) AS monto_rendido_enviado"),
+        'b.partida_id',
+      ])
+      ->where('geco_proyecto_id', '=', $geco_proyecto_id)
+      ->where('estado', '=', 4)
+      ->groupBy('b.partida_id')
+      ->get();
+
+    foreach ($comprobantes as $item) {
+      DB::table('Geco_proyecto_presupuesto')
+        ->where('geco_proyecto_id', '=', $geco_proyecto_id)
+        ->where('partida_id', '=', $item->partida_id)
+        ->update([
+          'monto_rendido_enviado' => $item->monto_rendido_enviado
+        ]);
+    }
+  }
+
+  public function calcularExceso($geco_proyecto_id) {
+    $presupuesto = DB::table('Geco_proyecto_presupuesto')
+      ->select([
+        'id',
+        'monto',
+        'monto_rendido_enviado',
+        'monto_rendido',
+      ])
+      ->where('geco_proyecto_id', '=', $geco_proyecto_id)
+      ->get();
+
+    foreach ($presupuesto as $item) {
+      $exceso = 0;
+
+      if (($item->monto_rendido_enviado + $item->monto_rendido) > $item->monto) {
+        $exceso = ($item->monto_rendido_enviado + $item->monto_rendido) - $item->monto;
+      }
+
+      DB::table('Geco_proyecto_presupuesto')
+        ->where('id', '=', $item->id)
+        ->update([
+          'monto_excedido' => $exceso
+        ]);
+    }
+  }
+
+  /**
+   * AUDITORÍA:
+   * Dentro de la columna audit (JSON almacenado como string) se guardarán
+   * los cambios de estado por parte de los administradores.
+   */
+
+  public function agregarAudit(Request $request) {
+    $documento = DB::table('Geco_documento')
+      ->select([
+        'audit'
+      ])
+      ->where('id', '=', $request->input('geco_documento_id'))
+      ->first();
+
+    $audit = json_decode($documento->audit ?? "[]");
+
+    $audit[] = [
+      'fecha' => Carbon::now()->format('Y-m-d H:i:s'),
+      'estado' => $request->input('estado')["value"],
+      'nombre' => $request->attributes->get('token_decoded')->nombre . " " . $request->attributes->get('token_decoded')->apellidos
+    ];
+
+    $audit = json_encode($audit);
+
+    DB::table('Geco_documento')
+      ->where('id', '=', $request->input('geco_documento_id'))
+      ->update([
+        'audit' => $audit
+      ]);
+  }
+
+  public function verAuditoria(Request $request) {
+    $documento = DB::table('Geco_documento')
+      ->select([
+        'audit'
+      ])
+      ->where('id', '=', $request->query('id'))
+      ->first();
+
+    $audit = json_decode($documento->audit ?? "[]");
+
+    return $audit;
   }
 }
