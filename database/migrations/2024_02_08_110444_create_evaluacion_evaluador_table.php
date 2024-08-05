@@ -15,7 +15,7 @@ return new class extends Migration {
       $table->unsignedBigInteger('usuario_evaluador_id');
 
       //  Fks
-      $table->foreign('evaluacion_facultad_id')->references('id')->on('Evaluacion_facultad');
+      $table->foreign('evaluacion_facultad_id')->references('id')->on('Evaluacion_facultad_H');
       $table->foreign('usuario_evaluador_id')->references('id')->on('Usuario_evaluador');
     });
   }
