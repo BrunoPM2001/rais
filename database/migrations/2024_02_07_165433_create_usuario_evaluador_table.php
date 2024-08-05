@@ -18,6 +18,11 @@ return new class extends Migration {
       $table->string('institucion')->nullable();
       $table->string('cargo')->nullable();
       $table->string('codigo_regina')->nullable();
+      $table->string('renacyt', 50)->nullable();
+      $table->string('nivel_renacyt', 5)->nullable();
+      $table->string('cti_vitae', 100)->nullable();
+      $table->string('codigo_orcid', 100)->nullable();
+      $table->string('numero_dni', 100)->nullable();
 
       //  Fks
       $table->foreign('usuario_investigador_id')->references('id')->on('Usuario_investigador');
