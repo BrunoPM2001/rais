@@ -51,6 +51,7 @@ use App\Http\Controllers\Investigador\Publicaciones\CapitulosLibrosController;
 use App\Http\Controllers\Investigador\Publicaciones\EventoController;
 use App\Http\Controllers\Investigador\Grupo\GrupoController as InvestigadorGrupoController;
 use App\Http\Controllers\Investigador\Informes\Informe_economicoController;
+use App\Http\Controllers\Investigador\Perfil\CdiController;
 use App\Http\Controllers\Investigador\Perfil\OrcidController;
 use App\Http\Controllers\Investigador\Perfil\PerfilController;
 use App\Http\Controllers\Investigador\Publicaciones\LibrosController;
@@ -156,6 +157,8 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
     //  Proyectos FEX
     Route::prefix('proyectosFEX')->group(function () {
       Route::get('listado', [ProyectosFEXController::class, 'listado']);
+      Route::get('lineasUnmsm', [ProyectosFEXController::class, 'lineasUnmsm']);
+      Route::post('registrarPaso1', [ProyectosFEXController::class, 'registrarPaso1']);
     });
 
     //  Informe técnico
@@ -230,6 +233,8 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
     //  Gestión de docentes investigadores
     Route::prefix('docentes')->group(function () {
       Route::get('listado', [DocenteInvestigadorController::class, 'listado']);
+      Route::get('constancias', [DocenteInvestigadorController::class, 'constancias']);
+
       Route::get('evaluarData', [DocenteInvestigadorController::class, 'evaluarData']);
       Route::get('opcionesSubCategorias', [DocenteInvestigadorController::class, 'opcionesSubCategorias']);
       Route::post('aprobarActividad', [DocenteInvestigadorController::class, 'aprobarActividad']);
@@ -244,6 +249,7 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
 
       Route::get('fichaEvaluacion', [DocenteInvestigadorController::class, 'fichaEvaluacion']);
       Route::get('constanciaCDI', [DocenteInvestigadorController::class, 'constanciaCDI']);
+      Route::get('constanciaCDIFirmada', [DocenteInvestigadorController::class, 'constanciaCDIFirmada']);
       Route::post('enviarCorreo', [DocenteInvestigadorController::class, 'enviarCorreo']);
     });
 
@@ -353,11 +359,19 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
   Route::prefix('perfil')->group(function () {
     Route::get('getData', [PerfilController::class, 'getData']);
     Route::put('updateData', [PerfilController::class, 'updateData']);
-    Route::get('cdiEstado', [PerfilController::class, 'cdiEstado']);
-    Route::get('actividadesExtra', [PerfilController::class, 'actividadesExtra']);
-    Route::post('addActividad', [PerfilController::class, 'addActividad']);
-    Route::delete('deleteActividad', [PerfilController::class, 'deleteActividad']);
-    Route::post('solicitarCDI', [PerfilController::class, 'solicitarCDI']);
+    Route::get('cdiEstado', [CdiController::class, 'cdiEstado']);
+    Route::post('solicitarCDI', [CdiController::class, 'solicitarCDI']);
+
+    Route::get('actividadesExtra', [CdiController::class, 'actividadesExtra']);
+    Route::post('addActividad', [CdiController::class, 'addActividad']);
+    Route::delete('deleteActividad', [CdiController::class, 'deleteActividad']);
+
+    Route::get('actividadesExtraObs', [CdiController::class, 'actividadesExtraObs']);
+    Route::post('addActividadObs', [CdiController::class, 'addActividadObs']);
+
+    Route::post('actualizarSolicitud', [CdiController::class, 'actualizarSolicitud']);
+
+    Route::get('observaciones', [CdiController::class, 'observaciones']);
   });
 
   //  Main dashboard

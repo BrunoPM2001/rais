@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Admin\Estudios;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\S3Controller;
 use App\Mail\SampleMailable;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
-class DocenteInvestigadorController extends Controller {
+class DocenteInvestigadorController extends S3Controller {
 
   public function listado() {
 
@@ -65,6 +65,34 @@ class DocenteInvestigadorController extends Controller {
     return $evaluaciones;
   }
 
+  public function constancias() {
+    $constancias = DB::table('Eval_docente_investigador AS a')
+      ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
+      ->leftJoin('Facultad AS c', 'c.id', '=', 'b.facultad_id')
+      ->select([
+        'a.id',
+        DB::raw("CASE 
+              WHEN a.fecha_fin < now() THEN 'No vigente'
+              ELSE 'Vigente'
+          END AS estado"),
+        'b.tipo',
+        'c.nombre AS facultad',
+        'b.codigo_orcid',
+        'b.apellido1',
+        'b.apellido2',
+        'b.nombres',
+        'b.doc_tipo',
+        'a.doc_numero',
+        'b.telefono_movil',
+        'b.email3'
+      ])
+      ->where('a.tipo_eval', '=', 'Constancia')
+      ->orderByDesc('a.fecha_fin')
+      ->get();
+
+    return $constancias;
+  }
+
   public function evaluarData(Request $request) {
     $currentYear = (int)date("Y");
     $lastTwoYears = [$currentYear - 2, $currentYear - 1];
@@ -72,14 +100,22 @@ class DocenteInvestigadorController extends Controller {
     $detalles = DB::table('Eval_docente_investigador AS a')
       ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
       ->join('Repo_rrhh AS c', 'c.ser_cod_ant', '=', 'b.codigo')
+      ->leftJoin('File AS d', function (JoinClause $join) {
+        $join->on('d.tabla_id', '=', 'a.id')
+          ->where('d.tabla', '=', 'Eval_docente_investigador')
+          ->where('d.recurso', '=', 'CONSTANCIA_FIRMADA');
+      })
       ->select([
+        DB::raw("CONCAT('/minio/', d.bucket, '/', d.key) AS url"),
         'a.nombres',
         DB::raw("CASE 
                 WHEN a.estado = 'ENVIADO' THEN 'Enviado'
                 WHEN a.estado = 'TRAMITE' THEN 'En trámite'
                 WHEN a.estado = 'CONSTANCIA' THEN 'Constancia'
                 WHEN a.estado = 'NO_APROBADO' THEN 'No aprobado'
-                WHEN a.estado = 'PROCESO ' THEN 'Observado'
+                WHEN a.estado = 'PROCESO' THEN 'Observado'
+                WHEN a.estado = 'PENDIENTE' THEN 'Pendiente'
+                WHEN a.estado = 'Aprobado' THEN 'Aprobado'
                 ELSE ''
             END AS estado"),
         'a.estado_tecnico',
@@ -97,6 +133,7 @@ class DocenteInvestigadorController extends Controller {
         'a.docente_categoria',
         'a.clase',
         'a.horas',
+        'a.confirmar',
         'a.d1',
         'a.d2',
         'a.d3',
@@ -439,6 +476,7 @@ class DocenteInvestigadorController extends Controller {
         'e.nombre AS facultad',
         'c.des_dep_cesantes',
         'a.estado_tecnico',
+        'a.confirmar',
         'a.d1',
         'a.d2',
         'a.d3',
@@ -555,8 +593,6 @@ class DocenteInvestigadorController extends Controller {
     $detalles = DB::table('Eval_docente_investigador AS a')
       ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
       ->join('Repo_rrhh AS c', 'c.ser_cod_ant', '=', 'b.codigo')
-      ->join('Grupo AS d', 'd.id', '=', 'a.d2')
-      ->join('Facultad AS e', 'e.id', '=', 'b.facultad_id')
       ->select([
         DB::raw("CONCAT(c.ser_ape_pat, ' ', c.ser_ape_mat, ', ', c.ser_nom) AS nombres"),
         'c.ser_cod_ant',
@@ -568,6 +604,22 @@ class DocenteInvestigadorController extends Controller {
 
     $pdf = Pdf::loadView('admin.estudios.docentes.constancia_no_firmada', ['detalles' => $detalles]);
     return $pdf->stream();
+  }
+
+  public function constanciaCDIFirmada(Request $request) {
+    $constancia = DB::table('Eval_docente_investigador AS a')
+      ->join('File AS b', function (JoinClause $join) {
+        $join->on('a.id', '=', 'b.tabla_id')
+          ->where('b.tabla', '=', 'Eval_docente_investigador')
+          ->where('b.recurso', '=', 'CONSTANCIA_FIRMADA');
+      })
+      ->select([
+        DB::raw("CONCAT('/minio/', b.bucket, '/', b.key) AS url")
+      ])
+      ->where('a.id', '=', $request->query('id'))
+      ->first();
+
+    return $constancia;
   }
 
   public function enviarCorreo(Request $request) {

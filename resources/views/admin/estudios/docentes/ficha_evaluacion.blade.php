@@ -240,7 +240,7 @@
         <tr>
           <td style="width: 20%;"><strong>Confirmación</strong></td>
           <td style="width: 1%;">:</td>
-          <td style="width: 79%;">NO</td>
+          <td style="width: 79%;">{{ $detalles->confirmar == 1 ? 'Sí' : 'No' }}</td>
         </tr>
       </tbody>
     </table>
