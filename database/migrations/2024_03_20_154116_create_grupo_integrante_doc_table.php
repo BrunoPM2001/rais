@@ -15,7 +15,7 @@ return new class extends Migration {
       $table->unsignedBigInteger('grupo_id');
       $table->unsignedBigInteger('investigador_id')->nullable();
       $table->string('nombre', 150)->nullable();
-      $table->string('archivo_tipo');
+      $table->string('key');
       $table->date('fecha');
       $table->boolean('estado');
 
