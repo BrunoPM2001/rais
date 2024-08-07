@@ -31,6 +31,6 @@ return new class extends Migration {
    * Reverse the migrations.
    */
   public function down(): void {
-    Schema::drop('Evaluacion_facultad');
+    Schema::drop('Evaluacion_facultad_H');
   }
 };
