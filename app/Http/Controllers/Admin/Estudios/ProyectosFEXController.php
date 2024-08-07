@@ -171,4 +171,56 @@ class ProyectosFEXController extends Controller {
 
     return ['message' => 'success', 'id' => $id];
   }
+
+  public function registrarPaso2(Request $request) {
+    $date = Carbon::now();
+    DB::table('Proyecto')
+      ->where('id', '=', $request->input('id'))
+      ->update([
+        'palabras_clave' => $request->input('palabras_clave'),
+        'fecha_inicio' => $request->input('fecha_inicio'),
+        'fecha_fin' => $request->input('fecha_fin'),
+        'updated_at' => $date
+      ]);
+
+    DB::table('Proyecto_descripcion')
+      ->updateOrInsert([
+        'proyecto_id' => $request->input('id'),
+        'codigo' => 'resumen'
+      ], [
+        'detalle' => $request->input('resumen')
+      ]);
+
+    DB::table('Proyecto_descripcion')
+      ->updateOrInsert([
+        'proyecto_id' => $request->input('id'),
+        'codigo' => 'objetivos'
+      ], [
+        'detalle' => $request->input('objetivos')
+      ]);
+
+    DB::table('Proyecto_descripcion')
+      ->updateOrInsert([
+        'proyecto_id' => $request->input('id'),
+        'codigo' => 'duracion_annio'
+      ], [
+        'detalle' => $request->input('años')
+      ]);
+
+    DB::table('Proyecto_descripcion')
+      ->updateOrInsert([
+        'proyecto_id' => $request->input('id'),
+        'codigo' => 'duracion_mes'
+      ], [
+        'detalle' => $request->input('meses')
+      ]);
+
+    DB::table('Proyecto_descripcion')
+      ->updateOrInsert([
+        'proyecto_id' => $request->input('id'),
+        'codigo' => 'duracion_dia'
+      ], [
+        'detalle' => $request->input('dias')
+      ]);
+  }
 }
