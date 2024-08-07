@@ -19,6 +19,7 @@ return new class extends Migration {
       $table->date('fecha');
       $table->string('dni_pasajero', 12)->nullable();
       $table->string('concepto')->nullable();
+      $table->tinyInteger('retencion')->nullable();
       $table->string('razon_social')->nullable();
       $table->float('monto')->default(0);
       $table->string('tipo_moneda')->nullable();
@@ -43,7 +44,8 @@ return new class extends Migration {
       $table->timestamps();
       //  Columna temporal
       $table->text('observacion');
-      $table->text('audit');
+      $table->text('audit')->nullable();
+
       //  Fks
       $table->foreign('geco_proyecto_id')->references('id')->on('Geco_proyecto');
       $table->foreign('investigador_id')->references('id')->on('Usuario_investigador');
