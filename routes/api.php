@@ -161,6 +161,7 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
       Route::post('registrarPaso1', [ProyectosFEXController::class, 'registrarPaso1']);
       Route::post('registrarPaso2', [ProyectosFEXController::class, 'registrarPaso2']);
 
+      Route::get('datosPaso1', [ProyectosFEXController::class, 'datosPaso1']);
       Route::get('datosPaso2', [ProyectosFEXController::class, 'datosPaso2']);
     });
 

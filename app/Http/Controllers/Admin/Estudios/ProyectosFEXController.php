@@ -102,70 +102,100 @@ class ProyectosFEXController extends Controller {
 
   public function registrarPaso1(Request $request) {
     $date = Carbon::now();
+    $id = 0;
 
-    $id = DB::table('Proyecto')
-      ->insertGetId([
-        'linea_investigacion_id' => $request->input('linea_investigacion_id')["value"] ?? null,
-        'ocde_id' => $request->input('ocde_3')["value"] ?? null,
-        'titulo' => $request->input('titulo'),
-        'fecha_inscripcion' => $date,
-        'tipo_proyecto' => 'PFEX',
-        'periodo' => $date->format("Y"),
-        'resolucion_rectoral' => $request->input('resolucion_rectoral'),
-        'aporte_unmsm' => $request->input('aporte_unmsm'),
-        'aporte_no_unmsm' => $request->input('aporte_no_unmsm'),
-        'financiamiento_fuente_externa' => $request->input('financiamiento_fuente_externa'),
-        'entidad_asociada' => $request->input('entidad_asociada'),
-        'monto_asignado' =>
-        $request->input('aporte_unmsm')
-          + $request->input('aporte_no_unmsm')
-          + $request->input('financiamiento_fuente_externa')
-          + $request->input('entidad_asociada'),
-        'estado' => 6,
-        'step' => 2,
-        'created_at' => $date,
-        'updated_at' => $date,
+    if ($request->input('id')) {
+      $id = $request->input('id');
+      DB::table('Proyecto')
+        ->where('id', '=', $id)
+        ->update([
+          'linea_investigacion_id' => $request->input('linea_investigacion_id')["value"] ?? null,
+          'ocde_id' => $request->input('ocde_3')["value"] ?? null,
+          'titulo' => $request->input('titulo'),
+          'resolucion_rectoral' => $request->input('resolucion_rectoral'),
+          'aporte_unmsm' => $request->input('aporte_unmsm'),
+          'aporte_no_unmsm' => $request->input('aporte_no_unmsm'),
+          'financiamiento_fuente_externa' => $request->input('financiamiento_fuente_externa'),
+          'entidad_asociada' => $request->input('entidad_asociada'),
+          'monto_asignado' =>
+          $request->input('aporte_unmsm')
+            + $request->input('aporte_no_unmsm')
+            + $request->input('financiamiento_fuente_externa')
+            + $request->input('entidad_asociada'),
+          'step' => 2,
+          'updated_at' => $date,
+        ]);
+    } else {
+      $id = DB::table('Proyecto')
+        ->insertGetId([
+          'linea_investigacion_id' => $request->input('linea_investigacion_id')["value"] ?? null,
+          'ocde_id' => $request->input('ocde_3')["value"] ?? null,
+          'titulo' => $request->input('titulo'),
+          'fecha_inscripcion' => $date,
+          'tipo_proyecto' => 'PFEX',
+          'periodo' => $date->format("Y"),
+          'resolucion_rectoral' => $request->input('resolucion_rectoral'),
+          'aporte_unmsm' => $request->input('aporte_unmsm'),
+          'aporte_no_unmsm' => $request->input('aporte_no_unmsm'),
+          'financiamiento_fuente_externa' => $request->input('financiamiento_fuente_externa'),
+          'entidad_asociada' => $request->input('entidad_asociada'),
+          'monto_asignado' =>
+          $request->input('aporte_unmsm')
+            + $request->input('aporte_no_unmsm')
+            + $request->input('financiamiento_fuente_externa')
+            + $request->input('entidad_asociada'),
+          'estado' => 6,
+          'step' => 2,
+          'created_at' => $date,
+          'updated_at' => $date,
+        ]);
+    }
+
+    DB::table('Proyecto_descripcion')
+      ->updateOrInsert([
+        'proyecto_id' => $id,
+        'codigo' => 'moneda_tipo'
+      ], [
+        'detalle' => $request->input('moneda_tipo')["value"] ?? ""
       ]);
 
     DB::table('Proyecto_descripcion')
-      ->insert([
+      ->updateOrInsert([
         'proyecto_id' => $id,
-        'codigo' => 'moneda_tipo',
-        'detalle' => $request->input('moneda')["value"] ?? ""
+        'codigo' => 'fuente_financiadora'
+      ], [
+        'detalle' => $request->input('fuente_financiadora')["value"] ?? ""
       ]);
 
     DB::table('Proyecto_descripcion')
-      ->insert([
+      ->updateOrInsert([
         'proyecto_id' => $id,
-        'codigo' => 'fuente_financiadora',
-        'detalle' => $request->input('fuente')["value"] ?? ""
+        'codigo' => 'otra_fuente'
+      ], [
+        'detalle' => $request->input('otra_fuente') ?? ""
       ]);
 
     DB::table('Proyecto_descripcion')
-      ->insert([
+      ->updateOrInsert([
         'proyecto_id' => $id,
-        'codigo' => 'otra_fuente',
-        'detalle' => $request->input('fuente_input') ?? ""
+        'codigo' => 'web_fuente'
+      ], [
+        'detalle' => $request->input('web_fuente') ?? ""
       ]);
 
     DB::table('Proyecto_descripcion')
-      ->insert([
+      ->updateOrInsert([
         'proyecto_id' => $id,
-        'codigo' => 'web_fuente',
-        'detalle' => $request->input('sitio') ?? ""
+        'codigo' => 'participacion_unmsm'
+      ], [
+        'detalle' => $request->input('participacion_unmsm')["value"] ?? ""
       ]);
 
     DB::table('Proyecto_descripcion')
-      ->insert([
+      ->updateOrInsert([
         'proyecto_id' => $id,
-        'codigo' => 'participacion_unmsm',
-        'detalle' => $request->input('participacion')["value"] ?? ""
-      ]);
-
-    DB::table('Proyecto_descripcion')
-      ->insert([
-        'proyecto_id' => $id,
-        'codigo' => 'pais',
+        'codigo' => 'pais'
+      ], [
         'detalle' => $request->input('pais')["value"] ?? ""
       ]);
 
@@ -238,6 +268,25 @@ class ProyectosFEXController extends Controller {
       ])
       ->where('id', '=', $request->query('id'))
       ->first();
+
+    $extras = DB::table('Proyecto_descripcion')
+      ->select([
+        'codigo',
+        'detalle'
+      ])
+      ->where('proyecto_id', '=', $request->query('id'))
+      ->whereIn('codigo', ['moneda_tipo', 'fuente_financiadora', 'otra_fuente', 'web_fuente', 'participacion_unmsm', 'pais'])
+      ->get()
+      ->mapWithKeys(function ($item) {
+        return [$item->codigo => $item->detalle];
+      });
+
+    $lineas = $this->lineasUnmsm();
+
+    return [
+      'proyecto' => $proyecto,
+      'extras' => $extras
+    ] + $lineas;
   }
 
   public function datosPaso2(Request $request) {
