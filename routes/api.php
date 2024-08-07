@@ -159,6 +159,9 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
       Route::get('listado', [ProyectosFEXController::class, 'listado']);
       Route::get('lineasUnmsm', [ProyectosFEXController::class, 'lineasUnmsm']);
       Route::post('registrarPaso1', [ProyectosFEXController::class, 'registrarPaso1']);
+      Route::post('registrarPaso2', [ProyectosFEXController::class, 'registrarPaso2']);
+
+      Route::get('datosPaso2', [ProyectosFEXController::class, 'datosPaso2']);
     });
 
     //  Informe técnico

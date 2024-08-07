@@ -204,7 +204,7 @@ class ProyectosFEXController extends Controller {
         'proyecto_id' => $request->input('id'),
         'codigo' => 'duracion_annio'
       ], [
-        'detalle' => $request->input('años')
+        'detalle' => $request->input('años') ?? ""
       ]);
 
     DB::table('Proyecto_descripcion')
@@ -212,7 +212,7 @@ class ProyectosFEXController extends Controller {
         'proyecto_id' => $request->input('id'),
         'codigo' => 'duracion_mes'
       ], [
-        'detalle' => $request->input('meses')
+        'detalle' => $request->input('meses') ?? ""
       ]);
 
     DB::table('Proyecto_descripcion')
@@ -220,7 +220,51 @@ class ProyectosFEXController extends Controller {
         'proyecto_id' => $request->input('id'),
         'codigo' => 'duracion_dia'
       ], [
-        'detalle' => $request->input('dias')
+        'detalle' => $request->input('dias') ?? ""
       ]);
+  }
+
+  public function datosPaso1(Request $request) {
+    $proyecto = DB::table('Proyecto')
+      ->select([
+        'titulo',
+        'linea_investigacion_id',
+        'ocde_id',
+        'aporte_unmsm',
+        'aporte_no_unmsm',
+        'financiamiento_fuente_externa',
+        'entidad_asociada',
+        'resolucion_rectoral'
+      ])
+      ->where('id', '=', $request->query('id'))
+      ->first();
+  }
+
+  public function datosPaso2(Request $request) {
+    $proyecto = DB::table('Proyecto')
+      ->select([
+        DB::raw("COALESCE(fecha_inicio, '') AS fecha_inicio"),
+        DB::raw("COALESCE(fecha_fin, '') AS fecha_fin"),
+        DB::raw("COALESCE(palabras_clave, '') AS palabras_clave"),
+      ])
+      ->where('id', '=', $request->query('id'))
+      ->first();
+
+    $extras = DB::table('Proyecto_descripcion')
+      ->select([
+        'codigo',
+        'detalle'
+      ])
+      ->where('proyecto_id', '=', $request->query('id'))
+      ->whereIn('codigo', ['resumen', 'objetivos', 'duracion_annio', 'duracion_mes', 'duracion_dia'])
+      ->get()
+      ->mapWithKeys(function ($item) {
+        return [$item->codigo => $item->detalle];
+      });
+
+    return [
+      'proyecto' => $proyecto,
+      'extras' => $extras
+    ];
   }
 }
