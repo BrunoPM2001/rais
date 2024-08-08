@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers\Admin\Estudios;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\S3Controller;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
-class ProyectosFEXController extends Controller {
+class ProyectosFEXController extends S3Controller {
   public function listado() {
     $responsable = DB::table('Proyecto_integrante AS a')
       ->leftJoin('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
@@ -98,6 +98,85 @@ class ProyectosFEXController extends Controller {
       'ocde' => $ocde,
       'paises' => $paises,
     ];
+  }
+
+  public function datosPaso1(Request $request) {
+    $proyecto = DB::table('Proyecto')
+      ->select([
+        'titulo',
+        'linea_investigacion_id',
+        'ocde_id',
+        'aporte_unmsm',
+        'aporte_no_unmsm',
+        'financiamiento_fuente_externa',
+        'entidad_asociada',
+        'resolucion_rectoral'
+      ])
+      ->where('id', '=', $request->query('id'))
+      ->first();
+
+    $extras = DB::table('Proyecto_descripcion')
+      ->select([
+        'codigo',
+        'detalle'
+      ])
+      ->where('proyecto_id', '=', $request->query('id'))
+      ->whereIn('codigo', ['moneda_tipo', 'fuente_financiadora', 'otra_fuente', 'web_fuente', 'participacion_unmsm', 'pais'])
+      ->get()
+      ->mapWithKeys(function ($item) {
+        return [$item->codigo => $item->detalle];
+      });
+
+    $lineas = $this->lineasUnmsm();
+
+    return [
+      'proyecto' => $proyecto,
+      'extras' => $extras
+    ] + $lineas;
+  }
+
+  public function datosPaso2(Request $request) {
+    $proyecto = DB::table('Proyecto')
+      ->select([
+        DB::raw("COALESCE(fecha_inicio, '') AS fecha_inicio"),
+        DB::raw("COALESCE(fecha_fin, '') AS fecha_fin"),
+        DB::raw("COALESCE(palabras_clave, '') AS palabras_clave"),
+      ])
+      ->where('id', '=', $request->query('id'))
+      ->first();
+
+    $extras = DB::table('Proyecto_descripcion')
+      ->select([
+        'codigo',
+        'detalle'
+      ])
+      ->where('proyecto_id', '=', $request->query('id'))
+      ->whereIn('codigo', ['resumen', 'objetivos', 'duracion_annio', 'duracion_mes', 'duracion_dia'])
+      ->get()
+      ->mapWithKeys(function ($item) {
+        return [$item->codigo => $item->detalle];
+      });
+
+    return [
+      'proyecto' => $proyecto,
+      'extras' => $extras
+    ];
+  }
+
+  public function datosPaso3(Request $request) {
+    $documentos = DB::table('Proyecto_fex_doc AS a')
+      ->select([
+        'id',
+        'doc_tipo',
+        'nombre',
+        'comentario',
+        'fecha',
+        DB::raw("CONCAT('/minio/', bucket, '/', a.key) AS url")
+      ])
+      ->where('proyecto_id', '=', $request->query('id'))
+      ->get();
+
+    return $documentos;
   }
 
   public function registrarPaso1(Request $request) {
@@ -254,66 +333,54 @@ class ProyectosFEXController extends Controller {
       ]);
   }
 
-  public function datosPaso1(Request $request) {
-    $proyecto = DB::table('Proyecto')
-      ->select([
-        'titulo',
-        'linea_investigacion_id',
-        'ocde_id',
-        'aporte_unmsm',
-        'aporte_no_unmsm',
-        'financiamiento_fuente_externa',
-        'entidad_asociada',
-        'resolucion_rectoral'
-      ])
-      ->where('id', '=', $request->query('id'))
-      ->first();
+  //  Paso 3
+  public function registrarPaso3(Request $request) {
+    $date = Carbon::now();
+    $date_name = $date->format('Ymd-His');
 
-    $extras = DB::table('Proyecto_descripcion')
-      ->select([
-        'codigo',
-        'detalle'
-      ])
-      ->where('proyecto_id', '=', $request->query('id'))
-      ->whereIn('codigo', ['moneda_tipo', 'fuente_financiadora', 'otra_fuente', 'web_fuente', 'participacion_unmsm', 'pais'])
-      ->get()
-      ->mapWithKeys(function ($item) {
-        return [$item->codigo => $item->detalle];
-      });
+    if ($request->hasFile('file')) {
 
-    $lineas = $this->lineasUnmsm();
+      $nameFile = $request->input('id') . "/" . $request->input('doc_tipo') . "_" . $date_name . "." . $request->file('file')->getClientOriginalExtension();
 
-    return [
-      'proyecto' => $proyecto,
-      'extras' => $extras
-    ] + $lineas;
+      $this->uploadFile($request->file('file'), "proyecto-fex-doc", $nameFile);
+
+      DB::table('Proyecto_fex_doc')
+        ->insert([
+          'proyecto_id' => $request->input('id'),
+          'doc_tipo' => $request->input('doc_tipo'),
+          'nombre' => $request->input('nombre'),
+          'comentario' => $request->input('comentario'),
+          'bucket' => 'proyecto-fex-doc',
+          'key' => $nameFile,
+          'fecha' => $date
+        ]);
+
+      return ['message' => 'success', 'detail' => 'Archivo cargado correctamente'];
+    } else {
+      return ['message' => 'error', 'detail' => 'Error al cargar archivo'];
+    }
   }
 
-  public function datosPaso2(Request $request) {
-    $proyecto = DB::table('Proyecto')
-      ->select([
-        DB::raw("COALESCE(fecha_inicio, '') AS fecha_inicio"),
-        DB::raw("COALESCE(fecha_fin, '') AS fecha_fin"),
-        DB::raw("COALESCE(palabras_clave, '') AS palabras_clave"),
+  public function updateDoc(Request $request) {
+    DB::table('Proyecto_fex_doc')
+      ->where([
+        'id' => $request->input('id')
       ])
-      ->where('id', '=', $request->query('id'))
-      ->first();
+      ->update([
+        'nombre' => $request->input('nombre'),
+        'comentario' => $request->input('comentario')
+      ]);
 
-    $extras = DB::table('Proyecto_descripcion')
-      ->select([
-        'codigo',
-        'detalle'
+    return ['message' => 'info', 'detail' => 'Datos actualizados correctamente'];
+  }
+
+  public function deleteDoc(Request $request) {
+    DB::table('Proyecto_fex_doc')
+      ->where([
+        'id' => $request->query('id')
       ])
-      ->where('proyecto_id', '=', $request->query('id'))
-      ->whereIn('codigo', ['resumen', 'objetivos', 'duracion_annio', 'duracion_mes', 'duracion_dia'])
-      ->get()
-      ->mapWithKeys(function ($item) {
-        return [$item->codigo => $item->detalle];
-      });
+      ->delete();
 
-    return [
-      'proyecto' => $proyecto,
-      'extras' => $extras
-    ];
+    return ['message' => 'info', 'detail' => 'Archivo eliminado correctamente'];
   }
 }

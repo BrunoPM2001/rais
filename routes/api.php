@@ -161,8 +161,13 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
       Route::post('registrarPaso1', [ProyectosFEXController::class, 'registrarPaso1']);
       Route::post('registrarPaso2', [ProyectosFEXController::class, 'registrarPaso2']);
 
+      Route::post('registrarPaso3', [ProyectosFEXController::class, 'registrarPaso3']);
+      Route::put('updateDoc', [ProyectosFEXController::class, 'updateDoc']);
+      Route::delete('deleteDoc', [ProyectosFEXController::class, 'deleteDoc']);
+
       Route::get('datosPaso1', [ProyectosFEXController::class, 'datosPaso1']);
       Route::get('datosPaso2', [ProyectosFEXController::class, 'datosPaso2']);
+      Route::get('datosPaso3', [ProyectosFEXController::class, 'datosPaso3']);
     });
 
     //  Informe técnico
