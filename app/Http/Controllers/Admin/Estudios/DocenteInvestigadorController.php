@@ -399,6 +399,7 @@ class DocenteInvestigadorController extends S3Controller {
   //  Trámite
   public function tramite(Request $request) {
     $date = Carbon::now();
+    $dateFin = Carbon::now()->addYears(2);
 
     if ($request->input('confirmar')["value"] == 1) {
       DB::table('Eval_docente_investigador')
@@ -406,7 +407,7 @@ class DocenteInvestigadorController extends S3Controller {
         ->update([
           'tipo_eval' => 'Constancia',
           'fecha_constancia' => $date,
-          'fecha_fin' => $date->addMonths(3),
+          'fecha_fin' => $dateFin,
           'estado' => 'PENDIENTE',
           'confirmar' => $request->input('confirmar')["value"],
           'confirmar_descripcion' => $request->input('descripcion'),
