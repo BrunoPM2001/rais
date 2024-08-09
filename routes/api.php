@@ -202,6 +202,8 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
       Route::get('detalle', [PublicacionesController::class, 'detalle']);
       Route::put('updateDetalle', [PublicacionesController::class, 'updateDetalle']);
       Route::get('getTabs', [PublicacionesController::class, 'getTabs']);
+
+      //  Detalles
     });
 
     Route::prefix('sincronizarPub')->group(function () {
@@ -497,6 +499,7 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
     //  Utils
     Route::prefix('utils')->group(function () {
       //  Data
+      Route::get('listadoTitulos', [PublicacionesUtilsController::class, 'listadoTitulos']);
       Route::get('listadoRevistasIndexadas', [PublicacionesUtilsController::class, 'listadoRevistasIndexadas']);
       Route::get('getPaises', [PublicacionesUtilsController::class, 'getPaises']);
       //  Paso 2

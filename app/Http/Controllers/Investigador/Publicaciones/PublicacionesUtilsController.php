@@ -10,6 +10,19 @@ use Illuminate\Support\Str;
 
 class PublicacionesUtilsController extends S3Controller {
 
+  public function listadoTitulos(Request $request) {
+    $titulos = DB::table('Publicacion')
+      ->select([
+        'id',
+        'titulo AS value',
+      ])
+      ->having('titulo', 'LIKE', '%' . $request->query('query') . '%')
+      ->limit(10)
+      ->get();
+
+    return $titulos;
+  }
+
   /*
   |-----------------------------------------------------------
   | Pasos 2, 3 y 4
