@@ -71,13 +71,25 @@ class PublicacionesController extends Controller {
             WHEN 'evento' THEN 'R. en evento científico'
             WHEN 'ensayo' THEN 'Ensayo'
           ELSE b.tipo_publicacion END AS tipo"),
+          'b.tipo_publicacion',
           'b.isbn',
           'b.issn',
           'b.editorial',
           'b.evento_nombre',
           'b.titulo',
           'b.fecha_publicacion',
-          'b.estado',
+          'b.created_at',
+          'b.updated_at',
+          DB::raw("CASE(b.estado)
+            WHEN -1 THEN 'Eliminado'
+            WHEN 1 THEN 'Registrado'
+            WHEN 2 THEN 'Observado'
+            WHEN 5 THEN 'Enviado'
+            WHEN 6 THEN 'En proceso'
+            WHEN 7 THEN 'Anulado'
+            WHEN 8 THEN 'No registrado'
+            WHEN 9 THEN 'Duplicado'
+          ELSE 'Sin estado' END AS estado"),
           'b.source AS procedencia'
         )
         ->where('a.investigador_id', '=', $request->query('investigador_id'))
@@ -102,7 +114,7 @@ class PublicacionesController extends Controller {
         'a.categoria_id',
         'a.comentario',
         'a.observaciones_usuario',
-        'a.fecha_inscripcion',
+        'a.created_at AS fecha_inscripcion',
         'a.estado',
         'a.tipo_publicacion',
         'b.id AS file_id',

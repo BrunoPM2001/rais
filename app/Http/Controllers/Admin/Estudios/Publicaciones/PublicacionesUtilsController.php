@@ -176,6 +176,9 @@ class PublicacionesUtilsController extends S3Controller {
         DB::raw("CASE(a.filiacion)
           WHEN 1 THEN 'Sí'
         ELSE 'No' END AS filiacion"),
+        'a.puntaje',
+        'a.created_at',
+        'a.updated_at',
       ])
       ->where('publicacion_id', '=', $request->query('id'))
       ->get();

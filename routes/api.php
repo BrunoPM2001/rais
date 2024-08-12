@@ -43,6 +43,7 @@ use App\Http\Controllers\Investigador\Actividades\ProyectoDetalleController;
 use App\Http\Controllers\Investigador\Actividades\ProyectoFEXController;
 use App\Http\Controllers\Investigador\Actividades\ProyectoMultidisciplinarioController;
 use App\Http\Controllers\Investigador\Actividades\ProyectoSinFinanciamientoController;
+use App\Http\Controllers\Investigador\Actividades\ProyectosUtilController;
 use App\Http\Controllers\Investigador\Actividades\PublicacionLibrosUniController;
 use App\Http\Controllers\Investigador\Actividades\TalleresController;
 use App\Http\Controllers\Investigador\Convocatorias\ProCTIController;
@@ -466,6 +467,7 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
     });
 
     Route::get('detalleProyecto', [ProyectoDetalleController::class, 'detalleProyecto']);
+    Route::get('reportePresupuesto', [ProyectosUtilController::class, 'reportePresupuesto']);
   });
 
   //  Publicaciones

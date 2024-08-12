@@ -338,26 +338,6 @@ class GestionTransferenciasController extends Controller {
       ->orderByDesc('created_at')
       ->first();
 
-    $subQuery = DB::table('Geco_operacion')
-      ->select([
-        'id',
-        'geco_proyecto_id',
-        'estado'
-      ])
-      ->where('geco_proyecto_id', '=', $request->query('geco_proyecto_id'))
-      ->orderByDesc('created_at')
-      ->limit(1);
-
-    $subQuery1 = DB::table('Geco_operacion_movimiento')
-      ->select([
-        'id',
-        'geco_proyecto_presupuesto_id',
-        'geco_operacion_id',
-        'operacion',
-        'monto',
-        'monto_original'
-      ]);
-
     if ($solicitud->estado == "Nueva operación") {
       $operacion = DB::table('Geco_operacion')
         ->select([
