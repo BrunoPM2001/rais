@@ -165,7 +165,8 @@ class PublicacionesController extends Controller {
       } else {
         $pub = DB::table('Publicacion')
           ->select([
-            'codigo_registro'
+            'codigo_registro',
+            'audit'
           ])
           ->where('id', '=', $request->input('id'))
           ->first();
@@ -178,6 +179,18 @@ class PublicacionesController extends Controller {
             ->orderByDesc('codigo_registro')
             ->first();
 
+          //  Audit
+
+          $audit = json_decode($pub->audit ?? "[]");
+
+          $audit[] = [
+            'fecha' => Carbon::now()->format('Y-m-d H:i:s'),
+            'nombres' => $request->attributes->get('token_decoded')->nombre,
+            'apellidos' => $request->attributes->get('token_decoded')->apellidos
+          ];
+
+          $audit = json_encode($audit);
+
           DB::table('Publicacion')
             ->where('id', '=', $request->input('id'))
             ->update([
@@ -187,6 +200,7 @@ class PublicacionesController extends Controller {
               'comentario' => $request->input('comentario'),
               'observaciones_usuario' => $request->input('observaciones_usuario'),
               'estado' => $request->input('estado')["value"],
+              'audit' => $audit,
               'updated_at' => Carbon::now(),
             ]);
 
@@ -209,14 +223,33 @@ class PublicacionesController extends Controller {
       }
     }
 
+    //  Audit
+    $audit_db = DB::table('Publicacion')
+      ->select([
+        'audit'
+      ])
+      ->where('id', '=', $request->input('id'))
+      ->first();
+
+    $audit = json_decode($audit_db->audit ?? "[]");
+
+    $audit[] = [
+      'fecha' => Carbon::now()->format('Y-m-d H:i:s'),
+      'nombres' => $request->attributes->get('token_decoded')->nombre,
+      'apellidos' => $request->attributes->get('token_decoded')->apellidos
+    ];
+
+    $audit = json_encode($audit);
+
     DB::table('Publicacion')
       ->where('id', '=', $request->input('id'))
       ->update([
         'validado' => $request->input('validado')["value"],
-        'categoria_id' => $request->input('categoria_id')["value"],
+        'categoria_id' => $request->input('categoria_id')["value"] ?? null,
         'comentario' => $request->input('comentario'),
         'observaciones_usuario' => $request->input('observaciones_usuario'),
         'estado' => $request->input('estado')["value"],
+        'audit' => $audit,
         'updated_at' => Carbon::now(),
       ]);
 
