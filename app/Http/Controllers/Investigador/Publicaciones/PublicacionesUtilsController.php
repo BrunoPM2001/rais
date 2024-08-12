@@ -10,6 +10,17 @@ use Illuminate\Support\Str;
 
 class PublicacionesUtilsController extends S3Controller {
 
+  /*
+  |-----------------------------------------------------------
+  | Solicitar ser incluído como autor
+  |-----------------------------------------------------------
+  |
+  | Funciones para solicitar inclusión como autor en el caso
+  | de que la publicación que uno quiera registrar ya esté
+  | registrada por otro investigador
+  |
+  */
+
   public function listadoTitulos(Request $request) {
     $titulos = DB::table('Publicacion')
       ->select([
@@ -23,6 +34,74 @@ class PublicacionesUtilsController extends S3Controller {
     return $titulos;
   }
 
+  public function infoPublicacion(Request $request) {
+    $publicacion = DB::table('Publicacion')
+      ->select([
+        'tipo_publicacion',
+        'titulo',
+        'doi',
+        'fecha_publicacion',
+        'publicacion_nombre',
+        'issn',
+        'issn_e',
+        'volumen',
+        'edicion',
+        'pagina_inicial',
+        'pagina_final',
+      ])
+      ->where('id', '=', $request->query('id'))
+      ->first();
+
+    $palabras_clave = DB::table('Publicacion_palabra_clave')
+      ->select([
+        'clave AS value'
+      ])
+      ->where('publicacion_id', '=', $request->query('id'))
+      ->get();
+
+    $index = DB::table('Publicacion_index AS a')
+      ->join('Publicacion_db_indexada AS b', 'b.id', '=', 'a.publicacion_db_indexada_id')
+      ->select([
+        'b.nombre AS value'
+      ])
+      ->where('a.publicacion_id', '=', $request->query('id'))
+      ->get();
+
+    $proyectos = DB::table('Publicacion_proyecto')
+      ->select([
+        'codigo_proyecto',
+        'nombre_proyecto',
+        'entidad_financiadora'
+      ])
+      ->where('publicacion_id', '=', $request->query('id'))
+      ->get();
+
+    $autores = DB::table('Publicacion_autor AS a')
+      ->leftJoin('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
+      ->select([
+        DB::raw("COALESCE(CONCAT(b.nombres, ' ', b.apellido1, ' ', b.apellido2), CONCAT(a.nombres, ' ', a.apellido1, ' ', a.apellido2)) AS nombre"),
+        'a.categoria',
+        'a.tipo'
+      ])
+      ->where('publicacion_id', '=', $request->query('id'))
+      ->get();
+
+    //  Incluir
+    $publicacion->palabras_clave = $palabras_clave;
+    $publicacion->index = $index;
+    $publicacion->proyectos = $proyectos;
+    $publicacion->autores = $autores;
+
+    return $publicacion;
+  }
+
+  public function verificarTituloUnico(Request $request) {
+    $count = DB::table('Publicacion')
+      ->where('titulo', '=', $request->input('titulo'))
+      ->count();
+
+    return $count == 0;
+  }
   /*
   |-----------------------------------------------------------
   | Pasos 2, 3 y 4
@@ -143,7 +222,9 @@ class PublicacionesUtilsController extends S3Controller {
           DB::raw("COALESCE(b.tipo, 'Externo') AS tipo"),
           DB::raw("COALESCE(CONCAT(b.apellido1, ' ', b.apellido2, ', ', b.nombres), 
                   CONCAT(a.apellido1, ' ', a.apellido2, ', ', a.nombres)) AS nombres"),
-          'a.filiacion',
+          DB::raw("CASE(a.filiacion)
+            WHEN 1 THEN 'Sí'
+          ELSE 'No' END AS filiacion"),
         ])
         ->where('publicacion_id', '=', $request->query('publicacion_id'))
         ->get();

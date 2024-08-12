@@ -31,13 +31,25 @@ class PublicacionesController extends Controller {
             WHEN 'evento' THEN 'R. en evento científico'
             WHEN 'ensayo' THEN 'Ensayo'
           ELSE tipo_publicacion END AS tipo"),
+          'tipo_publicacion',
           'isbn',
           'issn',
           'editorial',
           'evento_nombre',
           'titulo',
           'fecha_publicacion',
-          'estado',
+          'created_at',
+          'updated_at',
+          DB::raw("CASE(estado)
+            WHEN -1 THEN 'Eliminado'
+            WHEN 1 THEN 'Registrado'
+            WHEN 2 THEN 'Observado'
+            WHEN 5 THEN 'Enviado'
+            WHEN 6 THEN 'En proceso'
+            WHEN 7 THEN 'Anulado'
+            WHEN 8 THEN 'No registrado'
+            WHEN 9 THEN 'Duplicado'
+          ELSE 'Sin estado' END AS estado"),
           'source AS procedencia'
         )
         ->orderByDesc('id')
@@ -178,6 +190,20 @@ class PublicacionesController extends Controller {
               'updated_at' => Carbon::now(),
             ]);
 
+          $categoria = DB::table('Publicacion_categoria')
+            ->select([
+              'puntaje',
+            ])
+            ->where('id', '=', $request->input('categoria_id')["value"])
+            ->first();
+
+          DB::table('Publicacion_autor')
+            ->where('publicacion_id', '=', $request->input('id'))
+            ->where('presentado', '=', 1)
+            ->update([
+              'puntaje' => $categoria->puntaje
+            ]);
+
           return ['message' => 'success', 'detail' => 'Datos de la publicación actualizados correctamente'];
         }
       }
@@ -245,5 +271,82 @@ class PublicacionesController extends Controller {
       'autores' => $autores,
       'tipo' => $publicacion->tipo_publicacion
     ];
+  }
+
+  public function reporte(Request $request) {
+    switch ($request->query('tipo')) {
+      case "articulo":
+        $util = new ArticulosController();
+        return $util->reporte($request);
+        break;
+      case "libro":
+        $util = new LibrosController();
+        return $util->reporte($request);
+        break;
+      case "capitulo":
+        $util = new CapitulosLibrosController();
+        return $util->reporte($request);
+        break;
+      case "tesis":
+        $util = new TesisPropiasController();
+        return $util->reporte($request);
+        break;
+      case "tesis-asesoria":
+        $util = new TesisAsesoriaController();
+        return $util->reporte($request);
+        break;
+      case "evento":
+        $util = new EventoController();
+        return $util->reporte($request);
+        break;
+      default:
+        break;
+    }
+  }
+
+  public function verAuditoria(Request $request) {
+    $documento = DB::table('Publicacion')
+      ->select([
+        'audit'
+      ])
+      ->where('id', '=', $request->query('id'))
+      ->first();
+
+    $audit = json_decode($documento->audit ?? "[]");
+
+    return $audit;
+  }
+
+  public function paso1(Request $request) {
+    if ($request->input('id') == null) {
+    } else {
+      $pub = DB::table('Publicacion')
+        ->select([
+          'tipo_publicacion'
+        ])
+        ->where('id', '=', $request->input('id'))
+        ->first();
+
+      switch ($pub->tipo_publicacion) {
+        case "articulo":
+          $p1 = new ArticulosController();
+          return $p1->registrarPaso1($request);
+        case "capitulo":
+          $p1 = new CapitulosLibrosController();
+          return $p1->registrarPaso1($request);
+        case "evento":
+          $p1 = new EventoController();
+          return $p1->registrarPaso1($request);
+        case "libro":
+          $p1 = new LibrosController();
+          return $p1->registrarPaso1($request);
+        case "tesis-asesoria":
+          $p1 = new TesisAsesoriaController();
+          return $p1->registrarPaso1($request);
+        case "tesis":
+          $p1 = new TesisPropiasController();
+          return $p1->registrarPaso1($request);
+      }
+    }
   }
 }

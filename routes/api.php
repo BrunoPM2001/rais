@@ -19,6 +19,7 @@ use App\Http\Controllers\Admin\Estudios\LaboratoriosController;
 use App\Http\Controllers\Admin\Estudios\MonitoreoController;
 use App\Http\Controllers\Admin\Estudios\ProyectosFEXController;
 use App\Http\Controllers\Admin\Estudios\ProyectosGrupoController;
+use App\Http\Controllers\Admin\Estudios\Publicaciones\PublicacionesUtilsController as PublicacionesPublicacionesUtilsController;
 use App\Http\Controllers\Admin\Estudios\PublicacionesController;
 use App\Http\Controllers\Admin\Estudios\RevistasController;
 use App\Http\Controllers\Admin\Facultad\AsignacionEvaluadorController;
@@ -199,11 +200,33 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
     //  Gestión de publicaciones
     Route::prefix('publicaciones')->group(function () {
       Route::get('listado', [PublicacionesController::class, 'listado']);
+      Route::get('reporte', [PublicacionesController::class, 'reporte']);
+      Route::get('verAuditoria', [PublicacionesController::class, 'verAuditoria']);
+
       Route::get('detalle', [PublicacionesController::class, 'detalle']);
       Route::put('updateDetalle', [PublicacionesController::class, 'updateDetalle']);
       Route::get('getTabs', [PublicacionesController::class, 'getTabs']);
 
-      //  Detalles
+      //  Paso 1
+      Route::post('paso1', [PublicacionesController::class, 'paso1']);
+      Route::post('agregarRevista', [PublicacionesPublicacionesUtilsController::class, 'agregarRevista']);
+      Route::post('agregarWos', [PublicacionesPublicacionesUtilsController::class, 'agregarWos']);
+
+      //  Paso 2
+      Route::post('agregarProyecto', [PublicacionesPublicacionesUtilsController::class, 'agregarProyecto']);
+      Route::get('proyectos_registrados', [PublicacionesPublicacionesUtilsController::class, 'proyectos_registrados']);
+      Route::delete('eliminarProyecto', [PublicacionesPublicacionesUtilsController::class, 'eliminarProyecto']);
+
+      //  Paso 3
+      Route::get('searchDocenteRegistrado', [PublicacionesPublicacionesUtilsController::class, 'searchDocenteRegistrado']);
+      Route::get('searchEstudianteRegistrado', [PublicacionesPublicacionesUtilsController::class, 'searchEstudianteRegistrado']);
+      Route::get('searchExternoRegistrado', [PublicacionesPublicacionesUtilsController::class, 'searchExternoRegistrado']);
+
+      Route::post('agregarAutor', [PublicacionesPublicacionesUtilsController::class, 'agregarAutor']);
+      Route::put('editarAutor', [PublicacionesPublicacionesUtilsController::class, 'editarAutor']);
+      Route::delete('eliminarAutor', [PublicacionesPublicacionesUtilsController::class, 'eliminarAutor']);
+      Route::put('recalcularPuntaje', [PublicacionesPublicacionesUtilsController::class, 'recalcularPuntaje']);
+      Route::put('convertirPrincipal', [PublicacionesPublicacionesUtilsController::class, 'convertirPrincipal']);
     });
 
     Route::prefix('sincronizarPub')->group(function () {
@@ -498,8 +521,10 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
 
     //  Utils
     Route::prefix('utils')->group(function () {
-      //  Data
+      //  Solicitar inclusión
       Route::get('listadoTitulos', [PublicacionesUtilsController::class, 'listadoTitulos']);
+      Route::get('infoPublicacion', [PublicacionesUtilsController::class, 'infoPublicacion']);
+      //  Data
       Route::get('listadoRevistasIndexadas', [PublicacionesUtilsController::class, 'listadoRevistasIndexadas']);
       Route::get('getPaises', [PublicacionesUtilsController::class, 'getPaises']);
       //  Paso 2

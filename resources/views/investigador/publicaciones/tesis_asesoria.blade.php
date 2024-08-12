@@ -12,7 +12,7 @@
     }
 
     @page {
-      margin: 145px 20px 20px 20px;
+      margin: 130px 40px 20px 40px;
     }
 
     .head-1 {
@@ -61,15 +61,11 @@
       font-style: oblique;
     }
 
-    .div {
-      position: fixed;
-      top: -15px;
-      width: 100%;
-      height: 0.5px;
-      background: #000;
-    }
-
     .titulo {
+      border-top: 1px solid #000;
+      border-bottom: 1px solid #000;
+      padding-top: 5px;
+      padding-bottom: 5px;
       font-size: 16px;
       text-align: center;
     }
@@ -110,11 +106,7 @@
       Hora: {{ date('H:i:s') }}
     </p>
     <br>
-    <p class="user">
-      investigador
-    </p>
   </div>
-  <div class="div"></div>
   <div class="foot-1">RAIS - Registro de Actividades de Investigación de San Marcos</div>
 
   <p class="titulo"><strong>Reporte de publicación - Tesis asesoría</strong></p>

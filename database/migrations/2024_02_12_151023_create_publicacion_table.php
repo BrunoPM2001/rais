@@ -62,6 +62,7 @@ return new class extends Migration {
       $table->string("idioma")->nullable();
       $table->string("source")->nullable();
       $table->string("tipo_doc")->nullable();
+      $table->text("audit")->nullable();
       $table->timestamps();
 
       //  FKS
