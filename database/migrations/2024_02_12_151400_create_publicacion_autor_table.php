@@ -29,6 +29,7 @@ return new class extends Migration {
       //  Por quitar
       $table->decimal('puntaje')->nullable();
       $table->boolean('filiacion')->nullable();
+      $table->boolean('filiacion_unica')->nullable();
       $table->boolean('estado')->default(false);
       $table->timestamps();
 

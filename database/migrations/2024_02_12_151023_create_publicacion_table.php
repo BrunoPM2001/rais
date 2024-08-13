@@ -63,6 +63,7 @@ return new class extends Migration {
       $table->string("source")->nullable();
       $table->string("tipo_doc")->nullable();
       $table->text("audit")->nullable();
+      $table->string("resolucion")->nullable();
       $table->timestamps();
 
       //  FKS
