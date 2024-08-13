@@ -45,21 +45,24 @@ class TesisAsesoriaController extends S3Controller {
   }
 
   public function reporte(Request $request) {
-    $publicacion = DB::table('Publicacion')
+    $publicacion = DB::table('Publicacion AS a')
+      ->leftJoin('Publicacion_categoria AS b', 'b.id', '=', 'a.categoria_id')
       ->select([
-        'codigo_registro',
-        'titulo',
-        'url',
-        'uri',
-        'tipo_tesis',
-        'fecha_publicacion',
-        'pagina_total',
-        'universidad',
-        'lugar_publicacion',
-        'pais',
-        'estado'
+        'a.codigo_registro',
+        'a.titulo',
+        'a.url',
+        'a.uri',
+        'a.tipo_tesis',
+        'a.fecha_publicacion',
+        'a.pagina_total',
+        'a.universidad',
+        'a.lugar_publicacion',
+        'a.pais',
+        'a.estado',
+        'a.updated_at',
+        'b.categoria'
       ])
-      ->where('id', '=', $request->query('id'))
+      ->where('a.id', '=', $request->query('id'))
       ->first();
 
     $palabras_clave = DB::table('Publicacion_palabra_clave')
@@ -74,7 +77,7 @@ class TesisAsesoriaController extends S3Controller {
     $proyectos = $utils->proyectos_asociados($request);
     $autores = $utils->listarAutores($request);
 
-    $pdf = Pdf::loadView('investigador.publicaciones.tesis_asesoria', [
+    $pdf = Pdf::loadView('admin.estudios.publicaciones.tesis_asesoria', [
       'publicacion' => $publicacion,
       'palabras_clave' => $palabras_clave,
       'proyectos' => $proyectos,

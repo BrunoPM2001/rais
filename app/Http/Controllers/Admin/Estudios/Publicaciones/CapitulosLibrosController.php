@@ -50,26 +50,30 @@ class CapitulosLibrosController extends S3Controller {
   }
 
   public function reporte(Request $request) {
-    $publicacion = DB::table('Publicacion')
+    $publicacion = DB::table('Publicacion AS a')
+      ->leftJoin('Publicacion_categoria AS b', 'b.id', '=', 'a.categoria_id')
       ->select([
-        'codigo_registro',
-        'titulo',
-        'doi',
-        'pagina_inicial',
-        'pagina_final',
-        'fecha_publicacion',
-        'publicacion_nombre',
-        'isbn',
-        'editorial',
-        'edicion',
-        'volumen',
-        'pagina_total',
-        'ciudad',
-        'pais',
-        'url',
-        'estado'
+        'a.codigo_registro',
+        'a.titulo',
+        'a.doi',
+        'a.nombre_libro',
+        'a.pagina_inicial',
+        'a.pagina_final',
+        'a.fecha_publicacion',
+        'a.publicacion_nombre',
+        'a.isbn',
+        'a.editorial',
+        'a.edicion',
+        'a.volumen',
+        'a.pagina_total',
+        'a.lugar_publicacion AS ciudad',
+        'a.pais',
+        'a.url',
+        'a.estado',
+        'a.updated_at',
+        'b.categoria'
       ])
-      ->where('id', '=', $request->query('id'))
+      ->where('a.id', '=', $request->query('id'))
       ->first();
 
     $palabras_clave = DB::table('Publicacion_palabra_clave')
@@ -84,7 +88,7 @@ class CapitulosLibrosController extends S3Controller {
     $proyectos = $utils->proyectos_asociados($request);
     $autores = $utils->listarAutores($request);
 
-    $pdf = Pdf::loadView('investigador.publicaciones.capitulo', [
+    $pdf = Pdf::loadView('admin.estudios.publicaciones.capitulo', [
       'publicacion' => $publicacion,
       'palabras_clave' => $palabras_clave,
       'proyectos' => $proyectos,

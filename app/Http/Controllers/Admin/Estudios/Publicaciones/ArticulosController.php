@@ -70,24 +70,27 @@ class ArticulosController extends S3Controller {
   }
 
   public function reporte(Request $request) {
-    $publicacion = DB::table('Publicacion')
+    $publicacion = DB::table('Publicacion AS a')
+      ->leftJoin('Publicacion_categoria AS b', 'b.id', '=', 'a.categoria_id')
       ->select([
-        'codigo_registro',
-        'doi',
-        'art_tipo',
-        'titulo',
-        'pagina_inicial',
-        'pagina_final',
-        'fecha_publicacion',
-        'publicacion_nombre',
-        'issn',
-        'issn_e',
-        'volumen',
-        'edicion',
-        'url',
-        'estado'
+        'a.codigo_registro',
+        'a.art_tipo',
+        'a.titulo',
+        'a.doi',
+        'a.publicacion_nombre',
+        'a.pagina_inicial',
+        'a.pagina_final',
+        'a.fecha_publicacion',
+        'a.issn',
+        'a.issn_e',
+        'a.volumen',
+        'a.edicion',
+        'a.url',
+        'a.estado',
+        'a.updated_at',
+        'b.categoria'
       ])
-      ->where('id', '=', $request->query('id'))
+      ->where('a.id', '=', $request->query('id'))
       ->first();
 
     $palabras_clave = DB::table('Publicacion_palabra_clave')
@@ -111,7 +114,7 @@ class ArticulosController extends S3Controller {
     $proyectos = $utils->proyectos_asociados($request);
     $autores = $utils->listarAutores($request);
 
-    $pdf = Pdf::loadView('investigador.publicaciones.articulo', [
+    $pdf = Pdf::loadView('admin.estudios.publicaciones.articulo', [
       'publicacion' => $publicacion,
       'palabras_clave' => $palabras_clave,
       'indexada' => $indexada,

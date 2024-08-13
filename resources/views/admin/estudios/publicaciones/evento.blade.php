@@ -1,3 +1,6 @@
+@php
+  use Carbon\Carbon;
+@endphp
 <!DOCTYPE html>
 <html lang="es">
 
@@ -69,6 +72,16 @@
       font-size: 16px;
       text-align: center;
     }
+    
+    .subtitulo {
+      font-size: 14px;
+      text-align: center;
+    }
+
+    .subtitulo-1 {
+      font-size: 12px;
+      text-align: center;
+    }
 
     .table {
       width: 100%;
@@ -109,93 +122,11 @@
   </div>
   <div class="foot-1">RAIS - Registro de Actividades de Investigación de San Marcos</div>
 
-  <p class="titulo"><strong>Reporte de publicación - Evento científico</strong></p>
-  <div class="cuerpo">
+  <p class="titulo"><strong>Registro de evento cientifico</strong></p>
 
-    <h5>I. Información general:</h5>
-
-    <p>
-      <b>Código de publicación:</b>
-      {{ $publicacion->codigo_registro == null ? 'No tiene código' : $publicacion->codigo_registro }}
-    </p>
-    <p>
-      <b>Título: </b>
-      {{ $publicacion->titulo }}
-    </p>
-    <p>
-      <b>Tipo de presentación: </b>
-      {{ $publicacion->tipo_presentacion }}
-    </p>
-    <p>
-      <b>Nombre de la publicación: </b>
-      {{ $publicacion->publicacion_nombre }}
-    </p>
-    <p>
-      <b>Isbn: </b>
-      {{ $publicacion->isbn }}
-    </p>
-    <p>
-      <b>Editorial: </b>
-      {{ $publicacion->editorial }}
-    </p>
-    <p>
-      <b>Volumen: </b>
-      {{ $publicacion->volumen }}
-    </p>
-    <p>
-      <b>Ciudad de edición: </b>
-      {{ $publicacion->ciudad_edicion }}
-    </p>
-    <p>
-      <b>Issn: </b>
-      {{ $publicacion->issn }}
-    </p>
-    <p>
-      <b>Issn-e: </b>
-      {{ $publicacion->issn_e }}
-    </p>
-    <p>
-      <b>Página inicial: </b>
-      {{ $publicacion->pagina_inicial }}
-    </p>
-    <p>
-      <b>Página final: </b>
-      {{ $publicacion->pagina_final }}
-    </p>
-    <p>
-      <b>Fecha de publicación: </b>
-      {{ $publicacion->fecha_publicacion }}
-    </p>
-    <p>
-      <b>Nombre del evento: </b>
-      {{ $publicacion->evento_nombre }}
-    </p>
-    <p>
-      <b>Fecha de inicio: </b>
-      {{ $publicacion->fecha_inicio }}
-    </p>
-    <p>
-      <b>Fecha de fin: </b>
-      {{ $publicacion->fecha_fin }}
-    </p>
-    <p>
-      <b>Ciudad: </b>
-      {{ $publicacion->ciudad }}
-    </p>
-    <p>
-      <b>País: </b>
-      {{ $publicacion->pais }}
-    </p>
-    <p>
-      <b>Url: </b>
-      {{ $publicacion->url }}
-    </p>
-    <p>
-      <b>Palabras clave: </b>
-      {{ $palabras_clave }}
-    </p>
-    <p>
-      <b>Estado: </b>
+  <p class="subtitulo">
+    <strong>
+    Estado: 
       @switch($publicacion->estado)
         @case(-1)
           Eliminado
@@ -232,9 +163,132 @@
         @default
           Sin estado
       @endswitch
+       {{ Carbon::parse($publicacion->updated_at)->format("d/m/Y") }}
+    </strong>
+  </p>
+
+  @if ($publicacion->categoria != null)
+  <p class="subtitulo-1">
+    <strong>
+    {{ $publicacion->categoria }}
+    </strong>
+  </p>
+  @endif
+
+  <div class="cuerpo">
+
+    <h5>I. Descripción de la Publicación:</h5>
+
+    <p>
+      <b>Código:</b>
+      {{ $publicacion->codigo_registro == null ? 'No tiene código' : $publicacion->codigo_registro }}
+    </p>
+    <p>
+      <b>Título: </b>
+      {{ $publicacion->titulo }}
+    </p>
+    <p>
+      <b>Tipo de presentación: </b>
+      {{ $publicacion->tipo_presentacion }}
+    </p>
+    <p>
+      <b>Libro de resumen actas / Revista: </b>
+      {{ $publicacion->publicacion_nombre }}
+    </p>
+    <p>
+      <b>Isbn: </b>
+      {{ $publicacion->isbn }}
+    </p>
+    <p>
+      <b>Editorial: </b>
+      {{ $publicacion->editorial }}
+    </p>
+    <p>
+      <b>Volumen / Tomo: </b>
+      {{ $publicacion->volumen }}
+    </p>
+    <p>
+      <b>Ciudad de edición: </b>
+      {{ $publicacion->ciudad_edicion }}
+    </p>
+    <p>
+      <b>Issn: </b>
+      {{ $publicacion->issn }}
+    </p>
+    <p>
+      <b>Issn-e: </b>
+      {{ $publicacion->issn_e }}
+    </p>
+    <p>
+      <b>Página inicial: </b>
+      {{ $publicacion->pagina_inicial }}
+    </p>
+    <p>
+      <b>Página final: </b>
+      {{ $publicacion->pagina_final }}
+    </p>
+    <p>
+      <b>Nombre del evento: </b>
+      {{ $publicacion->evento_nombre }}
+    </p>
+    <p>
+      <b>Fecha de inicio: </b>
+      {{ $publicacion->fecha_inicio }}
+    </p>
+    <p>
+      <b>Fecha de fin: </b>
+      {{ $publicacion->fecha_fin }}
+    </p>
+    <p>
+      <b>Ciudad: </b>
+      {{ $publicacion->ciudad }}
+    </p>
+    <p>
+      <b>País: </b>
+      {{ $publicacion->pais }}
+    </p>
+    <p>
+      <b>Url de la publicación: </b>
+      {{ $publicacion->url }}
+    </p>
+    <p>
+      <b>Palabras clave: </b>
+      {{ $palabras_clave }}
     </p>
 
-    <h5>II. Resultado de proyectos de investigación financiados por:</h5>
+    <h5>II. Autores:</h5>
+
+    <table class="table">
+      <thead>
+        <tr>
+          <th style="width: 30%;" align="left">Autor</th>
+          <th style="width: 30%;" align="left">Profesor San Marcos</th>
+          <th style="width: 20%;" align="left">Fecha</th>
+          <th style="width: 20%;" align="left">N° registro</th>
+          <th style="width: 20%;" align="left">Puntaje</th>
+        </tr>
+      </thead>
+      <tbody>
+        @if (sizeof($autores) == 0)
+          <tr>
+            <td colspan="4" align="center">
+              No hay autores registrados
+            </td>
+          </tr>
+        @endif
+        @foreach ($autores as $autor)
+          <tr>
+            <td>{{ $autor->autor }}</td>
+            <td>{{ $autor->nombres }}</td>
+            <td>{{ Carbon::parse($autor->created_at)->format("Y-m-d") }}</td>
+            <td>{{ $autor->nro_registro }}</td>
+            <td>{{ $autor->puntaje }}</td>
+          </tr>
+        @endforeach
+      </tbody>
+    </table>
+
+    <h5>III. Proyecto de investigación financiado por:</h5>
 
     <table class="table">
       <thead>
@@ -261,41 +315,11 @@
         @endforeach
       </tbody>
     </table>
-
-    <h5>III. Autores:</h5>
-
-    <table class="table">
-      <thead>
-        <tr>
-          <th style="width: 20%;" align="left">Tipo de integrante</th>
-          <th style="width: 30%;" align="left">Nombre en la publicación</th>
-          <th style="width: 30%;" align="left">Nombre del autor</th>
-          <th style="width: 20%;" align="left">Relación UNMSM</th>
-        </tr>
-      </thead>
-      <tbody>
-        @if (sizeof($autores) == 0)
-          <tr>
-            <td colspan="4" align="center">
-              No hay autores registrados
-            </td>
-          </tr>
-        @endif
-        @foreach ($autores as $autor)
-          <tr>
-            <td>{{ $autor->categoria }}</td>
-            <td>{{ $autor->autor }}</td>
-            <td>{{ $autor->nombres }}</td>
-            <td>{{ $autor->tipo }}</td>
-          </tr>
-        @endforeach
-      </tbody>
-    </table>
   </div>
 
   <script type="text/php">
     if (isset($pdf)) {
-      $x = 530;
+      $x = 515;
       $y = 818;
       $text = "Página {PAGE_NUM} de {PAGE_COUNT}";
       $font = $fontMetrics->get_font("Helvetica", "Italic");

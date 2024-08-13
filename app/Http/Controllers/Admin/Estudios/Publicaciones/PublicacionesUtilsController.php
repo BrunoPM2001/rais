@@ -172,10 +172,11 @@ class PublicacionesUtilsController extends S3Controller {
         'a.autor',
         DB::raw("COALESCE(b.tipo, 'Externo') AS tipo"),
         DB::raw("COALESCE(CONCAT(b.apellido1, ' ', b.apellido2, ', ', b.nombres), 
-                  CONCAT(a.apellido1, ' ', a.apellido2, ', ', a.nombres)) AS nombres"),
+                  '') AS nombres"),
         DB::raw("CASE(a.filiacion)
           WHEN 1 THEN 'Sí'
         ELSE 'No' END AS filiacion"),
+        'a.nro_registro',
         'a.puntaje',
         'a.created_at',
         'a.updated_at',

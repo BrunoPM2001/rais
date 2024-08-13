@@ -48,22 +48,25 @@ class LibrosController extends S3Controller {
   }
 
   public function reporte(Request $request) {
-    $publicacion = DB::table('Publicacion')
+    $publicacion = DB::table('Publicacion AS a')
+      ->leftJoin('Publicacion_categoria AS b', 'b.id', '=', 'a.categoria_id')
       ->select([
-        'codigo_registro',
-        'isbn',
-        'titulo',
-        'editorial',
-        'ciudad',
-        'pais',
-        'edicion',
-        'volumen',
-        'pagina_total',
-        'fecha_publicacion',
-        'url',
-        'estado'
+        'a.codigo_registro',
+        'a.isbn',
+        'a.titulo',
+        'a.editorial',
+        'a.lugar_publicacion',
+        'a.pais',
+        'a.edicion',
+        'a.volumen',
+        'a.pagina_total',
+        'a.fecha_publicacion',
+        'a.url',
+        'a.estado',
+        'a.updated_at',
+        'b.categoria'
       ])
-      ->where('id', '=', $request->query('id'))
+      ->where('a.id', '=', $request->query('id'))
       ->first();
 
     $palabras_clave = DB::table('Publicacion_palabra_clave')
@@ -78,7 +81,7 @@ class LibrosController extends S3Controller {
     $proyectos = $utils->proyectos_asociados($request);
     $autores = $utils->listarAutores($request);
 
-    $pdf = Pdf::loadView('investigador.publicaciones.libro', [
+    $pdf = Pdf::loadView('admin.estudios.publicaciones.libro', [
       'publicacion' => $publicacion,
       'palabras_clave' => $palabras_clave,
       'proyectos' => $proyectos,

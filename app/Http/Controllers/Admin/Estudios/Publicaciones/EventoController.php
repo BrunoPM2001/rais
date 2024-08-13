@@ -54,30 +54,33 @@ class EventoController extends S3Controller {
   }
 
   public function reporte(Request $request) {
-    $publicacion = DB::table('Publicacion')
+    $publicacion = DB::table('Publicacion AS a')
+      ->leftJoin('Publicacion_categoria AS b', 'b.id', '=', 'a.categoria_id')
       ->select([
-        'codigo_registro',
-        'titulo',
-        'tipo_presentacion',
-        'publicacion_nombre',
-        'isbn',
-        'editorial',
-        'volumen',
-        'ciudad_edicion',
-        'issn',
-        'issn_e',
-        'pagina_inicial',
-        'pagina_final',
-        'fecha_publicacion',
-        'evento_nombre',
-        'fecha_inicio',
-        'fecha_fin',
-        'ciudad',
-        'pais',
-        'url',
-        'estado'
+        'a.codigo_registro',
+        'a.titulo',
+        'a.tipo_presentacion',
+        'a.publicacion_nombre',
+        'a.isbn',
+        'a.editorial',
+        'a.volumen',
+        'a.ciudad_edicion',
+        'a.issn',
+        'a.issn_e',
+        'a.pagina_inicial',
+        'a.pagina_final',
+        'a.fecha_publicacion',
+        'a.evento_nombre',
+        'a.fecha_inicio',
+        'a.fecha_fin',
+        'a.ciudad',
+        'a.pais',
+        'a.url',
+        'a.estado',
+        'a.updated_at',
+        'b.categoria'
       ])
-      ->where('id', '=', $request->query('id'))
+      ->where('a.id', '=', $request->query('id'))
       ->first();
 
     $palabras_clave = DB::table('Publicacion_palabra_clave')
@@ -92,7 +95,7 @@ class EventoController extends S3Controller {
     $proyectos = $utils->proyectos_asociados($request);
     $autores = $utils->listarAutores($request);
 
-    $pdf = Pdf::loadView('investigador.publicaciones.evento', [
+    $pdf = Pdf::loadView('admin.estudios.publicaciones.evento', [
       'publicacion' => $publicacion,
       'palabras_clave' => $palabras_clave,
       'proyectos' => $proyectos,
