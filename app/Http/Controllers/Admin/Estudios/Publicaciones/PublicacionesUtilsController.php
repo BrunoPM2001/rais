@@ -24,11 +24,12 @@ class PublicacionesUtilsController extends S3Controller {
         'puntaje' => 0
       ]);
 
-    DB::table('Publicacion_autor')
-      ->where('publicacion_id', '=', $request->input('id'))
-      ->where('presentado', '=', 1)
+    DB::table('Publicacion_autor AS a')
+      ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
+      ->where('a.publicacion_id', '=', $request->input('id'))
+      ->where('b.tipo', '=', 'DOCENTE PERMANENTE')
       ->update([
-        'puntaje' => $pub->puntaje ?? 0
+        'a.puntaje' => $pub->puntaje ?? 0,
       ]);
 
     return ['message' => 'info', 'detail' => 'Puntajes actualizados para esta publicación'];

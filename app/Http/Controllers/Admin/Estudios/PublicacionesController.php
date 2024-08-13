@@ -123,12 +123,23 @@ class PublicacionesController extends Controller {
       ->where('a.id', '=', $request->query('id'))
       ->first();
 
+    //  Verificar fecha
+    $fechaLimite = '2019-10-05';
+    $posterior = (strtotime($data->fecha_inscripcion) >= strtotime($fechaLimite));
+
     $categorias = DB::table('Publicacion_categoria')
       ->select([
         'id AS value',
         'categoria AS label',
-      ])
-      ->where('created_at', '>', '2018-05-05');
+      ]);
+
+    if ($posterior) {
+      $categorias = $categorias
+        ->where(DB::raw("date(created_at)"), '=', '2019-10-05');
+    } else {
+      $categorias = $categorias
+        ->where(DB::raw("date(created_at)"), '=', '2013-10-01');
+    }
 
     switch ($data->tipo_publicacion) {
       case 'articulo':
@@ -223,11 +234,12 @@ class PublicacionesController extends Controller {
             ->where('id', '=', $request->input('categoria_id')["value"])
             ->first();
 
-          DB::table('Publicacion_autor')
-            ->where('publicacion_id', '=', $request->input('id'))
-            ->where('presentado', '=', 1)
+          DB::table('Publicacion_autor AS a')
+            ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
+            ->where('a.publicacion_id', '=', $request->input('id'))
+            ->where('b.tipo', '=', 'DOCENTE PERMANENTE')
             ->update([
-              'puntaje' => $categoria->puntaje
+              'a.puntaje' => $categoria->puntaje,
             ]);
 
           return ['message' => 'success', 'detail' => 'Datos de la publicación actualizados correctamente'];
