@@ -176,7 +176,12 @@ class PublicacionesUtilsController extends S3Controller {
                   '') AS nombres"),
         DB::raw("CASE(a.filiacion)
           WHEN 1 THEN 'Sí'
-        ELSE 'No' END AS filiacion"),
+          WHEN 0 THEN 'No'
+        ELSE null END AS filiacion"),
+        DB::raw("CASE(a.filiacion_unica)
+          WHEN 1 THEN 'Sí'
+          WHEN 0 THEN 'No'
+        ELSE null END AS filiacion_unica"),
         'a.nro_registro',
         'a.puntaje',
         'a.created_at',
@@ -256,6 +261,7 @@ class PublicacionesUtilsController extends S3Controller {
           'autor' => $request->input('autor'),
           'categoria' => $request->input('categoria'),
           'filiacion' => $request->input('filiacion'),
+          'filiacion_unica' => $request->input('filiacion_unica'),
           'presentado' => 0,
           'estado' => 0,
           'created_at' => Carbon::now(),
@@ -305,6 +311,7 @@ class PublicacionesUtilsController extends S3Controller {
           'autor' => $request->input('autor'),
           'categoria' => $request->input('categoria'),
           'filiacion' => $request->input('filiacion'),
+          'filiacion_unica' => $request->input('filiacion_unica'),
           'presentado' => 0,
           'estado' => 0,
           'created_at' => Carbon::now(),
@@ -320,6 +327,7 @@ class PublicacionesUtilsController extends S3Controller {
           'autor' => $request->input('autor'),
           'categoria' => $request->input('categoria'),
           'filiacion' => $request->input('filiacion'),
+          'filiacion_unica' => $request->input('filiacion_unica'),
           'presentado' => 0,
           'estado' => 0,
           'created_at' => Carbon::now(),
@@ -341,6 +349,7 @@ class PublicacionesUtilsController extends S3Controller {
         'autor' => $request->input('autor'),
         'categoria' => $request->input('categoria'),
         'filiacion' => $request->input('filiacion'),
+        'filiacion_unica' => $request->input('filiacion_unica'),
         'updated_at' => Carbon::now()
       ]);
 
