@@ -180,80 +180,90 @@
     <h5>I. Descripción de la Publicación:</h5>
 
     <p>
-      <b>Código:</b>
+      <b>1.1 Código:</b>
       {{ $publicacion->codigo_registro == null ? 'No tiene código' : $publicacion->codigo_registro }}
     </p>
     <p>
-      <b>Título: </b>
+      <b>1.2 Título: </b>
       {{ $publicacion->titulo }}
     </p>
     <p>
-      <b>Tipo de presentación: </b>
+      <b>1.3 Tipo de presentación: </b>
       {{ $publicacion->tipo_presentacion }}
     </p>
     <p>
-      <b>Libro de resumen actas / Revista: </b>
+      <b>1.4 Libro de resumen actas / Revista: </b>
       {{ $publicacion->publicacion_nombre }}
     </p>
     <p>
-      <b>Isbn: </b>
+      <b>1.5 Isbn: </b>
       {{ $publicacion->isbn }}
     </p>
     <p>
-      <b>Editorial: </b>
+      <b>1.6 Editorial: </b>
       {{ $publicacion->editorial }}
     </p>
     <p>
-      <b>Volumen / Tomo: </b>
+      <b>1.7 Volumen / Tomo: </b>
       {{ $publicacion->volumen }}
     </p>
     <p>
-      <b>Ciudad de edición: </b>
+      <b>1.8 Ciudad de edición: </b>
       {{ $publicacion->ciudad_edicion }}
     </p>
     <p>
-      <b>Issn: </b>
+      <b>1.9 Issn: </b>
       {{ $publicacion->issn }}
     </p>
     <p>
-      <b>Issn-e: </b>
+      <b>1.10 Issn-e: </b>
       {{ $publicacion->issn_e }}
     </p>
     <p>
-      <b>Página inicial: </b>
+      <b>1.11 Página inicial: </b>
       {{ $publicacion->pagina_inicial }}
     </p>
     <p>
-      <b>Página final: </b>
+      <b>1.12 Página final: </b>
       {{ $publicacion->pagina_final }}
     </p>
     <p>
-      <b>Nombre del evento: </b>
+      <b>1.13 Nombre del evento: </b>
       {{ $publicacion->evento_nombre }}
     </p>
     <p>
-      <b>Fecha de inicio: </b>
+      <b>1.14 Fecha de inicio: </b>
       {{ $publicacion->fecha_inicio }}
     </p>
     <p>
-      <b>Fecha de fin: </b>
+      <b>1.15 Fecha de fin: </b>
       {{ $publicacion->fecha_fin }}
     </p>
     <p>
-      <b>Ciudad: </b>
+      <b>1.16 Ciudad: </b>
       {{ $publicacion->ciudad }}
     </p>
     <p>
-      <b>País: </b>
+      <b>1.17 País: </b>
       {{ $publicacion->pais }}
     </p>
     <p>
-      <b>Url de la publicación: </b>
+      <b>1.18 Url de la publicación: </b>
       {{ $publicacion->url }}
     </p>
     <p>
-      <b>Palabras clave: </b>
+      <b>1.19 Palabras clave: </b>
       {{ $palabras_clave }}
+    </p>
+    <p>
+      <b>1.20 Anexo: </b>
+      @php
+        if ($publicacion->anexo) {
+          echo "Sí";
+        } else {
+          echo "No";
+        }
+      @endphp
     </p>
 
     <h5>II. Autores:</h5>
@@ -261,11 +271,12 @@
     <table class="table">
       <thead>
         <tr>
+          <th style="width: 5%;" align="left">Nro</th>
           <th style="width: 30%;" align="left">Autor</th>
           <th style="width: 30%;" align="left">Profesor San Marcos</th>
           <th style="width: 20%;" align="left">Fecha</th>
           <th style="width: 20%;" align="left">N° registro</th>
-          <th style="width: 20%;" align="left">Puntaje</th>
+          <th style="width: 15%;" align="left">Puntaje</th>
         </tr>
       </thead>
       <tbody>
@@ -278,6 +289,7 @@
         @endif
         @foreach ($autores as $autor)
           <tr>
+            <td>{{ $loop->iteration }}</td>
             <td>{{ $autor->autor }}</td>
             <td>{{ $autor->nombres }}</td>
             <td>{{ Carbon::parse($autor->created_at)->format("Y-m-d") }}</td>

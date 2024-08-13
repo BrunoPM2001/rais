@@ -180,44 +180,54 @@
     <h5>I. Información general:</h5>
 
     <p>
-      <b>Código:</b>
+      <b>1.1 Código:</b>
       {{ $publicacion->codigo_registro == null ? 'No tiene código' : $publicacion->codigo_registro }}
     </p>
     <p>
-      <b>Título: </b>
+      <b>1.2 Título: </b>
       {{ $publicacion->titulo }}
     </p>
     <p>
-      <b>Repositorio de la tesis(Link): </b>
+      <b>1.3 Repositorio de la tesis(Link): </b>
       {{ $publicacion->url }}
     </p>
     <p>
-      <b>Tipo de tesis: </b>
+      <b>1.4 Tipo de tesis: </b>
       {{ $publicacion->tipo_tesis }}
     </p>
     <p>
-      <b>Fecha de publicación: </b>
+      <b>1.5 Fecha de publicación: </b>
       {{ $publicacion->fecha_publicacion }}
     </p>
     <p>
-      <b>Total de páginas: </b>
+      <b>1.6 Total de páginas: </b>
       {{ $publicacion->pagina_total }}
     </p>
     <p>
-      <b>Universidad: </b>
+      <b>1.7 Universidad: </b>
       {{ $publicacion->universidad }}
     </p>
     <p>
-      <b>Ciudad: </b>
+      <b>1.8 Ciudad: </b>
       {{ $publicacion->lugar_publicacion }}
     </p>
     <p>
-      <b>País: </b>
+      <b>1.9 País: </b>
       {{ $publicacion->pais }}
     </p>
     <p>
-      <b>Palabras clave: </b>
+      <b>1.10 Palabras clave: </b>
       {{ $palabras_clave }}
+    </p>
+    <p>
+      <b>1.11 Anexo: </b>
+      @php
+        if ($publicacion->anexo) {
+          echo "Sí";
+        } else {
+          echo "No";
+        }
+      @endphp
     </p>
 
     <h5>II. Autores:</h5>
@@ -225,11 +235,12 @@
     <table class="table">
       <thead>
         <tr>
+          <th style="width: 5%;" align="left">Nro</th>
           <th style="width: 30%;" align="left">Autor</th>
           <th style="width: 30%;" align="left">Profesor San Marcos</th>
           <th style="width: 20%;" align="left">Fecha</th>
           <th style="width: 20%;" align="left">N° registro</th>
-          <th style="width: 20%;" align="left">Puntaje</th>
+          <th style="width: 15%;" align="left">Puntaje</th>
         </tr>
       </thead>
       <tbody>
@@ -242,6 +253,7 @@
         @endif
         @foreach ($autores as $autor)
           <tr>
+            <td>{{ $loop->iteration }}</td>
             <td>{{ $autor->autor }}</td>
             <td>{{ $autor->nombres }}</td>
             <td>{{ Carbon::parse($autor->created_at)->format("Y-m-d") }}</td>
