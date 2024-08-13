@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin\Estudios\Publicaciones;
 use App\Http\Controllers\S3Controller;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
+use Illuminate\Database\Query\JoinClause;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -56,6 +57,11 @@ class EventoController extends S3Controller {
   public function reporte(Request $request) {
     $publicacion = DB::table('Publicacion AS a')
       ->leftJoin('Publicacion_categoria AS b', 'b.id', '=', 'a.categoria_id')
+      ->leftJoin('File AS c', function (JoinClause $join) {
+        $join->on('c.tabla_id', '=', 'a.id')
+          ->where('c.tabla', '=', 'Publicacion')
+          ->where('c.estado', '=', 20);
+      })
       ->select([
         'a.codigo_registro',
         'a.titulo',
@@ -78,7 +84,8 @@ class EventoController extends S3Controller {
         'a.url',
         'a.estado',
         'a.updated_at',
-        'b.categoria'
+        'b.categoria',
+        'c.key AS anexo'
       ])
       ->where('a.id', '=', $request->query('id'))
       ->first();

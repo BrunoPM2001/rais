@@ -179,64 +179,74 @@
     <h5>I. Descripción de la Publicación:</h5>
 
     <p>
-      <b>Código:</b>
+      <b>1.1 Código:</b>
       {{ $publicacion->codigo_registro == null ? 'No tiene código' : $publicacion->codigo_registro }}
     </p>
     <p>
-      <b>Tipo de artículo: </b>
+      <b>1.2 Tipo de artículo: </b>
       {{ $publicacion->art_tipo }}
     </p>
     <p>
-      <b>Título: </b>
+      <b>1.3 Título: </b>
       {{ $publicacion->titulo }}
     </p>
     <p>
-      <b>Doi: </b>
+      <b>1.4 Doi: </b>
       {{ $publicacion->doi }}
     </p>
     <p>
-      <b>Revista: </b>
+      <b>1.5 Revista: </b>
       {{ $publicacion->publicacion_nombre }}
     </p>
     <p>
-      <b>Revista indexada en: </b>
+      <b>1.6 Revista indexada en: </b>
       {{ $indexada }}
     </p>
     <p>
-      <b>Issn: </b>
+      <b>1.7 Issn: </b>
       {{ $publicacion->issn }}
     </p>
     <p>
-      <b>Issn-e: </b>
+      <b>1.8 Issn-e: </b>
       {{ $publicacion->issn_e }}
     </p>
     <p>
-      <b>Volumen: </b>
+      <b>1.9 Volumen: </b>
       {{ $publicacion->volumen }}
     </p>
     <p>
-      <b>Número: </b>
+      <b>1.10 Número: </b>
       {{ $publicacion->edicion }}
     </p>
     <p>
-      <b>Página inicial: </b>
+      <b>1.11 Página inicial: </b>
       {{ $publicacion->pagina_inicial }}
     </p>
     <p>
-      <b>Página final: </b>
+      <b>1.12 Página final: </b>
       {{ $publicacion->pagina_final }}
     </p>
     <p>
-      <b>Url de la publicación: </b>
+      <b>1.13 Url de la publicación: </b>
       {{ $publicacion->url }}
     </p>
     <p>
-      <b>Fecha de publicación: </b>
+      <b>1.14 Fecha de publicación: </b>
       {{ $publicacion->fecha_publicacion }}
     </p>
     <p>
-      <b>Palabras clave: </b>
+      <b>1.15 Palabras clave: </b>
       {{ $palabras_clave }}
+    </p>
+    <p>
+      <b>1.16 Anexo: </b>
+      @php
+        if ($publicacion->anexo) {
+          echo "Sí";
+        } else {
+          echo "No";
+        }
+      @endphp
     </p>
 
     <h5>II. Autores:</h5>
@@ -244,11 +254,12 @@
     <table class="table">
       <thead>
         <tr>
+          <th style="width: 5%;" align="left">Nro</th>
           <th style="width: 30%;" align="left">Autor</th>
           <th style="width: 30%;" align="left">Profesor San Marcos</th>
           <th style="width: 20%;" align="left">Fecha</th>
           <th style="width: 20%;" align="left">N° registro</th>
-          <th style="width: 20%;" align="left">Puntaje</th>
+          <th style="width: 15%;" align="left">Puntaje</th>
         </tr>
       </thead>
       <tbody>
@@ -261,6 +272,7 @@
         @endif
         @foreach ($autores as $autor)
           <tr>
+            <td>{{ $loop->iteration }}</td>
             <td>{{ $autor->autor }}</td>
             <td>{{ $autor->nombres }}</td>
             <td>{{ Carbon::parse($autor->created_at)->format("Y-m-d") }}</td>
