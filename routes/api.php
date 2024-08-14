@@ -365,6 +365,7 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
 
     //  Proyectos evaluados
     Route::prefix('evaluaciones')->group(function () {
+      Route::get('opciones', [ProyectosEvaluadosController::class, 'opciones']);
       Route::get('listado', [ProyectosEvaluadosController::class, 'listado']);
       Route::get('verFicha', [ProyectosEvaluadosController::class, 'verFicha']);
     });

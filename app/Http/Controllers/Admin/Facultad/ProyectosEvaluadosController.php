@@ -9,7 +9,22 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class ProyectosEvaluadosController extends Controller {
-  public function listado() {
+  public function opciones() {
+    $opciones = DB::table('Proyecto_evaluacion AS a')
+      ->join('Proyecto AS b', 'b.id', '=', 'a.proyecto_id')
+      ->select([
+        'a.id',
+        'b.tipo_proyecto',
+        'b.periodo'
+      ])
+      ->groupBy(['tipo_proyecto', 'periodo'])
+      ->orderByDesc('a.id')
+      ->get();
+
+    return $opciones;
+  }
+
+  public function listado(Request $request) {
     $proyectos = DB::table('Proyecto_evaluacion AS a')
       ->leftJoin('Usuario_evaluador AS b', 'b.id', '=', 'a.evaluador_id')
       ->leftJoin('Proyecto AS c', 'c.id', '=', 'a.proyecto_id')
@@ -43,6 +58,8 @@ class ProyectosEvaluadosController extends Controller {
         DB::raw("CONCAT('/minio/proyecto-evaluacion/', a.ficha) AS url")
       ])
       ->where('e.nivel', '=', 1)
+      ->where('c.periodo', '=', $request->query('periodo'))
+      ->where('c.tipo_proyecto', '=', $request->query('tipo_proyecto'))
       ->groupBy('a.id')
       ->get();
 
