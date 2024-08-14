@@ -433,6 +433,7 @@ class PublicacionesUtilsController extends S3Controller {
     $paises = DB::table('Pais')
       ->select(['name AS value'])
       ->get();
+
     return $paises;
   }
 
@@ -484,5 +485,39 @@ class PublicacionesUtilsController extends S3Controller {
     } else {
       return ['message' => 'error', 'detail' => 'Ya existe una revista con este nombre'];
     }
+  }
+
+  public function agregarRevistaPublicacion(Request $request) {
+    $date = Carbon::now();
+    DB::table('Publicacion_revista')
+      ->insert([
+        'issn' => $request->input('issn'),
+        'issne' => $request->input('issne'),
+        'revista' => $request->input('revista'),
+        'casa' => $request->input('casa'),
+        'isi' => $request->input('isi')["value"],
+        'pais' => $request->input('pais')["value"],
+        'cobertura' => $request->input('cobertura'),
+        'estado' => 1,
+        'created_at' => $date,
+        'updated_at' => $date
+      ]);
+
+    return ['message' => 'info', 'detail' => 'Revista añadida'];
+  }
+
+  public function searchRevista(Request $request) {
+    $revistas = DB::table('Publicacion_revista')
+      ->select(
+        DB::raw("CONCAT(issn, ' | ', issne, ' | ', revista) AS value"),
+        'issn',
+        'issne',
+        'revista',
+      )
+      ->having('value', 'LIKE', '%' . $request->query('query') . '%')
+      ->limit(10)
+      ->get();
+
+    return $revistas;
   }
 }

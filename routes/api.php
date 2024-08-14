@@ -212,6 +212,9 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
       Route::post('paso1', [PublicacionesController::class, 'paso1']);
       Route::post('agregarRevista', [PublicacionesPublicacionesUtilsController::class, 'agregarRevista']);
       Route::post('agregarWos', [PublicacionesPublicacionesUtilsController::class, 'agregarWos']);
+      Route::post('agregarRevistaPublicacion', [PublicacionesPublicacionesUtilsController::class, 'agregarRevistaPublicacion']);
+      Route::get('getPaises', [PublicacionesPublicacionesUtilsController::class, 'getPaises']);
+      Route::get('searchRevista', [PublicacionesPublicacionesUtilsController::class, 'searchRevista']);
 
       //  Paso 2
       Route::post('agregarProyecto', [PublicacionesPublicacionesUtilsController::class, 'agregarProyecto']);
