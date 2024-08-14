@@ -104,11 +104,11 @@ class Informe_economicoController extends S3Controller {
         ])
         ->where('a.geco_proyecto_id', '=', $request->query('id'))
         ->where('b.tipo', '!=', 'Otros')
-        ->where(function ($query) {
-          $query
-            ->orWhere('a.partida_nueva', '!=', '1')
-            ->orWhereNull('a.partida_nueva');
-        })
+        // ->where(function ($query) {
+        //   $query
+        //     ->orWhere('a.partida_nueva', '!=', '1')
+        //     ->orWhereNull('a.partida_nueva');
+        // })
         ->get();
 
       //  Comprobantes

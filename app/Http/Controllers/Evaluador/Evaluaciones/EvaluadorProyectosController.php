@@ -299,6 +299,7 @@ class EvaluadorProyectosController extends S3Controller {
       ->select([
         'a.comentario',
         'c.titulo',
+        'c.tipo_proyecto',
         DB::raw("CONCAT(b.apellidos, ' ', b.nombres) AS evaluador")
       ])
       ->where('a.proyecto_id', '=', $request->query('proyecto_id'))
@@ -393,15 +394,6 @@ class EvaluadorProyectosController extends S3Controller {
       ->where('a.proyecto_id', '=', $request->query('proyecto_id'))
       ->orderBy('a.tipo')
       ->get();
-
-    // $tesistas = DB::table('Proyecto_integrante AS a')
-    //   ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
-    //   ->select([
-    //     'a.'
-    //   ])
-    //   ->where('a.proyecto_id', '=', $request->query('proyecto_id'))
-    //   ->whereNotNull('a.tipo_tesis')
-    //   ->get();
 
     return [
       'proyecto' => $proyecto,

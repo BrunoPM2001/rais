@@ -147,7 +147,7 @@
   <div class="div"></div>
   <div class="foot-1">RAIS - Registro de Actividades de Investigación de San Marcos</div>
 
-  <p class="titulo"><strong>Ficha de evaluación 2024 - PMULTI</strong></p>
+  <p class="titulo"><strong>Ficha de evaluación 2024 - {{ $extra->tipo_proyecto }}</strong></p>
   <div class="cuerpo">
     <table class="tableData">
       <tbody>

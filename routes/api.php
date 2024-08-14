@@ -25,6 +25,7 @@ use App\Http\Controllers\Admin\Estudios\RevistasController;
 use App\Http\Controllers\Admin\Facultad\AsignacionEvaluadorController;
 use App\Http\Controllers\Admin\Facultad\ConvocatoriasController as FacultadConvocatoriasController;
 use App\Http\Controllers\Admin\Facultad\GestionEvaluadoresController;
+use App\Http\Controllers\Admin\Facultad\ProyectosEvaluadosController;
 use App\Http\Controllers\Admin\Reportes\ConsolidadoGeneralController;
 use App\Http\Controllers\Admin\Reportes\DocenteController;
 use App\Http\Controllers\Admin\Reportes\EstudioController;
@@ -360,6 +361,12 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
       Route::get('evaluadoresProyecto', [AsignacionEvaluadorController::class, 'evaluadoresProyecto']);
       Route::get('searchEvaluadorBy', [AsignacionEvaluadorController::class, 'searchEvaluadorBy']);
       Route::put('updateEvaluadores', [AsignacionEvaluadorController::class, 'updateEvaluadores']);
+    });
+
+    //  Proyectos evaluados
+    Route::prefix('evaluaciones')->group(function () {
+      Route::get('listado', [ProyectosEvaluadosController::class, 'listado']);
+      Route::get('verFicha', [ProyectosEvaluadosController::class, 'verFicha']);
     });
   });
 
