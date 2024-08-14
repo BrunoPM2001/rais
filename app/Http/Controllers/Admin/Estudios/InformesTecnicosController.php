@@ -8,36 +8,66 @@ use Illuminate\Support\Facades\DB;
 
 class InformesTecnicosController extends S3Controller {
 
-  public function proyectosListado() {
-    $responsable = DB::table('Proyecto_integrante AS a')
-      ->leftJoin('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
-      ->select(
-        'a.proyecto_id',
-        DB::raw('CONCAT(b.apellido1, " " , b.apellido2, ", ", b.nombres) AS responsable')
-      )
-      ->where('condicion', '=', 'Responsable');
+  public function proyectosListado(Request $request) {
+    if ($request->query('lista') == 'nuevos') {
 
-    //  TODO - Incluir deuda dentro de otra consulta para una nueva tabla en la UI
-    $proyectos = DB::table('Proyecto AS a')
-      ->join('Informe_tecnico AS b', 'b.proyecto_id', '=', 'a.id')
-      ->leftJoin('Facultad AS c', 'c.id', '=', 'a.facultad_id')
-      ->leftJoinSub($responsable, 'res', 'res.proyecto_id', '=', 'a.id')
-      ->select(
-        'a.id',
-        'a.tipo_proyecto',
-        'a.codigo_proyecto',
-        'a.titulo',
-        DB::raw('COUNT(b.id) AS cantidad_informes'),
-        'res.responsable',
-        'c.nombre AS facultad',
-        'a.periodo',
-        'a.estado'
-      )
-      ->where('a.estado', '>', 0)
-      ->groupBy('a.id')
-      ->get();
+      $responsable = DB::table('Proyecto_integrante AS a')
+        ->leftJoin('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
+        ->select(
+          'a.proyecto_id',
+          DB::raw('CONCAT(b.apellido1, " " , b.apellido2, ", ", b.nombres) AS responsable')
+        )
+        ->where('condicion', '=', 'Responsable');
 
-    return $proyectos;
+      //  TODO - Incluir deuda dentro de otra consulta para una nueva tabla en la UI
+      $proyectos = DB::table('Proyecto AS a')
+        ->join('Informe_tecnico AS b', 'b.proyecto_id', '=', 'a.id')
+        ->leftJoin('Facultad AS c', 'c.id', '=', 'a.facultad_id')
+        ->leftJoinSub($responsable, 'res', 'res.proyecto_id', '=', 'a.id')
+        ->select(
+          'a.id',
+          'a.tipo_proyecto',
+          'a.codigo_proyecto',
+          'a.titulo',
+          DB::raw('COUNT(b.id) AS cantidad_informes'),
+          'res.responsable',
+          'c.nombre AS facultad',
+          'a.periodo',
+          'a.estado'
+        )
+        ->where('a.estado', '>', 0)
+        ->groupBy('a.id')
+        ->get();
+
+      return $proyectos;
+    } else {
+      $responsable = DB::table('Proyecto_integrante_H AS a')
+        ->leftJoin('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
+        ->select(
+          'a.proyecto_id',
+          DB::raw('CONCAT(b.apellido1, " " , b.apellido2, ", ", b.nombres) AS responsable')
+        )
+        ->where('condicion', '=', 'Responsable');
+
+      $proyectos = DB::table('Proyecto_H AS a')
+        ->join('Informe_tecnico AS b', 'b.proyecto_h_id', '=', 'a.id')
+        ->leftJoin('Facultad AS c', 'c.id', '=', 'a.facultad_id')
+        ->leftJoinSub($responsable, 'res', 'res.proyecto_id', '=', 'a.id')
+        ->select(
+          'a.id',
+          'a.tipo AS tipo_proyecto',
+          'a.codigo AS codigo_proyecto',
+          'a.titulo',
+          DB::raw('COUNT(b.id) AS cantidad_informes'),
+          'res.responsable',
+          'c.nombre AS facultad',
+          'a.periodo',
+          'a.estado'
+        )
+        ->where('a.estado', '>', 0)
+        ->groupBy('a.id')
+        ->get();
+    }
   }
 
   public function informes($proyecto_id) {
