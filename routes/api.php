@@ -206,7 +206,7 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
       Route::get('verAuditoria', [PublicacionesController::class, 'verAuditoria']);
 
       Route::get('detalle', [PublicacionesController::class, 'detalle']);
-      Route::put('updateDetalle', [PublicacionesController::class, 'updateDetalle']);
+      Route::post('updateDetalle', [PublicacionesController::class, 'updateDetalle']);
       Route::get('getTabs', [PublicacionesController::class, 'getTabs']);
 
       //  Paso 1

@@ -9,13 +9,14 @@ use App\Http\Controllers\Admin\Estudios\Publicaciones\LibrosController;
 use App\Http\Controllers\Admin\Estudios\Publicaciones\PublicacionesUtilsController;
 use App\Http\Controllers\Admin\Estudios\Publicaciones\TesisAsesoriaController;
 use App\Http\Controllers\Admin\Estudios\Publicaciones\TesisPropiasController;
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\S3Controller;
 use Carbon\Carbon;
 use Illuminate\Database\Query\JoinClause;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
-class PublicacionesController extends Controller {
+class PublicacionesController extends S3Controller {
   public function listado(Request $request) {
     if (!$request->query('investigador_id')) {
       $publicaciones = DB::table('Publicacion')
@@ -182,9 +183,10 @@ class PublicacionesController extends Controller {
   }
 
   public function updateDetalle(Request $request) {
+    $now = Carbon::now();
     $cod = 0;
-    if ($request->input('estado')["value"] == 1) {
-      if ($request->input('categoria_id') == null) {
+    if ($request->input('estado') == 1) {
+      if ($request->input('categoria_id') == "null") {
         return ['message' => 'warning', 'detail' => 'Necesita colocar una calificación en caso quiera registrar la publicación'];
       } else {
         $pub = DB::table('Publicacion')
@@ -219,21 +221,21 @@ class PublicacionesController extends Controller {
             ->where('id', '=', $request->input('id'))
             ->update([
               'codigo_registro' => $cod->codigo_registro + 1,
-              'validado' => $request->input('validado')["value"],
-              'categoria_id' => $request->input('categoria_id')["value"],
+              'validado' => $request->input('validado'),
+              'categoria_id' => $request->input('categoria_id') == "null" ? null : $request->input('categoria_id'),
               'comentario' => $request->input('comentario'),
               'resolucion' => $request->input('resolucion'),
               'observaciones_usuario' => $request->input('observaciones_usuario'),
-              'estado' => $request->input('estado')["value"],
+              'estado' => $request->input('estado'),
               'audit' => $audit,
-              'updated_at' => Carbon::now(),
+              'updated_at' => $now,
             ]);
 
           $categoria = DB::table('Publicacion_categoria')
             ->select([
               'puntaje',
             ])
-            ->where('id', '=', $request->input('categoria_id')["value"])
+            ->where('id', '=', $request->input('categoria_id'))
             ->first();
 
           DB::table('Publicacion_autor AS a')
@@ -243,6 +245,60 @@ class PublicacionesController extends Controller {
             ->update([
               'a.puntaje' => $categoria->puntaje,
             ]);
+
+          if ($request->hasFile('file')) {
+            $date = Carbon::now();
+            $name = "token-" . $date->format('Ymd-His') . "-" . Str::random(8);
+            $nameFile = $name . "." . $request->file('file')->getClientOriginalExtension();
+            $this->uploadFile($request->file('file'), "publicacion", $nameFile);
+
+            DB::table('File')
+              ->where('tabla', '=', 'Publicacion')
+              ->where('tabla_id', '=', $request->input('id'))
+              ->where('recurso', '=', 'ANEXO')
+              ->update([
+                'estado' => -1
+              ]);
+
+            DB::table('File')
+              ->insert([
+                'tabla' => 'Publicacion',
+                'tabla_id' => $request->input('id'),
+                'bucket' => 'publicacion',
+                'key' => $nameFile,
+                'recurso' => 'ANEXO',
+                'estado' => 20,
+                'created_at' => $now,
+                'updated_at' => $now
+              ]);
+          }
+
+          if ($request->hasFile('file_comentario')) {
+            $date = Carbon::now();
+            $name = "comentario-" . $date->format('Ymd-His') . "-" . Str::random(8);
+            $nameFile = $name . "." . $request->file('file')->getClientOriginalExtension();
+            $this->uploadFile($request->file('file'), "publicacion", $nameFile);
+
+            DB::table('File')
+              ->where('tabla', '=', 'Publicacion')
+              ->where('tabla_id', '=', $request->input('id'))
+              ->where('recurso', '=', 'COMENTARIO')
+              ->update([
+                'estado' => -1
+              ]);
+
+            DB::table('File')
+              ->insert([
+                'tabla' => 'Publicacion',
+                'tabla_id' => $request->input('id'),
+                'bucket' => 'publicacion',
+                'key' => $nameFile,
+                'recurso' => 'COMENTARIO',
+                'estado' => 20,
+                'created_at' => $now,
+                'updated_at' => $now
+              ]);
+          }
 
           return ['message' => 'success', 'detail' => 'Datos de la publicación actualizados correctamente'];
         }
@@ -270,15 +326,42 @@ class PublicacionesController extends Controller {
     DB::table('Publicacion')
       ->where('id', '=', $request->input('id'))
       ->update([
-        'validado' => $request->input('validado')["value"],
-        'categoria_id' => $request->input('categoria_id')["value"] ?? null,
+        'validado' => $request->input('validado'),
+        'categoria_id' => $request->input('categoria_id') == "null" ? null : $request->input('categoria_id'),
         'comentario' => $request->input('comentario'),
         'resolucion' => $request->input('resolucion'),
         'observaciones_usuario' => $request->input('observaciones_usuario'),
-        'estado' => $request->input('estado')["value"],
+        'estado' => $request->input('estado'),
         'audit' => $audit,
         'updated_at' => Carbon::now(),
       ]);
+
+    if ($request->hasFile('file')) {
+      $date = Carbon::now();
+      $name = "token-" . $date->format('Ymd-His') . "-" . Str::random(8);
+      $nameFile = $name . "." . $request->file('file')->getClientOriginalExtension();
+      $this->uploadFile($request->file('file'), "publicacion", $nameFile);
+
+      DB::table('File')
+        ->where('tabla', '=', 'Publicacion')
+        ->where('tabla_id', '=', $request->input('id'))
+        ->where('recurso', '=', 'ANEXO')
+        ->update([
+          'estado' => -1
+        ]);
+
+      DB::table('File')
+        ->insert([
+          'tabla' => 'Publicacion',
+          'tabla_id' => $request->input('id'),
+          'bucket' => 'publicacion',
+          'key' => $nameFile,
+          'recurso' => 'ANEXO',
+          'estado' => 20,
+          'created_at' => $now,
+          'updated_at' => $now
+        ]);
+    }
 
     return ['message' => 'success', 'detail' => 'Datos de la publicación actualizados correctamente'];
   }

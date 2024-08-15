@@ -213,79 +213,75 @@
     @endforeach
 
     <!--  Actividades  -->
-    <?php $i = 1; ?>
     <h6>Calendario de actividades</h6>
-    @foreach ($actividades as $act)
-      <table class="table1">
-        <thead>
+    <table class="table1">
+      <thead>
+        <tr>
+          <th>Nro.</th>
+          <th>Actividad</th>
+          <th>Fecha inicial</th>
+          <th>Fecha final</th>
+        </tr>
+      </thead>
+      <tbody>
+        @foreach ($actividades as $act)
           <tr>
-            <th>Nro.</th>
-            <th>Actividad</th>
-            <th>Fecha inicial</th>
-            <th>Fecha final</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>{{ $i }}</td>
+            <td>{{ $loop->iteration }}</td>
             <td>{{ $act->actividad }}</td>
             <td>{{ $act->fecha_inicio }}</td>
             <td>{{ $act->fecha_fin }}</td>
           </tr>
-        </tbody>
-      </table>
-      <?php $i++; ?>
-    @endforeach
+        @endforeach
+      </tbody>
+    </table>
 
     <!--  Presupuesto  -->
     <h6>Presupuesto</h6>
-    @foreach ($presupuesto as $pres)
-      <table class="table1">
-        <thead>
+    <table class="table1">
+      <thead>
+        <tr>
+          <th>Nro</th>
+          <th>Partida</th>
+          <th>Monto S/.</th>
+          <th>Tipo</th>
+        </tr>
+      </thead>
+      <tbody>
+        @foreach ($presupuesto as $pres)
           <tr>
-            <th>Nro</th>
-            <th>Partida</th>
-            <th>Monto S/.</th>
-            <th>Tipo</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>{{ $i }}</td>
+            <td>{{ $loop->iteration }}</td>
             <td>{{ $pres->partida }}</td>
             <td>{{ $pres->monto }}</td>
             <td>{{ $pres->tipo }}</td>
           </tr>
-        </tbody>
-      </table>
-      <?php $i++; ?>
-    @endforeach
+        @endforeach
+      </tbody>
+    </table>
 
     <!--  Integrantes  -->
     <h6>Integrantes</h6>
-    @foreach ($integrantes as $int)
-      <table class="table1">
-        <thead>
+    <table class="table1">
+      <thead>
+        <tr>
+          <th>Nro</th>
+          <th>Condición</th>
+          <th>Apellidos y Nombres </th>
+          <th>Tipo</th>
+          <th>Facultad</th>
+        </tr>
+      </thead>
+      <tbody>
+        @foreach ($integrantes as $int)
           <tr>
-            <th>Nro</th>
-            <th>Condición</th>
-            <th>Apellidos y Nombres </th>
-            <th>Tipo</th>
-            <th>Facultad</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>{{ $i }}</td>
+            <td>{{ $loop->iteration }}</td>
             <td>{{ $int->condicion }}</td>
             <td>{{ $int->integrante }}</td>
             <td>{{ $int->tipo }}</td>
             <td>{{ $int->facultad }}</td>
           </tr>
-        </tbody>
-      </table>
-      <?php $i++; ?>
-    @endforeach
+        @endforeach
+      </tbody>
+    </table>
 
     {{-- Condiciones --}}
     <h6>Condiciones</h6>
