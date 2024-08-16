@@ -191,7 +191,7 @@ class TesisAsesoriaController extends Controller {
       'publicacion' => $publicacion,
       'palabras_clave' => $palabras_clave,
       'proyectos' => $proyectos,
-      'autores' => $autores,
+      'autores' => $autores["listado"],
     ]);
     return $pdf->stream();
   }

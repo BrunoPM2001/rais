@@ -34,6 +34,34 @@ class PublicacionesUtilsController extends S3Controller {
     return $titulos;
   }
 
+  public function listadoDois(Request $request) {
+    $dois = DB::table('Publicacion')
+      ->select([
+        'id',
+        'doi AS value',
+      ])
+      ->having('doi', 'LIKE', '%' . $request->query('query') . '%')
+      ->limit(10)
+      ->get();
+
+    return $dois;
+  }
+
+  public function listadoRevistas(Request $request) {
+    $revistas = DB::table('Publicacion_revista')
+      ->select(
+        DB::raw("CONCAT(issn, ' | ', issne, ' | ', revista) AS value"),
+        'issn',
+        'issne',
+        'revista',
+      )
+      ->having('value', 'LIKE', '%' . $request->query('query') . '%')
+      ->limit(10)
+      ->get();
+
+    return $revistas;
+  }
+
   public function infoPublicacion(Request $request) {
     $publicacion = DB::table('Publicacion')
       ->select([
@@ -76,12 +104,11 @@ class PublicacionesUtilsController extends S3Controller {
       ->where('publicacion_id', '=', $request->query('id'))
       ->get();
 
-    $autores = DB::table('Publicacion_autor AS a')
-      ->leftJoin('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
+    $autores = DB::table('Publicacion_autor')
       ->select([
-        DB::raw("COALESCE(CONCAT(b.nombres, ' ', b.apellido1, ' ', b.apellido2), CONCAT(a.nombres, ' ', a.apellido1, ' ', a.apellido2)) AS nombre"),
-        'a.categoria',
-        'a.tipo'
+        'autor',
+        'categoria',
+        'tipo'
       ])
       ->where('publicacion_id', '=', $request->query('id'))
       ->get();
@@ -192,14 +219,20 @@ class PublicacionesUtilsController extends S3Controller {
   }
 
   public function eliminarProyecto(Request $request) {
-    $count = DB::table('Publicacion_proyecto')
-      ->where('id', '=', $request->query('proyecto_id'))
-      ->whereIn('estado', [2, 6])
-      ->delete();
+    $count = DB::table('Publicacion_proyecto AS a')
+      ->join('Publicacion AS b', 'b.id', '=', 'a.publicacion_id')
+      ->where('a.id', '=', $request->query('proyecto_id'))
+      ->whereIn('b.estado', [2, 6])
+      ->count();
 
     if ($count == 0) {
+
       return ['message' => 'error', 'detail' => 'Esta publicación ya ha sido enviada, no se pueden hacer más cambios'];
     }
+
+    DB::table('Publicacion_proyecto')
+      ->where('id', '=', $request->query('proyecto_id'))
+      ->delete();
 
     return ['message' => 'info', 'detail' => 'Proyecto eliminado de la lista exitosamente'];
   }
@@ -224,12 +257,26 @@ class PublicacionesUtilsController extends S3Controller {
                   CONCAT(a.apellido1, ' ', a.apellido2, ', ', a.nombres)) AS nombres"),
           DB::raw("CASE(a.filiacion)
             WHEN 1 THEN 'Sí'
-          ELSE 'No' END AS filiacion"),
+            WHEN 0 THEN 'No'
+          ELSE null END AS filiacion"),
+          DB::raw("CASE(a.filiacion_unica)
+            WHEN 1 THEN 'Sí'
+            WHEN 0 THEN 'No'
+          ELSE null END AS filiacion_unica"),
         ])
         ->where('publicacion_id', '=', $request->query('publicacion_id'))
         ->get();
 
-      return $autores;
+      $cumple = DB::table('Publicacion_autor')
+        ->where('publicacion_id', '=', $request->query('publicacion_id'))
+        ->where(function ($query) {
+          $query->whereNull('autor')
+            ->orWhereNull('filiacion')
+            ->orWhereNull('filiacion_unica');
+        })
+        ->count();
+
+      return ['listado' => $autores, 'cumple' => $cumple > 0 ? false : true];
     } else {
       return response()->json(['error' => 'Unauthorized'], 401);
     }
@@ -313,6 +360,7 @@ class PublicacionesUtilsController extends S3Controller {
           'autor' => $request->input('autor'),
           'categoria' => $request->input('categoria'),
           'filiacion' => $request->input('filiacion'),
+          'filiacion_unica' => $request->input('filiacion_unica'),
           'presentado' => 0,
           'estado' => 0,
           'created_at' => Carbon::now(),
@@ -362,6 +410,7 @@ class PublicacionesUtilsController extends S3Controller {
           'autor' => $request->input('autor'),
           'categoria' => $request->input('categoria'),
           'filiacion' => $request->input('filiacion'),
+          'filiacion_unica' => $request->input('filiacion_unica'),
           'presentado' => 0,
           'estado' => 0,
           'created_at' => Carbon::now(),
@@ -377,6 +426,7 @@ class PublicacionesUtilsController extends S3Controller {
           'autor' => $request->input('autor'),
           'categoria' => $request->input('categoria'),
           'filiacion' => $request->input('filiacion'),
+          'filiacion_unica' => $request->input('filiacion_unica'),
           'presentado' => 0,
           'estado' => 0,
           'created_at' => Carbon::now(),
@@ -413,6 +463,7 @@ class PublicacionesUtilsController extends S3Controller {
         'autor' => $request->input('autor'),
         'categoria' => $request->input('categoria'),
         'filiacion' => $request->input('filiacion'),
+        'filiacion_unica' => $request->input('filiacion_unica'),
         'updated_at' => Carbon::now()
       ]);
 

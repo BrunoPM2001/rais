@@ -536,6 +536,8 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
     Route::prefix('utils')->group(function () {
       //  Solicitar inclusión
       Route::get('listadoTitulos', [PublicacionesUtilsController::class, 'listadoTitulos']);
+      Route::get('listadoDois', [PublicacionesUtilsController::class, 'listadoDois']);
+      Route::get('listadoRevistas', [PublicacionesUtilsController::class, 'listadoRevistas']);
       Route::get('infoPublicacion', [PublicacionesUtilsController::class, 'infoPublicacion']);
       //  Data
       Route::get('listadoRevistasIndexadas', [PublicacionesUtilsController::class, 'listadoRevistasIndexadas']);

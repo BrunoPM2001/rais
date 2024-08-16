@@ -255,7 +255,7 @@ class ArticulosController extends S3Controller {
       'palabras_clave' => $palabras_clave,
       'indexada' => $indexada,
       'proyectos' => $proyectos,
-      'autores' => $autores,
+      'autores' => $autores["listado"],
     ]);
     return $pdf->stream();
   }
