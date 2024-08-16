@@ -106,7 +106,14 @@ class PublicacionesController extends S3Controller {
       ->leftJoin('File AS b', function (JoinClause $join) {
         $join->on('b.tabla_id', '=', 'a.id')
           ->where('b.tabla', '=', 'Publicacion')
+          ->where('b.recurso', '=', 'ANEXO')
           ->where('b.estado', '=', 20);
+      })
+      ->leftJoin('File AS c', function (JoinClause $join) {
+        $join->on('c.tabla_id', '=', 'a.id')
+          ->where('c.tabla', '=', 'Publicacion')
+          ->where('c.recurso', '=', 'COMENTARIO')
+          ->where('c.estado', '=', 20);
       })
       ->select([
         'a.id',
@@ -119,8 +126,10 @@ class PublicacionesController extends S3Controller {
         'a.resolucion',
         'a.estado',
         'a.tipo_publicacion',
-        'b.id AS file_id',
-        DB::raw("CONCAT('/minio/', b.bucket, '/', b.key) AS url")
+        'b.id AS file_id_1',
+        'c.id AS file_id_2',
+        DB::raw("CONCAT('/minio/', b.bucket, '/', b.key) AS url_1"),
+        DB::raw("CONCAT('/minio/', c.bucket, '/', c.key) AS url_2")
       ])
       ->where('a.id', '=', $request->query('id'))
       ->first();
@@ -276,8 +285,8 @@ class PublicacionesController extends S3Controller {
           if ($request->hasFile('file_comentario')) {
             $date = Carbon::now();
             $name = "comentario-" . $date->format('Ymd-His') . "-" . Str::random(8);
-            $nameFile = $name . "." . $request->file('file')->getClientOriginalExtension();
-            $this->uploadFile($request->file('file'), "publicacion", $nameFile);
+            $nameFile = $name . "." . $request->file('file_comentario')->getClientOriginalExtension();
+            $this->uploadFile($request->file('file_comentario'), "publicacion", $nameFile);
 
             DB::table('File')
               ->where('tabla', '=', 'Publicacion')
@@ -357,6 +366,33 @@ class PublicacionesController extends S3Controller {
           'bucket' => 'publicacion',
           'key' => $nameFile,
           'recurso' => 'ANEXO',
+          'estado' => 20,
+          'created_at' => $now,
+          'updated_at' => $now
+        ]);
+    }
+
+    if ($request->hasFile('file_comentario')) {
+      $date = Carbon::now();
+      $name = "comentario-" . $date->format('Ymd-His') . "-" . Str::random(8);
+      $nameFile = $name . "." . $request->file('file_comentario')->getClientOriginalExtension();
+      $this->uploadFile($request->file('file_comentario'), "publicacion", $nameFile);
+
+      DB::table('File')
+        ->where('tabla', '=', 'Publicacion')
+        ->where('tabla_id', '=', $request->input('id'))
+        ->where('recurso', '=', 'COMENTARIO')
+        ->update([
+          'estado' => -1
+        ]);
+
+      DB::table('File')
+        ->insert([
+          'tabla' => 'Publicacion',
+          'tabla_id' => $request->input('id'),
+          'bucket' => 'publicacion',
+          'key' => $nameFile,
+          'recurso' => 'COMENTARIO',
           'estado' => 20,
           'created_at' => $now,
           'updated_at' => $now
