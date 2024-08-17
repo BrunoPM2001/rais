@@ -95,6 +95,13 @@
       margin-bottom: 30px;
     }
 
+    .firmas {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 10px;
+      margin-top: 120px;
+    }
+
     .table>thead th {
       font-size: 10px;
       border: 1.5px solid #000;
@@ -138,7 +145,13 @@
   <div class="div"></div>
   <div class="foot-1">RAIS - Registro de Actividades de Investigación de San Marcos</div>
 
-  <p class="titulo"><strong>HOJA DE RESUMEN DE LA SUBVENCIÓN FINANCIERA</strong></p>
+  <p class="titulo">
+    <strong>
+      HOJA DE RESUMEN DE LA SUBVENCIÓN FINANCIERA<br>
+      PROYECTOS DE INVESTIGACIÓN CON FINANCIAMIENTO PARA GI<br>
+      ESTADO: {{ $proyecto->estado }}
+    </strong>
+  </p>
   <div class="cuerpo">
 
     <h5>I. Información del proyecto:</h5>
@@ -211,13 +224,13 @@
             <td class="row-left" style="font-weight: bold" colspan="5">Bienes</td>
           </tr>
           @foreach ($presupuesto['Bienes'] as $item)
-          @php
-            $monto_original += $item->monto_original;
-            $monto_modificado += $item->monto_modificado;
-            $monto_rendido += $item->monto_rendido;
-            $saldo_rendicion += $item->saldo_rendicion;
-            $exceso += $item->monto_excedido;
-          @endphp
+            @php
+              $monto_original += $item->monto_original;
+              $monto_modificado += $item->monto_modificado;
+              $monto_rendido += $item->monto_rendido;
+              $saldo_rendicion += $item->saldo_rendicion;
+              $exceso += $item->monto_excedido;
+            @endphp
             <tr>
               <td class="row-left">{{ $item->partida }}</td>
               <td class="row-right">{{ $item->monto_original }}</td>
@@ -278,15 +291,31 @@
           <td class="row-right" style="font-weight: bold">Total</td>
           <td class="row-right">{{ number_format($monto_rendido + $exceso, 2) }}</td>
         </tr>
-        
+
       </tbody>
     </table>
 
-    <p>
-      Yo ORELLANA MANRIQUE DIEGO OSWALDO, declaro bajo juramento que lo consignado en el presente reporte y los documentos adjuntos por
-      concepto de rendición económica, es el resultado de la información registrada en el sistema RAIS - Registro de comprobantes; dando fe que dichos
-      gastos corresponden al desarrollo de la actividad de investigación citado lineas arriba, en concordancia al presupuesto asignado para tal fin
+    <p style="text-align: justify">
+      Yo <strong>{{ $proyecto->responsable }}</strong> declaro bajo juramento que lo consignado en el presente reporte
+      y los documentos adjuntos por
+      concepto de rendición económica, es el resultado de la información registrada en el sistema RAIS - Registro de
+      comprobantes; dando fe que dichos
+      gastos corresponden al desarrollo de la actividad de investigación citado lineas arriba, en concordancia al
+      presupuesto asignado para tal fin.
     </p>
+
+    <table class="firmas">
+      <thead>
+        <tr>
+          <th style="width: 45%; border-top: 1px solid #000; padding-top: 20px;">Responsable</th>
+          <th style="width: 10%"></th>
+          <th style="width: 45%; border-top: 1px solid #000; padding-top: 20px;">V°B° de conocimiento Vicedecanato
+            de <br>
+            investigación y
+            posgrado.</th>
+        </tr>
+        </tbody>
+    </table>
 
   </div>
 
