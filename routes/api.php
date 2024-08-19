@@ -36,6 +36,7 @@ use App\Http\Controllers\Evaluador\Evaluaciones\EvaluadorProyectosController;
 use App\Http\Controllers\Investigador\Actividades\AsesoriaTesisPosController;
 use App\Http\Controllers\Investigador\Actividades\AsesoriaTesisPreController;
 use App\Http\Controllers\Investigador\Actividades\ComiteEditorialController;
+use App\Http\Controllers\Investigador\Actividades\DeudaController;
 use App\Http\Controllers\Investigador\Actividades\EquipamientoCientificoController;
 use App\Http\Controllers\Investigador\Actividades\EventosController;
 use App\Http\Controllers\Investigador\Actividades\GrupoEstudioController;
@@ -475,6 +476,10 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
     //  Grupos de estudio
     Route::prefix('gruposEstudio')->group(function () {
       Route::get('listado', [GrupoEstudioController::class, 'listado']);
+    });
+    //  Deudas
+    Route::prefix('deudas')->group(function () {
+      Route::get('listado', [DeudaController::class, 'listado']);
     });
 
     Route::get('detalleProyecto', [ProyectoDetalleController::class, 'detalleProyecto']);

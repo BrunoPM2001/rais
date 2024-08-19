@@ -19,13 +19,14 @@ class PublicacionLibrosUniController extends Controller {
         'a.tipo_proyecto',
         'c.nombre AS condicion',
         'a.estado',
-        'a.periodo'
+        'a.periodo',
+        DB::raw("'no' AS antiguo")
       )
       ->where('b.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
       ->whereIn('a.tipo_proyecto', ['RFPLU'])
       ->orderByDesc('a.periodo')
       ->get();
 
-    return ['data' => $proyectos];
+    return $proyectos;
   }
 }

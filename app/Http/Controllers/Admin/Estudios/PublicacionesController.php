@@ -125,7 +125,26 @@ class PublicacionesController extends S3Controller {
         'a.created_at AS fecha_inscripcion',
         'a.resolucion',
         'a.estado',
+        DB::raw("CASE(a.estado)
+            WHEN -1 THEN 'Eliminado'
+            WHEN 1 THEN 'Registrado'
+            WHEN 2 THEN 'Observado'
+            WHEN 5 THEN 'Enviado'
+            WHEN 6 THEN 'En proceso'
+            WHEN 7 THEN 'Anulado'
+            WHEN 8 THEN 'No registrado'
+            WHEN 9 THEN 'Duplicado'
+          ELSE 'Sin estado' END AS estado_text"),
         'a.tipo_publicacion',
+        DB::raw("CASE (a.tipo_publicacion)
+            WHEN 'articulo' THEN 'Artículo en revista'
+            WHEN 'capitulo' THEN 'Capítulo de libro'
+            WHEN 'libro' THEN 'Libro'
+            WHEN 'tesis' THEN 'Tesis propia'
+            WHEN 'tesis-asesoria' THEN 'Tesis asesoria'
+            WHEN 'evento' THEN 'R. en evento científico'
+            WHEN 'ensayo' THEN 'Ensayo'
+          ELSE a.tipo_publicacion END AS tipo"),
         'b.id AS file_id_1',
         'c.id AS file_id_2',
         DB::raw("CONCAT('/minio/', b.bucket, '/', b.key) AS url_1"),

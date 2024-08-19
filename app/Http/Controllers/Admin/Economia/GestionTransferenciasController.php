@@ -177,7 +177,15 @@ class GestionTransferenciasController extends Controller {
       ->where('geco_operacion_id', '=', $request->query('geco_operacion_id'))
       ->get();
 
-    return $movimientos;
+    $operacion = DB::table('Geco_operacion')
+      ->select([
+        'justificacion',
+        'observacion'
+      ])
+      ->where('id', '=', $request->query('geco_operacion_id'))
+      ->first();
+
+    return ['movimientos' => $movimientos, 'operacion' => $operacion];
   }
 
   public function calificar(Request $request) {

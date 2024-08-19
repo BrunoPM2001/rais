@@ -19,13 +19,31 @@ class ProyectoSinFinanciamientoController extends Controller {
         'a.tipo_proyecto',
         'c.nombre AS condicion',
         'a.estado',
-        'a.periodo'
+        'a.periodo',
+        DB::raw("'no' AS antiguo")
       )
       ->where('b.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
       ->whereIn('a.tipo_proyecto', ['PSINFINV', 'PSINFIPU'])
       ->orderByDesc('a.periodo')
       ->get();
 
-    return ['data' => $proyectos];
+    $proyectos_antiguos = DB::table('Proyecto_H AS a')
+      ->leftJoin('Proyecto_integrante_H AS b', 'b.proyecto_id', '=', 'a.id')
+      ->select([
+        'a.id',
+        'a.codigo AS codigo_proyecto',
+        'a.titulo',
+        'a.tipo AS tipo_proyecto',
+        'b.condicion',
+        'a.status AS estado',
+        'a.periodo',
+        DB::raw("'si' AS antiguo")
+      ])
+      ->where('b.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+      ->where('a.tipo', '=', 'SIN-SIN')
+      ->orderByDesc('a.periodo')
+      ->get();
+
+    return $proyectos->merge($proyectos_antiguos);
   }
 }

@@ -49,6 +49,7 @@ class Informe_economicoController extends S3Controller {
       $datos = DB::table('Geco_proyecto AS a')
         ->join('Proyecto AS b', 'b.id', '=', 'a.proyecto_id')
         ->select([
+          'a.proyecto_id',
           'b.titulo',
           'b.codigo_proyecto',
           'b.tipo_proyecto'
@@ -237,6 +238,17 @@ class Informe_economicoController extends S3Controller {
         ->orderByDesc('created_at')
         ->get();
 
+      //  Informe de cumplimiento
+      $integrantes = DB::table('Proyecto_integrante AS a')
+        ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
+        ->join('Proyecto_integrante_tipo AS c', 'c.id', '=', 'a.proyecto_integrante_tipo_id')
+        ->select([
+          DB::raw("CONCAT(b.apellido1, ' ', b.apellido2, ' ', b.nombres) AS nombres"),
+        ])
+        ->where('a.proyecto_id', '=', $datos->proyecto_id)
+        ->where('c.condicion', '=', 'titular')
+        ->get();
+
       return [
         'cifras' => [
           'rendido' => $porcentaje,
@@ -251,7 +263,8 @@ class Informe_economicoController extends S3Controller {
           'habilitado' => $habilitado,
           'solicitud' => $result,
           'historial' => $historial,
-        ]
+        ],
+        'integrantes' => $integrantes
       ];
     }
   }
