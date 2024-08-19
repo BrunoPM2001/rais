@@ -54,6 +54,7 @@ use App\Http\Controllers\Investigador\Publicaciones\ArticulosController;
 use App\Http\Controllers\Investigador\Publicaciones\CapitulosLibrosController;
 use App\Http\Controllers\Investigador\Publicaciones\EventoController;
 use App\Http\Controllers\Investigador\Grupo\GrupoController as InvestigadorGrupoController;
+use App\Http\Controllers\Investigador\Informes\Informe_academicoController;
 use App\Http\Controllers\Investigador\Informes\Informe_economicoController;
 use App\Http\Controllers\Investigador\Perfil\CdiController;
 use App\Http\Controllers\Investigador\Perfil\OrcidController;
@@ -664,6 +665,12 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
       Route::post('solicitarTransferencia', [Informe_economicoController::class, 'solicitarTransferencia']);
 
       Route::get('reportePresupuesto', [Informe_economicoController::class, 'reportePresupuesto']);
+    });
+
+    Route::prefix('informe_academico')->group(function () {
+      Route::get('listadoPendientes', [Informe_academicoController::class, 'listadoPendientes']);
+      Route::get('listadoAceptados', [Informe_academicoController::class, 'listadoAceptados']);
+      Route::get('verInforme', [Informe_academicoController::class, 'verInforme']);
     });
   });
 
