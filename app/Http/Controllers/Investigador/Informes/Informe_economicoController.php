@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Investigador\Informes;
 
 use App\Http\Controllers\S3Controller;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
+use Illuminate\Database\Query\JoinClause;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -949,5 +951,75 @@ class Informe_economicoController extends S3Controller {
       ]);
 
     return ['message' => 'info', 'detail' => 'Transferencia solicitada'];
+  }
+
+  public function reportePresupuesto(Request $request) {
+    $proyecto_id = DB::table('Geco_proyecto')
+      ->select([
+        'proyecto_id AS id'
+      ])
+      ->where('id', '=', $request->query('id'))
+      ->first();
+
+    $proyecto = DB::table('Proyecto AS a')
+      ->join('Proyecto_integrante AS b', function (JoinClause $join) {
+        $join->on('a.id', '=', 'b.proyecto_id')
+          ->where('condicion', '=', 'Responsable');
+      })
+      ->join('Usuario_investigador AS c', 'b.investigador_id', '=', 'c.id')
+      ->leftJoin('Facultad AS d', 'a.facultad_id', '=', 'd.id')
+      ->select([
+        'a.fecha_inscripcion',
+        'a.periodo',
+        'a.tipo_proyecto',
+        'a.codigo_proyecto',
+        'a.titulo',
+        DB::raw("COALESCE(d.nombre, 'No figura') AS facultad"),
+        DB::raw("CONCAT(c.apellido1, ' ', c.apellido2, ' ', c.nombres) AS responsable"),
+        'c.email3',
+        'c.telefono_movil',
+        DB::raw("CASE(a.estado)
+          WHEN -1 THEN 'Eliminado'
+          WHEN 0 THEN 'No aprobado'
+          WHEN 1 THEN 'Aprobado'
+          WHEN 3 THEN 'En evaluación'
+          WHEN 5 THEN 'Enviado'
+          WHEN 6 THEN 'En proceso'
+          WHEN 7 THEN 'Anulado'
+          WHEN 8 THEN 'Sustentado'
+          WHEN 9 THEN 'En ejecucion'
+          WHEN 10 THEN 'Ejecutado'
+          WHEN 11 THEN 'Concluido'
+          ELSE 'Sin estado'
+        END AS estado")
+      ])
+      ->where('a.id', '=', $proyecto_id->id)
+      ->first();
+
+    $presupuesto = DB::table('Geco_proyecto AS a')
+      ->join('Geco_proyecto_presupuesto AS b', 'b.geco_proyecto_id', '=', 'a.id')
+      ->join('Partida AS c', 'c.id', '=', 'b.partida_id')
+      ->leftJoin('Proyecto_presupuesto AS d', function (JoinClause $join) use ($proyecto_id) {
+        $join->on('d.partida_id', '=', 'b.partida_id')
+          ->where('d.proyecto_id', '=', $proyecto_id->id);
+      })
+      ->select([
+        'b.id',
+        'c.tipo',
+        'c.partida',
+        DB::raw("COALESCE(d.monto, 0) AS monto_original"),
+        DB::raw("COALESCE(b.monto, 0) AS monto_modificado"),
+        DB::raw("(b.monto_rendido - b.monto_excedido) AS monto_rendido"),
+        DB::raw("(b.monto - b.monto_rendido + b.monto_excedido) AS saldo_rendicion"),
+        'b.monto_excedido'
+      ])
+      ->where('a.proyecto_id', '=', $proyecto_id->id)
+      ->where('c.tipo', '!=', 'Otros')
+      ->orderBy('c.tipo')
+      ->get()
+      ->groupBy('tipo');
+
+    $pdf = Pdf::loadView('investigador.informes.economico.hoja_resumen', ['proyecto' => $proyecto, 'presupuesto' => $presupuesto]);
+    return $pdf->stream();
   }
 }

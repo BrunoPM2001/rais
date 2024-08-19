@@ -16,7 +16,11 @@ class DeudaProyectosController extends Controller {
         'a.periodo',
         'a.titulo',
         'b.nombre AS facultad',
-        'a.deuda',
+        DB::raw("CASE (a.deuda)
+          WHEN 1 THEN 'Sí'
+          WHEN 0 THEN 'No'
+        ELSE a.deuda END AS deuda"),
+        // 'a.deuda',
         'a.created_at',
         'a.updated_at'
       )

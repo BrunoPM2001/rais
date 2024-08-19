@@ -662,6 +662,8 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
       Route::get('partidasTransferencias', [Informe_economicoController::class, 'partidasTransferencias']);
       Route::post('addTransferenciaTemporal', [Informe_economicoController::class, 'addTransferenciaTemporal']);
       Route::post('solicitarTransferencia', [Informe_economicoController::class, 'solicitarTransferencia']);
+
+      Route::get('reportePresupuesto', [Informe_economicoController::class, 'reportePresupuesto']);
     });
   });
 
