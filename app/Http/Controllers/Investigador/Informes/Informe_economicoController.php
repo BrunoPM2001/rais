@@ -1022,4 +1022,71 @@ class Informe_economicoController extends S3Controller {
     $pdf = Pdf::loadView('investigador.informes.economico.hoja_resumen', ['proyecto' => $proyecto, 'presupuesto' => $presupuesto]);
     return $pdf->stream();
   }
+
+  public function detalleGasto(Request $request) {
+    $proyecto_id = DB::table('Geco_proyecto')
+      ->select([
+        'proyecto_id AS id'
+      ])
+      ->where('id', '=', $request->query('id'))
+      ->first();
+
+    $proyecto = DB::table('Proyecto AS a')
+      ->join('Proyecto_integrante AS b', function (JoinClause $join) {
+        $join->on('a.id', '=', 'b.proyecto_id')
+          ->where('condicion', '=', 'Responsable');
+      })
+      ->join('Usuario_investigador AS c', 'b.investigador_id', '=', 'c.id')
+      ->leftJoin('Grupo AS d', 'd.id', '=', 'a.grupo_id')
+      ->leftJoin('Facultad AS e', 'e.id', '=', 'd.facultad_id')
+      ->select([
+        'd.grupo_nombre',
+        'e.nombre AS facultad',
+        'a.titulo',
+        DB::raw("CONCAT(c.apellido1, ' ', c.apellido2, ' ', c.nombres) AS responsable"),
+        'c.email3',
+        'c.telefono_movil',
+        'a.codigo_proyecto',
+      ])
+      ->where('a.id', '=', $proyecto_id->id)
+      ->first();
+
+    $bienes = DB::table('Geco_documento AS a')
+      ->join('Geco_documento_item AS b', 'b.geco_documento_id', '=', 'a.id')
+      ->join('Partida AS c', 'c.id', '=', 'b.partida_id')
+      ->select([
+        'a.fecha',
+        'a.tipo',
+        'a.numero',
+        'c.codigo',
+        'c.partida',
+        'b.total'
+      ])
+      ->where('a.geco_proyecto_id', '=', $request->query('id'))
+      ->where('c.tipo', '=', 'Bienes')
+      ->where('a.estado', '=', 1)
+      ->get();
+
+    $servicios = DB::table('Geco_documento AS a')
+      ->join('Geco_documento_item AS b', 'b.geco_documento_id', '=', 'a.id')
+      ->join('Partida AS c', 'c.id', '=', 'b.partida_id')
+      ->select([
+        'a.fecha',
+        'a.tipo',
+        'a.numero',
+        'c.codigo',
+        'c.partida',
+        'b.total'
+      ])
+      ->where('a.geco_proyecto_id', '=', $request->query('id'))
+      ->where('c.tipo', '=', 'Servicios')
+      ->where('a.estado', '=', 1)
+      ->get();
+
+    $pdf = Pdf::loadView(
+      'investigador.informes.economico.detalle_gasto',
+      ['proyecto' => $proyecto, 'bienes' => $bienes, 'servicios' => $servicios]
+    );
+    return $pdf->stream();
+  }
 }

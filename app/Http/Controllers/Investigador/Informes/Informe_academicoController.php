@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Investigador\Informes;
 
 use App\Http\Controllers\S3Controller;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Database\Query\JoinClause;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -133,17 +134,76 @@ class Informe_academicoController extends S3Controller {
           ->where('d.cargo', '=', 'Coordinador');
       })
       ->leftJoin('Usuario_investigador AS e', 'e.id', '=', 'd.investigador_id')
+      ->leftJoin('Linea_investigacion AS g', 'g.id', '=', 'f.linea_investigacion_id')
+      ->leftJoin('Informe_tipo AS h', 'h.id', '=', 'a.informe_tipo_id')
       ->select([
-        'f.titulo',
+        'f.id AS proyecto_id',
         'f.codigo_proyecto',
+        'f.titulo',
+        'f.periodo',
+        'f.localizacion',
         'b.nombre AS facultad',
         'c.grupo_nombre',
         DB::raw("CONCAT(e.apellido1, ' ', e.apellido2, ' ', e.nombres) AS coordinador"),
-        'f.resolucion_rectoral'
+        'f.resolucion_rectoral',
+        'g.nombre AS linea',
+        //  Informe
+        'h.tipo',
+        'h.informe',
+        DB::raw("CASE(a.estado)
+          WHEN 0 THEN 'En proceso'
+          WHEN 1 THEN 'Aprobado'
+          WHEN 2 THEN 'Presentado'
+          WHEN 3 THEN 'Observado'
+        ELSE 'Por presentar' END AS estado"),
+        'a.updated_at',
+        'a.resumen_ejecutivo',
+        'a.palabras_clave',
+        'a.infinal1',
+        'a.infinal2',
+        'a.infinal3',
+        'a.infinal4',
+        'a.infinal5',
+        'a.infinal6',
+        'a.infinal7',
+        'a.infinal8',
+        'a.infinal9',
+        'a.infinal10',
+        'a.infinal11',
       ])
       ->where('a.id', '=', $request->query('id'))
       ->first();
 
-    return ['proyecto' => $proyecto];
+    $miembros = DB::table('Proyecto_integrante AS a')
+      ->leftJoin('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
+      ->select([
+        'b.codigo',
+        DB::raw("CONCAT(b.apellido1, ' ', b.apellido2, ' ', b.nombres) AS nombres"),
+        'a.condicion',
+        'b.tipo'
+      ])
+      ->where('a.proyecto_id', '=', $proyecto->proyecto_id)
+      ->get();
+
+    $extras = DB::table('Proyecto_descripcion')
+      ->select([
+        'codigo',
+        'detalle'
+      ])
+      ->where('proyecto_id', '=', $proyecto->proyecto_id)
+      ->get()
+      ->mapWithKeys(function ($item) {
+        return [$item->codigo => $item->detalle];
+      });
+
+    if ($proyecto->tipo == "pconfigi") {
+      $pdf = Pdf::loadView('investigador.informes.academico.pconfigi', ['proyecto' => $proyecto, 'miembros' => $miembros, 'extras' => $extras]);
+      return $pdf->stream();
+    } else if ($proyecto->tipo == "eci") {
+      $pdf = Pdf::loadView('investigador.informes.academico.eci', ['proyecto' => $proyecto, 'miembros' => $miembros]);
+      return $pdf->stream();
+    } else {
+      return "ok";
+    }
   }
 }

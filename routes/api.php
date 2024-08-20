@@ -665,6 +665,7 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
       Route::post('solicitarTransferencia', [Informe_economicoController::class, 'solicitarTransferencia']);
 
       Route::get('reportePresupuesto', [Informe_economicoController::class, 'reportePresupuesto']);
+      Route::get('detalleGasto', [Informe_economicoController::class, 'detalleGasto']);
     });
 
     Route::prefix('informe_academico')->group(function () {
