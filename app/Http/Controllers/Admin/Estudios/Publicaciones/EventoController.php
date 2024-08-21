@@ -82,6 +82,7 @@ class EventoController extends S3Controller {
         'a.ciudad',
         'a.pais',
         'a.url',
+        'a.resolucion',
         'a.estado',
         'a.updated_at',
         'b.categoria',

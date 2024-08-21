@@ -248,6 +248,10 @@
         }
       @endphp
     </p>
+    <p>
+      <b>1.17 Resolución: </b>
+      {{ $publicacion->resolucion }}
+    </p>
 
     <h5>II. Autores:</h5>
 

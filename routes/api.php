@@ -45,7 +45,6 @@ use App\Http\Controllers\Investigador\Actividades\ProyectoDetalleController;
 use App\Http\Controllers\Investigador\Actividades\ProyectoFEXController;
 use App\Http\Controllers\Investigador\Actividades\ProyectoMultidisciplinarioController;
 use App\Http\Controllers\Investigador\Actividades\ProyectoSinFinanciamientoController;
-use App\Http\Controllers\Investigador\Actividades\ProyectosUtilController;
 use App\Http\Controllers\Investigador\Actividades\PublicacionLibrosUniController;
 use App\Http\Controllers\Investigador\Actividades\TalleresController;
 use App\Http\Controllers\Investigador\Convocatorias\ProCTIController;
@@ -56,6 +55,7 @@ use App\Http\Controllers\Investigador\Publicaciones\EventoController;
 use App\Http\Controllers\Investigador\Grupo\GrupoController as InvestigadorGrupoController;
 use App\Http\Controllers\Investigador\Informes\Informe_academicoController;
 use App\Http\Controllers\Investigador\Informes\Informe_economicoController;
+use App\Http\Controllers\Investigador\Informes\Informes_academicos\InformeUtilsController;
 use App\Http\Controllers\Investigador\Perfil\CdiController;
 use App\Http\Controllers\Investigador\Perfil\OrcidController;
 use App\Http\Controllers\Investigador\Perfil\PerfilController;
@@ -672,6 +672,10 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
       Route::get('listadoPendientes', [Informe_academicoController::class, 'listadoPendientes']);
       Route::get('listadoAceptados', [Informe_academicoController::class, 'listadoAceptados']);
       Route::get('verInforme', [Informe_academicoController::class, 'verInforme']);
+
+      Route::get('getData', [InformeUtilsController::class, 'getData']);
+      Route::post('sendData', [InformeUtilsController::class, 'sendData']);
+      Route::put('presentar', [InformeUtilsController::class, 'presentar']);
     });
   });
 

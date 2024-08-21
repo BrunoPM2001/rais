@@ -75,6 +75,7 @@ class CapitulosLibrosController extends S3Controller {
         'a.lugar_publicacion AS ciudad',
         'a.pais',
         'a.url',
+        'a.resolucion',
         'a.estado',
         'a.updated_at',
         'b.categoria',

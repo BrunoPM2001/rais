@@ -62,6 +62,7 @@ class TesisPropiasController extends S3Controller {
         'a.universidad',
         'a.lugar_publicacion',
         'a.pais',
+        'a.resolucion',
         'a.estado',
         'a.updated_at',
         'b.categoria',

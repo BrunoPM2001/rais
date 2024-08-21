@@ -68,6 +68,7 @@ class LibrosController extends S3Controller {
         'a.pagina_total',
         'a.fecha_publicacion',
         'a.url',
+        'a.resolucion',
         'a.estado',
         'a.updated_at',
         'b.categoria',

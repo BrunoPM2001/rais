@@ -92,6 +92,7 @@ class ArticulosController extends S3Controller {
         'a.volumen',
         'a.edicion',
         'a.url',
+        'a.resolucion',
         'a.estado',
         'a.updated_at',
         'b.categoria',
