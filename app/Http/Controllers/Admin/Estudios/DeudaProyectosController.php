@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\DB;
 
 class DeudaProyectosController extends Controller {
-  public function listadoProyectos($periodo, $tipo_proyecto, $deuda) {
+  public function listadoProyectos1($periodo, $tipo_proyecto, $deuda) {
     $proyectos = DB::table('Proyecto AS a')
       ->join('Facultad AS b', 'b.id', '=', 'a.facultad_id')
       ->select(
@@ -16,11 +16,10 @@ class DeudaProyectosController extends Controller {
         'a.periodo',
         'a.titulo',
         'b.nombre AS facultad',
-        DB::raw("CASE (a.deuda)
-          WHEN 1 THEN 'Sí'
-          WHEN 0 THEN 'No'
-        ELSE a.deuda END AS deuda"),
-        // 'a.deuda',
+        DB::raw("CASE
+          WHEN a.deuda <= 3 THEN 'Sí'
+          WHEN a.deuda > 3 THEN 'No'
+        END AS deuda"),
         'a.created_at',
         'a.updated_at'
       )
@@ -58,6 +57,39 @@ class DeudaProyectosController extends Controller {
       ->get();
 
     return ['data' => $integrantes];
+  }
+
+  public function listadoProyectos($year, $investigadorId) {
+    $deudas = DB::table('view_proyectos')
+      ->select([
+        'proyecto_id AS id',
+        'codigo AS codigo_proyecto',
+        'tipo AS tipo_proyecto',
+        'periodo',
+        'xtitulo AS titulo',
+        'facultad',
+        DB::raw("CASE
+          WHEN (deuda IS NULL OR deuda <= 0) THEN 'NO'
+          WHEN deuda > 0 AND deuda <= 3 THEN 'SI'
+          WHEN deuda > 3 THEN 'SUBSANADA'
+        END as deuda"),
+        'fecha_inscripcion AS created_at',
+        'updated_at'
+      ])
+      ->whereNotIn('tipo', ['PFEX', 'FEX', 'SIN-CON'])
+      ->orderBy('fecha_inscripcion', 'DESC')
+      ->orderBy('facultad', 'DESC')
+      ->get();
+
+    // if (!empty($year)) {
+    //   $deudas->where('t1.periodo', $year);
+    // }
+
+    // if ($investigadorId) {
+    //   $deudas->where('t1.investigador_id', $investigadorId);
+    // }
+
+    return $deudas;
   }
 
   public function listadoProyectosNoDeuda() {
