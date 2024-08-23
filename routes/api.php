@@ -234,6 +234,7 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
       Route::delete('eliminarAutor', [PublicacionesPublicacionesUtilsController::class, 'eliminarAutor']);
       Route::put('recalcularPuntaje', [PublicacionesPublicacionesUtilsController::class, 'recalcularPuntaje']);
       Route::put('convertirPrincipal', [PublicacionesPublicacionesUtilsController::class, 'convertirPrincipal']);
+      Route::put('reOrdenar', [PublicacionesPublicacionesUtilsController::class, 'reOrdenar']);
     });
 
     Route::prefix('sincronizarPub')->group(function () {
@@ -542,6 +543,9 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
 
     //  Utils
     Route::prefix('utils')->group(function () {
+      //  ELiminar
+      Route::delete('eliminarPublicacion', [PublicacionesUtilsController::class, 'eliminarPublicacion']);
+
       //  Solicitar inclusión
       Route::get('listadoTitulos', [PublicacionesUtilsController::class, 'listadoTitulos']);
       Route::get('listadoDois', [PublicacionesUtilsController::class, 'listadoDois']);

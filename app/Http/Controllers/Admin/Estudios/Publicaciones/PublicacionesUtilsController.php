@@ -51,6 +51,19 @@ class PublicacionesUtilsController extends S3Controller {
     return ['message' => 'info', 'detail' => 'Se ha asignado a un nuevo autor principal'];
   }
 
+  public function reOrdenar(Request $request) {
+    $index = 1;
+    foreach ($request->input('autores') as $item) {
+      DB::table('Publicacion_autor')
+        ->where('id', '=', $item["id"])
+        ->update([
+          'orden' => $index
+        ]);
+      $index++;
+    }
+    return ['message' => 'info', 'detail' => 'Autores reordenados'];
+  }
+
   /*
   |-----------------------------------------------------------
   | Solicitar ser incluído como autor
@@ -188,6 +201,7 @@ class PublicacionesUtilsController extends S3Controller {
         'a.updated_at',
       ])
       ->where('publicacion_id', '=', $request->query('id'))
+      ->orderBy('a.orden')
       ->get();
 
     return $autores;

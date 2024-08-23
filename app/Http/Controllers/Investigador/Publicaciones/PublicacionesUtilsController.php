@@ -10,6 +10,46 @@ use Illuminate\Support\Str;
 
 class PublicacionesUtilsController extends S3Controller {
 
+  public function eliminarPublicacion(Request $request) {
+    $count = DB::table('Publicacion_autor AS a')
+      ->join('Publicacion AS b', 'b.id', '=', 'a.publicacion_id')
+      ->where('a.publicacion_id', '=', $request->query('id'))
+      ->where('b.estado', '=', 6)
+      ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+      ->count();
+
+    if ($count > 0) {
+
+      DB::table('Publicacion_autor')
+        ->where('publicacion_id', '=', $request->query('id'))
+        ->delete();
+
+      DB::table('Publicacion_index')
+        ->where('publicacion_id', '=', $request->query('id'))
+        ->delete();
+
+      DB::table('Publicacion_wos')
+        ->where('publicacion_id', '=', $request->query('id'))
+        ->delete();
+
+      DB::table('Publicacion_palabra_clave')
+        ->where('publicacion_id', '=', $request->query('id'))
+        ->delete();
+
+      DB::table('Publicacion_proyecto')
+        ->where('publicacion_id', '=', $request->query('id'))
+        ->delete();
+
+      DB::table('Publicacion')
+        ->where('id', '=', $request->query('id'))
+        ->delete();
+
+      return ['message' => 'info', 'detail' => 'Publicación eliminada correctamente'];
+    } else {
+      return ['message' => 'warning', 'detail' => 'No se puede eliminar esta publicación'];
+    }
+  }
+
   /*
   |-----------------------------------------------------------
   | Solicitar ser incluído como autor

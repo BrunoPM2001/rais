@@ -21,7 +21,16 @@ class ArticulosController extends S3Controller {
         'a.observaciones_usuario',
         DB::raw('YEAR(a.fecha_publicacion) AS año_publicacion'),
         'b.puntaje',
-        'a.estado',
+        DB::raw("CASE(a.estado)
+            WHEN -1 THEN 'Eliminado'
+            WHEN 1 THEN 'Registrado'
+            WHEN 2 THEN 'Observado'
+            WHEN 5 THEN 'Enviado'
+            WHEN 6 THEN 'En proceso'
+            WHEN 7 THEN 'Anulado'
+            WHEN 8 THEN 'No registrado'
+            WHEN 9 THEN 'Duplicado'
+          ELSE 'Sin estado' END AS estado"),
         'a.step'
       )
       ->where('a.estado', '>', 0)

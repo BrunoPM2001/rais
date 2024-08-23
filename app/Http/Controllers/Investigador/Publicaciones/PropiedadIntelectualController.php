@@ -16,7 +16,16 @@ class PropiedadIntelectualController extends Controller {
         'a.id',
         'a.titulo',
         'a.updated_at',
-        'a.estado',
+        DB::raw("CASE(a.estado)
+            WHEN -1 THEN 'Eliminado'
+            WHEN 1 THEN 'Registrado'
+            WHEN 2 THEN 'Observado'
+            WHEN 5 THEN 'Enviado'
+            WHEN 6 THEN 'En proceso'
+            WHEN 7 THEN 'Anulado'
+            WHEN 8 THEN 'No registrado'
+            WHEN 9 THEN 'Duplicado'
+          ELSE 'Sin estado' END AS estado"),
         'b.puntaje',
         'a.step'
       )
