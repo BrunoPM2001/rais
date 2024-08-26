@@ -628,9 +628,14 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
 
       Route::post('registrar1', [PinvposController::class, 'registrar1']);
       Route::post('registrar3', [PinvposController::class, 'registrar3']);
+
       Route::post('agregarActividad', [PinvposController::class, 'agregarActividad']);
       Route::put('actualizarActividad', [PinvposController::class, 'actualizarActividad']);
       Route::delete('eliminarActividad', [PinvposController::class, 'eliminarActividad']);
+
+      Route::post('agregarPartida', [PinvposController::class, 'agregarPartida']);
+      Route::put('actualizarPartida', [PinvposController::class, 'actualizarPartida']);
+      Route::delete('eliminarPartida', [PinvposController::class, 'eliminarPartida']);
     });
 
     Route::get('verificar', [ProCTIController::class, 'verificar']);

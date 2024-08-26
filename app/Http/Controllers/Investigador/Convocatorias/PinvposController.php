@@ -417,4 +417,40 @@ class PinvposController extends S3Controller {
 
     return ['message' => 'info', 'detail' => 'Actividad eliminada correctamente'];
   }
+
+  public function agregarPartida(Request $request) {
+    $date = Carbon::now();
+
+    DB::table('Proyecto_presupuesto')
+      ->insert([
+        'proyecto_id' => $request->input('proyecto_id'),
+        'partida_id' => $request->input('partida_id'),
+        'monto' => $request->input('monto'),
+        'created_at' => $date,
+        'updated_at' => $date,
+      ]);
+
+    return ['message' => 'success', 'detail' => 'Partida agregada correctamente'];
+  }
+
+  public function actualizarPartida(Request $request) {
+    $date = Carbon::now();
+
+    DB::table('Proyecto_presupuesto')
+      ->where('id', '=', $request->input('id'))
+      ->update([
+        'monto' => $request->input('monto'),
+        'updated_at' => $date,
+      ]);
+
+    return ['message' => 'info', 'detail' => 'Partida actualizada correctamente'];
+  }
+
+  public function eliminarPartida(Request $request) {
+    DB::table('Proyecto_presupuesto')
+      ->where('id', '=', $request->query('id'))
+      ->delete();
+
+    return ['message' => 'info', 'detail' => 'Partida eliminada correctamente'];
+  }
 }
