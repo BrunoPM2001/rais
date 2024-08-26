@@ -199,6 +199,58 @@ class PinvposController extends S3Controller {
     }
   }
 
+  public function verificar5(Request $request) {
+    $errores = [];
+
+    $habilitado = DB::table('Proyecto_integrante_dedicado AS a')
+      ->leftJoin('Proyecto AS b', function (JoinClause $join) {
+        $join->on('b.id', '=', 'a.proyecto_id')
+          ->where('b.tipo_proyecto', '=', 'PINVPOS')
+          ->where('b.periodo', '=', 2024);
+      })
+      ->leftJoin('Usuario_investigador AS c', 'c.id', '=', 'a.investigador_id')
+      ->leftJoin('Facultad AS d', 'd.id', '=', 'c.facultad_id')
+      ->select([
+        'b.id AS proyecto_id',
+        'b.step',
+        'b.estado',
+        DB::raw("CONCAT(c.apellido1, ' ', c.apellido2, ' ', c.nombres) AS responsable"),
+        'c.doc_numero',
+        'c.email3',
+        'd.nombre AS facultad',
+        'c.codigo',
+        'c.tipo'
+      ])
+      ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+      ->first();
+
+    if (!$habilitado) {
+      $errores[] = 'No tiene un proyecto creado';
+    }
+
+    if ($habilitado->estado != 6 && $habilitado->estado != null) {
+      $errores[] = 'Ya ha enviado una propuesta de proyecto';
+    }
+
+    if (!empty($errores)) {
+      return ['estado' => false, 'message' => $errores];
+    } else {
+      $partidas = DB::table('Proyecto_presupuesto AS a')
+        ->join('Partida AS b', 'b.id', '=', 'a.partida_id')
+        ->select([
+          'a.id',
+          'b.codigo',
+          'b.partida',
+          'b.tipo',
+          'a.monto'
+        ])
+        ->where('a.proyecto_id', '=', $habilitado->proyecto_id)
+        ->get();
+
+      return ['estado' => true, 'datos' => $habilitado, 'partidas' => $partidas];
+    }
+  }
+
   public function registrar1(Request $request) {
     if ($request->input('id') != 'null') {
       $id = $request->input('id');

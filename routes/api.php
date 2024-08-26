@@ -624,6 +624,7 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
       Route::get('verificar2', [PinvposController::class, 'verificar2']);
       Route::get('verificar3', [PinvposController::class, 'verificar3']);
       Route::get('verificar4', [PinvposController::class, 'verificar4']);
+      Route::get('verificar5', [PinvposController::class, 'verificar5']);
 
       Route::post('registrar1', [PinvposController::class, 'registrar1']);
       Route::post('registrar3', [PinvposController::class, 'registrar3']);
