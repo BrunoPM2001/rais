@@ -17,6 +17,7 @@ return new class extends Migration {
       $table->date('fecha_inicio');
       $table->date('fecha_fin');
       $table->text('justificacion')->nullable();
+      $table->integer('duracion')->nullable();
 
       //  Fks
       $table->foreign('proyecto_id')->references('id')->on('Proyecto');

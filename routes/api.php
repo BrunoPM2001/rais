@@ -621,6 +621,15 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
 
     Route::prefix('pinvpos')->group(function () {
       Route::get('verificar', [PinvposController::class, 'verificar']);
+      Route::get('verificar2', [PinvposController::class, 'verificar2']);
+      Route::get('verificar3', [PinvposController::class, 'verificar3']);
+      Route::get('verificar4', [PinvposController::class, 'verificar4']);
+
+      Route::post('registrar1', [PinvposController::class, 'registrar1']);
+      Route::post('registrar3', [PinvposController::class, 'registrar3']);
+      Route::post('agregarActividad', [PinvposController::class, 'agregarActividad']);
+      Route::put('actualizarActividad', [PinvposController::class, 'actualizarActividad']);
+      Route::delete('eliminarActividad', [PinvposController::class, 'eliminarActividad']);
     });
 
     Route::get('verificar', [ProCTIController::class, 'verificar']);
