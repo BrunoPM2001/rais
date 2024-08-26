@@ -47,6 +47,7 @@ use App\Http\Controllers\Investigador\Actividades\ProyectoMultidisciplinarioCont
 use App\Http\Controllers\Investigador\Actividades\ProyectoSinFinanciamientoController;
 use App\Http\Controllers\Investigador\Actividades\PublicacionLibrosUniController;
 use App\Http\Controllers\Investigador\Actividades\TalleresController;
+use App\Http\Controllers\Investigador\Convocatorias\PinvposController;
 use App\Http\Controllers\Investigador\Convocatorias\ProCTIController;
 use App\Http\Controllers\Investigador\DashboardController as InvestigadorDashboardController;
 use App\Http\Controllers\Investigador\Publicaciones\ArticulosController;
@@ -617,6 +618,11 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
 
   //  Convocatorias
   Route::prefix('convocatorias')->group(function () {
+
+    Route::prefix('pinvpos')->group(function () {
+      Route::get('verificar', [PinvposController::class, 'verificar']);
+    });
+
     Route::get('verificar', [ProCTIController::class, 'verificar']);
 
     Route::get('datosPaso1', [ProCTIController::class, 'datosPaso1']);
