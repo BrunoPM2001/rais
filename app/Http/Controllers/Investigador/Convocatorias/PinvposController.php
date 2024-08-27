@@ -44,10 +44,10 @@ class PinvposController extends S3Controller {
 
     if (!$habilitado) {
       $errores[] = 'Esta convocatoria no está disponible para usted';
-    }
-
-    if ($habilitado->estado != 6 && $habilitado->estado != null) {
-      $errores[] = 'Ya ha enviado una propuesta de proyecto';
+    } else {
+      if ($habilitado?->estado != 6 && $habilitado->estado != null) {
+        $errores[] = 'Ya ha enviado una propuesta de proyecto';
+      }
     }
 
     if (!empty($errores)) {
@@ -210,6 +210,17 @@ class PinvposController extends S3Controller {
       })
       ->leftJoin('Usuario_investigador AS c', 'c.id', '=', 'a.investigador_id')
       ->leftJoin('Facultad AS d', 'd.id', '=', 'c.facultad_id')
+      ->leftJoin('Proyecto_doc AS e', function (JoinClause $join) {
+        $join->on('e.proyecto_id', '=', 'b.id')
+          ->where('e.tipo', '=', 18)
+          ->where('e.estado', '=', 1)
+          ->where('e.categoria', '=', 'erd-cofinanciamiento')
+          ->where('e.nombre', '=', 'ERD de cofinanciamiento');
+      })
+      ->leftJoin('Proyecto_descripcion AS f', function (JoinClause $join) {
+        $join->on('f.proyecto_id', '=', 'b.id')
+          ->where('f.codigo', '=', 'facultad_monto');
+      })
       ->select([
         'b.id AS proyecto_id',
         'b.step',
@@ -219,7 +230,9 @@ class PinvposController extends S3Controller {
         'c.email3',
         'd.nombre AS facultad',
         'c.codigo',
-        'c.tipo'
+        'c.tipo',
+        DB::raw("CONCAT('/minio/proyecto-doc/', e.archivo) AS url"),
+        'f.detalle AS monto'
       ])
       ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
       ->first();
@@ -235,10 +248,11 @@ class PinvposController extends S3Controller {
     if (!empty($errores)) {
       return ['estado' => false, 'message' => $errores];
     } else {
-      $partidas = DB::table('Proyecto_presupuesto AS a')
+      $presupuesto = DB::table('Proyecto_presupuesto AS a')
         ->join('Partida AS b', 'b.id', '=', 'a.partida_id')
         ->select([
           'a.id',
+          'b.id AS partida_id',
           'b.codigo',
           'b.partida',
           'b.tipo',
@@ -247,7 +261,18 @@ class PinvposController extends S3Controller {
         ->where('a.proyecto_id', '=', $habilitado->proyecto_id)
         ->get();
 
-      return ['estado' => true, 'datos' => $habilitado, 'partidas' => $partidas];
+      $partidas = DB::table('Partida_proyecto AS a')
+        ->join('Partida AS b', 'b.id', '=', 'a.partida_id')
+        ->select([
+          'b.id AS value',
+          DB::raw("CONCAT(b.codigo, ' - ', b.partida) AS label"),
+          'b.tipo',
+        ])
+        ->where('a.tipo_proyecto', '=', 'PINVPOS')
+        ->where('a.postulacion', '=', 1)
+        ->get();
+
+      return ['estado' => true, 'datos' => $habilitado, 'partidas' => $partidas, 'presupuesto' => $presupuesto];
     }
   }
 
@@ -423,8 +448,8 @@ class PinvposController extends S3Controller {
 
     DB::table('Proyecto_presupuesto')
       ->insert([
-        'proyecto_id' => $request->input('proyecto_id'),
-        'partida_id' => $request->input('partida_id'),
+        'proyecto_id' => $request->input('id'),
+        'partida_id' => $request->input('partida')["value"],
         'monto' => $request->input('monto'),
         'created_at' => $date,
         'updated_at' => $date,
@@ -439,6 +464,7 @@ class PinvposController extends S3Controller {
     DB::table('Proyecto_presupuesto')
       ->where('id', '=', $request->input('id'))
       ->update([
+        'partida_id' => $request->input('partida')["value"],
         'monto' => $request->input('monto'),
         'updated_at' => $date,
       ]);
@@ -452,5 +478,89 @@ class PinvposController extends S3Controller {
       ->delete();
 
     return ['message' => 'info', 'detail' => 'Partida eliminada correctamente'];
+  }
+
+  public function registrar5(Request $request) {
+    $id = $request->input('id');
+
+    //  Verificar que sea miembro de proyecto
+    $cuenta = DB::table('Proyecto_integrante')
+      ->where('proyecto_id', '=', $id)
+      ->where('investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+      ->count();
+
+    if ($cuenta == 0) {
+      return ['message' => 'error', 'detail' => 'No es miembro de este proyecto'];
+    } else {
+      if ($request->hasFile('file')) {
+        $date = Carbon::now();
+        $date1 = Carbon::now();
+        $name = $date1->format('Ymd-His');
+        $nameFile = $id . "/" . $name . "." . $request->file('file')->getClientOriginalExtension();
+        $this->uploadFile($request->file('file'), "proyecto-doc", $nameFile);
+
+        DB::table('Proyecto_doc')
+          ->where('proyecto_id', '=', $id)
+          ->where('tipo', '=', 18)
+          ->where('categoria', '=', 'erd-cofinanciamiento')
+          ->where('nombre', '=', 'ERD de cofinanciamiento')
+          ->update([
+            'estado' => 0,
+          ]);
+
+        DB::table('Proyecto_doc')
+          ->insert([
+            'proyecto_id' => $id,
+            'tipo' => 18,
+            'categoria' => 'erd-cofinanciamiento',
+            'nombre' => 'ERD de cofinanciamiento',
+            'comentario' => $date,
+            'archivo' => $nameFile,
+            'estado' => 1
+          ]);
+
+        DB::table('Proyecto_descripcion')
+          ->updateOrInsert([
+            'proyecto_id' => $id,
+            'codigo' => 'facultad_monto'
+          ], [
+            'detalle' => $request->input('monto')
+          ]);
+
+        return ['message' => 'success', 'detail' => 'Datos guardados'];
+      } else {
+        $cuenta = DB::table('Proyecto_doc')
+          ->where('proyecto_id', '=', $id)
+          ->where('tipo', '=', 18)
+          ->where('categoria', '=', 'erd-cofinanciamiento')
+          ->where('nombre', '=', 'ERD de cofinanciamiento')
+          ->where('estado', '=', 1)
+          ->count();
+
+        if ($cuenta == 0) {
+          return ['message' => 'error', 'detail' => 'Necesita cargar un archivo'];
+        } else {
+          DB::table('Proyecto_descripcion')
+            ->updateOrInsert([
+              'proyecto_id' => $id,
+              'codigo' => 'facultad_monto'
+            ], [
+              'detalle' => $request->input('monto')
+            ]);
+
+          return ['message' => 'success', 'detail' => 'Datos guardados'];
+        }
+      }
+    }
+  }
+
+  public function enviar(Request $request) {
+    DB::table('Proyecto')
+      ->where('id', '=', $request->input('id'))
+      ->update([
+        'estado' => 5
+      ]);
+
+    return ['message' => 'info', 'detail' => 'Proyecto enviado para evaluación'];
   }
 }
