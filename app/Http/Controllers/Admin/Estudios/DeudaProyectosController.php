@@ -6,33 +6,6 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\DB;
 
 class DeudaProyectosController extends Controller {
-  public function listadoProyectos1($periodo, $tipo_proyecto, $deuda) {
-    $proyectos = DB::table('Proyecto AS a')
-      ->join('Facultad AS b', 'b.id', '=', 'a.facultad_id')
-      ->select(
-        'a.id',
-        'a.codigo_proyecto',
-        'a.tipo_proyecto',
-        'a.periodo',
-        'a.titulo',
-        'b.nombre AS facultad',
-        DB::raw("CASE
-          WHEN a.deuda <= 3 THEN 'Sí'
-          WHEN a.deuda > 3 THEN 'No'
-        END AS deuda"),
-        'a.created_at',
-        'a.updated_at'
-      )
-      ->where('a.estado', '=', 1);
-
-    //  Filtros
-    $proyectos = $periodo == 'null' ? $proyectos : $proyectos->where('a.periodo', '=', $periodo);
-    $proyectos = $tipo_proyecto == 'null' ? $proyectos : $proyectos->where('a.tipo_proyecto', '=', $tipo_proyecto);
-    $proyectos = $deuda == 'null' ? $proyectos : $proyectos->where('a.deuda', '=', $deuda);
-
-    return ['data' => $proyectos->get()];
-  }
-
   public function listadoIntegrantes($proyecto_id) {
     $integrantes = DB::table('Proyecto_integrante AS a')
       ->join('Proyecto_integrante_tipo AS b', 'b.id', '=', 'a.proyecto_integrante_tipo_id')
@@ -59,10 +32,15 @@ class DeudaProyectosController extends Controller {
     return ['data' => $integrantes];
   }
 
-  public function listadoProyectos($year, $investigadorId) {
+  public function listadoProyectos() {
     $deudas = DB::table('view_proyectos')
       ->select([
-        'proyecto_id AS id',
+        DB::raw("CONCAT(proyecto_origen, '_', proyecto_id) AS id"),
+        DB::raw("CASE
+          WHEN proyecto_origen COLLATE utf8mb4_unicode_ci = 'PROYECTO_BASE' THEN 'Nuevo'
+          WHEN proyecto_origen COLLATE utf8mb4_unicode_ci = 'PROYECTO' THEN 'Antiguo'
+        END as proyecto_origen"),
+        'proyecto_id',
         'codigo AS codigo_proyecto',
         'tipo AS tipo_proyecto',
         'periodo',
@@ -80,14 +58,6 @@ class DeudaProyectosController extends Controller {
       ->orderBy('fecha_inscripcion', 'DESC')
       ->orderBy('facultad', 'DESC')
       ->get();
-
-    // if (!empty($year)) {
-    //   $deudas->where('t1.periodo', $year);
-    // }
-
-    // if ($investigadorId) {
-    //   $deudas->where('t1.investigador_id', $investigadorId);
-    // }
 
     return $deudas;
   }

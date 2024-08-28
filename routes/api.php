@@ -197,7 +197,7 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
 
     //  Deudas proyecto
     Route::prefix('deudaProyecto')->group(function () {
-      Route::get('listadoProyectos/{periodo}/{tipo_proyecto}/{deuda}', [DeudaProyectosController::class, 'listadoProyectos']);
+      Route::get('listadoProyectos', [DeudaProyectosController::class, 'listadoProyectos']);
       Route::get('listadoIntegrantes/{proyecto_id}', [DeudaProyectosController::class, 'listadoIntegrantes']);
       Route::get('listadoProyectosNoDeuda', [DeudaProyectosController::class, 'listadoProyectosNoDeuda']);
     });
@@ -234,8 +234,9 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
       Route::put('editarAutor', [PublicacionesPublicacionesUtilsController::class, 'editarAutor']);
       Route::delete('eliminarAutor', [PublicacionesPublicacionesUtilsController::class, 'eliminarAutor']);
       Route::put('recalcularPuntaje', [PublicacionesPublicacionesUtilsController::class, 'recalcularPuntaje']);
-      Route::put('convertirPrincipal', [PublicacionesPublicacionesUtilsController::class, 'convertirPrincipal']);
       Route::put('reOrdenar', [PublicacionesPublicacionesUtilsController::class, 'reOrdenar']);
+
+      Route::put('searchDocentePermanente', [PublicacionesPublicacionesUtilsController::class, 'searchDocentePermanente']);
     });
 
     Route::prefix('sincronizarPub')->group(function () {

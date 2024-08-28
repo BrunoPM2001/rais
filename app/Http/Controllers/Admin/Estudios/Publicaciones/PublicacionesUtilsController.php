@@ -35,22 +35,6 @@ class PublicacionesUtilsController extends S3Controller {
     return ['message' => 'info', 'detail' => 'Puntajes actualizados para esta publicación'];
   }
 
-  public function convertirPrincipal(Request $request) {
-    DB::table('Publicacion_autor')
-      ->where('publicacion_id', '=', $request->input('publicacion_id'))
-      ->update([
-        'presentado' => 0
-      ]);
-
-    DB::table('Publicacion_autor')
-      ->where('id', '=', $request->input('id'))
-      ->update([
-        'presentado' => 1
-      ]);
-
-    return ['message' => 'info', 'detail' => 'Se ha asignado a un nuevo autor principal'];
-  }
-
   public function reOrdenar(Request $request) {
     $index = 1;
     foreach ($request->input('autores') as $item) {
@@ -533,5 +517,24 @@ class PublicacionesUtilsController extends S3Controller {
       ->get();
 
     return $revistas;
+  }
+
+  public function searchDocentePermanente(Request $request) {
+    $investigadores = DB::table('Usuario_investigador')
+      ->select([
+        DB::raw("CONCAT(TRIM(codigo), ' | ', doc_numero, ' | ', apellido1, ' ', apellido2, ', ', nombres) AS value"),
+        'id AS investigador_id',
+        'codigo',
+        'doc_numero',
+        'apellido1',
+        'apellido2',
+        'nombres'
+      ])
+      ->where('tipo', '=', 'DOCENTE PERMANENTE')
+      ->having('value', 'LIKE', '%' . $request->query('query') . '%')
+      ->limit(10)
+      ->get();
+
+    return $investigadores;
   }
 }
