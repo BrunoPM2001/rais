@@ -31,14 +31,26 @@ class ProyectosGrupoController extends S3Controller {
         DB::raw('SUM(f.monto) AS monto'),
         'a.resolucion_rectoral',
         'a.updated_at',
-        'a.estado'
+        DB::raw("CASE(a.estado)
+            WHEN -1 THEN 'Eliminado'
+            WHEN 0 THEN 'No aprobado'
+            WHEN 1 THEN 'Aprobado'
+            WHEN 3 THEN 'En evaluacion'
+            WHEN 5 THEN 'Enviado'
+            WHEN 6 THEN 'En proceso'
+            WHEN 7 THEN 'Anulado'
+            WHEN 8 THEN 'Sustentado'
+            WHEN 9 THEN 'En ejecución'
+            WHEN 10 THEN 'Ejecutado'
+            WHEN 11 THEN 'Concluído'
+          ELSE 'Sin estado' END AS estado"),
       )
       ->where('d.condicion', '=', 'Responsable')
       ->where('a.periodo', '=', $periodo)
       ->groupBy('a.id')
       ->get();
 
-    return ['data' => $proyectos];
+    return $proyectos;
   }
 
   public function dataProyecto(Request $request) {
@@ -255,9 +267,12 @@ class ProyectosGrupoController extends S3Controller {
 
     //  Info de presupuesto
     $info = [
-      'bienes_monto' => 0.00, 'bienes_cantidad' => 0,
-      'servicios_monto' => 0.00, 'servicios_cantidad' => 0,
-      'otros_monto' => 0.00, 'otros_cantidad' => 0
+      'bienes_monto' => 0.00,
+      'bienes_cantidad' => 0,
+      'servicios_monto' => 0.00,
+      'servicios_cantidad' => 0,
+      'otros_monto' => 0.00,
+      'otros_cantidad' => 0
     ];
 
     foreach ($presupuesto as $data) {

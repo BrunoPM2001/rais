@@ -523,7 +523,7 @@ class PublicacionesUtilsController extends S3Controller {
     $investigadores = DB::table('Usuario_investigador')
       ->select([
         DB::raw("CONCAT(TRIM(codigo), ' | ', doc_numero, ' | ', apellido1, ' ', apellido2, ', ', nombres) AS value"),
-        'id AS investigador_id',
+        'id',
         'codigo',
         'doc_numero',
         'apellido1',
@@ -536,5 +536,24 @@ class PublicacionesUtilsController extends S3Controller {
       ->get();
 
     return $investigadores;
+  }
+
+  public function asociarInvestigador(Request $request) {
+    DB::table('Publicacion_autor')
+      ->where('id', '=', $request->input('id'))
+      ->update([
+        'investigador_id' => $request->input('investigador_id'),
+        'autor' => $request->input('autor'),
+        'categoria' => $request->input('categoria')["value"],
+        'filiacion' => $request->input('filiacion')["value"],
+        'filiacion_unica' => $request->input('filiacion_unica')["value"],
+        'nombres' => null,
+        'apellido1' => null,
+        'apellido2' => null,
+        'tipo' => 'interno',
+        'updated_at' => Carbon::now()
+      ]);
+
+    return ['message' => 'info', 'detail' => 'Se asoció el autor al investigador seleccionado'];
   }
 }

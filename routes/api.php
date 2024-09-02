@@ -236,7 +236,8 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
       Route::put('recalcularPuntaje', [PublicacionesPublicacionesUtilsController::class, 'recalcularPuntaje']);
       Route::put('reOrdenar', [PublicacionesPublicacionesUtilsController::class, 'reOrdenar']);
 
-      Route::put('searchDocentePermanente', [PublicacionesPublicacionesUtilsController::class, 'searchDocentePermanente']);
+      Route::get('searchDocentePermanente', [PublicacionesPublicacionesUtilsController::class, 'searchDocentePermanente']);
+      Route::put('asociarInvestigador', [PublicacionesPublicacionesUtilsController::class, 'asociarInvestigador']);
     });
 
     Route::prefix('sincronizarPub')->group(function () {

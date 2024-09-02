@@ -23,7 +23,7 @@ class ProyectoConFinanciamientoController extends Controller {
         DB::raw("'no' AS antiguo")
       )
       ->where('b.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
-      ->where('a.tipo_proyecto', '=', 'PCONFIGI')
+      ->whereIn('a.tipo_proyecto', ['PCONFIGI', 'PRO-CTIE'])
       ->orderByDesc('a.periodo')
       ->get();
 
