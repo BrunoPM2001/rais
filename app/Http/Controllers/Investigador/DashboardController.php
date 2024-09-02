@@ -42,6 +42,13 @@ class DashboardController extends Controller {
       ->where('b.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
       ->first()->puntaje;
 
+    $puntaje_pasado = DB::table('view_puntaje_7u')
+      ->select(
+        'puntaje'
+      )
+      ->where('investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+      ->first()?->puntaje ?? 0;
+
     //  Tipos de publicación
     $tipos1 = DB::table('Publicacion AS a')
       ->leftJoin('Publicacion_autor AS b', 'a.id', '=', 'b.publicacion_id')
@@ -75,6 +82,7 @@ class DashboardController extends Controller {
         'proyectos' => $proyectos,
         'publicaciones' => $publicaciones,
         'puntaje' => $puntaje,
+        'puntaje_pasado' => $puntaje_pasado,
       ],
       'tipos_publicaciones' => $tipos1,
       'tipos_proyectos' => $tipos2,
@@ -111,11 +119,19 @@ class DashboardController extends Controller {
       ->where('b.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
       ->first()->puntaje;
 
+    $puntaje_pasado = DB::table('view_puntaje_7u')
+      ->select(
+        'puntaje'
+      )
+      ->where('investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+      ->first()->puntaje;
+
     return [
       'grupos' => $grupos,
       'proyectos' => $proyectos,
       'publicaciones' => $publicaciones,
       'puntaje' => $puntaje,
+      'puntaje_pasado' => $puntaje_pasado,
     ];
   }
 

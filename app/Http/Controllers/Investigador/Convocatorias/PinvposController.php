@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Investigador\Convocatorias;
 
 use App\Http\Controllers\S3Controller;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Database\Query\JoinClause;
 use Illuminate\Http\Request;
@@ -93,7 +94,24 @@ class PinvposController extends S3Controller {
     if (!empty($errores)) {
       return ['estado' => false, 'message' => $errores];
     } else {
-      return ['estado' => true, 'datos' => $habilitado];
+      $miembros = DB::table('Proyecto_integrante AS a')
+        ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
+        ->join('Facultad AS c', 'c.id', '=', 'b.facultad_id')
+        ->select([
+          'a.id',
+          'a.condicion',
+          'b.apellido1',
+          'b.apellido2',
+          'b.nombres',
+          'b.doc_numero',
+          'b.codigo',
+          'b.email3',
+          'c.nombre AS facultad',
+        ])
+        ->where('a.proyecto_id', '=', $habilitado->proyecto_id)
+        ->get();
+
+      return ['estado' => true, 'datos' => $habilitado, 'miembros' => $miembros];
     }
   }
 
@@ -261,6 +279,9 @@ class PinvposController extends S3Controller {
         ->where('a.proyecto_id', '=', $habilitado->proyecto_id)
         ->get();
 
+      //  Ids no repetidos
+      $partidaIds = $presupuesto->pluck('partida_id');
+
       $partidas = DB::table('Partida_proyecto AS a')
         ->join('Partida AS b', 'b.id', '=', 'a.partida_id')
         ->select([
@@ -270,6 +291,7 @@ class PinvposController extends S3Controller {
         ])
         ->where('a.tipo_proyecto', '=', 'PINVPOS')
         ->where('a.postulacion', '=', 1)
+        ->whereNotIn('b.id', $partidaIds)
         ->get();
 
       return ['estado' => true, 'datos' => $habilitado, 'partidas' => $partidas, 'presupuesto' => $presupuesto];
@@ -375,6 +397,40 @@ class PinvposController extends S3Controller {
           ->update([
             'proyecto_id' => $id
           ]);
+
+        //  Agregar al resto de integrantes
+        $fac = DB::table('Proyecto_integrante_dedicado')
+          ->select([
+            'facultad_id'
+          ])
+          ->where('investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+          ->first();
+
+        $miembros = DB::table('Proyecto_integrante_dedicado')
+          ->select([
+            'investigador_id'
+          ])
+          ->where('facultad_id', '=', $fac->facultad_id)
+          ->where('investigador_id', '!=', $request->attributes->get('token_decoded')->investigador_id)
+          ->get();
+
+        foreach ($miembros as $miembro) {
+          DB::table('Proyecto_integrante')
+            ->insert([
+              'proyecto_id' => $id,
+              'investigador_id' => $miembro->investigador_id,
+              'proyecto_integrante_tipo_id' => 29,
+              'condicion' => 'Miembro',
+              'created_at' => $date,
+              'updated_at' => $date,
+            ]);
+
+          DB::table('Proyecto_integrante_dedicado')
+            ->where('investigador_id', '=', $miembro->investigador_id)
+            ->update([
+              'proyecto_id' => $id
+            ]);
+        }
 
         return ['message' => 'success', 'detail' => 'Datos guardados', 'id' => $id];
       } else {
@@ -552,6 +608,128 @@ class PinvposController extends S3Controller {
         }
       }
     }
+  }
+
+  public function reporte(Request $request) {
+    $proyecto = DB::table('Proyecto AS a')
+      ->join('Proyecto_integrante AS b', function (JoinClause $join) {
+        $join->on('b.proyecto_id', '=', 'a.id')
+          ->where('b.condicion', '=', 'Responsable');
+      })
+      ->join('Usuario_investigador AS c', 'c.id', '=', 'b.investigador_id')
+      ->join('Facultad AS d', 'd.id', '=', 'c.facultad_id')
+      ->leftJoin('Proyecto_doc AS e', function (JoinClause $join) {
+        $join->on('e.proyecto_id', '=', 'a.id')
+          ->where('e.tipo', '=', 17)
+          ->where('e.estado', '=', 1)
+          ->where('e.categoria', '=', 'resolucion')
+          ->where('e.nombre', '=', 'Resolución de Designación Oficial');
+      })
+      ->leftJoin('Proyecto_doc AS f', function (JoinClause $join) {
+        $join->on('f.proyecto_id', '=', 'a.id')
+          ->where('f.tipo', '=', 18)
+          ->where('f.estado', '=', 1)
+          ->where('f.categoria', '=', 'erd-cofinanciamiento')
+          ->where('f.nombre', '=', 'ERD de cofinanciamiento');
+      })
+      ->select([
+        'a.titulo',
+        DB::raw("CONCAT(c.apellido1, ' ', c.apellido2, ', ', c.nombres) AS responsable"),
+        'c.doc_numero',
+        'c.email3',
+        'd.nombre AS facultad',
+        'c.codigo',
+        DB::raw("CASE
+          WHEN SUBSTRING_INDEX(SUBSTRING_INDEX(docente_categoria, '-', 2), '-', -1) = '1' THEN 'Dedicación Exclusiva'
+          WHEN SUBSTRING_INDEX(SUBSTRING_INDEX(docente_categoria, '-', 2), '-', -1) = '2' THEN 'Tiempo Completo'
+          WHEN SUBSTRING_INDEX(SUBSTRING_INDEX(docente_categoria, '-', 2), '-', -1) = '3' THEN 'Tiempo Parcial'
+          ELSE 'Sin clase'
+        END AS clase"),
+        DB::raw("CASE(e.archivo)
+          WHEN null THEN 'No'
+          ELSE 'Sí'
+        END AS anexo"),
+        DB::raw("CASE(f.archivo)
+          WHEN null THEN 'No'
+          ELSE 'Sí'
+        END AS rd"),
+        'a.updated_at',
+        DB::raw("CASE(a.estado)
+            WHEN -1 THEN 'Eliminado'
+            WHEN 0 THEN 'No aprobado'
+            WHEN 1 THEN 'Aprobado'
+            WHEN 3 THEN 'En evaluacion'
+            WHEN 5 THEN 'Enviado'
+            WHEN 6 THEN 'En proceso'
+            WHEN 7 THEN 'Anulado'
+            WHEN 8 THEN 'Sustentado'
+            WHEN 9 THEN 'En ejecución'
+            WHEN 10 THEN 'Ejecutado'
+            WHEN 11 THEN 'Concluído'
+          ELSE 'Sin estado' END AS estado"),
+      ])
+      ->where('a.id', '=', $request->query('id'))
+      ->first();
+
+    $miembros = DB::table('Proyecto_integrante AS a')
+      ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
+      ->join('Facultad AS c', 'c.id', '=', 'b.facultad_id')
+      ->select([
+        'a.condicion',
+        'b.apellido1',
+        'b.apellido2',
+        'b.nombres',
+        'b.doc_numero',
+        'b.codigo',
+        'b.email3',
+        'c.nombre AS facultad',
+      ])
+      ->where('a.proyecto_id', '=', $request->query('id'))
+      ->get();
+
+    $detalles = DB::table('Proyecto_descripcion')
+      ->select([
+        'codigo',
+        'detalle'
+      ])
+      ->where('proyecto_id', '=', $request->query('id'))
+      ->get()
+      ->mapWithKeys(function ($item) {
+        return [$item->codigo => $item->detalle];
+      });
+
+    $actividades = DB::table('Proyecto_actividad')
+      ->select([
+        'id',
+        'actividad',
+        'fecha_inicio',
+        'fecha_fin',
+        'duracion'
+      ])
+      ->where('proyecto_id', '=', $request->query('id'))
+      ->get();
+
+    $presupuesto = DB::table('Proyecto_presupuesto AS a')
+      ->join('Partida AS b', 'b.id', '=', 'a.partida_id')
+      ->select([
+        'a.id',
+        'b.id AS partida_id',
+        'b.codigo',
+        'b.partida',
+        'b.tipo',
+        'a.monto'
+      ])
+      ->where('a.proyecto_id', '=', $request->query('id'))
+      ->get();
+
+    $pdf = Pdf::loadView('investigador.actividades.taller', [
+      'proyecto' => $proyecto,
+      'miembros' => $miembros,
+      'detalles' => $detalles,
+      'actividades' => $actividades,
+      'presupuesto' => $presupuesto,
+    ]);
+    return $pdf->stream();
   }
 
   public function enviar(Request $request) {

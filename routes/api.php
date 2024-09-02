@@ -546,6 +546,8 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
 
     //  Utils
     Route::prefix('utils')->group(function () {
+      Route::get('observacion', [PublicacionesUtilsController::class, 'observacion']);
+
       //  ELiminar
       Route::delete('eliminarPublicacion', [PublicacionesUtilsController::class, 'eliminarPublicacion']);
 
@@ -631,6 +633,7 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
       Route::post('registrar1', [PinvposController::class, 'registrar1']);
       Route::post('registrar3', [PinvposController::class, 'registrar3']);
       Route::post('registrar5', [PinvposController::class, 'registrar5']);
+      Route::get('reporte', [PinvposController::class, 'reporte']);
       Route::post('enviar', [PinvposController::class, 'enviar']);
 
       Route::post('agregarActividad', [PinvposController::class, 'agregarActividad']);

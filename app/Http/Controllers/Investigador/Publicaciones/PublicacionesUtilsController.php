@@ -10,6 +10,18 @@ use Illuminate\Support\Str;
 
 class PublicacionesUtilsController extends S3Controller {
 
+  public function observacion(Request $request) {
+    $obs = DB::table('Publicacion')
+      ->select([
+        'estado',
+        'observaciones_usuario'
+      ])
+      ->where('id', '=', $request->query('id'))
+      ->first();
+
+    return $obs;
+  }
+
   public function eliminarPublicacion(Request $request) {
     $count = DB::table('Publicacion_autor AS a')
       ->join('Publicacion AS b', 'b.id', '=', 'a.publicacion_id')

@@ -202,12 +202,12 @@
         <tr>
           <td style="width: 24%;" valign="top"><strong>Categoría y clase</strong></td>
           <td style="width: 1%;" valign="top">:</td>
-          <td style="width: 75%;" valign="top">{{ $proyecto->categoria }}</td>
+          <td style="width: 75%;" valign="top">{{ $proyecto->clase }}</td>
         </tr>
         <tr>
           <td style="width: 24%;" valign="top"><strong>Resolución de designación oficial</strong></td>
           <td style="width: 1%;" valign="top">:</td>
-          <td style="width: 75%;" valign="top">{{ $proyecto->documento }}</td>
+          <td style="width: 75%;" valign="top">{{ $proyecto->anexo }}</td>
         </tr>
       </tbody>
     </table>
@@ -217,163 +217,128 @@
     <table class="table">
       <thead>
         <tr>
-          <th style="width: 11%;">Condición</th>
-          <th style="width: 11%;">Cargo</th>
-          <th style="width: 11%;">Apellido paterno</th>
-          <th style="width: 11%;">Apellido materno</th>
-          <th style="width: 11%;">Nombres</th>
-          <th style="width: 11%;">DNI</th>
-          <th style="width: 11%;">Código</th>
-          <th style="width: 12%;">Correo</th>
-          <th style="width: 11%;">Facultad</th>
+          <th style="width: 14%;">Condición</th>
+          <th style="width: 14%;">Apellido paterno</th>
+          <th style="width: 14%;">Apellido materno</th>
+          <th style="width: 14%;">Nombres</th>
+          <th style="width: 14%;">DNI</th>
+          <th style="width: 14%;">Código</th>
+          <th style="width: 16%;">Correo</th>
         </tr>
       </thead>
       <tbody>
-        @if (sizeof($comite) == 0)
+        @if (sizeof($miembros) == 0)
           <tr>
             <td colspan="9" align="center">
               No hay miembros en el comité
             </td>
           </tr>
         @endif
-        @foreach ($comite as $item)
+        @foreach ($miembros as $item)
           <tr>
-            <td style="text-align: center">{{ $loop->iteration }}</td>
-            <td>{{ $item->actividad }}</td>
-            <td>{{ $item->fecha_inicio }}</td>
-            <td>{{ $item->fecha_fin }}</td>
+            <td>{{ $item->condicion }}</td>
+            <td>{{ $item->apellido1 }}</td>
+            <td>{{ $item->apellido2 }}</td>
+            <td>{{ $item->nombres }}</td>
+            <td>{{ $item->doc_numero }}</td>
+            <td>{{ $item->codigo }}</td>
+            <td>{{ $item->email3 }}</td>
           </tr>
         @endforeach
       </tbody>
     </table>
 
-    <div class="desc">
-      {!! $detalles['resumen_ejecutivo'] !!}
-    </div>
+    <h5>III. Plan de trabajo:</h5>
 
-    <h5>IV. Palabras clave:</h5>
-
-    <div class="desc">
-      {{ $proyecto->palabras_clave }}
-    </div>
-
-    <h5>V. Antecedentes:</h5>
-
-    <div class="desc">
-      {!! $detalles['antecedentes'] !!}
-    </div>
-
-    <h5>VI. Justificación:</h5>
-
+    <h6>Justificación</h6>
     <div class="desc">
       {!! $detalles['justificacion'] !!}
     </div>
 
-    <h5>VII. Contribución e impacto:</h5>
-
+    <h6>Objetivos</h6>
     <div class="desc">
-      {!! $detalles['contribucion_impacto'] !!}
+      {!! $detalles['objetivo'] !!}
     </div>
 
-    <h5>VIII. Hipótesis:</h5>
-
+    <h6>Metas específicas</h6>
     <div class="desc">
-      {!! $detalles['hipotesis'] !!}
+      {!! $detalles['metas'] !!}
     </div>
 
-    <h5>IX. Objetivos:</h5>
-
-    <div class="desc">
-      {!! $detalles['objetivos'] !!}
-    </div>
-
-    <h5>X. Metodología de trabajo:</h5>
-
-    <div class="desc">
-      {!! $detalles['metodologia_trabajo'] !!}
-    </div>
-
-    <h5>XI. Referencias bibliográficas:</h5>
-
-    <div class="desc">
-      {!! $detalles['referencias_bibliograficas'] !!}
-    </div>
-
-    <h5>XII. Calendario:</h5>
+    <h5>IV. Programa del taller:</h5>
 
     <table class="table">
       <thead>
         <tr>
           <th style="width: 5%;">N°</th>
-          <th style="width: 65%;">Actividad</th>
+          <th style="width: 55%;">Actividad</th>
           <th style="width: 15%;">Fecha inicial</th>
           <th style="width: 15%;">Fecha final</th>
+          <th style="width: 10%;">Horas</th>
         </tr>
       </thead>
       <tbody>
-        @if (sizeof($calendario) == 0)
+        @if (sizeof($actividades) == 0)
           <tr>
             <td colspan="4" align="center">
               No hay actividades registradas
             </td>
           </tr>
         @endif
-        @foreach ($calendario as $item)
+        @foreach ($actividades as $item)
           <tr>
             <td style="text-align: center">{{ $loop->iteration }}</td>
             <td>{{ $item->actividad }}</td>
             <td>{{ $item->fecha_inicio }}</td>
             <td>{{ $item->fecha_fin }}</td>
+            <td>{{ $item->duracion }}</td>
           </tr>
         @endforeach
       </tbody>
     </table>
 
-    <h5>XIII. Integrantes:</h5>
+    <h5>V. Financiamiento:</h5>
 
     <table class="table">
       <thead>
         <tr>
-          <th style="width: 10%;">Condición</th>
-          <th style="width: 25%;">Apellidos y nombres</th>
+          <th style="width: 10%;">Código</th>
+          <th style="width: 25%;">Partida</th>
           <th style="width: 20%;">Tipo</th>
-          <th style="width: 20%;">Tipo de tesis</th>
-          <th style="width: 25%;">Título de la tesis</th>
+          <th style="width: 20%;">Monto</th>
         </tr>
       </thead>
       <tbody>
-        @foreach ($integrantes as $item)
+        @foreach ($presupuesto as $item)
           <tr>
-            <td>{{ $item->condicion }}</td>
-            <td>{{ $item->nombres }}</td>
+            <td>{{ $item->codigo }}</td>
+            <td>{{ $item->partida }}</td>
             <td>{{ $item->tipo }}</td>
-            <td>{{ $item->tipo_tesis }}</td>
-            <td>{{ $item->titulo_tesis }}</td>
+            <td>{{ $item->monto }}</td>
           </tr>
         @endforeach
       </tbody>
     </table>
 
-    <h5>XIV. Condiciones:</h5>
+    <table class="tableData">
+      <tbody>
+        <tr>
+          <td style="width: 24%;" valign="top"><strong>Cofinanciamiento de Facultad</strong></td>
+          <td style="width: 1%;" valign="top">:</td>
+          <td style="width: 75%;" valign="top">S/ {{ $detalles["facultad_monto"] }}</td>
+        </tr>
+        <tr>
+          <td style="width: 24%;"><strong>Subvención económica VRIP</strong></td>
+          <td style="width: 1%;">:</td>
+          <td style="width: 75%;">S/ 2700</td>
+        </tr>
+        <tr>
+          <td style="width: 24%;"><strong>Documento RD de cofinanciamiento</strong></td>
+          <td style="width: 1%;">:</td>
+          <td style="width: 75%;">{{ $proyecto->rd }}</td>
+        </tr>
+      </tbody>
+    </table>
 
-    <div class="desc">
-      Los docentes y/o estudiantes deben indicar, en cada publicación o forma de divulgación (tesis, artículos, libros,
-      resúmenes de trabajos presentados en congresos, páginas de
-      internet y cualquier otra publicación) que resulten del apoyo de la UNMSM, el siguiente párrafo:
-      <br>
-      <br>
-      <i>
-        Para los artículos escritos en español:
-      </i><br>
-      Esta investigación fue financiada por la Universidad Nacional Mayor de San Marcos – RR N° aabb-cc con código de
-      proyecto dfgh.
-      <br>
-      <br>
-      <i>
-        Para los artículos escritos en algún idioma extranjero, indicar el apoyo de la UNMSM en inglés:
-      </i><br>
-      This research was supported by the Universidad Nacional Mayor de San Marcos – RR N° aabb-cc and project number
-      dfgh.
-    </div>
   </div>
 </body>
