@@ -3,506 +3,13 @@
 namespace App\Http\Controllers\Investigador\Grupo;
 
 use App\Http\Controllers\S3Controller;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class GrupoController extends S3Controller {
-
-  //  Solicitar grupo
-  public function paso1(Request $request) {
-
-    $miembroGrupo = DB::table('Grupo_integrante AS a')
-      ->join('Grupo AS b', 'b.id', '=', 'a.grupo_id')
-      ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
-      ->whereNot('a.condicion', 'LIKE', 'Ex%')
-      ->where('b.tipo', '=', 'grupo')
-      ->count();
-
-    if ($miembroGrupo > 0) {
-      return ['message' => 'error', 'detail' => 'Ya pertenece a un grupo de investigación'];
-    }
-
-    $miembroSolicitud = DB::table('Grupo_integrante AS a')
-      ->join('Grupo AS b', 'b.id', '=', 'a.grupo_id')
-      ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
-      ->where('a.cargo', '!=', 'Coordinador')
-      ->where('b.tipo', '=', 'solicitud')
-      ->count();
-
-    if ($miembroSolicitud > 0) {
-      return ['message' => 'error', 'detail' => 'Ya está siendo incluído en la solicitud de grupo de alguien más'];
-    }
-
-    $coordinadorSolicitud = DB::table('Grupo_integrante AS a')
-      ->join('Grupo AS b', 'b.id', '=', 'a.grupo_id')
-      ->select([
-        'b.id'
-      ])
-      ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
-      ->where('a.cargo', '=', 'Coordinador')
-      ->where('b.tipo', '=', 'solicitud')
-      ->first();
-
-    $now = Carbon::now();
-    if ($coordinadorSolicitud == null) {
-      $facultad = DB::table('Usuario_investigador')
-        ->select(['facultad_id'])
-        ->where('id', '=', $request->attributes->get('token_decoded')->investigador_id)
-        ->first();
-
-      $id = DB::table('Grupo')
-        ->insertGetId([
-          'grupo_nombre' => $request->input('grupo_nombre'),
-          'grupo_nombre_corto' => $request->input('grupo_nombre_corto'),
-          'facultad_id' => $facultad->facultad_id,
-          'tipo' => 'solicitud',
-          'step' => 2,
-          'estado' => 6,
-          'created_at' => $now,
-          'updated_at' => $now,
-        ]);
-
-      DB::table('Grupo_integrante')
-        ->insert([
-          'grupo_id' => $id,
-          'investigador_id' => $request->attributes->get('token_decoded')->investigador_id,
-          'cargo' => 'Coordinador',
-          'condicion' => 'Titular',
-          'estado' => 1,
-          'created_at' => $now,
-          'updated_at' => $now,
-        ]);
-    } else {
-      DB::table('Grupo')
-        ->where('id', '=', $coordinadorSolicitud->id)
-        ->update([
-          'grupo_nombre' => $request->input('grupo_nombre'),
-          'grupo_nombre_corto' => $request->input('grupo_nombre_corto'),
-          'updated_at' => $now,
-        ]);
-    }
-
-    return [
-      'message' => 'success',
-      'detail' => 'Datos guardados'
-    ];
-  }
-
-  public function dataPaso1(Request $request) {
-    $sol = $this->validarSol($request);
-
-    if (!isset($sol['grupo_id']) || $sol['grupo_id'] === null) {
-      if ($sol["detail"] == "No tienen ninguna solicitud en curso") {
-        return [];
-      }
-      return $sol;
-    }
-    $data = DB::table('Grupo')
-      ->select([
-        'grupo_nombre',
-        'grupo_nombre_corto',
-      ])
-      ->where('id', '=', $sol["grupo_id"])
-      ->first();
-
-    return $data;
-  }
-
-  public function validarSol(Request $request) {
-    $miembroGrupo = DB::table('Grupo_integrante AS a')
-      ->join('Grupo AS b', 'b.id', '=', 'a.grupo_id')
-      ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
-      ->whereNot('a.condicion', 'LIKE', 'Ex%')
-      ->where('b.tipo', '=', 'grupo')
-      ->count();
-
-    if ($miembroGrupo > 0) {
-      return ['message' => 'error', 'detail' => 'Ya pertenece a un grupo de investigación'];
-    }
-
-    $miembroSolicitud = DB::table('Grupo_integrante AS a')
-      ->join('Grupo AS b', 'b.id', '=', 'a.grupo_id')
-      ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
-      ->where('a.cargo', '!=', 'Coordinador')
-      ->where('b.tipo', '=', 'solicitud')
-      ->count();
-
-    if ($miembroSolicitud > 0) {
-      return ['message' => 'error', 'detail' => 'Ya está siendo incluído en la solicitud de grupo de alguien más'];
-    }
-
-    $coordinadorSolicitud = DB::table('Grupo_integrante AS a')
-      ->join('Grupo AS b', 'b.id', '=', 'a.grupo_id')
-      ->select([
-        'b.id'
-      ])
-      ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
-      ->where('a.cargo', '=', 'Coordinador')
-      ->where('b.tipo', '=', 'solicitud')
-      ->first();
-
-    if ($coordinadorSolicitud == null) {
-      return ['message' => 'error', 'detail' => 'No tienen ninguna solicitud en curso'];
-    } else {
-      return ['grupo_id' => $coordinadorSolicitud->id];
-    }
-  }
-
-  //  Paso 2
-  public function dataPaso2(Request $request) {
-    $sol = $this->validarSol($request);
-    if (!isset($sol['grupo_id']) || $sol['grupo_id'] === null) {
-      return $sol;
-    }
-
-    $docente = DB::table('Usuario_investigador AS a')
-      ->join('Dependencia AS b', 'b.id', '=', 'a.dependencia_id')
-      ->select([
-        DB::raw("CONCAT(a.apellido1, ' ', a.apellido2, ', ', a.nombres) AS nombre"),
-        'a.doc_numero',
-        'a.codigo',
-        'a.tipo',
-        'b.dependencia',
-        'a.cti_vitae',
-        'a.google_scholar',
-        'a.codigo_orcid',
-        //  Editable
-        'a.grado',
-        'a.titulo_profesional',
-        'a.especialidad',
-        'a.instituto_id',
-        'a.email3',
-        'a.telefono_casa',
-        'a.telefono_trabajo',
-        'a.telefono_movil',
-      ])
-      ->where('a.id', '=', $request->attributes->get('token_decoded')->investigador_id)
-      ->first();
-
-    $institutos = DB::table('Instituto')
-      ->select([
-        'id AS value',
-        'instituto AS label'
-      ])
-      ->get();
-
-    return ['data' => $docente, 'institutos' => $institutos];
-  }
-
-  public function paso2(Request $request) {
-    $sol = $this->validarSol($request);
-    if (!isset($sol['grupo_id']) || $sol['grupo_id'] === null) {
-      return $sol;
-    }
-
-    $now = Carbon::now();
-    DB::table('Usuario_investigador')
-      ->where('id', '=', $request->attributes->get('token_decoded')->investigador_id)
-      ->update([
-        'grado' => $request->input('grado')["value"],
-        'titulo_profesional' => $request->input('titulo_profesional'),
-        'especialidad' => $request->input('especialidad'),
-        'instituto_id' => $request->input('instituto_id')["value"],
-        'email3' => $request->input('email3'),
-        'telefono_casa' => $request->input('telefono_casa'),
-        'telefono_trabajo' => $request->input('telefono_trabajo'),
-        'telefono_movil' => $request->input('telefono_movil'),
-        'updated_at' => $now
-      ]);
-
-    DB::table('Grupo')
-      ->where('id', '=', $sol["grupo_id"])
-      ->update([
-        'step' => 3
-      ]);
-
-    return [
-      'grupo_id' => $request->input('grupo_id')
-    ];
-  }
-
-  //  Paso 3
-  public function dataPaso3(Request $request) {
-    $sol = $this->validarSol($request);
-    if (!isset($sol['grupo_id']) || $sol['grupo_id'] === null) {
-      return $sol;
-    }
-
-    $integrantes = DB::table('Grupo_integrante AS a')
-      ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
-      ->leftJoin('Facultad AS c', 'c.id', '=', 'b.facultad_id')
-      ->select([
-        'a.id',
-        'a.condicion',
-        'a.cargo',
-        'b.doc_numero',
-        DB::raw("CONCAT(b.apellido1, ' ', b.apellido2, ', ', b.nombres) AS nombres"),
-        'b.codigo_orcid',
-        'b.google_scholar',
-        'b.cti_vitae',
-        'b.tipo',
-        'c.nombre AS facultad'
-      ])
-      ->where('a.grupo_id', '=', $sol["grupo_id"])
-      ->get();
-
-    return ['integrantes' => $integrantes, 'grupo_id' => $sol["grupo_id"]];
-  }
-
-  //  Paso 4
-  public function dataPaso4(Request $request) {
-    $sol = $this->validarSol($request);
-    if (!isset($sol['grupo_id']) || $sol['grupo_id'] === null) {
-      return $sol;
-    }
-
-    $info = DB::table('Grupo')
-      ->select([
-        'presentacion',
-        'objetivos',
-        'servicios',
-      ])
-      ->where('id', '=', $sol['grupo_id'])
-      ->first();
-
-    $lineas = DB::table('Grupo_linea AS a')
-      ->join('Linea_investigacion AS b', 'b.id', '=', 'a.linea_investigacion_id')
-      ->select([
-        'a.id',
-        'b.codigo',
-        'b.nombre',
-      ])
-      ->where('a.grupo_id', '=', $sol['grupo_id'])
-      ->get();
-
-    $requisito = sizeof($lineas) > 0 ? true : false;
-
-    $listado = DB::table('Linea_investigacion')
-      ->select([
-        'id AS value',
-        DB::raw("CONCAT(codigo, ' - ', nombre) AS label")
-      ])
-      ->get();
-
-    return ['info' => $info, 'lineas' => $lineas, 'listado' => $listado, 'requisito' => $requisito, 'grupo_id' => $sol["grupo_id"]];
-  }
-
-  public function paso4(Request $request) {
-    $sol = $this->validarSol($request);
-    if (!isset($sol['grupo_id']) || $sol['grupo_id'] === null) {
-      return $sol;
-    }
-
-    DB::table('Grupo')
-      ->where('id', '=', $sol["grupo_id"])
-      ->update([
-        'presentacion' => $request->input('presentacion'),
-        'objetivos' => $request->input('objetivos'),
-        'servicios' => $request->input('servicios'),
-        'step' => 5,
-        'updated_at' => Carbon::now()
-      ]);
-
-    return ['message' => 'success', 'detail' => 'Datos guardados correctamente'];
-  }
-
-  public function agregarLinea(Request $request) {
-    $sol = $this->validarSol($request);
-    if (!isset($sol['grupo_id']) || $sol['grupo_id'] === null) {
-      return $sol;
-    }
-
-    DB::table('Grupo_linea')
-      ->insert([
-        'grupo_id' => $sol['grupo_id'],
-        'linea_investigacion_id' => $request->input('linea_investigacion_id')["value"],
-      ]);
-
-    return ['message' => 'success', 'detail' => 'Línea agregada correctamente'];
-  }
-
-  public function eliminarLinea(Request $request) {
-    $sol = $this->validarSol($request);
-    if (!isset($sol['grupo_id']) || $sol['grupo_id'] === null) {
-      return $sol;
-    }
-
-    DB::table('Grupo_linea')
-      ->where('id', '=', $request->query('id'))
-      ->delete();
-
-    return ['message' => 'info', 'detail' => 'Línea eliminada correctamente'];
-  }
-
-  //  Paso 5
-  public function dataPaso5(Request $request) {
-    $sol = $this->validarSol($request);
-    if (!isset($sol['grupo_id']) || $sol['grupo_id'] === null) {
-      return $sol;
-    }
-
-    $proyectos = DB::table('Grupo_integrante AS a')
-      ->join('Proyecto_integrante AS b', 'b.investigador_id', '=', 'a.investigador_id')
-      ->join('Proyecto AS c', 'c.id', '=', 'b.proyecto_id')
-      ->join('Usuario_investigador AS d', 'd.id', '=', 'a.investigador_id')
-      ->select([
-        'c.id',
-        DB::raw("CONCAT(d.apellido1, ' ', d.apellido2, ', ', d.nombres) AS nombre"),
-        'c.codigo_proyecto',
-        'c.titulo',
-        'c.tipo_proyecto',
-        'c.periodo',
-      ])
-      ->where('a.grupo_id', '=', $sol['grupo_id'])
-      ->where('c.estado', '=', 1)
-      ->where('a.condicion', '=', 'Titular')
-      ->get();
-
-    return $proyectos;
-  }
-
-  //  Paso 6
-  public function dataPaso6(Request $request) {
-    $sol = $this->validarSol($request);
-    if (!isset($sol['grupo_id']) || $sol['grupo_id'] === null) {
-      return $sol;
-    }
-
-    $publicaciones = DB::table('Grupo_integrante AS a')
-      ->join('Publicacion_autor AS b', 'b.investigador_id', '=', 'a.investigador_id')
-      ->join('Publicacion AS c', 'c.id', '=', 'b.publicacion_id')
-      ->join('Usuario_investigador AS d', 'd.id', '=', 'a.investigador_id')
-      ->select([
-        'c.id',
-        DB::raw("CONCAT(d.apellido1, ' ', d.apellido2, ', ', d.nombres) AS nombre"),
-        'c.titulo',
-        'c.tipo_publicacion',
-      ])
-      ->where('a.grupo_id', '=', $sol['grupo_id'])
-      ->where('c.estado', '=', 1)
-      ->where('a.condicion', '=', 'Titular')
-      ->get();
-
-    return $publicaciones;
-  }
-
-  //  Paso 7
-  public function dataPaso7(Request $request) {
-    $sol = $this->validarSol($request);
-    if (!isset($sol['grupo_id']) || $sol['grupo_id'] === null) {
-      return $sol;
-    }
-
-    $info = DB::table('Grupo')
-      ->select([
-        'infraestructura_ambientes',
-        'infraestructura_sgestion',
-      ])
-      ->where('id', '=', $sol['grupo_id'])
-      ->first();
-
-    $laboratorios = DB::table('Grupo_infraestructura AS a')
-      ->join('Laboratorio AS b', 'b.id', '=', 'a.laboratorio_id')
-      ->select([
-        'a.id',
-        'b.codigo',
-        'b.laboratorio',
-        'b.responsable',
-      ])
-      ->where('a.grupo_id', '=', $sol['grupo_id'])
-      ->get();
-
-    return ['info' => $info, 'laboratorios' => $laboratorios];
-  }
-
-  public function searchLaboratorio(Request $request) {
-    $laboratorios = DB::table('Laboratorio AS a')
-      ->join('Facultad AS b', 'b.id', '=', 'a.facultad_id')
-      ->select(
-        DB::raw("CONCAT(TRIM(a.codigo), ' | ', a.laboratorio, ' | ', b.nombre) AS value"),
-        'a.id',
-        'a.codigo',
-        'a.laboratorio',
-        'a.responsable',
-        'a.categoria_uso',
-        'a.ubicacion',
-      )
-      ->having('value', 'LIKE', '%' . $request->query('query') . '%')
-      ->limit(10)
-      ->get();
-
-    return $laboratorios;
-  }
-
-  public function agregarLaboratorio(Request $request) {
-    $sol = $this->validarSol($request);
-    if (!isset($sol['grupo_id']) || $sol['grupo_id'] === null) {
-      return $sol;
-    }
-
-    $count = DB::table('Grupo_infraestructura')
-      ->where('grupo_id', '=', $sol['grupo_id'])
-      ->where('laboratorio_id', '=', $request->input('id'))
-      ->count();
-
-    if ($count == 0) {
-      DB::table('Grupo_infraestructura')
-        ->insert([
-          'grupo_id' => $sol['grupo_id'],
-          'laboratorio_id' => $request->input('id'),
-          'categoria' => 'laboratorio',
-          'created_at' => Carbon::now(),
-          'updated_at' => Carbon::now(),
-        ]);
-
-      return ['message' => 'success', 'detail' => 'Laboratorio agregado correctamente'];
-    } else {
-      return ['message' => 'error', 'detail' => 'El laboratorio seleccionado ya figura en su grupo'];
-    }
-  }
-
-  public function eliminarLaboratorio(Request $request) {
-    $sol = $this->validarSol($request);
-    if (!isset($sol['grupo_id']) || $sol['grupo_id'] === null) {
-      return $sol;
-    }
-
-    DB::table('Grupo_infraestructura')
-      ->where('id', '=', $request->query('id'))
-      ->delete();
-
-    return ['message' => 'info', 'detail' => 'Laboratorio eliminado correctamente'];
-  }
-
-  public function paso7(Request $request) {
-    $sol = $this->validarSol($request);
-    if (!isset($sol['grupo_id']) || $sol['grupo_id'] === null) {
-      return $sol;
-    }
-
-    if ($request->hasFile('file')) {
-
-      $nameFile = Str::random(32) . "." . $request->file('file')->getClientOriginalExtension();
-      $this->uploadFile($request->file('file'), "grupo-infraestructura-sgestion", $nameFile);
-    } else {
-      return ['message' => 'error', 'detail' => 'Error al cargar archivo'];
-    }
-
-    DB::table('Grupo')
-      ->where('id', '=', $sol["grupo_id"])
-      ->update([
-        'presentacion' => $request->input('presentacion'),
-        'objetivos' => $request->input('objetivos'),
-        'servicios' => $request->input('servicios'),
-        'step' => 5,
-        'updated_at' => Carbon::now()
-      ]);
-
-    return ['message' => 'success', 'detail' => 'Datos guardados correctamente'];
-  }
-
   //  Grupos
   public function listadoGrupos(Request $request) {
     $grupos = DB::table('Grupo_integrante AS a')
@@ -535,6 +42,7 @@ class GrupoController extends S3Controller {
         'a.cargo',
         'b.resolucion_fecha',
         'b.estado',
+        'b.step'
       )
       ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
       ->where('b.tipo', '=', 'solicitud')
@@ -543,6 +51,571 @@ class GrupoController extends S3Controller {
 
     return ['data' => $grupos];
   }
+
+  //  Solicitar grupo
+  public function verificar1(Request $request) {
+    $errores = [];
+
+    $miembroGrupo = DB::table('Grupo_integrante AS a')
+      ->join('Grupo AS b', 'b.id', '=', 'a.grupo_id')
+      ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+      ->whereNot('a.condicion', 'LIKE', 'Ex%')
+      ->where('b.tipo', '=', 'grupo')
+      ->count();
+
+    if ($miembroGrupo > 0) {
+      $errores[] = 'Ya pertenece a un grupo de investigación';
+    }
+
+    $miembroSolicitud = DB::table('Grupo_integrante AS a')
+      ->join('Grupo AS b', 'b.id', '=', 'a.grupo_id')
+      ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+      ->whereNot('b.id', '=', $request->query('id'))
+      ->where('b.tipo', '=', 'solicitud')
+      ->count();
+
+    if ($miembroSolicitud > 0) {
+      $errores[] = 'Ya está siendo incluído en la solicitud de grupo de alguien más';
+    }
+
+    if (!empty($errores)) {
+      return ['estado' => false, 'message' => $errores];
+    } else {
+      $datos = DB::table('Grupo')
+        ->select([
+          'grupo_nombre',
+          'grupo_nombre_corto'
+        ])
+        ->where('id', '=', $request->query('id'))
+        ->first();
+
+      return ['estado' => true, 'datos' => $datos];
+    }
+  }
+
+  public function registrar1(Request $request) {
+    if ($request->input('id')) {
+      $rep = DB::table('Grupo')
+        ->where('id', '!=', $request->input('id'))
+        ->where(function ($query) use ($request) {
+          $query->orWhere('grupo_nombre', '=', $request->input('grupo_nombre'))
+            ->orWhere('grupo_nombre_corto', '=', $request->input('grupo_nombre_corto'));
+        })
+        ->count();
+
+      if ($rep > 0) {
+        return ['message' => 'error', 'detail' => 'El nombre o el nombre corto que ha colocado ya lo tiene otro grupo'];
+      }
+
+      DB::table('Grupo')
+        ->where('id', '=',  $request->input('id'))
+        ->update([
+          'grupo_nombre' => $request->input('grupo_nombre'),
+          'grupo_nombre_corto' => $request->input('grupo_nombre_corto'),
+        ]);
+
+      return ['message' => 'success', 'detail' => 'Información actualizada', 'id' => $request->input('id')];
+    } else {
+      $rep = DB::table('Grupo')
+        ->where('grupo_nombre', '=', $request->input('grupo_nombre'))
+        ->orWhere('grupo_nombre_corto', '=', $request->input('grupo_nombre_corto'))
+        ->count();
+
+      if ($rep > 0) {
+        return ['message' => 'error', 'detail' => 'El nombre o el nombre corto que ha colocado ya lo tiene otro grupo'];
+      }
+
+      $now = Carbon::now();
+
+      $investigador = DB::table('Usuario_investigador')
+        ->select([
+          'facultad_id',
+          'email3'
+        ])
+        ->where('id', '=', $request->attributes->get('token_decoded')->investigador_id)
+        ->first();
+
+      $id = DB::table('Grupo')
+        ->insertGetId([
+          'grupo_nombre' => $request->input('grupo_nombre'),
+          'grupo_nombre_corto' => $request->input('grupo_nombre_corto'),
+          'facultad_id' => $investigador->facultad_id,
+          'email' => $investigador->email3,
+          'coorddatos' => $request->attributes->get('token_decoded')->investigador_id,
+          'tipo' => 'solicitud',
+          'step' => 2,
+          'estado' => 6,
+          'created_at' => $now,
+          'updated_at' => $now,
+        ]);
+
+      DB::table('Grupo_integrante')
+        ->insert([
+          'grupo_id' => $id,
+          'investigador_id' => $request->attributes->get('token_decoded')->investigador_id,
+          'cargo' => 'Coordinador',
+          'condicion' => 'Titular',
+          'estado' => 1,
+          'created_at' => $now,
+          'updated_at' => $now,
+        ]);
+
+      return ['message' => 'success', 'detail' => 'Datos registrados correctamente', 'id' => $id];
+    }
+  }
+
+  public function validarSol(Request $request, $id) {
+    $errores = [];
+
+    $miembroGrupo = DB::table('Grupo_integrante AS a')
+      ->join('Grupo AS b', 'b.id', '=', 'a.grupo_id')
+      ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+      ->whereNot('a.condicion', 'LIKE', 'Ex%')
+      ->where('b.tipo', '=', 'grupo')
+      ->count();
+
+    if ($miembroGrupo > 0) {
+      $errores[] = 'Ya pertenece a un grupo de investigación';
+    }
+
+    $miembroSolicitud = DB::table('Grupo_integrante AS a')
+      ->join('Grupo AS b', 'b.id', '=', 'a.grupo_id')
+      ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+      ->where('a.cargo', '!=', 'Coordinador')
+      ->where('b.tipo', '=', 'solicitud')
+      ->count();
+
+    if ($miembroSolicitud > 0) {
+      $errores[] = 'Ya está siendo incluído en la solicitud de grupo de alguien más';
+    }
+
+    $coordinadorSolicitud = DB::table('Grupo_integrante AS a')
+      ->join('Grupo AS b', 'b.id', '=', 'a.grupo_id')
+      ->select([
+        'b.id'
+      ])
+      ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+      ->where('b.id', '=', $id)
+      ->where('a.cargo', '=', 'Coordinador')
+      ->where('b.tipo', '=', 'solicitud')
+      ->count();
+
+    if ($coordinadorSolicitud == 0) {
+      $errores[] = 'No tienen ninguna solicitud en curso para este grupo';
+    }
+    return $errores;
+  }
+
+  //  Paso 2
+  public function verificar2(Request $request) {
+    $sol = $this->validarSol($request, $request->query('id'));
+    if (sizeof($sol) > 0) {
+      return ['estado' => false, 'message' => $sol];
+    }
+
+    $docente = DB::table('Usuario_investigador AS a')
+      ->join('Dependencia AS b', 'b.id', '=', 'a.dependencia_id')
+      ->leftJoin('view_puntaje_7u AS c', 'c.investigador_id', '=', 'a.id')
+      ->select([
+        DB::raw("CONCAT(a.apellido1, ' ', a.apellido2, ', ', a.nombres) AS nombre"),
+        'a.doc_numero',
+        'a.codigo',
+        'a.tipo',
+        'b.dependencia',
+        'a.cti_vitae',
+        'a.google_scholar',
+        'a.codigo_orcid',
+        //  Editable
+        'a.grado',
+        'a.titulo_profesional',
+        'a.especialidad',
+        'a.instituto_id',
+        'a.email3',
+        'a.telefono_casa',
+        'a.telefono_trabajo',
+        'a.telefono_movil',
+        'c.puntaje'
+      ])
+      ->where('a.id', '=', $request->attributes->get('token_decoded')->investigador_id)
+      ->first();
+
+    $institutos = DB::table('Instituto')
+      ->select([
+        'id AS value',
+        'instituto AS label'
+      ])
+      ->get();
+
+    return ['estado' => true, 'datos' => $docente, 'institutos' => $institutos];
+  }
+
+  public function registrar2(Request $request) {
+    $sol = $this->validarSol($request, $request->input('id'));
+    if (sizeof($sol) > 0) {
+      return ['estado' => false, 'message' => $sol];
+    }
+
+    $now = Carbon::now();
+    DB::table('Usuario_investigador')
+      ->where('id', '=', $request->attributes->get('token_decoded')->investigador_id)
+      ->update([
+        'grado' => $request->input('grado')["value"],
+        'titulo_profesional' => $request->input('titulo_profesional'),
+        'especialidad' => $request->input('especialidad'),
+        'instituto_id' => $request->input('instituto_id')["value"],
+        'email3' => $request->input('email3'),
+        'telefono_casa' => $request->input('telefono_casa'),
+        'telefono_trabajo' => $request->input('telefono_trabajo'),
+        'telefono_movil' => $request->input('telefono_movil'),
+        'updated_at' => $now
+      ]);
+
+    DB::table('Grupo')
+      ->where('id', '=', $request->input('id'))
+      ->update([
+        'step' => 3
+      ]);
+
+    return ['message' => 'success', 'detail' => 'Datos registrados correctamente', 'id' => $request->input('id')];
+  }
+
+  //  Paso 3
+  public function verificar3(Request $request) {
+    $sol = $this->validarSol($request, $request->query('id'));
+    if (sizeof($sol) > 0) {
+      return ['estado' => false, 'message' => $sol];
+    }
+
+    $integrantes = DB::table('Grupo_integrante AS a')
+      ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
+      ->leftJoin('Facultad AS c', 'c.id', '=', 'b.facultad_id')
+      ->select([
+        'a.id',
+        'a.condicion',
+        'a.cargo',
+        'b.doc_numero',
+        DB::raw("CONCAT(b.apellido1, ' ', b.apellido2, ', ', b.nombres) AS nombres"),
+        'b.codigo_orcid',
+        'b.google_scholar',
+        'b.cti_vitae',
+        'b.tipo',
+        'c.nombre AS facultad'
+      ])
+      ->where('a.grupo_id', '=', $request->query('id'))
+      ->get();
+
+    return ['estado' => true, 'integrantes' => $integrantes];
+  }
+
+  //  Paso 4
+  public function verificar4(Request $request) {
+    $sol = $this->validarSol($request, $request->query('id'));
+    if (sizeof($sol) > 0) {
+      return ['estado' => false, 'message' => $sol];
+    }
+
+    $datos = DB::table('Grupo')
+      ->select([
+        'presentacion',
+        'objetivos',
+        'servicios',
+      ])
+      ->where('id', '=', $request->query('id'))
+      ->first();
+
+    $lineas = DB::table('Grupo_linea AS a')
+      ->join('Linea_investigacion AS b', 'b.id', '=', 'a.linea_investigacion_id')
+      ->select([
+        'a.id',
+        'b.codigo',
+        'b.nombre',
+      ])
+      ->where('a.grupo_id', '=', $request->query('id'))
+      ->get();
+
+    $listado = DB::table('Linea_investigacion')
+      ->select([
+        'id AS value',
+        DB::raw("CONCAT(codigo, ' - ', nombre) AS label")
+      ])
+      ->get();
+
+    return ['estado' => true, 'datos' => $datos, 'lineas' => $lineas, 'listado' => $listado];
+  }
+
+  public function registrar4(Request $request) {
+    $sol = $this->validarSol($request, $request->input('id'));
+    if (sizeof($sol) > 0) {
+      return ['estado' => false, 'message' => $sol];
+    }
+
+    DB::table('Grupo')
+      ->where('id', '=', $request->input('id'))
+      ->update([
+        'presentacion' => $request->input('presentacion'),
+        'objetivos' => $request->input('objetivos'),
+        'servicios' => $request->input('servicios'),
+        'step' => 5,
+        'updated_at' => Carbon::now()
+      ]);
+
+    return ['message' => 'success', 'detail' => 'Datos guardados correctamente'];
+  }
+
+  //  Paso 5
+  public function verificar5(Request $request) {
+    $sol = $this->validarSol($request, $request->query('id'));
+    if (sizeof($sol) > 0) {
+      return ['estado' => false, 'message' => $sol];
+    }
+
+    $proyectos = DB::table('Grupo_integrante AS a')
+      ->join('Proyecto_integrante AS b', 'b.investigador_id', '=', 'a.investigador_id')
+      ->join('Proyecto AS c', 'c.id', '=', 'b.proyecto_id')
+      ->join('Usuario_investigador AS d', 'd.id', '=', 'a.investigador_id')
+      ->select([
+        'c.id',
+        DB::raw("CONCAT(d.apellido1, ' ', d.apellido2, ', ', d.nombres) AS nombre"),
+        'c.codigo_proyecto',
+        'c.titulo',
+        'c.tipo_proyecto',
+        'c.periodo',
+      ])
+      ->where('a.grupo_id', '=', $request->query('id'))
+      ->where('c.estado', '=', 1)
+      ->where('a.condicion', '=', 'Titular')
+      ->get();
+
+    return ['estado' => true, 'proyectos' => $proyectos];
+  }
+
+  //  Paso 6
+  public function verificar6(Request $request) {
+    $sol = $this->validarSol($request, $request->query('id'));
+    if (sizeof($sol) > 0) {
+      return ['estado' => false, 'message' => $sol];
+    }
+
+    $publicaciones = DB::table('Grupo_integrante AS a')
+      ->join('Publicacion_autor AS b', 'b.investigador_id', '=', 'a.investigador_id')
+      ->join('Publicacion AS c', 'c.id', '=', 'b.publicacion_id')
+      ->join('Usuario_investigador AS d', 'd.id', '=', 'a.investigador_id')
+      ->select([
+        'c.id',
+        DB::raw("CONCAT(d.apellido1, ' ', d.apellido2, ', ', d.nombres) AS nombre"),
+        'c.titulo',
+        DB::raw("YEAR(c.fecha_publicacion) AS periodo"),
+        'c.tipo_publicacion',
+      ])
+      ->where('a.grupo_id', '=', $request->query('id'))
+      ->where('c.estado', '=', 1)
+      ->where('a.condicion', '=', 'Titular')
+      ->get();
+
+    return ['estado' => true, 'publicaciones' => $publicaciones];
+  }
+
+  //  Paso 7
+  public function verificar7(Request $request) {
+    $sol = $this->validarSol($request, $request->query('id'));
+    if (sizeof($sol) > 0) {
+      return ['estado' => false, 'message' => $sol];
+    }
+
+    $datos = DB::table('Grupo')
+      ->select([
+        'infraestructura_ambientes',
+        'infraestructura_sgestion AS url',
+      ])
+      ->where('id', '=', $request->query('id'))
+      ->first();
+
+    $laboratorios = DB::table('Grupo_infraestructura AS a')
+      ->join('Laboratorio AS b', 'b.id', '=', 'a.laboratorio_id')
+      ->select([
+        'a.id',
+        'b.codigo',
+        'b.laboratorio',
+        'b.responsable',
+      ])
+      ->where('a.grupo_id', '=', $request->query('id'))
+      ->get();
+
+    return ['estado' => true, 'datos' => $datos, 'laboratorios' => $laboratorios];
+  }
+
+  public function registrar7(Request $request) {
+    $sol = $this->validarSol($request, $request->input('id'));
+    if (sizeof($sol) > 0) {
+      return ['estado' => false, 'message' => $sol];
+    }
+
+    if ($request->hasFile('file')) {
+
+      $nameFile = Str::random(32) . "." . $request->file('file')->getClientOriginalExtension();
+      $this->uploadFile($request->file('file'), "grupo-infraestructura-sgestion", $nameFile);
+
+      DB::table('Grupo')
+        ->where('id', '=', $request->input('id'))
+        ->update([
+          'infraestructura_ambientes' => $request->input('infraestructura_ambientes'),
+          'infraestructura_sgestion' => $nameFile,
+          'step' => 8,
+          'updated_at' => Carbon::now()
+        ]);
+
+      return ['message' => 'success', 'detail' => 'Datos guardados correctamente'];
+    } else {
+      $cuenta = DB::table('Grupo')
+        ->where('id', '=', $request->input('id'))
+        ->whereNull('infraestructura_sgestion')
+        ->count();
+
+      if ($cuenta > 0) {
+        return ['message' => 'error', 'detail' => 'Necesita cargar un archivo'];
+      } else {
+        DB::table('Grupo')
+          ->where('id', '=', $request->input('id'))
+          ->update([
+            'infraestructura_ambientes' => $request->input('infraestructura_ambientes'),
+            'step' => 8,
+            'updated_at' => Carbon::now()
+          ]);
+
+        return ['message' => 'success', 'detail' => 'Datos guardados correctamente'];
+      }
+    }
+  }
+
+  //  Paso 8
+  public function verificar8(Request $request) {
+    $sol = $this->validarSol($request, $request->query('id'));
+    if (sizeof($sol) > 0) {
+      return ['estado' => false, 'message' => $sol];
+    }
+
+    $datos = DB::table('Grupo')
+      ->select([
+        'telefono',
+        'anexo',
+        'oficina',
+        'direccion',
+        'email',
+        'web',
+      ])
+      ->where('id', '=', $request->query('id'))
+      ->first();
+
+    return ['estado' => true, 'datos' => $datos];
+  }
+
+  public function registrar8(Request $request) {
+    $sol = $this->validarSol($request, $request->input('id'));
+    if (sizeof($sol) > 0) {
+      return ['estado' => false, 'message' => $sol];
+    }
+
+    DB::table('Grupo')
+      ->where('id', '=', $request->input('id'))
+      ->update([
+        'telefono' => $request->input('telefono'),
+        'anexo' => $request->input('anexo'),
+        'oficina' => $request->input('oficina'),
+        'direccion' => $request->input('direccion'),
+        'web' => $request->input('web'),
+        'step' => 9,
+      ]);
+
+    return ['message' => 'success', 'detail' => 'Datos guardados correctamente'];
+  }
+
+  //  Paso 9
+  public function verificar9(Request $request) {
+    return ['estado' => true];
+    $sol = $this->validarSol($request, $request->query('id'));
+    if (sizeof($sol) > 0) {
+      return ['estado' => false, 'message' => $sol];
+    }
+  }
+
+  public function reporteSolicitud(Request $request) {
+    $sol = $this->validarSol($request, $request->query('id'));
+    if (sizeof($sol) > 0) {
+      return ['estado' => false, 'message' => $sol];
+    } else {
+      $grupo = DB::table('Grupo')
+        ->select([
+          'grupo_nombre',
+          'grupo_nombre_corto',
+          'telefono',
+          'anexo',
+          'oficina',
+          'direccion',
+          'web',
+          'email',
+          'presentacion',
+          'objetivos',
+          'servicios',
+          'infraestructura_ambientes',
+          DB::raw("CASE 
+            WHEN infraestructura_sgestion IS NULL THEN 'No'
+            ELSE 'Sí'
+          END AS anexo"),
+        ])
+        ->where('id', '=', $request->query('id'))
+        ->first();
+
+      $integrantes = DB::table('Grupo_integrante AS a')
+        ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
+        ->leftJoin('Facultad AS c', 'c.id', '=', 'b.facultad_id')
+        ->select([
+          'b.doc_numero',
+          DB::raw("CONCAT(b.apellido1, ' ', b.apellido2, ', ', b.nombres) AS nombres"),
+          DB::raw("CASE 
+          WHEN a.cargo IS NOT NULL THEN CONCAT(a.condicion, '(', a.cargo, ')')
+          ELSE a.condicion
+          END AS condicion"),
+          'b.tipo',
+          'c.nombre AS facultad'
+        ])
+        ->where('a.grupo_id', '=', $request->query('id'))
+        ->get();
+
+      $lineas = DB::table('Grupo_linea AS a')
+        ->join('Linea_investigacion AS b', 'b.id', '=', 'a.linea_investigacion_id')
+        ->select([
+          'a.id',
+          'b.codigo',
+          'b.nombre',
+        ])
+        ->where('a.grupo_id', '=', $request->query('id'))
+        ->get();
+
+      $laboratorios = DB::table('Grupo_infraestructura AS a')
+        ->join('Laboratorio AS b', 'b.id', '=', 'a.laboratorio_id')
+        ->select([
+          'a.id',
+          'b.codigo',
+          'b.laboratorio',
+          'b.responsable',
+        ])
+        ->where('a.grupo_id', '=', $request->query('id'))
+        ->get();
+
+      $pdf = Pdf::loadView('investigador.grupo.reporte', [
+        'grupo' => $grupo,
+        'integrantes' => $integrantes,
+        'lineas' => $lineas,
+        'laboratorios' => $laboratorios,
+      ]);
+
+      return $pdf->stream();
+    }
+  }
+
+  /**
+   *  Otros
+   */
 
   public function detalle(Request $request) {
     $detalle = DB::table('Grupo AS a')
@@ -602,57 +675,9 @@ class GrupoController extends S3Controller {
     return ['data' => $miembros];
   }
 
-  public function searchEstudiante(Request $request) {
-    $estudiantes = DB::table('Repo_sum AS a')
-      ->leftJoin('Usuario_investigador AS b', 'b.codigo', '=', 'a.codigo_alumno')
-      ->select(
-        DB::raw("CONCAT(TRIM(a.codigo_alumno), ' | ', a.dni, ' | ', a.apellido_paterno, ' ', a.apellido_materno, ', ', a.nombres, ' | ', a.programa) AS value"),
-        'a.id',
-        'b.id AS investigador_id',
-        'a.codigo_alumno',
-        'a.dni',
-        'a.apellido_paterno',
-        'a.apellido_materno',
-        'a.nombres',
-        'a.facultad',
-        'a.programa',
-        'a.permanencia',
-        'b.email3'
-      )
-      ->whereIn('a.permanencia', ['Activo', 'Reserva de Matricula'])
-      ->having('value', 'LIKE', '%' . $request->query('query') . '%')
-      ->limit(10)
-      ->get();
-
-    return $estudiantes;
-  }
-
-  public function searchEgresado(Request $request) {
-    $egresados = DB::table('Repo_sum AS a')
-      ->leftJoin('Usuario_investigador AS b', 'b.codigo', '=', 'a.codigo_alumno')
-      ->select(
-        DB::raw("CONCAT(TRIM(a.codigo_alumno), ' | ', a.dni, ' | ', a.apellido_paterno, ' ', a.apellido_materno, ', ', a.nombres, ' | ', a.programa) AS value"),
-        'a.id',
-        'b.id AS investigador_id',
-        'a.codigo_alumno',
-        'a.dni',
-        'a.apellido_paterno',
-        'a.apellido_materno',
-        'a.nombres',
-        'a.facultad',
-        'a.programa',
-        'a.permanencia',
-        'a.ultimo_periodo_matriculado'
-      )
-      ->whereIn('a.permanencia', ['Egresado'])
-      ->having('value', 'LIKE', '%' . $request->query('query') . '%')
-      ->limit(10)
-      ->get();
-
-    return $egresados;
-  }
-
+  //  Miembros
   public function incluirMiembroData(Request $request) {
+
     switch ($request->query('tipo')) {
       case "estudiante":
       case "egresado":
@@ -879,7 +904,7 @@ class GrupoController extends S3Controller {
           break;
       }
     } else {
-      if ($request->input('tipo_registro') == 'titular') {
+      if ($request->input('tipo_registro') == 'Titular' || $request->input('tipo_registro') == 'Colaborador') {
         $investigador = DB::table('Usuario_investigador AS a')
           ->select(
             'a.codigo',
@@ -898,8 +923,8 @@ class GrupoController extends S3Controller {
             'instituto_id' => $investigador->instituto_id,
             'investigador_id' => $request->input('investigador_id'),
             'codigo' => $investigador->codigo,
-            'tipo' => $request->input('tipo'),
-            'condicion' => $request->input('condicion'),
+            'tipo' => 'DOCENTE PERMANENTE',
+            'condicion' => $request->input('tipo_registro'),
             'estado' => '1',
             'created_at' => $date,
             'updated_at' => $date
@@ -918,64 +943,24 @@ class GrupoController extends S3Controller {
     }
   }
 
-  public function excluirMiembro(Request $request) {
+  public function eliminarMiembro(Request $request) {
     DB::table('Grupo_integrante')
-      ->where('id', '=', $request->input('id'))
-      ->update([
-        'condicion' => "Ex " . $request->input('condicion'),
-        'fecha_exclusion' => $request->input('fecha_exclusion'),
-        'resolucion_exclusion' => $request->input('resolucion_exclusion'),
-        'resolucion_exclusion_fecha' => $request->input('resolucion_exclusion_fecha'),
-        'resolucion_oficina_exclusion' => $request->input('resolucion_oficina_exclusion'),
-        'observacion_excluir' => $request->input('observacion_excluir'),
-        'estado' => "-2"
-      ]);
+      ->where('id', '=', $request->query('id'))
+      ->delete();
 
     return [
       'message' => 'info',
-      'detail' => 'Miembro excluído exitosamente'
+      'detail' => 'Miembro eliminado exitosamente'
     ];
   }
 
-  public function visualizarMiembro(Request $request) {
-    $informacion = DB::table('Grupo_integrante AS a')
-      ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
-      ->leftJoin('Dependencia AS c', 'c.id', '=', 'b.dependencia_id')
-      ->leftJoin('Facultad AS d', 'd.id', '=', 'b.facultad_id')
+  public function getPaises() {
+    $paises = DB::table('Pais')
       ->select([
-        DB::raw("CONCAT(b.apellido1, ' ', b.apellido2, ', ', b.nombres) AS nombre"),
-        'b.codigo',
-        'b.doc_numero',
-        'b.docente_categoria',
-        'b.docente_categoria',
-        'c.dependencia',
-        'd.nombre AS facultad',
-        'b.codigo_orcid',
-        'b.researcher_id',
-        'b.scopus_id',
-        'a.fecha_inclusion',
-        'a.resolucion_oficina',
-        'a.resolucion',
-        'a.resolucion_fecha',
-      ])
-      ->where('a.id', '=', $request->query('grupo_integrante_id'))
-      ->first();
+        'name AS value'
+      ])->get();
 
-    $proyectos = DB::table('Grupo_integrante AS a')
-      ->join('Proyecto_integrante AS b', 'b.grupo_integrante_id', '=', 'a.id')
-      ->join('Proyecto AS c', 'c.id', '=', 'b.proyecto_id')
-      ->select([
-        'c.codigo_proyecto',
-        'c.titulo',
-        'c.tipo_proyecto',
-        'c.periodo'
-      ])
-      ->where('a.id', '=', $request->query('grupo_integrante_id'))
-      ->where('c.estado', '=', 1)
-      ->groupBy('c.id')
-      ->get();
-
-    return ['informacion' => $informacion, 'proyectos' => $proyectos];
+    return $paises;
   }
 
   //  Search
@@ -1024,5 +1009,144 @@ class GrupoController extends S3Controller {
       ->get();
 
     return $investigadores;
+  }
+
+  public function searchEstudiante(Request $request) {
+    $estudiantes = DB::table('Repo_sum AS a')
+      ->leftJoin('Usuario_investigador AS b', 'b.codigo', '=', 'a.codigo_alumno')
+      ->select(
+        DB::raw("CONCAT(TRIM(a.codigo_alumno), ' | ', a.dni, ' | ', a.apellido_paterno, ' ', a.apellido_materno, ', ', a.nombres, ' | ', a.programa) AS value"),
+        'a.id',
+        'b.id AS investigador_id',
+        'a.codigo_alumno',
+        'a.dni',
+        'a.apellido_paterno',
+        'a.apellido_materno',
+        'a.nombres',
+        'a.facultad',
+        'a.programa',
+        'a.permanencia',
+        'b.email3'
+      )
+      ->whereIn('a.permanencia', ['Activo', 'Reserva de Matricula'])
+      ->having('value', 'LIKE', '%' . $request->query('query') . '%')
+      ->limit(10)
+      ->get();
+
+    return $estudiantes;
+  }
+
+  public function searchEgresado(Request $request) {
+    $egresados = DB::table('Repo_sum AS a')
+      ->leftJoin('Usuario_investigador AS b', 'b.codigo', '=', 'a.codigo_alumno')
+      ->select(
+        DB::raw("CONCAT(TRIM(a.codigo_alumno), ' | ', a.dni, ' | ', a.apellido_paterno, ' ', a.apellido_materno, ', ', a.nombres, ' | ', a.programa) AS value"),
+        'a.id',
+        'b.id AS investigador_id',
+        'a.codigo_alumno',
+        'a.dni',
+        'a.apellido_paterno',
+        'a.apellido_materno',
+        'a.nombres',
+        'a.facultad',
+        'a.programa',
+        'a.permanencia',
+        'a.ultimo_periodo_matriculado'
+      )
+      ->whereIn('a.permanencia', ['Egresado'])
+      ->having('value', 'LIKE', '%' . $request->query('query') . '%')
+      ->limit(10)
+      ->get();
+
+    return $egresados;
+  }
+
+  //  Líneas
+  public function agregarLinea(Request $request) {
+    $sol = $this->validarSol($request, $request->input('grupo_id'));
+    if (sizeof($sol) > 0) {
+      return ['estado' => false, 'message' => $sol];
+    }
+
+    DB::table('Grupo_linea')
+      ->insert([
+        'grupo_id' => $request->input('grupo_id'),
+        'linea_investigacion_id' => $request->input('linea_investigacion_id')["value"],
+      ]);
+
+    return ['message' => 'success', 'detail' => 'Línea agregada correctamente'];
+  }
+
+  public function eliminarLinea(Request $request) {
+    $sol = $this->validarSol($request, $request->query('grupo_id'));
+    if (sizeof($sol) > 0) {
+      return ['estado' => false, 'message' => $sol];
+    }
+
+    DB::table('Grupo_linea')
+      ->where('id', '=', $request->query('id'))
+      ->delete();
+
+    return ['message' => 'info', 'detail' => 'Línea eliminada correctamente'];
+  }
+
+  //  Laboratorios
+  public function searchLaboratorio(Request $request) {
+    $laboratorios = DB::table('Laboratorio AS a')
+      ->join('Facultad AS b', 'b.id', '=', 'a.facultad_id')
+      ->select(
+        DB::raw("CONCAT(TRIM(a.codigo), ' | ', a.laboratorio, ' | ', b.nombre) AS value"),
+        'a.id',
+        'a.codigo',
+        'a.laboratorio',
+        'a.responsable',
+        'a.categoria_uso',
+        'a.ubicacion',
+      )
+      ->having('value', 'LIKE', '%' . $request->query('query') . '%')
+      ->limit(10)
+      ->get();
+
+    return $laboratorios;
+  }
+
+  public function agregarLaboratorio(Request $request) {
+    $sol = $this->validarSol($request, $request->input('grupo_id'));
+    if (sizeof($sol) > 0) {
+      return ['estado' => false, 'message' => $sol];
+    }
+
+    $count = DB::table('Grupo_infraestructura')
+      ->where('grupo_id', '=', $request->input('grupo_id'))
+      ->where('laboratorio_id', '=', $request->input('id'))
+      ->count();
+
+    if ($count == 0) {
+      DB::table('Grupo_infraestructura')
+        ->insert([
+          'grupo_id' => $request->input('grupo_id'),
+          'laboratorio_id' => $request->input('id'),
+          'categoria' => 'laboratorio',
+          'created_at' => Carbon::now(),
+          'updated_at' => Carbon::now(),
+        ]);
+
+      return ['message' => 'success', 'detail' => 'Laboratorio agregado correctamente'];
+    } else {
+      return ['message' => 'error', 'detail' => 'El laboratorio seleccionado ya figura en su grupo'];
+    }
+  }
+
+  public function eliminarLaboratorio(Request $request) {
+    $sol = $this->validarSol($request, $request->query('id'));
+    if (sizeof($sol) > 0) {
+      return ['estado' => false, 'message' => $sol];
+    }
+
+    DB::table('Grupo_infraestructura')
+      ->where('id', '=', $request->query('id'))
+      ->delete();
+
+    return ['message' => 'info', 'detail' => 'Laboratorio eliminado correctamente'];
   }
 }

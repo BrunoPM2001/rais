@@ -68,7 +68,7 @@ class PinvposController extends S3Controller {
           ->where('b.periodo', '=', 2024);
       })
       ->leftJoin('Usuario_investigador AS c', 'c.id', '=', 'a.investigador_id')
-      ->leftJoin('Facultad AS d', 'd.id', '=', 'c.facultad_id')
+      ->leftJoin('Facultad AS d', 'd.id', '=', 'a.facultad_id')
       ->select([
         'b.id AS proyecto_id',
         'b.step',
@@ -96,7 +96,8 @@ class PinvposController extends S3Controller {
     } else {
       $miembros = DB::table('Proyecto_integrante AS a')
         ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
-        ->join('Facultad AS c', 'c.id', '=', 'b.facultad_id')
+        ->join('Proyecto_integrante_dedicado AS c', 'c.investigador_id', '=', 'b.id')
+        ->join('Facultad AS d', 'd.id', '=', 'c.facultad_id')
         ->select([
           'a.id',
           'a.condicion',
@@ -106,9 +107,11 @@ class PinvposController extends S3Controller {
           'b.doc_numero',
           'b.codigo',
           'b.email3',
-          'c.nombre AS facultad',
+          'd.nombre AS facultad',
+          'c.cargo'
         ])
         ->where('a.proyecto_id', '=', $habilitado->proyecto_id)
+        ->where('c.proyecto_id', '=', $habilitado->proyecto_id)
         ->get();
 
       return ['estado' => true, 'datos' => $habilitado, 'miembros' => $miembros];
@@ -645,12 +648,12 @@ class PinvposController extends S3Controller {
           WHEN SUBSTRING_INDEX(SUBSTRING_INDEX(docente_categoria, '-', 2), '-', -1) = '3' THEN 'Tiempo Parcial'
           ELSE 'Sin clase'
         END AS clase"),
-        DB::raw("CASE(e.archivo)
-          WHEN null THEN 'No'
+        DB::raw("CASE
+          WHEN e.archivo IS NULL THEN 'No'
           ELSE 'Sí'
         END AS anexo"),
-        DB::raw("CASE(f.archivo)
-          WHEN null THEN 'No'
+        DB::raw("CASE
+          WHEN f.archivo IS NUL THEN 'No'
           ELSE 'Sí'
         END AS rd"),
         'a.updated_at',

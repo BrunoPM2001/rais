@@ -582,25 +582,36 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
   Route::prefix('grupo')->group(function () {
     //  Solicitar
     Route::prefix('solicitar')->group(function () {
-      Route::get('dataPaso1', [InvestigadorGrupoController::class, 'dataPaso1']);
-      Route::post('paso1', [InvestigadorGrupoController::class, 'paso1']);
+      Route::get('verificar1', [InvestigadorGrupoController::class, 'verificar1']);
+      Route::get('verificar2', [InvestigadorGrupoController::class, 'verificar2']);
+      Route::get('verificar3', [InvestigadorGrupoController::class, 'verificar3']);
+      Route::get('verificar4', [InvestigadorGrupoController::class, 'verificar4']);
+      Route::get('verificar5', [InvestigadorGrupoController::class, 'verificar5']);
+      Route::get('verificar6', [InvestigadorGrupoController::class, 'verificar6']);
+      Route::get('verificar7', [InvestigadorGrupoController::class, 'verificar7']);
+      Route::get('verificar8', [InvestigadorGrupoController::class, 'verificar8']);
+      Route::get('verificar9', [InvestigadorGrupoController::class, 'verificar9']);
 
-      Route::get('dataPaso2', [InvestigadorGrupoController::class, 'dataPaso2']);
-      Route::put('paso2', [InvestigadorGrupoController::class, 'paso2']);
+      Route::get('reporteSolicitud', [InvestigadorGrupoController::class, 'reporteSolicitud']);
 
-      Route::get('dataPaso3', [InvestigadorGrupoController::class, 'dataPaso3']);
+      Route::post('registrar1', [InvestigadorGrupoController::class, 'registrar1']);
+      Route::post('registrar2', [InvestigadorGrupoController::class, 'registrar2']);
+      Route::post('registrar4', [InvestigadorGrupoController::class, 'registrar4']);
+      Route::post('registrar7', [InvestigadorGrupoController::class, 'registrar7']);
+      Route::post('registrar8', [InvestigadorGrupoController::class, 'registrar8']);
+
       Route::get('searchDocenteRrhh', [InvestigadorGrupoController::class, 'searchDocenteRrhh']);
+      Route::get('searchEstudiante', [InvestigadorGrupoController::class, 'searchEstudiante']);
+      Route::get('searchEgresado', [InvestigadorGrupoController::class, 'searchEgresado']);
 
-      Route::get('dataPaso4', [InvestigadorGrupoController::class, 'dataPaso4']);
+      Route::get('incluirMiembroData', [InvestigadorGrupoController::class, 'incluirMiembroData']);
+      Route::post('agregarMiembro', [InvestigadorGrupoController::class, 'agregarMiembro']);
+      Route::delete('eliminarMiembro', [InvestigadorGrupoController::class, 'eliminarMiembro']);
+      Route::get('getPaises', [InvestigadorGrupoController::class, 'getPaises']);
+
       Route::post('agregarLinea', [InvestigadorGrupoController::class, 'agregarLinea']);
       Route::delete('eliminarLinea', [InvestigadorGrupoController::class, 'eliminarLinea']);
-      Route::put('paso4', [InvestigadorGrupoController::class, 'paso4']);
 
-      Route::get('dataPaso5', [InvestigadorGrupoController::class, 'dataPaso5']);
-
-      Route::get('dataPaso6', [InvestigadorGrupoController::class, 'dataPaso6']);
-
-      Route::get('dataPaso7', [InvestigadorGrupoController::class, 'dataPaso7']);
       Route::get('searchLaboratorio', [InvestigadorGrupoController::class, 'searchLaboratorio']);
       Route::post('agregarLaboratorio', [InvestigadorGrupoController::class, 'agregarLaboratorio']);
       Route::delete('eliminarLaboratorio', [InvestigadorGrupoController::class, 'eliminarLaboratorio']);

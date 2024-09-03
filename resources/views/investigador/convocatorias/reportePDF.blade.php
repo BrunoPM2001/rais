@@ -151,9 +151,6 @@
       Hora: {{ date('H:i:s') }}
     </p>
     <br>
-    <p class="user">
-      ichajaya
-    </p>
   </div>
   <div class="div"></div>
   <div class="foot-1">RAIS - Registro de Actividades de Investigación de San Marcos</div>
