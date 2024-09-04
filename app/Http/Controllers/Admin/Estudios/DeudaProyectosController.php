@@ -3,33 +3,59 @@
 namespace App\Http\Controllers\Admin\Estudios;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class DeudaProyectosController extends Controller {
-  public function listadoIntegrantes($proyecto_id) {
-    $integrantes = DB::table('Proyecto_integrante AS a')
-      ->join('Proyecto_integrante_tipo AS b', 'b.id', '=', 'a.proyecto_integrante_tipo_id')
-      ->join('Usuario_investigador AS c', 'c.id', '=', 'a.investigador_id')
-      ->leftJoin('Licencia AS d', 'd.investigador_id', '=', 'c.id')
-      ->leftJoin('Licencia_tipo AS e', 'e.id', '=', 'd.licencia_tipo_id')
-      ->leftJoin('Proyecto_integrante_deuda AS f', 'f.proyecto_integrante_id', '=', 'a.id')
-      ->select(
-        'a.id',
-        'c.doc_numero',
-        'c.apellido1',
-        'c.apellido2',
-        'c.nombres',
-        'b.nombre AS condicion',
-        'e.tipo AS licencia',
-        'f.categoria AS tipo_deuda',
-        'f.informe',
-        'f.detalle',
-        'f.fecha_sub'
-      )
-      ->where('a.proyecto_id', '=', $proyecto_id)
-      ->get();
+  public function listadoIntegrantes(Request $request) {
+    if ($request->query('tabla') == "Nuevo") {
+      $integrantes = DB::table('Proyecto_integrante AS a')
+        ->join('Proyecto_integrante_tipo AS b', 'b.id', '=', 'a.proyecto_integrante_tipo_id')
+        ->join('Usuario_investigador AS c', 'c.id', '=', 'a.investigador_id')
+        ->leftJoin('Licencia AS d', 'd.investigador_id', '=', 'c.id')
+        ->leftJoin('Licencia_tipo AS e', 'e.id', '=', 'd.licencia_tipo_id')
+        ->leftJoin('Proyecto_integrante_deuda AS f', 'f.proyecto_integrante_id', '=', 'a.id')
+        ->select(
+          'a.id',
+          'c.doc_numero',
+          'c.apellido1',
+          'c.apellido2',
+          'c.nombres',
+          'b.nombre AS condicion',
+          'e.tipo AS licencia',
+          'f.categoria AS tipo_deuda',
+          'f.informe',
+          'f.detalle',
+          'f.fecha_sub'
+        )
+        ->where('a.proyecto_id', '=', $request->query('id'))
+        ->get();
 
-    return ['data' => $integrantes];
+      return $integrantes;
+    } else {
+      $integrantes = DB::table('Proyecto_integrante_H AS a')
+        ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
+        ->leftJoin('Licencia AS c', 'c.investigador_id', '=', 'b.id')
+        ->leftJoin('Licencia_tipo AS d', 'd.id', '=', 'c.licencia_tipo_id')
+        ->leftJoin('Proyecto_integrante_deuda AS e', 'e.proyecto_integrante_h_id', '=', 'a.id')
+        ->select(
+          'a.id',
+          'b.doc_numero',
+          'b.apellido1',
+          'b.apellido2',
+          'b.nombres',
+          'a.condicion',
+          'd.tipo AS licencia',
+          'e.categoria AS tipo_deuda',
+          'e.informe',
+          'e.detalle',
+          'e.fecha_sub'
+        )
+        ->where('a.proyecto_id', '=', $request->query('id'))
+        ->get();
+
+      return $integrantes;
+    }
   }
 
   public function listadoProyectos() {

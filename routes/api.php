@@ -198,7 +198,7 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
     //  Deudas proyecto
     Route::prefix('deudaProyecto')->group(function () {
       Route::get('listadoProyectos', [DeudaProyectosController::class, 'listadoProyectos']);
-      Route::get('listadoIntegrantes/{proyecto_id}', [DeudaProyectosController::class, 'listadoIntegrantes']);
+      Route::get('listadoIntegrantes', [DeudaProyectosController::class, 'listadoIntegrantes']);
       Route::get('listadoProyectosNoDeuda', [DeudaProyectosController::class, 'listadoProyectosNoDeuda']);
     });
 
