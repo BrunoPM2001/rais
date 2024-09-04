@@ -118,6 +118,6 @@ class DeudaProyectosController extends Controller {
       })
       ->get();
 
-    return ['data' => $lista];
+    return $lista;
   }
 }

@@ -21,14 +21,19 @@ class GrupoController extends S3Controller {
         'a.condicion',
         'a.cargo',
         'b.resolucion_fecha',
-        'b.estado',
+        DB::raw("CASE(b.estado)
+          WHEN -2 THEN 'Disuelto'
+          WHEN 4 THEN 'Registrado'
+          WHEN 12 THEN 'Reg. observado'
+          ELSE 'Estado desconocido'
+        END AS estado")
       )
       ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
       ->where('b.tipo', '=', 'grupo')
       ->whereNot('a.condicion', 'LIKE', 'Ex%')
       ->get();
 
-    return ['data' => $grupos];
+    return $grupos;
   }
 
   public function listadoSolicitudes(Request $request) {
@@ -41,15 +46,22 @@ class GrupoController extends S3Controller {
         'a.condicion',
         'a.cargo',
         'b.resolucion_fecha',
-        'b.estado',
-        'b.step'
+        'b.step',
+        DB::raw("CASE(b.estado)
+          WHEN -1 THEN 'Eliminado'
+          WHEN 0 THEN 'No aprobado'
+          WHEN 2 THEN 'Observado'
+          WHEN 5 THEN 'Enviado'
+          WHEN 6 THEN 'En proceso'
+          ELSE 'Estado desconocido'
+        END AS estado")
       )
       ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
       ->where('b.tipo', '=', 'solicitud')
       ->whereNot('a.condicion', 'LIKE', 'Ex%')
       ->get();
 
-    return ['data' => $grupos];
+    return $grupos;
   }
 
   //  Solicitar grupo
@@ -427,7 +439,7 @@ class GrupoController extends S3Controller {
     $datos = DB::table('Grupo')
       ->select([
         'infraestructura_ambientes',
-        'infraestructura_sgestion AS url',
+        DB::raw("CONCAT('/minio/grupo-infraestructura-sgestion/', infraestructura_sgestion) AS url")
       ])
       ->where('id', '=', $request->query('id'))
       ->first();
@@ -537,6 +549,20 @@ class GrupoController extends S3Controller {
     $sol = $this->validarSol($request, $request->query('id'));
     if (sizeof($sol) > 0) {
       return ['estado' => false, 'message' => $sol];
+    }
+  }
+
+  public function registrar9(Request $request) {
+    $count = DB::table('Grupo')
+      ->where('id', '=', $request->input('id'))
+      ->update([
+        'estado' => 5
+      ]);
+
+    if ($count == 0) {
+      return ['message' => 'error', 'detail' => 'Esta solicitud ya ha sido registrada'];
+    } else {
+      return ['message' => 'success', 'detail' => 'Solicitud de creación de grupo enviada'];
     }
   }
 

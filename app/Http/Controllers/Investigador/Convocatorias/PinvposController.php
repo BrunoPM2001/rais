@@ -347,6 +347,50 @@ class PinvposController extends S3Controller {
     } else {
       if ($request->hasFile('file')) {
         $date = Carbon::now();
+        $monto_asignado = 0;
+
+        $fac = DB::table('Proyecto_integrante_dedicado')
+          ->select([
+            'facultad_id'
+          ])
+          ->where('investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+          ->first();
+
+        switch ($fac->facultad_id) {
+          case 19:
+          case 11:
+          case 20:
+            $monto_asignado = 28325;
+            break;
+          case 12:
+          case 2:
+          case 16:
+          case 18:
+          case 9:
+          case 17:
+          case 14:
+          case 6:
+            $monto_asignado = 87550;
+            break;
+          case 13:
+          case 15:
+          case 7:
+            $monto_asignado = 43775;
+            break;
+          case 5:
+          case 4:
+            $monto_asignado = 36050;
+            break;
+          case 3:
+          case 8:
+          case 1:
+          case 10:
+            $monto_asignado = 77250;
+            break;
+          default:
+            $monto_asignado = 0;
+            break;
+        }
 
         $id = DB::table('Proyecto')
           ->insertGetId([
@@ -355,6 +399,7 @@ class PinvposController extends S3Controller {
             'periodo' => 2024,
             'step' => 2,
             'estado' => 6,
+            'monto_asignado' => $monto_asignado,
             'fecha_inscripcion' => $date,
             'created_at' => $date,
             'updated_at' => $date,
@@ -402,13 +447,6 @@ class PinvposController extends S3Controller {
           ]);
 
         //  Agregar al resto de integrantes
-        $fac = DB::table('Proyecto_integrante_dedicado')
-          ->select([
-            'facultad_id'
-          ])
-          ->where('investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
-          ->first();
-
         $miembros = DB::table('Proyecto_integrante_dedicado')
           ->select([
             'investigador_id'

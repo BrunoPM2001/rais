@@ -33,14 +33,19 @@ class GruposController extends S3Controller {
         'a.resolucion_rectoral',
         'a.created_at',
         'a.updated_at',
-        'a.estado'
+        DB::raw("CASE(a.estado)
+          WHEN -2 THEN 'Disuelto'
+          WHEN 4 THEN 'Registrado'
+          WHEN 12 THEN 'Reg. observado'
+          ELSE 'Estado desconocido'
+        END AS estado")
       )
       ->leftJoinSub($coordinador, 'coordinador', 'coordinador.id', '=', 'a.id')
       ->where('a.tipo', '=', 'grupo')
       ->groupBy('a.id')
       ->get();
 
-    return ['data' => $grupos];
+    return $grupos;
   }
 
   public function listadoSolicitudes() {
@@ -66,6 +71,14 @@ class GruposController extends S3Controller {
         'd.nombre AS facultad',
         'coordinador.nombre AS coordinador',
         'a.estado',
+        DB::raw("CASE(a.estado)
+          WHEN -1 THEN 'Eliminado'
+          WHEN 0 THEN 'No aprobado'
+          WHEN 2 THEN 'Observado'
+          WHEN 5 THEN 'Enviado'
+          WHEN 6 THEN 'En proceso'
+          ELSE 'Estado desconocido'
+        END AS estado"),
         'a.created_at',
         'a.updated_at'
       )
@@ -74,7 +87,7 @@ class GruposController extends S3Controller {
       ->groupBy('a.id')
       ->get();
 
-    return ['data' => $solicitudes];
+    return $solicitudes;
   }
 
   public function detalle($grupo_id) {

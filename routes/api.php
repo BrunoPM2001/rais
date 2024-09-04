@@ -599,6 +599,7 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
       Route::post('registrar4', [InvestigadorGrupoController::class, 'registrar4']);
       Route::post('registrar7', [InvestigadorGrupoController::class, 'registrar7']);
       Route::post('registrar8', [InvestigadorGrupoController::class, 'registrar8']);
+      Route::post('registrar9', [InvestigadorGrupoController::class, 'registrar9']);
 
       Route::get('searchDocenteRrhh', [InvestigadorGrupoController::class, 'searchDocenteRrhh']);
       Route::get('searchEstudiante', [InvestigadorGrupoController::class, 'searchEstudiante']);
