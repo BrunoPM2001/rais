@@ -38,7 +38,7 @@ class InvestigadoresController extends Controller {
       )
       ->get();
 
-    return ['data' => $investigadores];
+    return $investigadores;
   }
 
   public function getOne(Request $request) {
@@ -70,6 +70,10 @@ class InvestigadoresController extends Controller {
         'email3',
         'facebook',
         'twitter',
+        'link',
+        'grado',
+        'especialidad',
+        'titulo_profesional',
         'codigo_orcid',
         'researcher_id',
         'scopus_id',
@@ -122,13 +126,68 @@ class InvestigadoresController extends Controller {
       ])
       ->get();
 
+
+    $grupos = DB::table('Grupo_integrante AS a')
+      ->join('Grupo AS b', 'b.id', '=', 'a.grupo_id')
+      ->select([
+        'a.id',
+        'b.grupo_nombre AS nombre',
+        'b.grupo_categoria AS categoria',
+        'a.condicion',
+        DB::raw("CASE(b.estado)
+          WHEN -2 THEN 'Disuelto'
+          WHEN -1 THEN 'Eliminado'
+          WHEN 0 THEN 'No aprobado'
+          WHEN 2 THEN 'Observado'
+          WHEN 4 THEN 'Registrado'
+          WHEN 5 THEN 'Enviado'
+          WHEN 6 THEN 'En proceso'
+          WHEN 12 THEN 'Reg. observado'
+          ELSE 'Estado desconocido'
+        END AS estado"),
+        DB::raw("DATE(a.created_at) AS created_at")
+      ])
+      ->where('a.investigador_id', '=', $request->query('id'))
+      ->get();
+
+    $proyectos = DB::table('Proyecto_integrante AS a')
+      ->join('Proyecto AS b', 'b.id', '=', 'a.proyecto_id')
+      ->join('Proyecto_integrante_tipo AS c', 'c.id', '=', 'a.proyecto_integrante_tipo_id')
+      ->select([
+        'a.id',
+        'b.periodo',
+        'b.tipo_proyecto',
+        'b.titulo',
+        'b.codigo_proyecto',
+        'c.nombre AS condicion',
+        DB::raw("CASE(b.estado)
+            WHEN -1 THEN 'Eliminado'
+            WHEN 0 THEN 'No aprobado'
+            WHEN 1 THEN 'Aprobado'
+            WHEN 3 THEN 'En evaluacion'
+            WHEN 5 THEN 'Enviado'
+            WHEN 6 THEN 'En proceso'
+            WHEN 7 THEN 'Anulado'
+            WHEN 8 THEN 'Sustentado'
+            WHEN 9 THEN 'En ejecución'
+            WHEN 10 THEN 'Ejecutado'
+            WHEN 11 THEN 'Concluído'
+          ELSE 'Sin estado' END AS estado"),
+        DB::raw("DATE(a.created_at) AS created_at")
+      ])
+      ->where('a.investigador_id', '=', $request->query('id'))
+      ->get();
+
     return [
       'data' => $investigador,
       'paises' => $paises,
       'facultades' =>  $facultades,
       'dependencias' =>  $dependencias,
       'institutos' =>  $institutos,
-      'docente_categorias' => $doc_categorias
+      'docente_categorias' => $doc_categorias,
+      //  Datos adicionales
+      'grupos' => $grupos,
+      'proyectos' => $proyectos
     ];
   }
 
@@ -257,6 +316,10 @@ class InvestigadoresController extends Controller {
         'email3' => $request->input('email3'),
         'facebook' => $request->input('facebook'),
         'twitter' => $request->input('twitter'),
+        'link' => $request->input('link'),
+        'grado' => $request->input('grado')["value"],
+        'titulo_profesional' => $request->input('titulo_profesional'),
+        'especialidad' => $request->input('especialidad'),
         'codigo_orcid' => $request->input('codigo_orcid'),
         'researcher_id' => $request->input('researcher_id'),
         'scopus_id' => $request->input('scopus_id'),

@@ -5,10 +5,8 @@ namespace App\Http\Controllers\Admin\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Svg\Tag\Rect;
 
 class Usuario_investigadorController extends Controller {
-
   public function getAll() {
     $usuarios = DB::table('Usuario AS a')
       ->join('Usuario_investigador AS b', 'b.id', '=', 'a.tabla_id')
@@ -28,7 +26,7 @@ class Usuario_investigadorController extends Controller {
       ->where('tabla', '=', 'Usuario_investigador')
       ->get();
 
-    return ['data' => $usuarios];
+    return $usuarios;
   }
 
   public function getOne($id) {
@@ -39,9 +37,9 @@ class Usuario_investigadorController extends Controller {
         'estado'
       )
       ->where('id', '=', $id)
-      ->get();
+      ->first();
 
-    return $usuario[0];
+    return $usuario;
   }
 
   public function searchInvestigadorBy(Request $request) {
