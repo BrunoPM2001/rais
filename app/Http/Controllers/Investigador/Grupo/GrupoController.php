@@ -72,6 +72,7 @@ class GrupoController extends S3Controller {
       ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
       ->whereNot('b.id', '=', $request->query('id'))
       ->where('b.tipo', '=', 'solicitud')
+      ->whereNot('a.condicion', 'LIKE', 'Ex%')
       ->count();
 
     if ($miembroSolicitud > 0) {
@@ -181,8 +182,9 @@ class GrupoController extends S3Controller {
     $miembroSolicitud = DB::table('Grupo_integrante AS a')
       ->join('Grupo AS b', 'b.id', '=', 'a.grupo_id')
       ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
-      ->where('a.cargo', '!=', 'Coordinador')
+      ->whereNot('b.id', '=', $id)
       ->where('b.tipo', '=', 'solicitud')
+      ->whereNot('a.condicion', 'LIKE', 'Ex%')
       ->count();
 
     if ($miembroSolicitud > 0) {

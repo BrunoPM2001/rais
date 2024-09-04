@@ -307,7 +307,7 @@
       <tbody>
         @if (sizeof($laboratorios) == 0)
           <tr>
-            <td colspan="2" align="center">
+            <td colspan="3" align="center">
               No hay líneas registrados
             </td>
           </tr>
