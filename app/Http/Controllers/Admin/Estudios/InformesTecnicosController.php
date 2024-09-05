@@ -7,10 +7,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class InformesTecnicosController extends S3Controller {
-
   public function proyectosListado(Request $request) {
     if ($request->query('lista') == 'nuevos') {
-
       $responsable = DB::table('Proyecto_integrante AS a')
         ->leftJoin('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
         ->select(
@@ -21,7 +19,7 @@ class InformesTecnicosController extends S3Controller {
 
       //  TODO - Incluir deuda dentro de otra consulta para una nueva tabla en la UI
       $proyectos = DB::table('Proyecto AS a')
-        ->join('Informe_tecnico AS b', 'b.proyecto_id', '=', 'a.id')
+        ->leftJoin('Informe_tecnico AS b', 'b.proyecto_id', '=', 'a.id')
         ->leftJoin('Facultad AS c', 'c.id', '=', 'a.facultad_id')
         ->leftJoinSub($responsable, 'res', 'res.proyecto_id', '=', 'a.id')
         ->select(
@@ -33,7 +31,13 @@ class InformesTecnicosController extends S3Controller {
           'res.responsable',
           'c.nombre AS facultad',
           'a.periodo',
-          'a.estado'
+          DB::raw("CASE(b.estado)
+            WHEN 0 THEN 'En proceso'
+            WHEN 1 THEN 'Aprobado'
+            WHEN 2 THEN 'Presentado'
+            WHEN 3 THEN 'Observado'
+            ELSE 'No tiene informe'
+          END AS estado")
         )
         ->where('a.estado', '>', 0)
         ->groupBy('a.id')
@@ -50,7 +54,7 @@ class InformesTecnicosController extends S3Controller {
         ->where('condicion', '=', 'Responsable');
 
       $proyectos = DB::table('Proyecto_H AS a')
-        ->join('Informe_tecnico AS b', 'b.proyecto_h_id', '=', 'a.id')
+        ->leftJoin('Informe_tecnico_H AS b', 'b.proyecto_id', '=', 'a.id')
         ->leftJoin('Facultad AS c', 'c.id', '=', 'a.facultad_id')
         ->leftJoinSub($responsable, 'res', 'res.proyecto_id', '=', 'a.id')
         ->select(
@@ -62,7 +66,13 @@ class InformesTecnicosController extends S3Controller {
           'res.responsable',
           'c.nombre AS facultad',
           'a.periodo',
-          'a.estado'
+          DB::raw("CASE(b.estado)
+            WHEN 0 THEN 'En proceso'
+            WHEN 1 THEN 'Aprobado'
+            WHEN 2 THEN 'Presentado'
+            WHEN 3 THEN 'Observado'
+            ELSE 'No tiene informe'
+          END AS estado")
         )
         ->where('a.estado', '>', 0)
         ->groupBy('a.id')
@@ -88,8 +98,6 @@ class InformesTecnicosController extends S3Controller {
   }
 
   public function getDataInforme(Request $request) {
-    $s3 = $this->s3Client;
-
     $detalles = DB::table('Informe_tecnico AS a')
       ->join('Proyecto AS b', 'b.id', '=', 'a.proyecto_id')
       ->leftJoin('Facultad AS c', 'c.id', '=', 'b.facultad_id')
