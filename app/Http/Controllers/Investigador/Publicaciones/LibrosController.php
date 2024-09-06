@@ -209,4 +209,32 @@ class LibrosController extends Controller {
     ]);
     return $pdf->stream();
   }
+
+  public function searchTitulo(Request $request) {
+    $publicaciones = DB::table('Publicacion')
+      ->select([
+        'id',
+        'titulo AS value',
+      ])
+      ->where('tipo_publicacion', '=', 'libro')
+      ->having('titulo', 'LIKE', '%' . $request->query('query') . '%')
+      ->limit(10)
+      ->get();
+
+    return $publicaciones;
+  }
+
+  public function searchIsbn(Request $request) {
+    $isbns = DB::table('Publicacion')
+      ->select([
+        'id',
+        'isbn AS value',
+      ])
+      ->where('tipo_publicacion', '=', 'libro')
+      ->having('isbn', 'LIKE', '%' . $request->query('query') . '%')
+      ->limit(10)
+      ->get();
+
+    return $isbns;
+  }
 }

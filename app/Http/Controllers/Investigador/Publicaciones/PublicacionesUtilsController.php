@@ -116,19 +116,7 @@ class PublicacionesUtilsController extends S3Controller {
 
   public function infoPublicacion(Request $request) {
     $publicacion = DB::table('Publicacion')
-      ->select([
-        'tipo_publicacion',
-        'titulo',
-        'doi',
-        'fecha_publicacion',
-        'publicacion_nombre',
-        'issn',
-        'issn_e',
-        'volumen',
-        'edicion',
-        'pagina_inicial',
-        'pagina_final',
-      ])
+      ->select()
       ->where('id', '=', $request->query('id'))
       ->first();
 
@@ -542,23 +530,69 @@ class PublicacionesUtilsController extends S3Controller {
   //  Paso 4
   public function enviarPublicacion(Request $request) {
     if ($request->hasFile('file')) {
-      $count = DB::table('Publicacion')
+      //  Audit del investigador:
+      $pub = DB::table('Publicacion')
+        ->select([
+          'audit'
+        ])
+        ->where('id', '=', $request->input('publicacion_id'))
+        ->first();
+
+      $audit = json_decode($pub->audit ?? "[]");
+
+      $investigador = DB::table('Usuario_investigador')
+        ->select([
+          DB::raw("CONCAT(apellido1, ' ', apellido2) AS apellidos"),
+          'nombres'
+        ])
+        ->where('id', '=', $request->attributes->get('token_decoded')->investigador_id)
+        ->first();
+
+      $audit[] = [
+        'fecha' => Carbon::now()->format('Y-m-d H:i:s'),
+        'nombres' => $investigador->nombres,
+        'apellidos' => $investigador->apellidos
+      ];
+
+      $audit = json_encode($audit);
+
+      $count1 = DB::table('Publicacion')
         ->where('id', '=', $request->input('publicacion_id'))
         ->whereIn('estado', [2, 6])
         ->update([
           'step' => 4,
-          'estado' => 5
+          'estado' => 5,
+          'audit' => $audit
         ]);
 
-      if ($count == 0) {
+      if ($count1 == 0) {
         return ['message' => 'error', 'detail' => 'Esta publicación ya ha sido enviada, no se pueden hacer más cambios'];
       } else {
-
         $date = Carbon::now();
         $name = "token-" . $date->format('Ymd-His') . "-" . Str::random(8);
         $nameFile = $name . "." . $request->file('file')->getClientOriginalExtension();
 
         $this->uploadFile($request->file('file'), "publicacion", $nameFile);
+
+        DB::table('File')
+          ->where('tabla_id', '=', $request->input('publicacion_id'))
+          ->where('tabla', 'Publicacion')
+          ->where('recurso', 'ANEXO')
+          ->update([
+            'estado' => -1,
+          ]);
+
+        DB::table('File')
+          ->insert([
+            'tabla_id' => $request->input('publicacion_id'),
+            'tabla' => 'Publicacion',
+            'bucket' => 'publicacion',
+            'key' => $nameFile,
+            'recurso' => 'ANEXO',
+            'estado' => 20,
+            'created_at' => Carbon::now(),
+            'updated_at' => Carbon::now(),
+          ]);
 
         return ['message' => 'success', 'detail' => 'Publicación enviada correctamente'];
       }

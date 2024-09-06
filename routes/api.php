@@ -509,6 +509,9 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
       Route::get('listado', [LibrosController::class, 'listado']);
       Route::post('registrarPaso1', [LibrosController::class, 'registrarPaso1']);
       Route::get('datosPaso1', [LibrosController::class, 'datosPaso1']);
+
+      Route::get('searchTitulo', [LibrosController::class, 'searchTitulo']);
+      Route::get('searchIsbn', [LibrosController::class, 'searchIsbn']);
     });
 
     //  Capítulos de libros
@@ -516,6 +519,8 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
       Route::get('listado', [CapitulosLibrosController::class, 'listado']);
       Route::post('registrarPaso1', [CapitulosLibrosController::class, 'registrarPaso1']);
       Route::get('datosPaso1', [CapitulosLibrosController::class, 'datosPaso1']);
+
+      Route::get('searchTitulo', [CapitulosLibrosController::class, 'searchTitulo']);
     });
 
     //  Participación en eventos
@@ -523,6 +528,8 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
       Route::get('listado', [EventoController::class, 'listado']);
       Route::post('registrarPaso1', [EventoController::class, 'registrarPaso1']);
       Route::get('datosPaso1', [EventoController::class, 'datosPaso1']);
+
+      Route::get('searchTitulo', [EventoController::class, 'searchTitulo']);
     });
 
     //  Tesis propias
