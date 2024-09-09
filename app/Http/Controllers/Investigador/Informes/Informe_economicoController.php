@@ -243,15 +243,7 @@ class Informe_economicoController extends S3Controller {
         ->get();
 
       //  Informe de cumplimiento
-      $integrantes = DB::table('Proyecto_integrante AS a')
-        ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
-        ->join('Proyecto_integrante_tipo AS c', 'c.id', '=', 'a.proyecto_integrante_tipo_id')
-        ->select([
-          DB::raw("CONCAT(b.apellido1, ' ', b.apellido2, ' ', b.nombres) AS nombres"),
-        ])
-        ->where('a.proyecto_id', '=', $datos->proyecto_id)
-        ->where('c.condicion', '=', 'titular')
-        ->get();
+      $informe = $this->integrantesCumplimiento($request);
 
       return [
         'cifras' => [
@@ -268,7 +260,7 @@ class Informe_economicoController extends S3Controller {
           'solicitud' => $result,
           'historial' => $historial,
         ],
-        'integrantes' => $integrantes
+        'informe' => $informe
       ];
     }
   }
@@ -1090,5 +1082,59 @@ class Informe_economicoController extends S3Controller {
       ['proyecto' => $proyecto, 'bienes' => $bienes, 'servicios' => $servicios]
     );
     return $pdf->stream();
+  }
+
+  /**
+   * Informe de cumplimiento
+   */
+
+  public function integrantesCumplimiento(Request $request) {
+    $count = DB::table('Geco_proyecto AS a')
+      ->join('Geco_informe AS b', 'b.geco_proyecto_id', '=', 'a.id')
+      ->where('a.id', '=', $request->query('id'))
+      ->count();
+
+    if ($count == 0) {
+      $listado = DB::table('Geco_proyecto AS a')
+        ->join('Proyecto_integrante AS b', 'b.proyecto_id', '=', 'a.proyecto_id')
+        ->join('Usuario_investigador AS c', function (JoinClause $join) {
+          $join->on('c.id', '=', 'b.investigador_id')
+            ->where('c.tipo', '=', 'DOCENTE PERMANENTE');
+        })
+        ->select([
+          'b.id',
+          DB::raw("CONCAT(c.apellido1, ' ', c.apellido2, ' ', c.nombres) AS nombres"),
+        ])
+        ->where('a.id', '=', $request->query('id'))
+        ->where('c.id', '!=', $request->attributes->get('token_decoded')->investigador_id)
+        ->get();
+
+      return [
+        'estado' => 0,
+        'listado' => $listado
+      ];
+    } else {
+      $listado = DB::table('Geco_proyecto AS a')
+        ->join('Proyecto_integrante AS b', 'b.proyecto_id', '=', 'a.proyecto_id')
+        ->join('Usuario_investigador AS c', function (JoinClause $join) {
+          $join->on('c.id', '=', 'b.investigador_id')
+            ->where('c.tipo', '=', 'DOCENTE PERMANENTE');
+        })
+        ->leftJoin('Geco_informe_actividad AS d', 'd.proyecto_integrante_id', '=', 'b.id')
+        ->select([
+          'b.id',
+          DB::raw("CONCAT(c.apellido1, ' ', c.apellido2, ' ', c.nombres) AS nombres"),
+          'd.actividad',
+          'd.cumplimiento'
+        ])
+        ->where('a.id', '=', $request->query('id'))
+        ->where('c.id', '!=', $request->attributes->get('token_decoded')->investigador_id)
+        ->get();
+
+      return [
+        'estado' => 2,
+        'listado' => $listado
+      ];
+    }
   }
 }
