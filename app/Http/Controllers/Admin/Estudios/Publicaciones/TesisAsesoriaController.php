@@ -45,6 +45,13 @@ class TesisAsesoriaController extends S3Controller {
     ];
   }
 
+  public function infoNuevo() {
+    $utils = new PublicacionesUtilsController();
+    $paises = $utils->getPaises();
+
+    return $paises;
+  }
+
   public function reporte(Request $request) {
     $publicacion = DB::table('Publicacion AS a')
       ->leftJoin('Publicacion_categoria AS b', 'b.id', '=', 'a.categoria_id')
@@ -118,7 +125,7 @@ class TesisAsesoriaController extends S3Controller {
           'tipo_publicacion' => 'tesis-asesoria',
           'estado' => 6,
           'created_at' => $date,
-          'updated_at' => $date()
+          'updated_at' => $date
         ]);
 
         foreach ($request->input('palabras_clave') as $palabra) {

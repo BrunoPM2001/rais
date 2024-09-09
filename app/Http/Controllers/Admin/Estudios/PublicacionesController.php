@@ -517,6 +517,26 @@ class PublicacionesController extends S3Controller {
 
   public function paso1(Request $request) {
     if ($request->input('id') == null) {
+      switch ($request->tipo) {
+        case "articulo":
+          $p1 = new ArticulosController();
+          return $p1->registrarPaso1($request);
+        case "capitulo":
+          $p1 = new CapitulosLibrosController();
+          return $p1->registrarPaso1($request);
+        case "evento":
+          $p1 = new EventoController();
+          return $p1->registrarPaso1($request);
+        case "libro":
+          $p1 = new LibrosController();
+          return $p1->registrarPaso1($request);
+        case "tesis-asesoria":
+          $p1 = new TesisAsesoriaController();
+          return $p1->registrarPaso1($request);
+        case "tesis":
+          $p1 = new TesisPropiasController();
+          return $p1->registrarPaso1($request);
+      }
     } else {
       $pub = DB::table('Publicacion')
         ->select([
@@ -546,5 +566,38 @@ class PublicacionesController extends S3Controller {
           return $p1->registrarPaso1($request);
       }
     }
+  }
+
+  public function infoNuevo(Request $request) {
+    switch ($request->query('tipo')) {
+      case "articulo":
+        $util1 = new ArticulosController();
+        $data = $util1->infoNuevo();
+        break;
+      case "libro":
+        $util1 = new LibrosController();
+        $data = $util1->infoNuevo();
+        break;
+      case "capitulo":
+        $util1 = new CapitulosLibrosController();
+        $data = $util1->infoNuevo();
+        break;
+      case "tesis":
+        $util1 = new TesisPropiasController();
+        $data = $util1->infoNuevo();
+        break;
+      case "tesis-asesoria":
+        $util1 = new TesisAsesoriaController();
+        $data = $util1->infoNuevo();
+        break;
+      case "evento":
+        $util1 = new EventoController();
+        $data = $util1->infoNuevo();
+        break;
+      default:
+        break;
+    }
+
+    return $data;
   }
 }

@@ -18,6 +18,7 @@ class ArticulosController extends S3Controller {
         'doi',
         'art_tipo',
         'titulo',
+        'resumen',
         'pagina_inicial',
         'pagina_final',
         'fecha_publicacion',
@@ -65,6 +66,17 @@ class ArticulosController extends S3Controller {
       'palabras_clave' => $palabras_clave,
       'indexada' => $indexada,
       'indexada_wos' => $indexada_wos,
+      'revistas' => $revistas,
+      'wos' => $wos
+    ];
+  }
+
+  public function infoNuevo() {
+    $utils =  new PublicacionesUtilsController();
+    $revistas = $utils->listadoRevistasIndexadas();
+    $wos = $utils->listadoWos();
+
+    return [
       'revistas' => $revistas,
       'wos' => $wos
     ];
@@ -144,6 +156,7 @@ class ArticulosController extends S3Controller {
           'doi' => $request->input('doi'),
           'art_tipo' => $request->input('art_tipo')["value"],
           'titulo' => $request->input('titulo'),
+          'resumen' => $request->input('resumen'),
           'pagina_inicial' => $request->input('pagina_inicial'),
           'pagina_final' => $request->input('pagina_final'),
           'fecha_publicacion' => $request->input('fecha_publicacion'),
@@ -198,6 +211,7 @@ class ArticulosController extends S3Controller {
           'doi' => $request->input('doi'),
           'art_tipo' => $request->input('art_tipo')["value"],
           'titulo' => $request->input('titulo'),
+          'resumen' => $request->input('resumen'),
           'pagina_inicial' => $request->input('pagina_inicial'),
           'pagina_final' => $request->input('pagina_final'),
           'fecha_publicacion' => $request->input('fecha_publicacion'),

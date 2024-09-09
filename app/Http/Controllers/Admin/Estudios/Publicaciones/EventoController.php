@@ -54,6 +54,13 @@ class EventoController extends S3Controller {
     ];
   }
 
+  public function infoNuevo() {
+    $utils = new PublicacionesUtilsController();
+    $paises = $utils->getPaises();
+
+    return $paises;
+  }
+
   public function reporte(Request $request) {
     $publicacion = DB::table('Publicacion AS a')
       ->leftJoin('Publicacion_categoria AS b', 'b.id', '=', 'a.categoria_id')

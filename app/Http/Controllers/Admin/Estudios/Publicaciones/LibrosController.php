@@ -12,23 +12,21 @@ use Illuminate\Support\Facades\DB;
 class LibrosController extends S3Controller {
 
   public function datosPaso1(Request $request) {
-    $publicacion = DB::table('Publicacion AS a')
-      ->join('Publicacion_autor AS b', 'b.publicacion_id', '=', 'a.id')
+    $publicacion = DB::table('Publicacion')
       ->select([
-        'a.id',
-        'b.categoria',
-        'a.isbn',
-        'a.titulo',
-        'a.editorial',
-        'a.ciudad',
-        'a.pais',
-        'a.edicion',
-        'a.volumen',
-        'a.pagina_total',
-        'a.fecha_publicacion',
-        'a.url',
+        'id',
+        'isbn',
+        'titulo',
+        'editorial',
+        'ciudad',
+        'pais',
+        'edicion',
+        'volumen',
+        'pagina_total',
+        'fecha_publicacion',
+        'url',
       ])
-      ->where('a.id', '=', $request->query('id'))
+      ->where('id', '=', $request->query('id'))
       ->first();
 
     $palabras_clave = DB::table('Publicacion_palabra_clave')
@@ -46,6 +44,13 @@ class LibrosController extends S3Controller {
       'palabras_clave' => $palabras_clave,
       'paises' => $paises
     ];
+  }
+
+  public function infoNuevo() {
+    $utils = new PublicacionesUtilsController();
+    $paises = $utils->getPaises();
+
+    return $paises;
   }
 
   public function reporte(Request $request) {

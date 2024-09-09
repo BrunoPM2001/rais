@@ -211,6 +211,7 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
       Route::get('detalle', [PublicacionesController::class, 'detalle']);
       Route::post('updateDetalle', [PublicacionesController::class, 'updateDetalle']);
       Route::get('getTabs', [PublicacionesController::class, 'getTabs']);
+      Route::get('infoNuevo', [PublicacionesController::class, 'infoNuevo']);
 
       //  Paso 1
       Route::post('paso1', [PublicacionesController::class, 'paso1']);
