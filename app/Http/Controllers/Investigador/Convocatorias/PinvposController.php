@@ -250,6 +250,7 @@ class PinvposController extends S3Controller {
         'c.doc_numero',
         'c.email3',
         'd.nombre AS facultad',
+        'd.id AS facultad_id',
         'c.codigo',
         'c.tipo',
         DB::raw("CONCAT('/minio/proyecto-doc/', e.archivo) AS url"),
@@ -297,7 +298,61 @@ class PinvposController extends S3Controller {
         ->whereNotIn('b.id', $partidaIds)
         ->get();
 
-      return ['estado' => true, 'datos' => $habilitado, 'partidas' => $partidas, 'presupuesto' => $presupuesto];
+      //  Montos
+      $monto_coefinanciamiento = 0;
+      $subvencion = 0;
+
+      switch ($habilitado->facultad_id) {
+        case 19:
+        case 11:
+        case 20:
+          $subvencion = 5150;
+          $monto_coefinanciamiento = 7725;
+          break;
+        case 12:
+        case 2:
+        case 16:
+        case 18:
+        case 9:
+        case 17:
+        case 14:
+        case 6:
+          $subvencion = 5150;
+          $monto_coefinanciamiento = 10300;
+          break;
+        case 13:
+        case 15:
+        case 7:
+          $subvencion = 5150;
+          $monto_coefinanciamiento = 12875;
+          break;
+        case 5:
+        case 4:
+          $subvencion = 5150;
+          $monto_coefinanciamiento = 15450;
+          break;
+        case 3:
+        case 8:
+        case 1:
+        case 10:
+          $subvencion = 5150;
+          $monto_coefinanciamiento = 18025;
+          break;
+        default:
+          $monto_asignado = 0;
+          break;
+      }
+
+      return [
+        'estado' => true,
+        'datos' => $habilitado,
+        'partidas' => $partidas,
+        'presupuesto' => $presupuesto,
+        'montos' => [
+          'monto_coefinanciamiento' => $monto_coefinanciamiento,
+          'subvencion' => $subvencion,
+        ]
+      ];
     }
   }
 
