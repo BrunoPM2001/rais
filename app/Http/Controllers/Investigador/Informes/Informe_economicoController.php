@@ -243,7 +243,12 @@ class Informe_economicoController extends S3Controller {
         ->get();
 
       //  Informe de cumplimiento
-      $informe = $this->integrantesCumplimiento($request);
+      $informe = [];
+      if ($porcentaje != 100) {
+        $informe = ['estado' => 2];
+      } else {
+        $informe = $this->integrantesCumplimiento($request);
+      }
 
       return [
         'cifras' => [
@@ -1132,9 +1137,43 @@ class Informe_economicoController extends S3Controller {
         ->get();
 
       return [
-        'estado' => 2,
+        'estado' => 1,
         'listado' => $listado
       ];
+    }
+  }
+
+  public function enviarInforme(Request $request) {
+    $count = DB::table('Geco_informe')
+      ->where('geco_proyecto_id', '=', $request->input('id'))
+      ->count();
+
+    if ($count == 0) {
+
+      $now = Carbon::now();
+
+      $id = DB::table('Geco_informe')
+        ->insertGetId([
+          'geco_proyecto_id' => $request->input('id'),
+          'created_at' => $now,
+          'updated_at' => $now,
+        ]);
+
+      foreach ($request->input('listado') as $item) {
+        DB::table('Geco_informe_actividad')
+          ->insert([
+            'geco_informe_id' => $id,
+            'proyecto_integrante_id' => $item["id"],
+            'actividad' => $item["actividad"],
+            'cumplimiento' => $item["cumplimiento"],
+            'created_at' => $now,
+            'updated_at' => $now,
+          ]);
+      }
+
+      return ['message' => 'info', 'detail' => 'Informe enviado correctamente'];
+    } else {
+      return ['message' => 'error', 'detail' => 'Ya presenta un registro de informe'];
     }
   }
 }

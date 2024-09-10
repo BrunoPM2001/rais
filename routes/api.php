@@ -718,6 +718,8 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
 
       Route::get('reportePresupuesto', [Informe_economicoController::class, 'reportePresupuesto']);
       Route::get('detalleGasto', [Informe_economicoController::class, 'detalleGasto']);
+
+      Route::post('enviarInforme', [Informe_economicoController::class, 'enviarInforme']);
     });
 
     Route::prefix('informe_academico')->group(function () {
