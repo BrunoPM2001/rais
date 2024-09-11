@@ -28,6 +28,7 @@ class Informe_economicoController extends S3Controller {
         END AS estado')
       )
       ->where('c.condicion', '=', 'Responsable')
+      ->whereIn('a.estado', [1, 8])
       ->where('a.periodo', '>', 2017)
       ->whereNotIn('a.tipo_proyecto', ['PSINFINV', 'PSINFIPU'])
       ->where('d.id', '=', $request->attributes->get('token_decoded')->investigador_id)

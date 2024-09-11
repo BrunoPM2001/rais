@@ -550,6 +550,19 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
     //  Propiedad intelectual
     Route::prefix('propiedadInt')->group(function () {
       Route::get('listado', [PropiedadIntelectualController::class, 'listado']);
+      Route::get('verificar1', [PropiedadIntelectualController::class, 'verificar1']);
+      Route::post('registrar1', [PropiedadIntelectualController::class, 'registrar1']);
+
+      Route::get('verificar2', [PropiedadIntelectualController::class, 'verificar2']);
+      Route::post('addTitular', [PropiedadIntelectualController::class, 'addTitular']);
+      Route::delete('deleteTitular', [PropiedadIntelectualController::class, 'deleteTitular']);
+
+      Route::get('verificar3', [PropiedadIntelectualController::class, 'verificar3']);
+      Route::post('addAutor', [PropiedadIntelectualController::class, 'addAutor']);
+      Route::delete('deleteAutor', [PropiedadIntelectualController::class, 'deleteAutor']);
+
+      Route::get('verificar4', [PropiedadIntelectualController::class, 'verificar4']);
+      Route::post('registrar4', [PropiedadIntelectualController::class, 'registrar4']);
     });
 
     //  Utils
