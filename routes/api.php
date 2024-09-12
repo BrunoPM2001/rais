@@ -49,6 +49,7 @@ use App\Http\Controllers\Investigador\Actividades\PublicacionLibrosUniController
 use App\Http\Controllers\Investigador\Actividades\TalleresController;
 use App\Http\Controllers\Investigador\Convocatorias\PinvposController;
 use App\Http\Controllers\Investigador\Convocatorias\ProCTIController;
+use App\Http\Controllers\Investigador\Convocatorias\PsinfinvController;
 use App\Http\Controllers\Investigador\DashboardController as InvestigadorDashboardController;
 use App\Http\Controllers\Investigador\Publicaciones\ArticulosController;
 use App\Http\Controllers\Investigador\Publicaciones\CapitulosLibrosController;
@@ -676,6 +677,16 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
       Route::post('agregarPartida', [PinvposController::class, 'agregarPartida']);
       Route::put('actualizarPartida', [PinvposController::class, 'actualizarPartida']);
       Route::delete('eliminarPartida', [PinvposController::class, 'eliminarPartida']);
+    });
+
+    Route::prefix('psinfinv')->group(function () {
+      Route::get('verificar', [PsinfinvController::class, 'verificar']);
+
+      Route::get('verificar1', [PsinfinvController::class, 'verificar1']);
+      Route::post('registrar1', [PsinfinvController::class, 'registrar1']);
+
+      Route::get('verificar2', [PsinfinvController::class, 'verificar2']);
+      Route::post('registrar2', [PsinfinvController::class, 'registrar2']);
     });
 
     Route::get('verificar', [ProCTIController::class, 'verificar']);
