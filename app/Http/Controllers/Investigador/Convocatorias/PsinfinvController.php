@@ -272,16 +272,10 @@ class PsinfinvController extends S3Controller {
     DB::table('Proyecto_descripcion')->updateOrInsert(['codigo' => 'metodologia_trabajo', 'proyecto_id' => $request->input('id')], ['detalle' => $request->input('metodologia_trabajo')]);
     DB::table('Proyecto_descripcion')->updateOrInsert(['codigo' => 'referencias_bibliograficas', 'proyecto_id' => $request->input('id')], ['detalle' => $request->input('referencias_bibliograficas')]);
 
-    $palabrasConcatenadas = "";
-    foreach ($request->input('palabras_clave') as $palabra) {
-      $palabrasConcatenadas = $palabrasConcatenadas . $palabra["label"] . ",";
-    }
-    $palabrasConcatenadas = rtrim($palabrasConcatenadas, ',');
-
     DB::table('Proyecto')
       ->where('id', '=', $request->input('id'))
       ->update([
-        'palabras_clave' => $palabrasConcatenadas,
+        'palabras_clave' => $request->input('palabras_clave'),
         'step' => 3,
       ]);
 
