@@ -13,12 +13,12 @@ use PhpOffice\PhpWord\PhpWord;
 class ProyectosGrupoController extends S3Controller {
   public function listado($periodo) {
     $proyectos = DB::table('Proyecto AS a')
-      ->join('Grupo AS b', 'b.id', '=', 'a.grupo_id')
+      ->leftJoin('Grupo AS b', 'b.id', '=', 'a.grupo_id')
       ->leftJoin('Linea_investigacion AS c', 'c.id', '=', 'a.linea_investigacion_id')
       ->leftJoin('Proyecto_integrante AS d', 'd.proyecto_id', '=', 'a.id')
-      ->join('Facultad AS e', 'e.id', '=', 'b.facultad_id')
+      ->leftJoin('Facultad AS e', 'e.id', '=', 'b.facultad_id')
       ->leftJoin('Proyecto_presupuesto AS f', 'f.proyecto_id', '=', 'a.id')
-      ->join('Usuario_investigador AS g', 'g.id', '=', 'd.investigador_id')
+      ->leftJoin('Usuario_investigador AS g', 'g.id', '=', 'd.investigador_id')
       ->select(
         'a.id',
         'a.tipo_proyecto',

@@ -689,6 +689,21 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
       Route::post('registrar2', [PsinfinvController::class, 'registrar2']);
 
       Route::get('verificar3', [PsinfinvController::class, 'verificar3']);
+
+      Route::get('verificar4', [PsinfinvController::class, 'verificar4']);
+      Route::get('listadoGrupoDocente', [PsinfinvController::class, 'listadoGrupoDocente']);
+      Route::get('listadoGrupoExterno', [PsinfinvController::class, 'listadoGrupoExterno']);
+      Route::get('listadoGrupoEstudiante', [PsinfinvController::class, 'listadoGrupoEstudiante']);
+      Route::post('agregarIntegrante', [PsinfinvController::class, 'agregarIntegrante']);
+      Route::delete('eliminarIntegrante', [PsinfinvController::class, 'eliminarIntegrante']);
+
+      Route::get('verificar5', [PsinfinvController::class, 'verificar5']);
+      Route::post('addActividad', [PsinfinvController::class, 'addActividad']);
+      Route::delete('eliminarActividad', [PinvposController::class, 'eliminarActividad']);
+
+      Route::get('verificar6', [PsinfinvController::class, 'verificar6']);
+      Route::get('reporte', [PsinfinvController::class, 'reporte']);
+      Route::post('enviar', [PsinfinvController::class, 'enviar']);
     });
 
     Route::get('verificar', [ProCTIController::class, 'verificar']);

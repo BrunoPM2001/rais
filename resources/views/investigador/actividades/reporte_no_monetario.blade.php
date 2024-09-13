@@ -90,13 +90,6 @@
       margin-bottom: 30px;
     }
 
-    .firmas {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 10px;
-      margin-top: 120px;
-    }
-
     .table>thead th {
       font-size: 10px;
       border: 1.5px solid #000;

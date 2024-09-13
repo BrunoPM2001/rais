@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Investigador\Convocatorias;
 
 use App\Http\Controllers\S3Controller;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Database\Query\JoinClause;
 use Illuminate\Http\Request;
@@ -13,6 +14,7 @@ class PsinfinvController extends S3Controller {
   //  Verifica las condiciones para participar
   public function verificar(Request $request, $proyecto_id = null) {
     $errores = [];
+    $req4 = null;
 
     //  Ser coordinador de un grupo de investigación
     $req1 = DB::table('Usuario_investigador AS a')
@@ -26,19 +28,49 @@ class PsinfinvController extends S3Controller {
     $req1 == 0 && $errores[] = "Necesita ser coordinador de un grupo de investigación";
 
     if ($proyecto_id != null) {
-      $req2 = DB::table('Proyecto_integrante')
-        ->where('proyecto_id', '=', $proyecto_id)
-        ->where('investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
-        ->where('condicion', '=', 'Responsable')
+      $req2 = DB::table('Proyecto_integrante AS a')
+        ->join('Proyecto AS b', 'b.id', '=', 'a.proyecto_id')
+        ->where('a.proyecto_id', '=', $proyecto_id)
+        ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+        ->where('a.condicion', '=', 'Responsable')
+        ->where('b.tipo_proyecto', '=', 'PSINFINV')
         ->count();
 
       $req2 == 0 && $errores[] = "No figura como responsable del proyecto";
+    } else {
+      $req3 = DB::table('Proyecto_integrante AS a')
+        ->join('Proyecto AS b', 'b.id', '=', 'a.proyecto_id')
+        ->where('a.condicion', '=', 'Responsable')
+        ->where('b.tipo_proyecto', '=', 'PSINFINV')
+        ->where('b.periodo', '=', 2024)
+        ->where('b.estado', '!=', 6)
+        ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+        ->count();
+
+      $req3 > 0 && $errores[] = "Ya ha enviado un proyecto";
+
+      $req4 = DB::table('Proyecto_integrante AS a')
+        ->join('Proyecto AS b', 'b.id', '=', 'a.proyecto_id')
+        ->select([
+          'b.id',
+          'b.step'
+        ])
+        ->where('a.condicion', '=', 'Responsable')
+        ->where('b.tipo_proyecto', '=', 'PSINFINV')
+        ->where('b.periodo', '=', 2024)
+        ->where('b.estado', '=', 6)
+        ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+        ->first();
     }
 
     if (!empty($errores)) {
       return ['estado' => false, 'errores' => $errores];
     } else {
-      return ['estado' => true];
+      if ($req4 == null) {
+        return ['estado' => true];
+      } else {
+        return ['estado' => true, 'id' => $req4->id, 'step' => $req4->step];
+      }
     }
   }
 
@@ -47,6 +79,10 @@ class PsinfinvController extends S3Controller {
     $res1 = $this->verificar($request, $request->query('id'));
     if (!$res1["estado"]) {
       return $res1;
+    } else {
+      if (isset($res1["id"])) {
+        return ['go' => $res1["id"], 'step' => $res1["step"]];
+      }
     }
 
     $datos = DB::table('Usuario_investigador AS a')
@@ -373,5 +409,326 @@ class PsinfinvController extends S3Controller {
       'estado' => true,
       'data' => $data,
     ];
+  }
+
+  public function verificar4(Request $request) {
+    $res1 = $this->verificar($request, $request->query('id'));
+    if (!$res1["estado"]) {
+      return $res1;
+    }
+
+    $integrantes = DB::table('Proyecto_integrante AS a')
+      ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
+      ->join('Proyecto_integrante_tipo AS c', 'c.id', '=', 'a.proyecto_integrante_tipo_id')
+      ->select([
+        'a.id',
+        'c.nombre AS tipo_integrante',
+        DB::raw("CONCAT(b.apellido1, ' ', b.apellido2, ', ', b.nombres) AS nombre"),
+        'b.tipo',
+        'a.tipo_tesis',
+        'a.titulo_tesis',
+        'a.excluido'
+      ])
+      ->where('a.proyecto_id', '=', $request->query('id'))
+      ->get();
+
+    return ['estado' => true, 'integrantes' => $integrantes];
+  }
+
+  public function listadoGrupoDocente(Request $request) {
+    $grupo = DB::table('Grupo_integrante')
+      ->select([
+        'grupo_id'
+      ])
+      ->where('investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+      ->where('cargo', '=', 'Coordinador')
+      ->first();
+
+    $listado = Db::table('Grupo_integrante AS a')
+      ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
+      ->select(
+        DB::raw("CONCAT(b.tipo, ' - ' , a.condicion, ' | ', b.apellido1, ' ', b.apellido2, ', ', b.nombres) AS value"),
+        'a.investigador_id',
+        'a.id AS grupo_integrante_id',
+        'a.grupo_id'
+      )
+      ->having('value', 'LIKE', '%' . $request->query('query') . '%')
+      ->whereNot('a.condicion', 'LIKE', 'Ex%')
+      ->where('a.grupo_id', '=', $grupo->grupo_id)
+      ->where('b.tipo', 'LIKE', '%DOCENTE%')
+      ->limit(10)
+      ->get();
+
+    return $listado;
+  }
+
+  public function listadoGrupoExterno(Request $request) {
+    $grupo = DB::table('Grupo_integrante')
+      ->select([
+        'grupo_id'
+      ])
+      ->where('investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+      ->where('cargo', '=', 'Coordinador')
+      ->first();
+
+    $listado = Db::table('Grupo_integrante AS a')
+      ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
+      ->select(
+        DB::raw("CONCAT(b.tipo, ' - ' , a.condicion, ' | ', b.apellido1, ' ', b.apellido2, ', ', b.nombres) AS value"),
+        'a.investigador_id',
+        'a.id AS grupo_integrante_id',
+        'a.grupo_id'
+      )
+      ->having('value', 'LIKE', '%' . $request->query('query') . '%')
+      ->whereNot('a.condicion', 'LIKE', 'Ex%')
+      ->where('a.grupo_id', '=', $grupo->grupo_id)
+      ->where('b.tipo', '=', 'Externo')
+      ->limit(10)
+      ->get();
+
+    return $listado;
+  }
+
+  public function listadoGrupoEstudiante(Request $request) {
+    $grupo = DB::table('Grupo_integrante')
+      ->select([
+        'grupo_id'
+      ])
+      ->where('investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+      ->where('cargo', '=', 'Coordinador')
+      ->first();
+
+    $listado = Db::table('Grupo_integrante AS a')
+      ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
+      ->select(
+        DB::raw("CONCAT(b.tipo, ' - ' , a.condicion, ' | ', b.apellido1, ' ', b.apellido2, ', ', b.nombres) AS value"),
+        'a.investigador_id',
+        'a.id AS grupo_integrante_id',
+        'a.grupo_id'
+      )
+      ->having('value', 'LIKE', '%' . $request->query('query') . '%')
+      ->whereNot('a.condicion', 'LIKE', 'Ex%')
+      ->where('a.grupo_id', '=', $grupo->grupo_id)
+      ->where('b.tipo', 'LIKE', 'Estudiante%')
+      ->limit(10)
+      ->get();
+
+    return $listado;
+  }
+
+  public function agregarIntegrante(Request $request) {
+    $count = DB::table('Proyecto_integrante')
+      ->where('proyecto_id', '=', $request->input('id'))
+      ->where('investigador_id', '=', $request->input('investigador_id'))
+      ->count();
+
+    if ($count == 0) {
+
+      if ($request->input('tipo_tesis') == null) {
+        DB::table('Proyecto_integrante')
+          ->insert([
+            'proyecto_id' => $request->input('id'),
+            'grupo_id' => $request->input('grupo_id'),
+            'investigador_id' => $request->input('investigador_id'),
+            'grupo_integrante_id' => $request->input('grupo_integrante_id'),
+            'proyecto_integrante_tipo_id' => $request->input('proyecto_integrante_tipo_id'),
+            'contribucion' => $request->input('contribucion'),
+            'excluido' => 'Incluido',
+            'created_at' => Carbon::now(),
+            'updated_at' => Carbon::now(),
+          ]);
+      } else {
+        DB::table('Proyecto_integrante')
+          ->insert([
+            'proyecto_id' => $request->input('id'),
+            'grupo_id' => $request->input('grupo_id'),
+            'investigador_id' => $request->input('investigador_id'),
+            'grupo_integrante_id' => $request->input('grupo_integrante_id'),
+            'proyecto_integrante_tipo_id' => $request->input('proyecto_integrante_tipo_id'),
+            'contribucion' => $request->input('contribucion'),
+            'tipo_tesis' => $request?->input('tipo_tesis')["value"],
+            'titulo_tesis' => $request->input('titulo_tesis'),
+            'excluido' => 'Incluido',
+            'created_at' => Carbon::now(),
+            'updated_at' => Carbon::now(),
+          ]);
+      }
+
+      return ['message' => 'success', 'detail' => 'Integrante añadido'];
+    } else {
+      return ['message' => 'error', 'detail' => 'No puede añadir al mismo integrante 2 veces'];
+    }
+  }
+
+  public function eliminarIntegrante(Request $request) {
+    DB::table('Proyecto_integrante')
+      ->where('id', '=', $request->query('id'))
+      ->delete();
+
+    return ['message' => 'info', 'detail' => 'Integrante eliminado'];
+  }
+
+  public function verificar5(Request $request) {
+    $res1 = $this->verificar($request, $request->query('id'));
+    if (!$res1["estado"]) {
+      return $res1;
+    }
+
+    $actividades = DB::table('Proyecto_actividad AS a')
+      ->join('Proyecto_integrante AS b', 'b.id', '=', 'a.proyecto_integrante_id')
+      ->join('Usuario_investigador AS c', 'c.id', '=', 'b.investigador_id')
+      ->select([
+        'a.id',
+        'a.actividad',
+        DB::raw("CONCAT(c.apellido1, ' ', c.apellido2, ', ', c.nombres) AS responsable"),
+        'a.fecha_inicio',
+        'a.fecha_fin',
+      ])
+      ->where('a.proyecto_id', '=', $request->query('id'))
+      ->get();
+
+    $integrantes = DB::table('Proyecto_integrante AS a')
+      ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
+      ->join('Proyecto_integrante_tipo AS c', 'c.id', '=', 'a.proyecto_integrante_tipo_id')
+      ->select([
+        'a.id AS value',
+        DB::raw("CONCAT(c.nombre, ' | ', b.apellido1, ' ', b.apellido2, ', ', b.nombres) AS label"),
+      ])
+      ->where('a.proyecto_id', '=', $request->query('id'))
+      ->get();
+
+    return ['estado' => true, 'actividades' => $actividades, 'integrantes' => $integrantes];
+  }
+
+  public function addActividad(Request $request) {
+    DB::table('Proyecto_actividad')
+      ->insert([
+        'proyecto_id' => $request->input('id'),
+        'proyecto_integrante_id' => $request->input('responsable')["value"],
+        'actividad' => $request->input('actividad'),
+        'fecha_inicio' => $request->input('fecha_inicio'),
+        'fecha_fin' => $request->input('fecha_fin'),
+      ]);
+
+    return ['message' => 'info', 'detail' => 'Actividad añadida'];
+  }
+
+  public function eliminarActividad(Request $request) {
+    DB::table('Proyecto_actividad')
+      ->where('id', '=', $request->query('id'))
+      ->delete();
+
+    return ['message' => 'info', 'detail' => 'Actividad eliminada'];
+  }
+
+  public function verificar6(Request $request) {
+    $res1 = $this->verificar($request, $request->query('id'));
+    if (!$res1["estado"]) {
+      return $res1;
+    }
+
+    return ['estado' => true];
+  }
+
+  public function reporte(Request $request) {
+    $proyecto = DB::table('Proyecto AS a')
+      ->join('Proyecto_descripcion AS b', function (JoinClause $join) {
+        $join->on('a.id', '=', 'b.proyecto_id')
+          ->where('codigo', '=', 'tipo_investigacion');
+      })
+      ->join('Grupo AS c', 'c.id', '=', 'a.grupo_id')
+      ->join('Facultad AS d', 'd.id', '=', 'a.facultad_id')
+      ->join('Area AS e', 'e.id', '=', 'd.area_id')
+      ->join('Linea_investigacion AS f', 'f.id', '=', 'a.linea_investigacion_id')
+      ->join('Ocde AS g', 'g.id', '=', 'a.ocde_id')
+      ->select([
+        'a.titulo',
+        'c.grupo_nombre',
+        'e.nombre AS area',
+        'd.nombre AS facultad',
+        'f.nombre AS linea',
+        'b.detalle AS tipo_investigacion',
+        'a.localizacion',
+        'g.linea AS ocde',
+        'a.palabras_clave'
+      ])
+      ->where('a.id', '=', $request->query('id'))
+      ->first();
+
+    $detalles = DB::table('Proyecto_descripcion')
+      ->select([
+        'codigo',
+        'detalle'
+      ])
+      ->where('proyecto_id', '=', $request->query('id'))
+      ->get()
+      ->mapWithKeys(function ($item) {
+        return [$item->codigo => $item->detalle];
+      });
+
+    $responsable = DB::table('Proyecto_integrante AS a')
+      ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
+      ->join('Facultad AS c', 'c.id', '=', 'b.facultad_id')
+      ->join('Dependencia AS d', 'd.id', '=', 'b.dependencia_id')
+      ->select([
+        'b.codigo',
+        'd.dependencia',
+        'c.nombre AS facultad',
+        'b.cti_vitae',
+        'b.codigo_orcid',
+        'b.scopus_id',
+        'b.google_scholar',
+      ])
+      ->where('a.proyecto_id', '=', $request->query('id'))
+      ->where('a.condicion', '=', 'Responsable')
+      ->first();
+
+    $integrantes = DB::table('Proyecto_integrante AS a')
+      ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
+      ->join('Proyecto_integrante_tipo AS c', 'c.id', '=', 'a.proyecto_integrante_tipo_id')
+      ->select([
+        'c.nombre AS condicion',
+        DB::raw("CONCAT(b.apellido1, ' ', b.apellido2, ', ', b.nombres) AS integrante"),
+        'b.tipo',
+        'a.tipo_tesis',
+        'a.titulo_tesis',
+      ])
+      ->where('a.proyecto_id', '=', $request->query('id'))
+      ->get();
+
+    $actividades = DB::table('Proyecto_actividad')
+      ->select([
+        'id',
+        'actividad',
+        'fecha_inicio',
+        'fecha_fin',
+        'duracion'
+      ])
+      ->where('proyecto_id', '=', $request->query('id'))
+      ->get();
+
+    $pdf = Pdf::loadView('investigador.convocatorias.psinfinv', [
+      'proyecto' => $proyecto,
+      'responsable' => $responsable,
+      'integrantes' => $integrantes,
+      'detalles' => $detalles,
+      'actividades' => $actividades,
+    ]);
+    return $pdf->stream();
+  }
+
+  public function enviar(Request $request) {
+    $count = DB::table('Proyecto')
+      ->where('id', '=', $request->input('id'))
+      ->where('estado', '=', 6)
+      ->update([
+        'estado' => 5
+      ]);
+
+    if ($count > 0) {
+      return ['message' => 'info', 'detail' => 'Proyecto enviado para evaluación'];
+    } else {
+      return ['message' => 'error', 'detail' => 'Ya ha enviado su solicitud'];
+    }
   }
 }
