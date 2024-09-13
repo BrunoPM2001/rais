@@ -25,7 +25,7 @@ class PsinfinvController extends S3Controller {
 
     $req1 == 0 && $errores[] = "Necesita ser coordinador de un grupo de investigación";
 
-    if (!$proyecto_id) {
+    if ($proyecto_id != null) {
       $req2 = DB::table('Proyecto_integrante')
         ->where('proyecto_id', '=', $proyecto_id)
         ->where('investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
@@ -253,7 +253,7 @@ class PsinfinvController extends S3Controller {
     return [
       'estado' => true,
       'descripcion' => $descripcion,
-      'palabras_clave' => $palabras_clave,
+      'palabras_clave' => $palabras_clave->palabras_clave,
       'archivos' => [
         'metodologia' => $archivo1?->url,
         'propiedad' => $archivo2?->url,
@@ -332,5 +332,46 @@ class PsinfinvController extends S3Controller {
           'updated_at' => Carbon::now(),
         ]);
     }
+
+    return ['message' => 'success', 'detail' => 'Datos guardados'];
+  }
+
+  public function verificar3(Request $request) {
+    $res1 = $this->verificar($request, $request->query('id'));
+    if (!$res1["estado"]) {
+      return $res1;
+    }
+
+    $data = DB::table('Usuario_investigador AS a')
+      ->join('Facultad AS b', 'b.id', '=', 'a.facultad_id')
+      ->join('Dependencia AS c', 'c.id', '=', 'a.dependencia_id')
+      ->select([
+        DB::raw("CONCAT(a.apellido1, ' ', a.apellido2, ', ', a.nombres) AS nombres"),
+        'a.doc_numero',
+        'a.fecha_nac',
+        'a.especialidad',
+        'a.titulo_profesional',
+        'a.grado',
+        'a.tipo',
+        DB::raw("CASE
+          WHEN SUBSTRING_INDEX(SUBSTRING_INDEX(a.docente_categoria, '-', 2), '-', -1) = '1' THEN 'Dedicación Exclusiva'
+          WHEN SUBSTRING_INDEX(SUBSTRING_INDEX(a.docente_categoria, '-', 2), '-', -1) = '2' THEN 'Tiempo Completo'
+          WHEN SUBSTRING_INDEX(SUBSTRING_INDEX(a.docente_categoria, '-', 2), '-', -1) = '3' THEN 'Tiempo Parcial'
+          ELSE 'Sin clase'
+        END AS clase"),
+        'a.codigo',
+        'c.dependencia',
+        'b.nombre AS facultad',
+        'a.codigo_orcid',
+        'a.scopus_id',
+        'a.google_scholar',
+      ])
+      ->where('a.id', '=', $request->attributes->get('token_decoded')->investigador_id)
+      ->first();
+
+    return [
+      'estado' => true,
+      'data' => $data,
+    ];
   }
 }

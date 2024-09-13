@@ -687,6 +687,8 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
 
       Route::get('verificar2', [PsinfinvController::class, 'verificar2']);
       Route::post('registrar2', [PsinfinvController::class, 'registrar2']);
+
+      Route::get('verificar3', [PsinfinvController::class, 'verificar3']);
     });
 
     Route::get('verificar', [ProCTIController::class, 'verificar']);
