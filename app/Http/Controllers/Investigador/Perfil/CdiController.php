@@ -251,8 +251,18 @@ class CdiController extends S3Controller {
 
     function obtenerFechaActual() {
       $meses = [
-        1 => 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-        'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+        1 => 'Enero',
+        'Febrero',
+        'Marzo',
+        'Abril',
+        'Mayo',
+        'Junio',
+        'Julio',
+        'Agosto',
+        'Septiembre',
+        'Octubre',
+        'Noviembre',
+        'Diciembre'
       ];
 
       $fecha = new DateTime();
@@ -785,13 +795,16 @@ class CdiController extends S3Controller {
   /**
    *  Verificar los prerrequisitos para solicitar la constancia:
    *  Orcid asociado al rais, no tener en blanco el CTI Vitae ni
-   *  el Google Scholar
+   *  el Google Scholar, el nivel de renacyt tiene que ser diferente
+   *  a Carlos Monge y Maria R.
    */
   public function preCdi(Request $request) {
     $cuenta = DB::table('Usuario_investigador AS a')
       ->join('Token_investigador_orcid AS b', 'b.investigador_id', '=', 'a.id')
       ->where('a.id', '=', $request->attributes->get('token_decoded')->investigador_id)
       ->where('a.cti_vitae', '!=', '')
+      ->whereNot('a.renacyt_nivel', 'LIKE', '%worows%')
+      ->whereNot('a.renacyt_nivel', 'LIKE', '%Monge%')
       ->where('a.google_scholar', '!=', '')
       ->count();
 

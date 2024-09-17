@@ -197,10 +197,36 @@ class DocenteInvestigadorController extends S3Controller {
     // Verificar si se encontraron los dos años
     $allYearsFound = !in_array(false, $yearsFound);
 
-    $d4 = json_decode($detalles->d4, true);
+    $d4 = DB::table('Publicacion AS a')
+      ->join('Publicacion_autor AS b', 'b.publicacion_id', '=', 'a.id')
+      ->leftJoin('Publicacion_index AS c', 'c.publicacion_id', '=', 'a.id')
+      ->leftJoin('Publicacion_db_indexada AS d', 'd.id', '=', 'c.publicacion_db_indexada_id')
+      ->select([
+        'a.titulo',
+        DB::raw("YEAR(a.fecha_publicacion) AS periodo"),
+        'a.codigo_registro',
+        DB::raw("GROUP_CONCAT(d.nombre SEPARATOR ', ') AS indexada"),
+        DB::raw("CASE(b.filiacion)
+          WHEN 1 THEN 'Sí'
+          WHEN 0 THEN 'No'
+          ELSE '-'
+        END AS filiacion"),
+        DB::raw("CASE(b.filiacion_unica)
+          WHEN 1 THEN 'Sí'
+          WHEN 0 THEN 'No'
+          ELSE '-'
+        END AS filiacion_unica"),
+      ])
+      ->where('b.investigador_id', '=', $detalles->investigador_id)
+      ->where('a.estado', '=', 1)
+      ->whereIn(DB::raw("YEAR(a.fecha_publicacion)"), $lastTwoYears)
+      ->groupBy('a.id')
+      ->get();
+
+    // $d4 = json_decode($detalles->d4, true);
     $filiacion = 0;
     foreach ($d4 as $item) {
-      if ($item["filiacion"] == 1) {
+      if ($item->filiacion == 1) {
         $filiacion++;
       }
     }
