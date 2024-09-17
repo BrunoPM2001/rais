@@ -192,7 +192,7 @@
     <div class="desc">
       {{ $proyecto->palabras_clave }}
     </div>
-    
+
     <h6>Antecedentes</h6>
     <div class="desc">
       {!! $detalles['antecedentes'] !!}
@@ -226,6 +226,11 @@
     <h6>Referencias bibliográficas</h6>
     <div class="desc">
       {!! $detalles['referencias_bibliograficas'] !!}
+    </div>
+
+    <h6>Resultados esperados</h6>
+    <div class="desc">
+      {!! $detalles['resumen_esperado'] !!}
     </div>
 
     <h5>III. Datos del responsable:</h5>

@@ -3,12 +3,12 @@
 namespace App\Http\Controllers\Investigador\Convocatorias;
 
 use App\Http\Controllers\S3Controller;
-use Barryvdh\DomPDF\Facade\Pdf;
-use Carbon\Carbon;
 use Illuminate\Database\Query\JoinClause;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Carbon\Carbon;
 
 class PsinfinvController extends S3Controller {
   //  Verifica las condiciones para participar
@@ -579,6 +579,7 @@ class PsinfinvController extends S3Controller {
       ->join('Usuario_investigador AS c', 'c.id', '=', 'b.investigador_id')
       ->select([
         'a.id',
+        'a.proyecto_integrante_id',
         'a.actividad',
         DB::raw("CONCAT(c.apellido1, ' ', c.apellido2, ', ', c.nombres) AS responsable"),
         'a.fecha_inicio',
@@ -619,6 +620,19 @@ class PsinfinvController extends S3Controller {
       ->delete();
 
     return ['message' => 'info', 'detail' => 'Actividad eliminada'];
+  }
+
+  public function editActividad(Request $request) {
+    DB::table('Proyecto_actividad')
+      ->where('id', '=', $request->input('id'))
+      ->update([
+        'proyecto_integrante_id' => $request->input('responsable')["value"],
+        'actividad' => $request->input('actividad'),
+        'fecha_inicio' => $request->input('fecha_inicio'),
+        'fecha_fin' => $request->input('fecha_fin'),
+      ]);
+
+    return ['message' => 'info', 'detail' => 'Actividad actualizada'];
   }
 
   public function verificar6(Request $request) {

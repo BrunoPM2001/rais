@@ -699,7 +699,8 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
 
       Route::get('verificar5', [PsinfinvController::class, 'verificar5']);
       Route::post('addActividad', [PsinfinvController::class, 'addActividad']);
-      Route::delete('eliminarActividad', [PinvposController::class, 'eliminarActividad']);
+      Route::delete('eliminarActividad', [PsinfinvController::class, 'eliminarActividad']);
+      Route::put('editActividad', [PsinfinvController::class, 'editActividad']);
 
       Route::get('verificar6', [PsinfinvController::class, 'verificar6']);
       Route::get('reporte', [PsinfinvController::class, 'reporte']);
