@@ -42,6 +42,7 @@ return new class extends Migration {
       $table->string('estado_tecnico')->nullable();
       $table->string('estado_real')->nullable();
       $table->date('fecha_envio_mail')->nullable();
+      $table->string('directiva_evaluacion')->nullable();
       $table->timestamps();
 
       //  Fks

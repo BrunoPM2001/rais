@@ -502,6 +502,13 @@ class CdiController extends S3Controller {
         ->leftJoin('Publicacion_db_indexada AS d', 'd.id', '=', 'c.publicacion_db_indexada_id')
         ->select([
           'a.titulo',
+          DB::raw("CASE (a.tipo_publicacion)
+            WHEN 'articulo' THEN 'Artículo en revista'
+            WHEN 'capitulo' THEN 'Capítulo de libro'
+            WHEN 'libro' THEN 'Libro'
+            WHEN 'evento' THEN 'R. en evento científico'
+            WHEN 'ensayo' THEN 'Ensayo'
+          ELSE tipo_publicacion END AS tipo_publicacion"),
           DB::raw("YEAR(a.fecha_publicacion) AS periodo"),
           'a.codigo_registro',
           DB::raw("GROUP_CONCAT(d.nombre SEPARATOR ', ') AS indexada"),
@@ -510,6 +517,7 @@ class CdiController extends S3Controller {
         ->where('b.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
         ->where('a.estado', '=', 1)
         ->whereIn(DB::raw("YEAR(a.fecha_publicacion)"), $lastTwoYears)
+        ->whereNotIn('a.tipo_publicacion', ['tesis-asesoria', 'tesis'])
         ->groupBy('a.id')
         ->get();
 

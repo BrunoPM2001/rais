@@ -55,7 +55,8 @@ class DocenteInvestigadorController extends S3Controller {
         'b.doc_tipo',
         'a.doc_numero',
         'b.telefono_movil',
-        'b.email3'
+        'b.email3',
+        'a.created_at'
       ])
       ->where('a.tipo_eval', '=', 'Solicitud')
       ->whereIn('a.estado', ['ENVIADO', 'TRAMITE', 'NO_APROBADO', 'PROCESO'])
@@ -75,6 +76,8 @@ class DocenteInvestigadorController extends S3Controller {
               WHEN a.fecha_fin < now() THEN 'No vigente'
               ELSE 'Vigente'
           END AS estado"),
+        DB::raw("DATE(a.fecha_constancia) AS fecha_constancia"),
+        DB::raw("DATE(a.fecha_fin) AS fecha_fin"),
         'b.tipo',
         'c.nombre AS facultad',
         'b.codigo_orcid',
@@ -127,6 +130,7 @@ class DocenteInvestigadorController extends S3Controller {
         'a.renacyt',
         'a.renacyt_nivel',
         'a.orcid',
+        'b.scopus_id',
         'a.google_scholar',
         'a.created_at',
         'a.tipo_docente',
@@ -203,6 +207,13 @@ class DocenteInvestigadorController extends S3Controller {
       ->leftJoin('Publicacion_db_indexada AS d', 'd.id', '=', 'c.publicacion_db_indexada_id')
       ->select([
         'a.titulo',
+        DB::raw("CASE (a.tipo_publicacion)
+            WHEN 'articulo' THEN 'Artículo en revista'
+            WHEN 'capitulo' THEN 'Capítulo de libro'
+            WHEN 'libro' THEN 'Libro'
+            WHEN 'evento' THEN 'R. en evento científico'
+            WHEN 'ensayo' THEN 'Ensayo'
+          ELSE tipo_publicacion END AS tipo_publicacion"),
         DB::raw("YEAR(a.fecha_publicacion) AS periodo"),
         'a.codigo_registro',
         DB::raw("GROUP_CONCAT(d.nombre SEPARATOR ', ') AS indexada"),
@@ -220,6 +231,7 @@ class DocenteInvestigadorController extends S3Controller {
       ->where('b.investigador_id', '=', $detalles->investigador_id)
       ->where('a.estado', '=', 1)
       ->whereIn(DB::raw("YEAR(a.fecha_publicacion)"), $lastTwoYears)
+      ->whereNotIn('a.tipo_publicacion', ['tesis-asesoria', 'tesis'])
       ->groupBy('a.id')
       ->get();
 
@@ -435,6 +447,7 @@ class DocenteInvestigadorController extends S3Controller {
           'fecha_constancia' => $date,
           'fecha_fin' => $dateFin,
           'estado' => 'PENDIENTE',
+          'directiva_evaluacion' => $request->input('norma')["value"],
           'confirmar' => $request->input('confirmar')["value"],
           'confirmar_descripcion' => $request->input('descripcion'),
           'updated_at' => $date
