@@ -21,6 +21,7 @@ class LibrosController extends Controller {
         DB::raw('COALESCE(a.issn, a.isbn) AS isbn'),
         DB::raw('YEAR(a.fecha_publicacion) AS año_publicacion'),
         'b.puntaje',
+        'a.observaciones_usuario',
         DB::raw("CASE(a.estado)
             WHEN -1 THEN 'Eliminado'
             WHEN 1 THEN 'Registrado'

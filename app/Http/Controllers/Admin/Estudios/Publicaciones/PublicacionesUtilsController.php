@@ -406,7 +406,7 @@ class PublicacionesUtilsController extends S3Controller {
   public function listadoRevistasIndexadas() {
     $revistas = DB::table('Publicacion_db_indexada')
       ->select([
-        DB::raw('CAST(id AS CHAR) AS value'),
+        'id AS value',
         'nombre AS label',
       ])
       ->where('estado', '!=', 0)
@@ -418,7 +418,7 @@ class PublicacionesUtilsController extends S3Controller {
   public function listadoWos() {
     $revistas = DB::table('Publicacion_db_wos')
       ->select([
-        DB::raw('CAST(id AS CHAR) AS value'),
+        'id AS value',
         'nombre AS label',
       ])
       ->where('estado', '!=', 0)

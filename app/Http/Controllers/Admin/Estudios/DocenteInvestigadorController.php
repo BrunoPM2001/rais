@@ -102,7 +102,7 @@ class DocenteInvestigadorController extends S3Controller {
 
     $detalles = DB::table('Eval_docente_investigador AS a')
       ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
-      ->join('Repo_rrhh AS c', 'c.ser_cod_ant', '=', 'b.codigo')
+      ->leftJoin('Repo_rrhh AS c', 'c.ser_cod_ant', '=', 'b.codigo')
       ->leftJoin('File AS d', function (JoinClause $join) {
         $join->on('d.tabla_id', '=', 'a.id')
           ->where('d.tabla', '=', 'Eval_docente_investigador')

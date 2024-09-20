@@ -16,16 +16,16 @@ class PsinfinvController extends S3Controller {
     $errores = [];
     $req4 = null;
 
-    //  Ser coordinador de un grupo de investigación
+    //  Ser titular de un grupo de investigación
     $req1 = DB::table('Usuario_investigador AS a')
       ->join('Grupo_integrante AS b', function (JoinClause $join) {
         $join->on('b.investigador_id', '=', 'a.id')
-          ->where('b.cargo', '=', 'Coordinador');
+          ->where('b.condicion', '=', 'Titular');
       })
       ->where('a.id', '=', $request->attributes->get('token_decoded')->investigador_id)
       ->count();
 
-    $req1 == 0 && $errores[] = "Necesita ser coordinador de un grupo de investigación";
+    $req1 == 0 && $errores[] = "Necesita ser titular de un grupo de investigación";
 
     if ($proyecto_id != null) {
       $req2 = DB::table('Proyecto_integrante AS a')
@@ -49,7 +49,17 @@ class PsinfinvController extends S3Controller {
 
       $req3 > 0 && $errores[] = "Ya ha enviado un proyecto";
 
-      $req4 = DB::table('Proyecto_integrante AS a')
+      $req4 = DB::table('Grupo_integrante AS a')
+        ->join('Proyecto AS b', 'b.grupo_id', '=', 'a.grupo_id')
+        ->where('a.condicion', '=', 'Titular')
+        ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+        ->where('b.tipo_proyecto', '=', 'PSINFINV')
+        ->where('b.periodo', '=', 2024)
+        ->count();
+
+      $req4 > 0 && $errores[] = "Su grupo de investigación ya está presentando un proyecto";
+
+      $detail = DB::table('Proyecto_integrante AS a')
         ->join('Proyecto AS b', 'b.id', '=', 'a.proyecto_id')
         ->select([
           'b.id',
@@ -69,7 +79,7 @@ class PsinfinvController extends S3Controller {
       if ($req4 == null) {
         return ['estado' => true];
       } else {
-        return ['estado' => true, 'id' => $req4->id, 'step' => $req4->step];
+        return ['estado' => true, 'id' => $detail->id, 'step' => $detail->step];
       }
     }
   }
@@ -90,7 +100,7 @@ class PsinfinvController extends S3Controller {
       ->leftJoin('Area AS c', 'c.id', '=', 'b.area_id')
       ->join('Grupo_integrante AS d', function (JoinClause $join) {
         $join->on('d.investigador_id', '=', 'a.id')
-          ->where('d.cargo', '=', 'Coordinador');
+          ->where('d.condicion', '=', 'Titular');
       })
       ->join('Grupo AS e', 'e.id', '=', 'd.grupo_id')
       ->select([
@@ -182,7 +192,7 @@ class PsinfinvController extends S3Controller {
       $datos = DB::table('Usuario_investigador AS a')
         ->join('Grupo_integrante AS b', function (JoinClause $join) {
           $join->on('b.investigador_id', '=', 'a.id')
-            ->where('b.cargo', '=', 'Coordinador');
+            ->where('b.condicion', '=', 'Titular');
         })
         ->select([
           'a.facultad_id',
@@ -441,7 +451,6 @@ class PsinfinvController extends S3Controller {
         'grupo_id'
       ])
       ->where('investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
-      ->where('cargo', '=', 'Coordinador')
       ->first();
 
     $listado = Db::table('Grupo_integrante AS a')
@@ -468,7 +477,6 @@ class PsinfinvController extends S3Controller {
         'grupo_id'
       ])
       ->where('investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
-      ->where('cargo', '=', 'Coordinador')
       ->first();
 
     $listado = Db::table('Grupo_integrante AS a')
@@ -495,7 +503,6 @@ class PsinfinvController extends S3Controller {
         'grupo_id'
       ])
       ->where('investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
-      ->where('cargo', '=', 'Coordinador')
       ->first();
 
     $listado = Db::table('Grupo_integrante AS a')

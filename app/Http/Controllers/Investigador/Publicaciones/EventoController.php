@@ -18,9 +18,9 @@ class EventoController extends Controller {
         'a.id',
         'a.titulo',
         DB::raw("IF(a.publicacion_nombre IS NULL OR a.publicacion_nombre = '',CONCAT(c.revista,' ',c.issn),CONCAT(a.publicacion_nombre,' ',a.issn)) AS revista"),
-        'a.observaciones_usuario',
         DB::raw('YEAR(a.fecha_publicacion) AS año_publicacion'),
         'b.puntaje',
+        'a.observaciones_usuario',
         DB::raw("CASE(a.estado)
             WHEN -1 THEN 'Eliminado'
             WHEN 1 THEN 'Registrado'

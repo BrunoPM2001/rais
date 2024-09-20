@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Investigador\Publicaciones;
 
 use App\Http\Controllers\S3Controller;
 use Carbon\Carbon;
+use Illuminate\Database\Query\JoinClause;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -187,14 +188,21 @@ class PublicacionesUtilsController extends S3Controller {
       ->count();
 
     if ($esAutor > 0) {
-      $proyectos = DB::table('Publicacion_proyecto')
+      $proyectos = DB::table('Publicacion_proyecto AS a')
+        ->leftJoin('File AS b', function (JoinClause $join) {
+          $join->on('b.tabla_id', '=', 'a.id')
+            ->where('b.tabla', '=', 'Publicacion_proyecto')
+            ->where('b.recurso', '=', 'DOCUMENTO_ADJUNTO')
+            ->where('b.estado', '=', 20);
+        })
         ->select([
-          'id',
-          'codigo_proyecto',
-          'nombre_proyecto',
-          'entidad_financiadora',
+          'a.id',
+          'a.codigo_proyecto',
+          'a.nombre_proyecto',
+          'a.entidad_financiadora',
+          DB::raw("CONCAT('/minio/', b.bucket, '/', b.key) AS url"),
         ])
-        ->where('publicacion_id', '=', $request->query('publicacion_id'))
+        ->where('a.publicacion_id', '=', $request->query('publicacion_id'))
         ->get();
 
       return $proyectos;
@@ -234,8 +242,8 @@ class PublicacionesUtilsController extends S3Controller {
       return ['message' => 'error', 'detail' => 'Esta publicación ya ha sido enviada, no se pueden hacer más cambios'];
     }
 
-    DB::table('Publicacion_proyecto')
-      ->insert([
+    $pub_proyecto = DB::table('Publicacion_proyecto')
+      ->insertGetId([
         'investigador_id' => $request->attributes->get('token_decoded')->investigador_id,
         'publicacion_id' => $request->input('publicacion_id'),
         'proyecto_id' => $request->input('proyecto_id'),
@@ -248,6 +256,25 @@ class PublicacionesUtilsController extends S3Controller {
         'updated_at' => Carbon::now()
       ]);
 
+    if ($request->hasFile('file')) {
+      $date = Carbon::now();
+      $name = "token-" . $date->format('Ymd-His') . "-" . Str::random(8);
+      $nameFile = $name . "." . $request->file('file')->getClientOriginalExtension();
+
+      $this->uploadFile($request->file('file'), "publicacion", $nameFile);
+
+      DB::table('File')
+        ->insert([
+          'tabla_id' => $pub_proyecto,
+          'tabla' => 'Publicacion_proyecto',
+          'bucket' => 'publicacion',
+          'key' => $nameFile,
+          'recurso' => 'DOCUMENTO_ADJUNTO',
+          'estado' => 20,
+          'created_at' => Carbon::now(),
+          'updated_at' => Carbon::now(),
+        ]);
+    }
 
     DB::table('Publicacion')
       ->where('id', '=', $request->input('publicacion_id'))
@@ -443,35 +470,52 @@ class PublicacionesUtilsController extends S3Controller {
             ]);
         }
 
-        DB::table('Publicacion_autor')->insert([
-          'publicacion_id' => $request->input('publicacion_id'),
-          'investigador_id' => $id_investigador,
-          'tipo' => "interno",
-          'autor' => $request->input('autor'),
-          'categoria' => $request->input('categoria'),
-          'filiacion' => $request->input('filiacion'),
-          'filiacion_unica' => $request->input('filiacion_unica'),
-          'presentado' => 0,
-          'estado' => 0,
-          'created_at' => Carbon::now(),
-          'updated_at' => Carbon::now()
-        ]);
+        $cuenta_autor = DB::table('Publicacion_autor')
+          ->where('publicacion_id', '=', $request->input('publicacion_id'))
+          ->where('investigador_id', '=', $id_investigador)
+          ->count();
+
+        if ($cuenta_autor == 0) {
+          DB::table('Publicacion_autor')->insert([
+            'publicacion_id' => $request->input('publicacion_id'),
+            'investigador_id' => $id_investigador,
+            'tipo' => "interno",
+            'autor' => $request->input('autor'),
+            'categoria' => $request->input('categoria'),
+            'filiacion' => $request->input('filiacion'),
+            'filiacion_unica' => $request->input('filiacion_unica'),
+            'presentado' => 0,
+            'estado' => 0,
+            'created_at' => Carbon::now(),
+            'updated_at' => Carbon::now()
+          ]);
+        } else {
+          return ['message' => 'warning', 'detail' => 'Este autor ya está registrado'];
+        }
         break;
       case "interno":
+        $cuenta_autor = DB::table('Publicacion_autor')
+          ->where('publicacion_id', '=', $request->input('publicacion_id'))
+          ->where('investigador_id', '=', $request->input('investigador_id'))
+          ->count();
 
-        DB::table('Publicacion_autor')->insert([
-          'publicacion_id' => $request->input('publicacion_id'),
-          'investigador_id' => $request->input('investigador_id'),
-          'tipo' => "interno",
-          'autor' => $request->input('autor'),
-          'categoria' => $request->input('categoria'),
-          'filiacion' => $request->input('filiacion'),
-          'filiacion_unica' => $request->input('filiacion_unica'),
-          'presentado' => 0,
-          'estado' => 0,
-          'created_at' => Carbon::now(),
-          'updated_at' => Carbon::now()
-        ]);
+        if ($cuenta_autor == 0) {
+          DB::table('Publicacion_autor')->insert([
+            'publicacion_id' => $request->input('publicacion_id'),
+            'investigador_id' => $request->input('investigador_id'),
+            'tipo' => "interno",
+            'autor' => $request->input('autor'),
+            'categoria' => $request->input('categoria'),
+            'filiacion' => $request->input('filiacion'),
+            'filiacion_unica' => $request->input('filiacion_unica'),
+            'presentado' => 0,
+            'estado' => 0,
+            'created_at' => Carbon::now(),
+            'updated_at' => Carbon::now()
+          ]);
+        } else {
+          return ['message' => 'warning', 'detail' => 'Este autor ya está registrado'];
+        }
         break;
       default:
         break;

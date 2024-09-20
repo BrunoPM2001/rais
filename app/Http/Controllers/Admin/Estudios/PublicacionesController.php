@@ -95,6 +95,7 @@ class PublicacionesController extends S3Controller {
         )
         ->where('a.investigador_id', '=', $request->query('investigador_id'))
         ->orderByDesc('b.id')
+        ->groupBy('b.id')
         ->get();
 
       return ['data' => $publicaciones];
@@ -215,7 +216,7 @@ class PublicacionesController extends S3Controller {
     $cod = 0;
     if ($request->input('estado') == 1) {
       if ($request->input('categoria_id') == "null") {
-        return ['message' => 'warning', 'detail' => 'Necesita colocar una calificación en caso quiera registrar la publicación'];
+        return ['message' => 'warning', 'detail' => 'Necesita colocar una calificación y marcar como validado en caso quiera registrar la publicación'];
       } else {
         $pub = DB::table('Publicacion')
           ->select([
@@ -266,13 +267,15 @@ class PublicacionesController extends S3Controller {
             ->where('id', '=', $request->input('categoria_id'))
             ->first();
 
-          DB::table('Publicacion_autor AS a')
-            ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
-            ->where('a.publicacion_id', '=', $request->input('id'))
-            ->where('b.tipo', '=', 'DOCENTE PERMANENTE')
-            ->update([
-              'a.puntaje' => $categoria->puntaje,
-            ]);
+          if ($request->input('validado') == 1) {
+            DB::table('Publicacion_autor AS a')
+              ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
+              ->where('a.publicacion_id', '=', $request->input('id'))
+              ->where('b.tipo', '=', 'DOCENTE PERMANENTE')
+              ->update([
+                'a.puntaje' => $categoria->puntaje,
+              ]);
+          }
 
           if ($request->hasFile('file')) {
             $date = Carbon::now();
@@ -331,6 +334,16 @@ class PublicacionesController extends S3Controller {
           return ['message' => 'success', 'detail' => 'Datos de la publicación actualizados correctamente'];
         }
       }
+    }
+
+    if ($request->input('validado') == 0) {
+      DB::table('Publicacion_autor AS a')
+        ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
+        ->where('a.publicacion_id', '=', $request->input('id'))
+        ->where('b.tipo', '=', 'DOCENTE PERMANENTE')
+        ->update([
+          'a.puntaje' => 0,
+        ]);
     }
 
     //  Audit

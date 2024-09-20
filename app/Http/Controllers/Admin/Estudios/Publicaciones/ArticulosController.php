@@ -199,7 +199,7 @@ class ArticulosController extends S3Controller {
           ]);
         }
 
-        return ['message' => 'success', 'detail' => 'Datos de la publicación registrados', 'publicacion_id' => $publicacion_id];
+        return ['message' => 'success', 'detail' => 'Datos de la publicación registrados', 'id' => $publicacion_id];
       } else {
         return ['message' => 'error', 'detail' => 'Está usando el título de una publicación que ya está registrada'];
       }
