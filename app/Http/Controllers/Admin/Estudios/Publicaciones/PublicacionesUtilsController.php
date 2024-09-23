@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin\Estudios\Publicaciones;
 
 use App\Http\Controllers\S3Controller;
 use Carbon\Carbon;
+use Illuminate\Database\Query\JoinClause;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -92,14 +93,21 @@ class PublicacionesUtilsController extends S3Controller {
 
   //  Paso 2
   public function proyectos_asociados(Request $request) {
-    $proyectos = DB::table('Publicacion_proyecto')
+    $proyectos = DB::table('Publicacion_proyecto AS a')
+      ->leftJoin('File AS b', function (JoinClause $join) {
+        $join->on('b.tabla_id', '=', 'a.id')
+          ->where('b.tabla', '=', 'Publicacion_proyecto')
+          ->where('b.recurso', '=', 'DOCUMENTO_ADJUNTO')
+          ->where('b.estado', '=', 20);
+      })
       ->select([
-        'id',
-        'codigo_proyecto',
-        'nombre_proyecto',
-        'entidad_financiadora',
+        'a.id',
+        'a.codigo_proyecto',
+        'a.nombre_proyecto',
+        'a.entidad_financiadora',
+        DB::raw("CONCAT('/minio/', b.bucket, '/', b.key) AS url"),
       ])
-      ->where('publicacion_id', '=', $request->query('id'))
+      ->where('a.publicacion_id', '=', $request->query('id'))
       ->get();
 
     return $proyectos;
