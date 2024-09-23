@@ -19,6 +19,13 @@ class DeudaController extends Controller {
         'c.tipo_proyecto',
         'd.nombre AS condicion',
         'c.periodo',
+        DB::raw("CASE 
+                  WHEN (b.tipo IS NULL OR b.tipo <= 0) THEN 'NO'
+                  WHEN b.tipo = 1 THEN 'Deuda Académica'
+                  WHEN b.tipo = 2 THEN 'Deuda Económica'
+                  WHEN b.tipo = 3 THEN 'Deuda Económica y Académica'
+                  WHEN b.tipo > 3 THEN 'SUBSANADA'
+               END as deuda")
       ])
       ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
       ->whereNull('b.fecha_sub')

@@ -14,7 +14,7 @@ class PsinfinvController extends S3Controller {
   //  Verifica las condiciones para participar
   public function verificar(Request $request, $proyecto_id = null) {
     $errores = [];
-    $req4 = null;
+    $detail = null;
 
     //  Ser titular de un grupo de investigación
     $req1 = DB::table('Usuario_investigador AS a')
@@ -51,10 +51,13 @@ class PsinfinvController extends S3Controller {
 
       $req4 = DB::table('Grupo_integrante AS a')
         ->join('Proyecto AS b', 'b.grupo_id', '=', 'a.grupo_id')
-        ->where('a.condicion', '=', 'Titular')
-        ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+        ->join('Proyecto_integrante AS c', 'c.proyecto_id', '=', 'b.id')
         ->where('b.tipo_proyecto', '=', 'PSINFINV')
         ->where('b.periodo', '=', 2024)
+        ->where('a.condicion', '=', 'Titular')
+        ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+        ->where('c.condicion', '!=', 'Responsable')
+        ->where('c.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
         ->count();
 
       $req4 > 0 && $errores[] = "Su grupo de investigación ya está presentando un proyecto";
@@ -76,7 +79,7 @@ class PsinfinvController extends S3Controller {
     if (!empty($errores)) {
       return ['estado' => false, 'errores' => $errores];
     } else {
-      if ($req4 == null) {
+      if ($detail == null) {
         return ['estado' => true];
       } else {
         return ['estado' => true, 'id' => $detail->id, 'step' => $detail->step];
