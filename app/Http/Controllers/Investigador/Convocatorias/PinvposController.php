@@ -17,7 +17,8 @@ class PinvposController extends S3Controller {
       ->leftJoin('Proyecto AS b', function (JoinClause $join) {
         $join->on('b.id', '=', 'a.proyecto_id')
           ->where('b.tipo_proyecto', '=', 'PINVPOS')
-          ->where('b.periodo', '=', 2024);
+          ->where('b.periodo', '=', 2024)
+          ->whereNotIn('b.estado', [-1]);
       })
       ->leftJoin('Usuario_investigador AS c', 'c.id', '=', 'a.investigador_id')
       ->leftJoin('Facultad AS d', 'd.id', '=', 'c.facultad_id')
@@ -46,7 +47,7 @@ class PinvposController extends S3Controller {
     if (!$habilitado) {
       $errores[] = 'Esta convocatoria no está disponible para usted';
     } else {
-      if ($habilitado?->estado != 6 && $habilitado->estado != null) {
+      if ($habilitado?->estado == 5) {
         $errores[] = 'Ya ha enviado una propuesta de proyecto';
       }
     }

@@ -454,6 +454,7 @@ class PsinfinvController extends S3Controller {
         'grupo_id'
       ])
       ->where('investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+      ->whereNot('condicion', 'LIKE', 'Ex%')
       ->first();
 
     $listado = Db::table('Grupo_integrante AS a')
@@ -480,6 +481,7 @@ class PsinfinvController extends S3Controller {
         'grupo_id'
       ])
       ->where('investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+      ->whereNot('condicion', 'LIKE', 'Ex%')
       ->first();
 
     $listado = Db::table('Grupo_integrante AS a')
@@ -506,6 +508,7 @@ class PsinfinvController extends S3Controller {
         'grupo_id'
       ])
       ->where('investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+      ->whereNot('condicion', 'LIKE', 'Ex%')
       ->first();
 
     $listado = Db::table('Grupo_integrante AS a')

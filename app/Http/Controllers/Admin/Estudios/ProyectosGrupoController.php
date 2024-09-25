@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin\Estudios;
 
 use App\Http\Controllers\Admin\Estudios\Proyectos\EciController;
+use App\Http\Controllers\Admin\Estudios\Proyectos\PsinfinvController;
 use App\Http\Controllers\S3Controller;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -88,6 +89,19 @@ class ProyectosGrupoController extends S3Controller {
           'especificaciones' => $especificaciones,
           'impacto' => $impacto,
           'presupuesto' => $presupuesto,
+        ];
+      case "PSINFINV":
+        $ctrl = new PsinfinvController();
+        $detalle = $ctrl->detalle($request);
+        $miembros = $ctrl->miembros($request);
+        $descripcion = $ctrl->descripcion($request);
+        $actividades = $ctrl->actividades($request);
+
+        return [
+          'detalle' => $detalle,
+          'miembros' => $miembros,
+          'descripcion' => $descripcion,
+          'actividades' => $actividades,
         ];
       default:
         $detalle = $this->detalle($request);
