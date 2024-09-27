@@ -158,7 +158,9 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
       Route::get('actividades', [ProyectosGrupoController::class, 'actividades']);
       Route::get('presupuesto', [ProyectosGrupoController::class, 'presupuesto']);
       Route::get('responsable', [ProyectosGrupoController::class, 'responsable']);
+
       Route::get('exportToWord', [ProyectosGrupoController::class, 'exportToWord']);
+      Route::get('reporte', [ProyectosGrupoController::class, 'reporte']);
     });
 
     //  Proyectos FEX

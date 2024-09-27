@@ -325,7 +325,7 @@
         <tr>
           <td style="width: 24%;" valign="top"><strong>Cofinanciamiento de Facultad</strong></td>
           <td style="width: 1%;" valign="top">:</td>
-          <td style="width: 75%;" valign="top">S/ {{ $detalles["facultad_monto"] }}</td>
+          <td style="width: 75%;" valign="top">S/ {{ $detalles['facultad_monto'] }}</td>
         </tr>
         <tr>
           <td style="width: 24%;"><strong>Subvención económica VRIP</strong></td>
@@ -341,4 +341,19 @@
     </table>
 
   </div>
+
+  <script type="text/php">
+    if (isset($pdf)) {
+      $x = 515;
+      $y = 818;
+      $text = "Página {PAGE_NUM} de {PAGE_COUNT}";
+      $font = $fontMetrics->get_font("Helvetica", "Italic");
+      $size = 8;
+      $color = array(0,0,0);
+      $word_space = 0.0;  //  default
+      $char_space = 0.0;  //  default
+      $angle = 0.0;   //  default
+      $pdf->page_text($x, $y, $text, $font, $size, $color, $word_space, $char_space, $angle);
+    }
+  </script>
 </body>

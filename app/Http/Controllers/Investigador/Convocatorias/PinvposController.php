@@ -747,7 +747,7 @@ class PinvposController extends S3Controller {
           ELSE 'Sí'
         END AS anexo"),
         DB::raw("CASE
-          WHEN f.archivo IS NUL THEN 'No'
+          WHEN f.archivo IS NULL THEN 'No'
           ELSE 'Sí'
         END AS rd"),
         'a.updated_at',

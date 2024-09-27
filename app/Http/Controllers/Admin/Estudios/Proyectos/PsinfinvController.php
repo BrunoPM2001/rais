@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin\Estudios\Proyectos;
 
 use App\Http\Controllers\Controller;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Database\Query\JoinClause;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -145,5 +146,92 @@ class PsinfinvController extends Controller {
       ->get();
 
     return $actividades;
+  }
+
+  public function reporte(Request $request) {
+    $proyecto = DB::table('Proyecto AS a')
+      ->join('Proyecto_descripcion AS b', function (JoinClause $join) {
+        $join->on('a.id', '=', 'b.proyecto_id')
+          ->where('codigo', '=', 'tipo_investigacion');
+      })
+      ->join('Grupo AS c', 'c.id', '=', 'a.grupo_id')
+      ->join('Facultad AS d', 'd.id', '=', 'a.facultad_id')
+      ->join('Area AS e', 'e.id', '=', 'd.area_id')
+      ->join('Linea_investigacion AS f', 'f.id', '=', 'a.linea_investigacion_id')
+      ->join('Ocde AS g', 'g.id', '=', 'a.ocde_id')
+      ->select([
+        'a.titulo',
+        'c.grupo_nombre',
+        'e.nombre AS area',
+        'd.nombre AS facultad',
+        'f.nombre AS linea',
+        'b.detalle AS tipo_investigacion',
+        'a.localizacion',
+        'g.linea AS ocde',
+        'a.palabras_clave'
+      ])
+      ->where('a.id', '=', $request->query('proyecto_id'))
+      ->first();
+
+    $detalles = DB::table('Proyecto_descripcion')
+      ->select([
+        'codigo',
+        'detalle'
+      ])
+      ->where('proyecto_id', '=', $request->query('proyecto_id'))
+      ->get()
+      ->mapWithKeys(function ($item) {
+        return [$item->codigo => $item->detalle];
+      });
+
+    $responsable = DB::table('Proyecto_integrante AS a')
+      ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
+      ->join('Facultad AS c', 'c.id', '=', 'b.facultad_id')
+      ->join('Dependencia AS d', 'd.id', '=', 'b.dependencia_id')
+      ->select([
+        'b.codigo',
+        'd.dependencia',
+        'c.nombre AS facultad',
+        'b.cti_vitae',
+        'b.codigo_orcid',
+        'b.scopus_id',
+        'b.google_scholar',
+      ])
+      ->where('a.proyecto_id', '=', $request->query('proyecto_id'))
+      ->where('a.condicion', '=', 'Responsable')
+      ->first();
+
+    $integrantes = DB::table('Proyecto_integrante AS a')
+      ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
+      ->join('Proyecto_integrante_tipo AS c', 'c.id', '=', 'a.proyecto_integrante_tipo_id')
+      ->select([
+        'c.nombre AS condicion',
+        DB::raw("CONCAT(b.apellido1, ' ', b.apellido2, ', ', b.nombres) AS integrante"),
+        'b.tipo',
+        'a.tipo_tesis',
+        'a.titulo_tesis',
+      ])
+      ->where('a.proyecto_id', '=', $request->query('proyecto_id'))
+      ->get();
+
+    $actividades = DB::table('Proyecto_actividad')
+      ->select([
+        'id',
+        'actividad',
+        'fecha_inicio',
+        'fecha_fin',
+        'duracion'
+      ])
+      ->where('proyecto_id', '=', $request->query('proyecto_id'))
+      ->get();
+
+    $pdf = Pdf::loadView('investigador.convocatorias.psinfinv', [
+      'proyecto' => $proyecto,
+      'responsable' => $responsable,
+      'integrantes' => $integrantes,
+      'detalles' => $detalles,
+      'actividades' => $actividades,
+    ]);
+    return $pdf->stream();
   }
 }

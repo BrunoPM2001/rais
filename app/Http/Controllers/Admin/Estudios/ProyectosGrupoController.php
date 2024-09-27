@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin\Estudios;
 
 use App\Http\Controllers\Admin\Estudios\Proyectos\EciController;
+use App\Http\Controllers\Admin\Estudios\Proyectos\PinvposController;
 use App\Http\Controllers\Admin\Estudios\Proyectos\PsinfinvController;
 use App\Http\Controllers\S3Controller;
 use Carbon\Carbon;
@@ -102,6 +103,23 @@ class ProyectosGrupoController extends S3Controller {
           'miembros' => $miembros,
           'descripcion' => $descripcion,
           'actividades' => $actividades,
+        ];
+      case "PINVPOS":
+        $ctrl = new PinvposController();
+        $detalle = $ctrl->detalle($request);
+        $miembros = $ctrl->miembros($request);
+        $documentos = $ctrl->documentos($request);
+        $descripcion = $ctrl->descripcion($request);
+        $actividades = $ctrl->actividades($request);
+        $presupuesto = $this->presupuesto($request);
+
+        return [
+          'detalle' => $detalle,
+          'miembros' => $miembros,
+          'documentos' => $documentos,
+          'descripcion' => $descripcion,
+          'actividades' => $actividades,
+          'presupuesto' => $presupuesto,
         ];
       default:
         $detalle = $this->detalle($request);
@@ -270,7 +288,7 @@ class ProyectosGrupoController extends S3Controller {
     $presupuesto = DB::table('Proyecto_presupuesto AS a')
       ->join('Partida AS b', 'b.id', '=', 'a.partida_id')
       ->select(
-        'a.tipo',
+        'b.tipo',
         'b.partida',
         'a.justificacion',
         'a.monto',
@@ -405,5 +423,22 @@ class ProyectosGrupoController extends S3Controller {
 
     // Devolver el archivo como una respuesta de descarga
     return response()->download($tempPath)->deleteFileAfterSend();
+  }
+
+  public function reporte(Request $request) {
+    $tipo = DB::table('Proyecto')
+      ->select(['tipo_proyecto'])
+      ->where('id', '=', $request->query('proyecto_id'))
+      ->first();
+
+    switch ($tipo->tipo_proyecto) {
+      case "PSINFINV":
+        $ctrl = new PsinfinvController();
+        return $ctrl->reporte($request);
+      case "PINVPOS":
+        $ctrl = new PinvposController();
+        return $ctrl->reporte($request);
+      default:
+    }
   }
 }
