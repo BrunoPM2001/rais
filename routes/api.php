@@ -50,6 +50,7 @@ use App\Http\Controllers\Investigador\Actividades\TalleresController;
 use App\Http\Controllers\Investigador\Convocatorias\PinvposController;
 use App\Http\Controllers\Investigador\Convocatorias\ProCTIController;
 use App\Http\Controllers\Investigador\Convocatorias\PsinfinvController;
+use App\Http\Controllers\Investigador\Convocatorias\PsinfipuController;
 use App\Http\Controllers\Investigador\DashboardController as InvestigadorDashboardController;
 use App\Http\Controllers\Investigador\Publicaciones\ArticulosController;
 use App\Http\Controllers\Investigador\Publicaciones\CapitulosLibrosController;
@@ -707,6 +708,18 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
       Route::get('verificar6', [PsinfinvController::class, 'verificar6']);
       Route::get('reporte', [PsinfinvController::class, 'reporte']);
       Route::post('enviar', [PsinfinvController::class, 'enviar']);
+    });
+
+    Route::prefix('psinfipu')->group(function () {
+      Route::get('listado', [PsinfipuController::class, 'listado']);
+
+      Route::get('verificar', [PsinfipuController::class, 'verificar']);
+
+      Route::get('verificar1', [PsinfipuController::class, 'verificar1']);
+      Route::post('registrar1', [PsinfipuController::class, 'registrar1']);
+
+      Route::get('verificar2', [PsinfipuController::class, 'verificar2']);
+      // Route::post('registrar1', [PsinfipuController::class, 'registrar1']);
     });
 
     Route::get('verificar', [ProCTIController::class, 'verificar']);
