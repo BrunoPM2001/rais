@@ -11,10 +11,11 @@ use Illuminate\Support\Str;
 use Carbon\Carbon;
 
 class PsinfipuController extends S3Controller {
-  public function listadoProyectos(Request $request) {
+  public function listado(Request $request) {
     $listado = DB::table('Proyecto_integrante AS a')
       ->join('Proyecto AS b', 'b.id', '=', 'a.proyecto_id')
       ->select([
+        'b.id',
         'b.titulo',
         'b.step',
         DB::raw("CASE(b.estado)
@@ -66,30 +67,12 @@ class PsinfipuController extends S3Controller {
         ->count();
 
       $req2 == 0 && $errores[] = "No figura como responsable del proyecto";
-    } else {
-
-      $detail = DB::table('Proyecto_integrante AS a')
-        ->join('Proyecto AS b', 'b.id', '=', 'a.proyecto_id')
-        ->select([
-          'b.id',
-          'b.step'
-        ])
-        ->where('a.condicion', '=', 'Responsable')
-        ->where('b.tipo_proyecto', '=', 'PSINFIPU')
-        ->where('b.periodo', '=', 2024)
-        ->where('b.estado', '=', 6)
-        ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
-        ->first();
     }
 
     if (!empty($errores)) {
       return ['estado' => false, 'errores' => $errores];
     } else {
-      if ($detail == null) {
-        return ['estado' => true];
-      } else {
-        return ['estado' => true, 'id' => $detail->id, 'step' => $detail->step];
-      }
+      return ['estado' => true];
     }
   }
 
@@ -239,7 +222,7 @@ class PsinfipuController extends S3Controller {
         ->insert([
           'proyecto_id' => $id,
           'investigador_id' => $request->attributes->get('token_decoded')->investigador_id,
-          'proyecto_integrante_tipo_id' => 7,
+          'proyecto_integrante_tipo_id' => 13,
           'grupo_id' => $datos->grupo_id,
           'grupo_integrante_id' => $datos->id,
           'condicion' => 'Responsable',
@@ -254,6 +237,25 @@ class PsinfipuController extends S3Controller {
       return $res1;
     }
 
+    $proyecto = DB::table('Proyecto')
+      ->select([
+        'titulo',
+      ])
+      ->where('id', '=', $request->query('id'))
+      ->first();
+
+    $opt_proyectos = DB::table('Proyecto AS a')
+      ->join('Proyecto_integrante AS b', 'b.proyecto_id', '=', 'a.id')
+      ->select([
+        'a.id AS value',
+        DB::raw("CONCAT(a.tipo_proyecto, ' - ', a.titulo) AS label"),
+      ])
+      ->where('b.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+      ->whereIn('b.condicion', ['Responsable', 'Asesor'])
+      ->whereIn('a.tipo_proyecto', ['PCONFIGI', 'PSINFINV', 'PTPGRADO', 'PTPDOCTO', 'PTPMAEST'])
+      ->where('a.estado', '=', 1)
+      ->get();
+
     $descripcion = DB::table('Proyecto_descripcion')
       ->select([
         'codigo',
@@ -261,103 +263,80 @@ class PsinfipuController extends S3Controller {
       ])
       ->where('proyecto_id', '=', $request->query('id'))
       ->whereIn('codigo', [
-        'resumen_ejecutivo',
-        'resumen_esperado',
-        'antecedentes',
-        'objetivos_generales',
-        'objetivos_especificos',
-        'justificacion',
-        'hipotesis',
-        'metodologia_trabajo',
-        'referencias_bibliograficas',
+        'publicacion_editorial',
+        'publicacion_url',
+        'publicacion_tipo',
+        'investigacion_base',
       ])
       ->get()
       ->mapWithKeys(function ($item) {
         return [$item->codigo => $item->detalle];
       });
 
-    $palabras_clave = DB::table('Proyecto')
+    $archivo1 = DB::table('Proyecto_doc')
       ->select([
-        'palabras_clave'
+        DB::raw("CONCAT('/minio/proyecto-doc/', archivo) AS url")
       ])
-      ->where('id', '=', $request->query('id'))
+      ->where('proyecto_id', '=', $request->query('id'))
+      ->where('categoria', '=', 'tesis')
+      ->where('nombre', '=', 'Tesis Doctoral')
+      ->where('estado', '=', 1)
       ->first();
 
-    $archivo1 = DB::table('File AS a')
+    $archivo2 = DB::table('Proyecto_doc')
       ->select([
-        DB::raw("CONCAT('/minio/', bucket, '/', a.key) AS url")
+        DB::raw("CONCAT('/minio/proyecto-doc/', archivo) AS url")
       ])
-      ->where('tabla', '=', 'Proyecto')
-      ->where('tabla_id', '=', $request->query('id'))
-      ->where('bucket', '=', 'proyecto-doc')
-      ->where('recurso', '=', 'METODOLOGIA_TRABAJO')
-      ->where('estado', '=', 20)
-      ->first();
-
-    $archivo2 = DB::table('File AS a')
-      ->select([
-        DB::raw("CONCAT('/minio/', bucket, '/', a.key) AS url")
-      ])
-      ->where('tabla', '=', 'Proyecto')
-      ->where('tabla_id', '=', $request->query('id'))
-      ->where('bucket', '=', 'proyecto-doc')
-      ->where('recurso', '=', 'PROPIEDAD_INTELECTUAL')
-      ->where('estado', '=', 20)
+      ->where('proyecto_id', '=', $request->query('id'))
+      ->where('categoria', '=', 'tesis')
+      ->where('nombre', '=', 'Tesis Maestría')
+      ->where('estado', '=', 1)
       ->first();
 
     return [
       'estado' => true,
+      'proyecto' => $proyecto,
+      'opt_proyectos' => $opt_proyectos,
       'descripcion' => $descripcion,
-      'palabras_clave' => $palabras_clave->palabras_clave,
       'archivos' => [
-        'metodologia' => $archivo1?->url,
-        'propiedad' => $archivo2?->url,
+        'doctorado' => $archivo1?->url,
+        'maestria' => $archivo2?->url,
       ]
     ];
   }
 
   public function registrar2(Request $request) {
-    DB::table('Proyecto_descripcion')->updateOrInsert(['codigo' => 'resumen_ejecutivo', 'proyecto_id' => $request->input('id')], ['detalle' => $request->input('resumen_ejecutivo')]);
-    DB::table('Proyecto_descripcion')->updateOrInsert(['codigo' => 'resumen_esperado', 'proyecto_id' => $request->input('id')], ['detalle' => $request->input('resumen_esperado')]);
-    DB::table('Proyecto_descripcion')->updateOrInsert(['codigo' => 'antecedentes', 'proyecto_id' => $request->input('id')], ['detalle' => $request->input('antecedentes')]);
-    DB::table('Proyecto_descripcion')->updateOrInsert(['codigo' => 'objetivos_generales', 'proyecto_id' => $request->input('id')], ['detalle' => $request->input('objetivos_generales')]);
-    DB::table('Proyecto_descripcion')->updateOrInsert(['codigo' => 'objetivos_especificos', 'proyecto_id' => $request->input('id')], ['detalle' => $request->input('objetivos_especificos')]);
-    DB::table('Proyecto_descripcion')->updateOrInsert(['codigo' => 'justificacion', 'proyecto_id' => $request->input('id')], ['detalle' => $request->input('justificacion')]);
-    DB::table('Proyecto_descripcion')->updateOrInsert(['codigo' => 'hipotesis', 'proyecto_id' => $request->input('id')], ['detalle' => $request->input('hipotesis')]);
-    DB::table('Proyecto_descripcion')->updateOrInsert(['codigo' => 'metodologia_trabajo', 'proyecto_id' => $request->input('id')], ['detalle' => $request->input('metodologia_trabajo')]);
-    DB::table('Proyecto_descripcion')->updateOrInsert(['codigo' => 'referencias_bibliograficas', 'proyecto_id' => $request->input('id')], ['detalle' => $request->input('referencias_bibliograficas')]);
+    DB::table('Proyecto_descripcion')->updateOrInsert(['codigo' => 'publicacion_editorial', 'proyecto_id' => $request->input('id')], ['detalle' => $request->input('editorial')]);
+    DB::table('Proyecto_descripcion')->updateOrInsert(['codigo' => 'publicacion_url', 'proyecto_id' => $request->input('id')], ['detalle' => $request->input('editorial_url')]);
+    DB::table('Proyecto_descripcion')->updateOrInsert(['codigo' => 'publicacion_tipo', 'proyecto_id' => $request->input('id')], ['detalle' => $request->input('tipo_publicacion')]);
 
-    DB::table('Proyecto')
-      ->where('id', '=', $request->input('id'))
-      ->update([
-        'palabras_clave' => $request->input('palabras_clave'),
-        'step' => 3,
-      ]);
+    if ($request->input('proyecto')) {
+      DB::table('Proyecto_descripcion')->updateOrInsert(['codigo' => 'investigacion_base', 'proyecto_id' => $request->input('id')], ['detalle' => $request->input('proyecto')]);
+    }
 
     if ($request->hasFile('file1')) {
       $date = Carbon::now();
       $name = "token-" . $date->format('Ymd-His') . "-" . Str::random(8) . "." . $request->file('file1')->getClientOriginalExtension();
       $this->uploadFile($request->file('file1'), "proyecto-doc", $name);
 
-      DB::table('File')
-        ->where('tabla', '=', 'Proyecto')
-        ->where('tabla_id', '=', $request->input('id'))
-        ->where('recurso', '=', 'METODOLOGIA_TRABAJO')
-        ->where('estado', '=', 20)
+      DB::table('Proyecto_doc')
+        ->where('proyecto_id', '=', $request->input('id'))
+        ->where('categoria', '=', 'tesis')
+        ->where('nombre', '=', 'Tesis Doctoral')
+        ->where('estado', '=', 1)
         ->update([
-          'estado' => -1
+          'estado' => 0
         ]);
 
-      DB::table('File')
+      DB::table('Proyecto_doc')
         ->insert([
-          'tabla' => 'Proyecto',
-          'tabla_id' => $request->input('id'),
-          'bucket' => 'proyecto-doc',
-          'key' => $name,
-          'recurso' => 'METODOLOGIA_TRABAJO',
-          'estado' => 20,
-          'created_at' => Carbon::now(),
-          'updated_at' => Carbon::now(),
+          'proyecto_id' => $request->input('id'),
+          'archivo' => $name,
+          'categoria' => 'tesis',
+          'nombre' => 'Tesis Doctoral',
+          'estado' => 1,
+          'comentario' => Carbon::now(),
+          'tipo' => 3,
         ]);
     }
 
@@ -366,29 +345,38 @@ class PsinfipuController extends S3Controller {
       $name = "token-" . $date->format('Ymd-His') . "-" . Str::random(8) . "." . $request->file('file2')->getClientOriginalExtension();
       $this->uploadFile($request->file('file2'), "proyecto-doc", $name);
 
-      DB::table('File')
-        ->where('tabla', '=', 'Proyecto')
-        ->where('tabla_id', '=', $request->input('id'))
-        ->where('recurso', '=', 'PROPIEDAD_INTELECTUAL')
-        ->where('estado', '=', 20)
+      DB::table('Proyecto_doc')
+        ->where('proyecto_id', '=', $request->input('id'))
+        ->where('categoria', '=', 'tesis')
+        ->where('nombre', '=', 'Tesis Maestría')
+        ->where('estado', '=', 1)
         ->update([
-          'estado' => -1
+          'estado' => 0
         ]);
 
-      DB::table('File')
+      DB::table('Proyecto_doc')
         ->insert([
-          'tabla' => 'Proyecto',
-          'tabla_id' => $request->input('id'),
-          'bucket' => 'proyecto-doc',
-          'key' => $name,
-          'recurso' => 'PROPIEDAD_INTELECTUAL',
-          'estado' => 20,
-          'created_at' => Carbon::now(),
-          'updated_at' => Carbon::now(),
+          'proyecto_id' => $request->input('id'),
+          'archivo' => $name,
+          'categoria' => 'tesis',
+          'nombre' => 'Tesis Maestría',
+          'estado' => 1,
+          'comentario' => Carbon::now(),
+          'tipo' => 4,
         ]);
     }
 
     return ['message' => 'success', 'detail' => 'Datos guardados'];
+  }
+
+  public function eliminarArchivo(Request $request) {
+    DB::table('Proyecto_doc')
+      ->where('proyecto_id', '=', $request->query('id'))
+      ->where('categoria', '=', 'tesis')
+      ->where('nombre', '=', $request->query('tesis'))
+      ->delete();
+
+    return ['message' => 'info', 'detail' => 'Archivo eliminado'];
   }
 
   public function verificar3(Request $request) {
@@ -444,9 +432,6 @@ class PsinfipuController extends S3Controller {
         'c.nombre AS tipo_integrante',
         DB::raw("CONCAT(b.apellido1, ' ', b.apellido2, ', ', b.nombres) AS nombre"),
         'b.tipo',
-        'a.tipo_tesis',
-        'a.titulo_tesis',
-        'a.excluido'
       ])
       ->where('a.proyecto_id', '=', $request->query('id'))
       ->get();
@@ -454,7 +439,7 @@ class PsinfipuController extends S3Controller {
     return ['estado' => true, 'integrantes' => $integrantes];
   }
 
-  public function listadoGrupoDocente(Request $request) {
+  public function listadoGrupoMiembro(Request $request) {
     $grupo = DB::table('Grupo_integrante')
       ->select([
         'grupo_id'
@@ -474,61 +459,6 @@ class PsinfipuController extends S3Controller {
       ->having('value', 'LIKE', '%' . $request->query('query') . '%')
       ->whereNot('a.condicion', 'LIKE', 'Ex%')
       ->where('a.grupo_id', '=', $grupo->grupo_id)
-      ->where('b.tipo', 'LIKE', '%DOCENTE%')
-      ->limit(10)
-      ->get();
-
-    return $listado;
-  }
-
-  public function listadoGrupoExterno(Request $request) {
-    $grupo = DB::table('Grupo_integrante')
-      ->select([
-        'grupo_id'
-      ])
-      ->where('investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
-      ->whereNot('condicion', 'LIKE', 'Ex%')
-      ->first();
-
-    $listado = Db::table('Grupo_integrante AS a')
-      ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
-      ->select(
-        DB::raw("CONCAT(b.tipo, ' - ' , a.condicion, ' | ', b.apellido1, ' ', b.apellido2, ', ', b.nombres) AS value"),
-        'a.investigador_id',
-        'a.id AS grupo_integrante_id',
-        'a.grupo_id'
-      )
-      ->having('value', 'LIKE', '%' . $request->query('query') . '%')
-      ->whereNot('a.condicion', 'LIKE', 'Ex%')
-      ->where('a.grupo_id', '=', $grupo->grupo_id)
-      ->where('b.tipo', '=', 'Externo')
-      ->limit(10)
-      ->get();
-
-    return $listado;
-  }
-
-  public function listadoGrupoEstudiante(Request $request) {
-    $grupo = DB::table('Grupo_integrante')
-      ->select([
-        'grupo_id'
-      ])
-      ->where('investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
-      ->whereNot('condicion', 'LIKE', 'Ex%')
-      ->first();
-
-    $listado = Db::table('Grupo_integrante AS a')
-      ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
-      ->select(
-        DB::raw("CONCAT(b.tipo, ' - ' , a.condicion, ' | ', b.apellido1, ' ', b.apellido2, ', ', b.nombres) AS value"),
-        'a.investigador_id',
-        'a.id AS grupo_integrante_id',
-        'a.grupo_id'
-      )
-      ->having('value', 'LIKE', '%' . $request->query('query') . '%')
-      ->whereNot('a.condicion', 'LIKE', 'Ex%')
-      ->where('a.grupo_id', '=', $grupo->grupo_id)
-      ->where('b.tipo', 'LIKE', 'Estudiante%')
       ->limit(10)
       ->get();
 
@@ -543,35 +473,18 @@ class PsinfipuController extends S3Controller {
 
     if ($count == 0) {
 
-      if ($request->input('tipo_tesis') == null) {
-        DB::table('Proyecto_integrante')
-          ->insert([
-            'proyecto_id' => $request->input('id'),
-            'grupo_id' => $request->input('grupo_id'),
-            'investigador_id' => $request->input('investigador_id'),
-            'grupo_integrante_id' => $request->input('grupo_integrante_id'),
-            'proyecto_integrante_tipo_id' => $request->input('proyecto_integrante_tipo_id'),
-            'contribucion' => $request->input('contribucion'),
-            'excluido' => 'Incluido',
-            'created_at' => Carbon::now(),
-            'updated_at' => Carbon::now(),
-          ]);
-      } else {
-        DB::table('Proyecto_integrante')
-          ->insert([
-            'proyecto_id' => $request->input('id'),
-            'grupo_id' => $request->input('grupo_id'),
-            'investigador_id' => $request->input('investigador_id'),
-            'grupo_integrante_id' => $request->input('grupo_integrante_id'),
-            'proyecto_integrante_tipo_id' => $request->input('proyecto_integrante_tipo_id'),
-            'contribucion' => $request->input('contribucion'),
-            'tipo_tesis' => $request?->input('tipo_tesis')["value"],
-            'titulo_tesis' => $request->input('titulo_tesis'),
-            'excluido' => 'Incluido',
-            'created_at' => Carbon::now(),
-            'updated_at' => Carbon::now(),
-          ]);
-      }
+      DB::table('Proyecto_integrante')
+        ->insert([
+          'proyecto_id' => $request->input('id'),
+          'grupo_id' => $request->input('grupo_id'),
+          'investigador_id' => $request->input('investigador_id'),
+          'grupo_integrante_id' => $request->input('grupo_integrante_id'),
+          'proyecto_integrante_tipo_id' => 14,
+          'contribucion' => $request->input('contribucion'),
+          'created_at' => Carbon::now(),
+          'updated_at' => Carbon::now(),
+        ]);
+
 
       return ['message' => 'success', 'detail' => 'Integrante añadido'];
     } else {
@@ -674,6 +587,20 @@ class PsinfipuController extends S3Controller {
       ->join('Area AS e', 'e.id', '=', 'd.area_id')
       ->join('Linea_investigacion AS f', 'f.id', '=', 'a.linea_investigacion_id')
       ->join('Ocde AS g', 'g.id', '=', 'a.ocde_id')
+      ->leftJoin('Proyecto_doc AS h', function (JoinClause $join) {
+        $join->on('h.proyecto_id', '=', 'a.id')
+          ->where('h.tipo', '=', 3)
+          ->where('h.estado', '=', 1)
+          ->where('h.categoria', '=', 'tesis')
+          ->where('h.nombre', '=', 'Tesis Doctoral');
+      })
+      ->leftJoin('Proyecto_doc AS i', function (JoinClause $join) {
+        $join->on('i.proyecto_id', '=', 'a.id')
+          ->where('i.tipo', '=', 4)
+          ->where('i.estado', '=', 1)
+          ->where('i.categoria', '=', 'tesis')
+          ->where('i.nombre', '=', 'Tesis Maestría');
+      })
       ->select([
         'a.titulo',
         'c.grupo_nombre',
@@ -683,7 +610,14 @@ class PsinfipuController extends S3Controller {
         'b.detalle AS tipo_investigacion',
         'a.localizacion',
         'g.linea AS ocde',
-        'a.palabras_clave'
+        DB::raw("CASE
+          WHEN h.archivo IS NULL THEN 'No'
+          ELSE 'Sí'
+        END AS url1"),
+        DB::raw("CASE
+          WHEN i.archivo IS NULL THEN 'No'
+          ELSE 'Sí'
+        END AS url2"),
       ])
       ->where('a.id', '=', $request->query('id'))
       ->first();
@@ -704,6 +638,7 @@ class PsinfipuController extends S3Controller {
       ->join('Facultad AS c', 'c.id', '=', 'b.facultad_id')
       ->join('Dependencia AS d', 'd.id', '=', 'b.dependencia_id')
       ->select([
+        DB::raw("CONCAT(b.apellido1, ' ', b.apellido2, ', ', b.nombres) AS nombre"),
         'b.codigo',
         'd.dependencia',
         'c.nombre AS facultad',
@@ -740,7 +675,7 @@ class PsinfipuController extends S3Controller {
       ->where('proyecto_id', '=', $request->query('id'))
       ->get();
 
-    $pdf = Pdf::loadView('investigador.convocatorias.psinfinv', [
+    $pdf = Pdf::loadView('investigador.convocatorias.psinfipu', [
       'proyecto' => $proyecto,
       'responsable' => $responsable,
       'integrantes' => $integrantes,

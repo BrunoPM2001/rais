@@ -719,7 +719,24 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
       Route::post('registrar1', [PsinfipuController::class, 'registrar1']);
 
       Route::get('verificar2', [PsinfipuController::class, 'verificar2']);
-      // Route::post('registrar1', [PsinfipuController::class, 'registrar1']);
+      Route::post('registrar2', [PsinfipuController::class, 'registrar2']);
+      Route::delete('eliminarArchivo', [PsinfipuController::class, 'eliminarArchivo']);
+
+      Route::get('verificar3', [PsinfipuController::class, 'verificar3']);
+
+      Route::get('verificar4', [PsinfipuController::class, 'verificar4']);
+      Route::get('listadoGrupoMiembro', [PsinfipuController::class, 'listadoGrupoMiembro']);
+      Route::post('agregarIntegrante', [PsinfipuController::class, 'agregarIntegrante']);
+      Route::delete('eliminarIntegrante', [PsinfipuController::class, 'eliminarIntegrante']);
+
+      Route::get('verificar5', [PsinfipuController::class, 'verificar5']);
+      Route::post('addActividad', [PsinfipuController::class, 'addActividad']);
+      Route::delete('eliminarActividad', [PsinfipuController::class, 'eliminarActividad']);
+      Route::put('editActividad', [PsinfipuController::class, 'editActividad']);
+
+      Route::get('verificar6', [PsinfipuController::class, 'verificar6']);
+      Route::get('reporte', [PsinfipuController::class, 'reporte']);
+      Route::post('enviar', [PsinfipuController::class, 'enviar']);
     });
 
     Route::get('verificar', [ProCTIController::class, 'verificar']);
