@@ -88,12 +88,16 @@ class InformePconfigiController extends S3Controller {
       ], [
         'informe_tipo_id' => 35,
         'resumen_ejecutivo' => $request->input('resumen_ejecutivo'),
+        'palabras_clave' => $request->input('palabras_clave'),
         'infinal1' => $request->input('infinal1'),
         'infinal2' => $request->input('infinal2'),
         'infinal3' => $request->input('infinal3'),
         'infinal4' => $request->input('infinal4'),
         'infinal5' => $request->input('infinal5'),
         'infinal6' => $request->input('infinal6'),
+        'infinal7' => $request->input('infinal7'),
+        'infinal9' => $request->input('infinal9'),
+        'infinal10' => $request->input('infinal10'),
         'estado' => 0,
         'fecha_informe_tecnico' => $date,
         'created_at' => $date,
@@ -113,30 +117,6 @@ class InformePconfigiController extends S3Controller {
       $name = $request->input('proyecto_id') . "/" . $date1->format('Ymd-His') . "-" . Str::random(8) . "." . $request->file('file2')->getClientOriginalExtension();
       $this->uploadFile($request->file('file2'), "proyecto-doc", $name);
       $this->updateFile($proyecto_id, $date1, $name, "anexo2");
-    }
-
-    if ($request->hasFile('file3')) {
-      $name = $request->input('proyecto_id') . "/" . $date1->format('Ymd-His') . "-" . Str::random(8) . "." . $request->file('file3')->getClientOriginalExtension();
-      $this->uploadFile($request->file('file3'), "proyecto-doc", $name);
-      $this->updateFile($proyecto_id, $date1, $name, "anexo3");
-    }
-
-    if ($request->hasFile('file4')) {
-      $name = $request->input('proyecto_id') . "/" . $date1->format('Ymd-His') . "-" . Str::random(8) . "." . $request->file('file4')->getClientOriginalExtension();
-      $this->uploadFile($request->file('file4'), "proyecto-doc", $name);
-      $this->updateFile($proyecto_id, $date1, $name, "anexo4");
-    }
-
-    if ($request->hasFile('file5')) {
-      $name = $request->input('proyecto_id') . "/" . $date1->format('Ymd-His') . "-" . Str::random(8) . "." . $request->file('file5')->getClientOriginalExtension();
-      $this->uploadFile($request->file('file5'), "proyecto-doc", $name);
-      $this->updateFile($proyecto_id, $date1, $name, "anexo5");
-    }
-
-    if ($request->hasFile('file6')) {
-      $name = $request->input('proyecto_id') . "/" . $date1->format('Ymd-His') . "-" . Str::random(8) . "." . $request->file('file6')->getClientOriginalExtension();
-      $this->uploadFile($request->file('file6'), "proyecto-doc", $name);
-      $this->updateFile($proyecto_id, $date1, $name, "anexo6");
     }
 
     return ['message' => 'success', 'detail' => 'Informe guardado correctamente'];

@@ -23,6 +23,9 @@ class InformeUtilsController extends S3Controller {
       case "ECI":
         $util = new InformeEciController();
         return $util->sendData($request);
+      case "PCONFIGI":
+        $util = new InformePconfigiController();
+        return $util->sendData($request);
     }
   }
 
