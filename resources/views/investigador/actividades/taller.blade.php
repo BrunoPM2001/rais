@@ -330,7 +330,7 @@
         <tr>
           <td style="width: 24%;"><strong>Subvención económica VRIP</strong></td>
           <td style="width: 1%;">:</td>
-          <td style="width: 75%;">S/ 2700</td>
+          <td style="width: 75%;">S/ 2575</td>
         </tr>
         <tr>
           <td style="width: 24%;"><strong>Documento RD de cofinanciamiento</strong></td>

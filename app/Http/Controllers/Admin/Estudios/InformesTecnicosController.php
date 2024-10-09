@@ -98,6 +98,7 @@ class InformesTecnicosController extends S3Controller {
   }
 
   public function getDataInforme(Request $request) {
+    $actividades = [];
     $detalles = DB::table('Informe_tecnico AS a')
       ->join('Proyecto AS b', 'b.id', '=', 'a.proyecto_id')
       ->leftJoin('Facultad AS c', 'c.id', '=', 'b.facultad_id')
@@ -130,9 +131,25 @@ class InformesTecnicosController extends S3Controller {
           $archivo->url = '/minio/proyecto-doc/' . $archivo->archivo;
         }
         break;
+      case "PMULTI":
+        $actividades = DB::table('Proyecto_actividad AS a')
+          ->join('Proyecto_integrante AS b', 'b.id', '=', 'a.proyecto_integrante_id')
+          ->join('Usuario_investigador AS c', 'c.id', '=', 'b.investigador_id')
+          ->select([
+            DB::raw("ROW_NUMBER() OVER (ORDER BY a.id desc) AS indice"),
+            'a.id',
+            'a.actividad',
+            'a.justificacion',
+            DB::raw("CONCAT(c.apellido1, ' ', c.apellido2, ', ', c.nombres) AS responsable"),
+            'a.fecha_inicio',
+            'a.fecha_fin',
+          ])
+          ->where('a.proyecto_id', '=', $detalles->proyecto_id)
+          ->get();
+        break;
     }
 
-    return ['detalles' => $detalles, 'archivos' => $archivos];
+    return ['detalles' => $detalles, 'archivos' => $archivos, 'actividades' => $actividades];
   }
 
   public function updateInforme(Request $request) {

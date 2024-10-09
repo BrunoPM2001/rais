@@ -1177,4 +1177,54 @@ class Informe_economicoController extends S3Controller {
       return ['message' => 'error', 'detail' => 'Ya presenta un registro de informe'];
     }
   }
+
+  public function reporteInforme(Request $request) {
+    $datos = DB::table('Geco_proyecto AS a')
+      ->join('Proyecto AS b', 'b.id', '=', 'a.proyecto_id')
+      ->join('Geco_informe AS c', 'c.geco_proyecto_id', '=', 'a.id')
+      ->select([
+        'a.proyecto_id',
+        'b.titulo',
+        'c.updated_at AS fecha'
+      ])
+      ->where('a.id', '=', $request->query('id'))
+      ->first();
+
+    $responsable = DB::table('Usuario_investigador')
+      ->select([
+        DB::raw("CONCAT(apellido1, ' ', apellido2, ', ', nombres) AS nombres")
+      ])
+      ->where('id', '=', $request->attributes->get('token_decoded')->investigador_id)
+      ->first();
+
+    $listado = DB::table('Geco_proyecto AS a')
+      ->join('Proyecto_integrante AS b', 'b.proyecto_id', '=', 'a.proyecto_id')
+      ->join('Usuario_investigador AS c', function (JoinClause $join) {
+        $join->on('c.id', '=', 'b.investigador_id')
+          ->where('c.tipo', '=', 'DOCENTE PERMANENTE');
+      })
+      ->leftJoin('Geco_informe_actividad AS d', 'd.proyecto_integrante_id', '=', 'b.id')
+      ->select([
+        'b.id',
+        DB::raw("CONCAT(c.apellido1, ' ', c.apellido2, ' ', c.nombres) AS nombres"),
+        'd.actividad',
+        DB::raw("CASE (d.cumplimiento)
+        WHEN 1 THEN 'Sí'
+        WHEN 0 THEN 'No'
+        END AS cumplimiento")
+      ])
+      ->where('a.id', '=', $request->query('id'))
+      ->where('c.id', '!=', $request->attributes->get('token_decoded')->investigador_id)
+      ->get();
+
+    $pdf = Pdf::loadView(
+      'investigador.informes.economico.informe_cumplimiento',
+      [
+        'datos' => $datos,
+        'responsable' => $responsable,
+        'listado' => $listado,
+      ]
+    );
+    return $pdf->stream();
+  }
 }
