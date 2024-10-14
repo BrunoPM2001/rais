@@ -186,6 +186,7 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
       Route::get('informes/{proyecto_id}', [InformesTecnicosController::class, 'informes']);
       Route::get('getDataInforme', [InformesTecnicosController::class, 'getDataInforme']);
       Route::post('updateInforme', [InformesTecnicosController::class, 'updateInforme']);
+      Route::post('loadActividad', [InformesTecnicosController::class, 'loadActividad']);
     });
 
     //  Monitoreo
@@ -204,6 +205,11 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
       Route::get('listadoProyectos', [DeudaProyectosController::class, 'listadoProyectos']);
       Route::get('listadoIntegrantes', [DeudaProyectosController::class, 'listadoIntegrantes']);
       Route::get('listadoProyectosNoDeuda', [DeudaProyectosController::class, 'listadoProyectosNoDeuda']);
+      Route::get('listadoDeudaAcademica', [DeudaProyectosController::class, 'listadoDeudaAcademica']);
+      Route::post('asignarDeuda', [DeudaProyectosController::class, 'asignarDeuda']);
+      Route::get('proyectoDeuda', [DeudaProyectosController::class, 'proyectoDeuda']);
+      Route::post('subsanarDeuda', [DeudaProyectosController::class, 'subsanarDeuda']);
+      Route::get('getTipoDeuda', [DeudaProyectosController::class, 'getTipoDeuda']);
     });
 
     //  Gestión de publicaciones
@@ -805,6 +811,7 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
       Route::get('getData', [InformeUtilsController::class, 'getData']);
       Route::post('sendData', [InformeUtilsController::class, 'sendData']);
       Route::put('presentar', [InformeUtilsController::class, 'presentar']);
+      Route::post('loadActividad', [InformeUtilsController::class, 'loadActividad']);
     });
   });
 

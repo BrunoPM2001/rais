@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin\Estudios;
 
 use App\Http\Controllers\S3Controller;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -118,20 +119,35 @@ class InformesTecnicosController extends S3Controller {
     $archivos = DB::table('Proyecto_doc')
       ->select([
         'categoria',
-        'archivo',
-        'comentario'
+        DB::raw("CONCAT('/minio/proyecto-doc/', archivo) AS url")
       ])
       ->where('proyecto_id', '=', $detalles->proyecto_id)
       ->where('estado', '=', 1);
 
     switch ($detalles->tipo_proyecto) {
       case "ECI":
-        $archivos = $archivos->where('nombre', '=', 'Anexos proyecto ECI')->get();
-        foreach ($archivos as $archivo) {
-          $archivo->url = '/minio/proyecto-doc/' . $archivo->archivo;
-        }
+        $archivos = $archivos
+          ->where('nombre', '=', 'Anexos proyecto ECI')
+          ->get()
+          ->mapWithKeys(function ($item) {
+            return [$item->categoria => $item->url];
+          });
+        break;
+      case "PCONFIGI":
+      case "PCONFIGI-INV":
+        $archivos = $archivos
+          ->get()
+          ->mapWithKeys(function ($item) {
+            return [$item->categoria => $item->url];
+          });
         break;
       case "PMULTI":
+      case "PINTERDIS":
+        $archivos = $archivos
+          ->get()
+          ->mapWithKeys(function ($item) {
+            return [$item->categoria => $item->url];
+          });
         $actividades = DB::table('Proyecto_actividad AS a')
           ->join('Proyecto_integrante AS b', 'b.id', '=', 'a.proyecto_integrante_id')
           ->join('Usuario_investigador AS c', 'c.id', '=', 'b.investigador_id')
@@ -153,7 +169,6 @@ class InformesTecnicosController extends S3Controller {
   }
 
   public function updateInforme(Request $request) {
-
     $data = $request->all();
 
     // Función para convertir "null" string a null
@@ -200,5 +215,38 @@ class InformesTecnicosController extends S3Controller {
       'message' => 'success',
       'detail' => 'Informe actualizado exitosamente',
     ];
+  }
+
+  public function loadActividad(Request $request) {
+    if ($request->hasFile('file')) {
+      $proyecto = DB::table("Informe_tecnico")
+        ->select([
+          'proyecto_id'
+        ])
+        ->where('id', '=', $request->input('informe_id'))
+        ->first();
+
+      $date = Carbon::now();
+      $date1 = Carbon::now();
+
+      $name = $date1->format('Ymd-His');
+      $nameFile = $proyecto->proyecto_id . "/" . $name . "." . $request->file('file')->getClientOriginalExtension();
+      $this->uploadFile($request->file('file'), "proyecto-doc", $nameFile);
+
+      DB::table('Proyecto_doc')
+        ->updateOrInsert([
+          'proyecto_id' => $proyecto->proyecto_id,
+          'nombre' => 'Actividades',
+          'categoria' => 'actividad' . $request->input('indice'),
+        ], [
+          'comentario' => $date,
+          'archivo' => $nameFile,
+          'estado' => 1
+        ]);
+
+      return ['message' => 'success', 'detail' => 'Archivo cargado correctamente'];
+    } else {
+      return ['message' => 'error', 'detail' => 'Error al cargar archivo'];
+    }
   }
 }
