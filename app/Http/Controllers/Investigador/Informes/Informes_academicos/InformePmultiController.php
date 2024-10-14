@@ -9,7 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
-class InformePconfigiController extends S3Controller {
+class InformePmultiController extends S3Controller {
   public function getData(Request $request) {
     $proyecto = DB::table('Proyecto AS a')
       ->leftJoin('Grupo AS b', 'b.id', '=', 'a.grupo_id')
@@ -79,7 +79,22 @@ class InformePconfigiController extends S3Controller {
         return [$item->categoria => $item->url];
       });
 
-    return ['proyecto' => $proyecto, 'miembros' => $miembros, 'informe' => $informe, 'archivos' => $archivos];
+    $actividades = DB::table('Proyecto_actividad AS a')
+      ->join('Proyecto_integrante AS b', 'b.id', '=', 'a.proyecto_integrante_id')
+      ->join('Usuario_investigador AS c', 'c.id', '=', 'b.investigador_id')
+      ->select([
+        DB::raw("ROW_NUMBER() OVER (ORDER BY a.id desc) AS indice"),
+        'a.id',
+        'a.actividad',
+        'a.justificacion',
+        DB::raw("CONCAT(c.apellido1, ' ', c.apellido2, ', ', c.nombres) AS responsable"),
+        'a.fecha_inicio',
+        'a.fecha_fin',
+      ])
+      ->where('a.proyecto_id', '=', $request->get('proyecto_id'))
+      ->get();
+
+    return ['proyecto' => $proyecto, 'miembros' => $miembros, 'informe' => $informe, 'archivos' => $archivos, 'actividades' => $actividades];
   }
 
   public function sendData(Request $request) {
@@ -113,13 +128,7 @@ class InformePconfigiController extends S3Controller {
     if ($request->hasFile('file1')) {
       $name = $request->input('proyecto_id') . "/" . $date1->format('Ymd-His') . "-" . Str::random(8) . "." . $request->file('file1')->getClientOriginalExtension();
       $this->uploadFile($request->file('file1'), "proyecto-doc", $name);
-      $this->updateFile($proyecto_id, $date1, $name, "informe-PCONFIGI-INFORME", "Archivos de informe", 22);
-    }
-
-    if ($request->hasFile('file2')) {
-      $name = $request->input('proyecto_id') . "/" . $date1->format('Ymd-His') . "-" . Str::random(8) . "." . $request->file('file2')->getClientOriginalExtension();
-      $this->uploadFile($request->file('file2'), "proyecto-doc", $name);
-      $this->updateFile($proyecto_id, $date1, $name, "viabilidad", "Actividades", 65);
+      $this->updateFile($proyecto_id, $date1, $name, "informe-PMULTI-INFORME", "Archivos de informe", 22);
     }
 
     return ['message' => 'success', 'detail' => 'Informe guardado correctamente'];
@@ -142,7 +151,7 @@ class InformePconfigiController extends S3Controller {
 
     $count2 = DB::table('Proyecto_doc')
       ->where('proyecto_id', '=', $request->input('proyecto_id'))
-      ->where('categoria', '=', 'informe-PCONFIGI-INFORME')
+      ->where('categoria', '=', 'informe-PMULTI-INFORME')
       ->where('nombre', '=', 'Archivos de informe')
       ->where('estado', '=', 1)
       ->count();

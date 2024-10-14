@@ -57,7 +57,7 @@ class InformeEciController extends S3Controller {
       ->get()
       ->mapWithKeys(function ($item) {
         return [$item->categoria => $item->url];
-      });;
+      });
 
     return ['proyecto' => $proyecto, 'informe' => $informe, 'archivos' => $archivos];
   }

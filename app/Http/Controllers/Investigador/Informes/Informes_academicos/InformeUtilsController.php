@@ -15,6 +15,12 @@ class InformeUtilsController extends S3Controller {
       case "PCONFIGI":
         $util = new InformePconfigiController();
         return $util->getData($request);
+      case "PCONFIGI-INV":
+        $util = new InformePconfigiInvController();
+        return $util->getData($request);
+      case "PMULTI":
+        $util = new InformePmultiController();
+        return $util->getData($request);
     }
   }
 
@@ -25,6 +31,9 @@ class InformeUtilsController extends S3Controller {
         return $util->sendData($request);
       case "PCONFIGI":
         $util = new InformePconfigiController();
+        return $util->sendData($request);
+      case "PCONFIGI-INV":
+        $util = new InformePconfigiInvController();
         return $util->sendData($request);
     }
   }
