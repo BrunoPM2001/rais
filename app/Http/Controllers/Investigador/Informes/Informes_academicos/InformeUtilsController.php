@@ -49,6 +49,9 @@ class InformeUtilsController extends S3Controller {
       case "PINVPOS":
         $util = new InformePinvposController();
         return $util->sendData($request);
+      case "PMULTI":
+        $util = new InformePmultiController();
+        return $util->sendData($request);
     }
   }
 
@@ -56,6 +59,21 @@ class InformeUtilsController extends S3Controller {
     switch ($request->input('tipo_proyecto')) {
       case "ECI":
         $util = new InformeEciController();
+        return $util->presentar($request);
+      case "PCONFIGI":
+        $util = new InformePconfigiController();
+        return $util->presentar($request);
+      case "PCONFIGI-INV":
+        $util = new InformePconfigiInvController();
+        return $util->presentar($request);
+      case "PINTERDIS":
+        $util = new InformePinterdisController();
+        return $util->presentar($request);
+      case "PINVPOS":
+        $util = new InformePinvposController();
+        return $util->presentar($request);
+      case "PMULTI":
+        $util = new InformePmultiController();
         return $util->presentar($request);
     }
   }

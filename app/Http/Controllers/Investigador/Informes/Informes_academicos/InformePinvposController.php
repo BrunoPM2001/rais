@@ -4,22 +4,20 @@ namespace App\Http\Controllers\Investigador\Informes\Informes_academicos;
 
 use App\Http\Controllers\S3Controller;
 use Carbon\Carbon;
-use Illuminate\Database\Query\JoinClause;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 
 class InformePinvposController extends S3Controller {
   public function getData(Request $request) {
     $proyecto = DB::table('Proyecto AS a')
-      ->leftJoin('Usuario_investigador AS d', 'd.id', '=', 'c.investigador_id')
-      ->leftJoin('Facultad AS e', 'e.id', '=', 'b.facultad_id')
+      ->leftJoin('Proyecto_integrante AS b', 'b.proyecto_id', '=', 'a.id')
+      ->leftJoin('Usuario_investigador AS d', 'd.id', '=', 'b.investigador_id')
+      ->leftJoin('Facultad AS e', 'e.id', '=', 'd.facultad_id')
       ->select([
         'a.titulo',
         'a.codigo_proyecto',
         'a.resolucion_rectoral',
         'a.periodo',
-        'b.grupo_nombre',
         'e.nombre AS facultad',
         DB::raw("CONCAT(d.apellido1, ' ', d.apellido2, ' ', d.nombres) AS responsable")
       ])
@@ -64,13 +62,12 @@ class InformePinvposController extends S3Controller {
         'proyecto_id' => $request->input('proyecto_id')
       ], [
         'informe_tipo_id' => 35,
-        'resumen_ejecutivo' => $request->input('resumen_ejecutivo'),
-        'infinal1' => $request->input('infinal1'),
-        'infinal2' => $request->input('infinal2'),
-        'infinal3' => $request->input('infinal3'),
-        'infinal4' => $request->input('infinal4'),
-        'infinal5' => $request->input('infinal5'),
-        'infinal6' => $request->input('infinal6'),
+        'objetivos_taller' => $request->input('objetivos_taller'),
+        'fecha_evento' => $request->input('fecha_evento'),
+        'propuestas_taller' => $request->input('propuestas_taller'),
+        'conclusion_taller' => $request->input('conclusion_taller'),
+        'recomendacion_taller' => $request->input('recomendacion_taller'),
+        'asistencia_taller' => $request->input('asistencia_taller'),
         'estado' => 0,
         'fecha_informe_tecnico' => $date,
         'created_at' => $date,
@@ -80,54 +77,18 @@ class InformePinvposController extends S3Controller {
     $proyecto_id = $request->input('proyecto_id');
     $date1 = Carbon::now();
 
-    if ($request->hasFile('file1')) {
-      $name = $request->input('proyecto_id') . "/" . $date1->format('Ymd-His') . "-" . Str::random(8) . "." . $request->file('file1')->getClientOriginalExtension();
-      $this->uploadFile($request->file('file1'), "proyecto-doc", $name);
-      $this->updateFile($proyecto_id, $date1, $name, "anexo1");
-    }
-
-    if ($request->hasFile('file2')) {
-      $name = $request->input('proyecto_id') . "/" . $date1->format('Ymd-His') . "-" . Str::random(8) . "." . $request->file('file2')->getClientOriginalExtension();
-      $this->uploadFile($request->file('file2'), "proyecto-doc", $name);
-      $this->updateFile($proyecto_id, $date1, $name, "anexo2");
-    }
-
-    if ($request->hasFile('file3')) {
-      $name = $request->input('proyecto_id') . "/" . $date1->format('Ymd-His') . "-" . Str::random(8) . "." . $request->file('file3')->getClientOriginalExtension();
-      $this->uploadFile($request->file('file3'), "proyecto-doc", $name);
-      $this->updateFile($proyecto_id, $date1, $name, "anexo3");
-    }
-
-    if ($request->hasFile('file4')) {
-      $name = $request->input('proyecto_id') . "/" . $date1->format('Ymd-His') . "-" . Str::random(8) . "." . $request->file('file4')->getClientOriginalExtension();
-      $this->uploadFile($request->file('file4'), "proyecto-doc", $name);
-      $this->updateFile($proyecto_id, $date1, $name, "anexo4");
-    }
-
-    if ($request->hasFile('file5')) {
-      $name = $request->input('proyecto_id') . "/" . $date1->format('Ymd-His') . "-" . Str::random(8) . "." . $request->file('file5')->getClientOriginalExtension();
-      $this->uploadFile($request->file('file5'), "proyecto-doc", $name);
-      $this->updateFile($proyecto_id, $date1, $name, "anexo5");
-    }
-
-    if ($request->hasFile('file6')) {
-      $name = $request->input('proyecto_id') . "/" . $date1->format('Ymd-His') . "-" . Str::random(8) . "." . $request->file('file6')->getClientOriginalExtension();
-      $this->uploadFile($request->file('file6'), "proyecto-doc", $name);
-      $this->updateFile($proyecto_id, $date1, $name, "anexo6");
-    }
-
     return ['message' => 'success', 'detail' => 'Informe guardado correctamente'];
   }
 
   public function presentar(Request $request) {
     $count1 = DB::table('Informe_tecnico')
       ->where('proyecto_id', '=', $request->input('proyecto_id'))
-      ->whereNotNull('resumen_ejecutivo')
-      ->whereNotNull('infinal1')
-      ->whereNotNull('infinal2')
-      ->whereNotNull('infinal3')
-      ->whereNotNull('infinal4')
-      ->whereNotNull('infinal5')
+      ->whereNotNull('objetivos_taller')
+      ->whereNotNull('fecha_evento')
+      ->whereNotNull('propuestas_taller')
+      ->whereNotNull('conclusion_taller')
+      ->whereNotNull('recomendacion_taller')
+      ->whereNotNull('asistencia_taller')
       ->count();
 
     if ($count1 == 0) {

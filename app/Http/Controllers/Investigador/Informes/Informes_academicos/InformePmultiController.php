@@ -124,11 +124,60 @@ class InformePmultiController extends S3Controller {
 
     $proyecto_id = $request->input('proyecto_id');
     $date1 = Carbon::now();
+    $date_format =  $date1->format('Ymd-His');
 
     if ($request->hasFile('file1')) {
-      $name = $request->input('proyecto_id') . "/" . $date1->format('Ymd-His') . "-" . Str::random(8) . "." . $request->file('file1')->getClientOriginalExtension();
+      $name = $request->input('proyecto_id') . "/" . $date_format . "-" . Str::random(8) . "." . $request->file('file1')->getClientOriginalExtension();
       $this->uploadFile($request->file('file1'), "proyecto-doc", $name);
-      $this->updateFile($proyecto_id, $date1, $name, "informe-PMULTI-INFORME", "Archivos de informe", 22);
+      $this->updateFile($proyecto_id, $date_format, $name, "informe-PMULTI-INFORME", "Archivos de informe", 22);
+    }
+
+    if ($request->hasFile('file2')) {
+      $name = $request->input('proyecto_id') . "/" . $date_format . "-" . Str::random(8) . "." . $request->file('file2')->getClientOriginalExtension();
+      $this->uploadFile($request->file('file2'), "proyecto-doc", $name);
+      $this->updateFile($proyecto_id, $date_format, $name, "articulo1", "Artículos publicados o aceptados en revistas indizadas a SCOPUS O WoS,o un libro,o dos capítulos de libro publicados en editoriales reconocido prestigio, de acuerdo con las normas internas de la universidad.", 65);
+    }
+
+    if ($request->hasFile('file3')) {
+      $name = $request->input('proyecto_id') . "/" . $date_format . "-" . Str::random(8) . "." . $request->file('file3')->getClientOriginalExtension();
+      $this->uploadFile($request->file('file3'), "proyecto-doc", $name);
+      $this->updateFile($proyecto_id, $date_format, $name, "articulo2", "Artículos publicados o aceptados en revistas indizadas a SCOPUS O WoS,o un libro,o dos capítulos de libro publicados en editoriales reconocido prestigio, de acuerdo con las normas internas de la universidad.", 65);
+    }
+
+    if ($request->hasFile('file4')) {
+      $name = $request->input('proyecto_id') . "/" . $date_format . "-" . Str::random(8) . "." . $request->file('file4')->getClientOriginalExtension();
+      $this->uploadFile($request->file('file4'), "proyecto-doc", $name);
+      $this->updateFile($proyecto_id, $date_format, $name, "articulo3", "Artículos publicados o aceptados en revistas indizadas a SCOPUS O WoS,o un libro,o dos capítulos de libro publicados en editoriales reconocido prestigio, de acuerdo con las normas internas de la universidad.", 65);
+    }
+
+    if ($request->hasFile('file5')) {
+      $name = $request->input('proyecto_id') . "/" . $date_format . "-" . Str::random(8) . "." . $request->file('file5')->getClientOriginalExtension();
+      $this->uploadFile($request->file('file5'), "proyecto-doc", $name);
+      $this->updateFile($proyecto_id, $date_format, $name, "capituloLibro1", "Capítulos de libros publicados en editoriales de reconocido prestigio, de acuerdo con las normas internas de la universidad", 65);
+    }
+
+    if ($request->hasFile('file6')) {
+      $name = $request->input('proyecto_id') . "/" . $date_format . "-" . Str::random(8) . "." . $request->file('file6')->getClientOriginalExtension();
+      $this->uploadFile($request->file('file6'), "proyecto-doc", $name);
+      $this->updateFile($proyecto_id, $date_format, $name, "capituloLibro2", "Capítulos de libros publicados en editoriales de reconocido prestigio, de acuerdo con las normas internas de la universidad", 65);
+    }
+
+    if ($request->hasFile('file7')) {
+      $name = $request->input('proyecto_id') . "/" . $date_format . "-" . Str::random(8) . "." . $request->file('file7')->getClientOriginalExtension();
+      $this->uploadFile($request->file('file7'), "proyecto-doc", $name);
+      $this->updateFile($proyecto_id, $date_format, $name, "tesis1", "Tesis sustentadas Pregrado", 65);
+    }
+
+    if ($request->hasFile('file8')) {
+      $name = $request->input('proyecto_id') . "/" . $date_format . "-" . Str::random(8) . "." . $request->file('file8')->getClientOriginalExtension();
+      $this->uploadFile($request->file('file8'), "proyecto-doc", $name);
+      $this->updateFile($proyecto_id, $date_format, $name, "tesis4", "Tesis sustentadas Posgrado", 65);
+    }
+
+    if ($request->hasFile('file9')) {
+      $name = $request->input('proyecto_id') . "/" . $date_format . "-" . Str::random(8) . "." . $request->file('file9')->getClientOriginalExtension();
+      $this->uploadFile($request->file('file9'), "proyecto-doc", $name);
+      $this->updateFile($proyecto_id, $date_format, $name, "registro", "Formación de una red científica o el registro y/o inscripción al menos de una solicitud", 65);
     }
 
     return ['message' => 'success', 'detail' => 'Informe guardado correctamente'];
