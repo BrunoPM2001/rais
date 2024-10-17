@@ -129,22 +129,13 @@ class GruposController extends S3Controller {
         'a.presentacion',
         'a.objetivos',
         'a.servicios',
-        'a.infraestructura_ambientes',
-        'a.infraestructura_sgestion'
+        DB::raw("CONCAT('/minio/grupo-infraestructura-sgestion/', a.infraestructura_sgestion) AS url"),
+        'a.infraestructura_ambientes'
       )
       ->where('a.id', '=', $grupo_id)
       ->first();
 
-
-    if ($detalle->infraestructura_sgestion != null) {
-      $cmd = $s3->getCommand('GetObject', [
-        'Bucket' => 'grupo-infraestructura-sgestion',
-        'Key' => $detalle->infraestructura_sgestion
-      ]);
-      //  Generar url temporal
-      $url = (string) $s3->createPresignedRequest($cmd, '+10 minutes')->getUri();
-    }
-    $detalle->infraestructura_sgestion = $url ?? "#";
+    $detalle->url = $detalle->url ?? "#";
 
     return $detalle;
   }
@@ -425,8 +416,12 @@ class GruposController extends S3Controller {
         'a.apellido_materno',
         'a.nombres',
         'a.facultad',
-        'a.programa',
+        DB::raw("CASE
+          WHEN a.programa LIKE 'E.P.%' THEN 'Estudiante pregrado'
+          ELSE 'Estudiante posgrado'
+        END AS tipo"),
         'a.permanencia',
+        'a.programa',
         'b.email3'
       )
       ->whereIn('a.permanencia', ['Activo', 'Reserva de Matricula'])
@@ -451,6 +446,10 @@ class GruposController extends S3Controller {
         'a.nombres',
         'a.facultad',
         'a.programa',
+        DB::raw("CASE
+          WHEN a.programa LIKE 'E.P.%' THEN 'Estudiante pregrado'
+          ELSE 'Estudiante posgrado'
+        END AS tipo"),
         'a.permanencia',
         'a.ultimo_periodo_matriculado'
       )
@@ -587,6 +586,7 @@ class GruposController extends S3Controller {
               'direccion1' => $request->input('direccion1'),
               'doc_tipo' => $request->input('doc_tipo'),
               'doc_numero' => $request->input('doc_numero'),
+              'tipo' => 'Externo',
               'telefono_movil' => $request->input('telefono_movil'),
               'titulo_profesional' => $request->input('titulo_profesional'),
               'grado' => $request->input('grado'),
@@ -655,6 +655,7 @@ class GruposController extends S3Controller {
                 'apellido1' => $sumData->apellido_paterno,
                 'apellido2' => $sumData->apellido_materno,
                 'doc_tipo' => 'DNI',
+                'tipo' => $request->input('tipo'),
                 'doc_numero' => $sumData->dni,
                 'sexo' => $sumData->sexo,
                 'email3' => $sumData->correo_electronico,

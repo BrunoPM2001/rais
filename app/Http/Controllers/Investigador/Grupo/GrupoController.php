@@ -826,6 +826,7 @@ class GrupoController extends S3Controller {
               'nombres' => $request->input('nombres'),
               'sexo' => $request->input('sexo'),
               'institucion' => $request->input('institucion'),
+              'tipo' => 'Externo',
               'pais' => $request->input('pais'),
               'direccion1' => $request->input('direccion1'),
               'doc_tipo' => $request->input('doc_tipo'),
@@ -899,6 +900,7 @@ class GrupoController extends S3Controller {
                 'doc_numero' => $sumData->dni,
                 'sexo' => $sumData->sexo,
                 'email3' => $sumData->correo_electronico,
+                'tipo' => $request->input('tipo'),
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now(),
                 'tipo_investigador' => 'Estudiante'
@@ -1053,6 +1055,10 @@ class GrupoController extends S3Controller {
         'a.nombres',
         'a.facultad',
         'a.programa',
+        DB::raw("CASE
+          WHEN a.programa LIKE 'E.P.%' THEN 'Estudiante pregrado'
+          ELSE 'Estudiante posgrado'
+        END AS tipo"),
         'a.permanencia',
         'b.email3'
       )
@@ -1078,6 +1084,10 @@ class GrupoController extends S3Controller {
         'a.nombres',
         'a.facultad',
         'a.programa',
+        DB::raw("CASE
+          WHEN a.programa LIKE 'E.P.%' THEN 'Estudiante pregrado'
+          ELSE 'Estudiante posgrado'
+        END AS tipo"),
         'a.permanencia',
         'a.ultimo_periodo_matriculado'
       )
