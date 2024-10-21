@@ -63,7 +63,13 @@ class DocenteInvestigadorController extends S3Controller {
       ->groupBy('a.id')
       ->get();
 
-    return $evaluaciones;
+    $cuenta = DB::table('Eval_docente_investigador')
+      ->where('tipo_eval', '=', 'Constancia')
+      ->where(DB::raw('DATE(fecha_fin)'), '<', Carbon::now())
+      ->where('estado_real', '!=', 'NO VIGENTE')
+      ->get();
+
+    return $cuenta;
   }
 
   public function constancias() {
