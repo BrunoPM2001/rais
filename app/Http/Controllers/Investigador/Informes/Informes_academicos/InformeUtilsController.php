@@ -29,6 +29,12 @@ class InformeUtilsController extends S3Controller {
       case "PMULTI":
         $util = new InformePmultiController();
         return $util->getData($request);
+      case "PSINFINV":
+        $util = new InformePsinfinvController();
+        return $util->getData($request);
+      case "PSINFIPU":
+        $util = new InformePsinfipuController();
+        return $util->getData($request);
     }
   }
 
@@ -52,6 +58,12 @@ class InformeUtilsController extends S3Controller {
       case "PMULTI":
         $util = new InformePmultiController();
         return $util->sendData($request);
+      case "PSINFINV":
+        $util = new InformePsinfinvController();
+        return $util->sendData($request);
+      case "PSINFIPU":
+        $util = new InformePsinfipuController();
+        return $util->sendData($request);
     }
   }
 
@@ -74,6 +86,12 @@ class InformeUtilsController extends S3Controller {
         return $util->presentar($request);
       case "PMULTI":
         $util = new InformePmultiController();
+        return $util->presentar($request);
+      case "PSINFINV":
+        $util = new InformePsinfinvController();
+        return $util->presentar($request);
+      case "PSINFIPU":
+        $util = new InformePsinfipuController();
         return $util->presentar($request);
     }
   }

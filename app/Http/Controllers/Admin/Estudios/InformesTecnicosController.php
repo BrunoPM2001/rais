@@ -135,6 +135,8 @@ class InformesTecnicosController extends S3Controller {
         break;
       case "PCONFIGI":
       case "PCONFIGI-INV":
+      case "PSINFINV":
+      case "PSINFIPU":
         $archivos = $archivos
           ->get()
           ->mapWithKeys(function ($item) {
