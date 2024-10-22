@@ -978,20 +978,6 @@ class Informe_economicoController extends S3Controller {
         DB::raw("CONCAT(c.apellido1, ' ', c.apellido2, ' ', c.nombres) AS responsable"),
         'c.email3',
         'c.telefono_movil',
-        DB::raw("CASE(a.estado)
-          WHEN -1 THEN 'Eliminado'
-          WHEN 0 THEN 'No aprobado'
-          WHEN 1 THEN 'Aprobado'
-          WHEN 3 THEN 'En evaluación'
-          WHEN 5 THEN 'Enviado'
-          WHEN 6 THEN 'En proceso'
-          WHEN 7 THEN 'Anulado'
-          WHEN 8 THEN 'Sustentado'
-          WHEN 9 THEN 'En ejecucion'
-          WHEN 10 THEN 'Ejecutado'
-          WHEN 11 THEN 'Concluido'
-          ELSE 'Sin estado'
-        END AS estado")
       ])
       ->where('a.id', '=', $proyecto_id->id)
       ->first();
@@ -1019,7 +1005,25 @@ class Informe_economicoController extends S3Controller {
       ->get()
       ->groupBy('tipo');
 
-    $pdf = Pdf::loadView('investigador.informes.economico.hoja_resumen', ['proyecto' => $proyecto, 'presupuesto' => $presupuesto]);
+    //  Estado
+    $estado = '';
+    $rendido = DB::table('Geco_proyecto_presupuesto AS a')
+      ->join('Partida AS b', 'b.id', '=', 'a.partida_id')
+      ->select([
+        DB::raw("SUM(a.monto) AS total"),
+        DB::raw("SUM(a.monto_rendido) AS rendido")
+      ])
+      ->whereIn('b.tipo', ['Bienes', 'Servicios'])
+      ->where('geco_proyecto_id', '=', $request->query('id'))
+      ->first();
+
+    if ($rendido->total <= $rendido->rendido) {
+      $estado = 'COMPLETADO';
+    } else {
+      $estado = 'PENDIENTE';
+    }
+
+    $pdf = Pdf::loadView('investigador.informes.economico.hoja_resumen', ['proyecto' => $proyecto, 'presupuesto' => $presupuesto, 'estado' => $estado]);
     return $pdf->stream();
   }
 

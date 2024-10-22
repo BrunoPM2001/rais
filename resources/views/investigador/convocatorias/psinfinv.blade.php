@@ -134,7 +134,7 @@
 
   <div class="cuerpo">
 
-    <h5>I. Información general del taller:</h5>
+    <h5>I. Información general del proyecto:</h5>
 
     <table class="tableData">
       <tbody>

@@ -14,24 +14,20 @@ class Kernel extends ConsoleKernel {
    */
   protected function schedule(Schedule $schedule): void {
     //  Cronjobs
-    $schedule
-      ->call(function () {
-        try {
-
-          DB::table('Eval_docente_investigador')
-            ->where('tipo_eval', '=', 'Constancia')
-            ->where('id', '=', 965)
-            // ->where(DB::raw('DATE(fecha_fin)'), '<', Carbon::now())
-            // ->where('estado_real', '!=', 'NO VIGENTE')
-            ->update([
-              'estado_real' => 'NO VIGENTE'
-            ]);
-          Log::info('OK cronjob');
-        } catch (\Exception $e) {
-          Log::error('Error en cronjob: ' . $e->getMessage());
-        }
-      })
-      ->everyMinute();
+    $schedule->call(function () {
+      try {
+        DB::table('Eval_docente_investigador')
+          ->where('tipo_eval', '=', 'Constancia')
+          ->where(DB::raw('DATE(fecha_fin)'), '<', Carbon::now())
+          ->where('estado_real', '!=', 'NO VIGENTE')
+          ->update([
+            'estado_real' => 'NO VIGENTE'
+          ]);
+        Log::info('Constancias no vigentes actualizadas');
+      } catch (\Exception $e) {
+        Log::error('Error en cronjob: ' . $e->getMessage());
+      }
+    })->daily();
   }
 
   /**

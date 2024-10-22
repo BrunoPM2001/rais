@@ -63,13 +63,7 @@ class DocenteInvestigadorController extends S3Controller {
       ->groupBy('a.id')
       ->get();
 
-    $cuenta = DB::table('Eval_docente_investigador')
-      ->where('tipo_eval', '=', 'Constancia')
-      ->where(DB::raw('DATE(fecha_fin)'), '<', Carbon::now())
-      ->where('estado_real', '!=', 'NO VIGENTE')
-      ->get();
-
-    return $cuenta;
+    return $evaluaciones;
   }
 
   public function constancias() {
@@ -241,10 +235,9 @@ class DocenteInvestigadorController extends S3Controller {
       ->groupBy('a.id')
       ->get();
 
-    // $d4 = json_decode($detalles->d4, true);
     $filiacion = 0;
     foreach ($d4 as $item) {
-      if ($item->filiacion == 1) {
+      if ($item->filiacion == "Sí") {
         $filiacion++;
       }
     }
@@ -509,7 +502,7 @@ class DocenteInvestigadorController extends S3Controller {
     $detalles = DB::table('Eval_docente_investigador AS a')
       ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
       ->join('Repo_rrhh AS c', 'c.ser_cod_ant', '=', 'b.codigo')
-      ->join('Grupo AS d', 'd.id', '=', 'a.d2')
+      ->leftJoin('Grupo AS d', 'd.id', '=', 'a.d2')
       ->join('Facultad AS e', 'e.id', '=', 'b.facultad_id')
       ->select([
         'b.id AS investigador_id',

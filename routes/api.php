@@ -440,7 +440,6 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
   //  Main dashboard
   Route::prefix('dashboard')->group(function () {
     Route::get('getData', [InvestigadorDashboardController::class, 'getData']);
-    Route::get('metricas', [InvestigadorDashboardController::class, 'metricas']);
   });
 
   //  Actividades

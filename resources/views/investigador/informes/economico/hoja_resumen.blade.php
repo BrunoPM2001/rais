@@ -148,7 +148,7 @@
   <p class="titulo">
     <strong>
       HOJA DE RESUMEN DE LA SUBVENCIÓN FINANCIERA<br>
-      ESTADO: {{ $proyecto->estado }}
+      ESTADO: {{ $estado }}
     </strong>
   </p>
   <div class="cuerpo">

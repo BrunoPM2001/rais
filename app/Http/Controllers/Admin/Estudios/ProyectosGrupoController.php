@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin\Estudios;
 use App\Http\Controllers\Admin\Estudios\Proyectos\EciController;
 use App\Http\Controllers\Admin\Estudios\Proyectos\PinvposController;
 use App\Http\Controllers\Admin\Estudios\Proyectos\PsinfinvController;
+use App\Http\Controllers\Admin\Estudios\Proyectos\PsinfipuController;
 use App\Http\Controllers\S3Controller;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -104,6 +105,20 @@ class ProyectosGrupoController extends S3Controller {
           'descripcion' => $descripcion,
           'actividades' => $actividades,
         ];
+      case "PSINFIPU":
+        $ctrl = new PsinfipuController();
+        $detalle = $ctrl->detalle($request);
+        $miembros = $ctrl->miembros($request);
+        $descripcion = $ctrl->descripcion($request);
+        $actividades = $ctrl->actividades($request);
+
+        return [
+          'detalle' => $detalle,
+          'miembros' => $miembros,
+          'descripcion' => $descripcion,
+          'actividades' => $actividades,
+        ];
+
       case "PINVPOS":
         $ctrl = new PinvposController();
         $detalle = $ctrl->detalle($request);
@@ -434,6 +449,9 @@ class ProyectosGrupoController extends S3Controller {
     switch ($tipo->tipo_proyecto) {
       case "PSINFINV":
         $ctrl = new PsinfinvController();
+        return $ctrl->reporte($request);
+      case "PSINFIPU":
+        $ctrl = new PsinfipuController();
         return $ctrl->reporte($request);
       case "PINVPOS":
         $ctrl = new PinvposController();
