@@ -85,7 +85,7 @@ class InformePtpdoctoController extends S3Controller {
       ->updateOrInsert([
         'proyecto_id' => $request->input('proyecto_id')
       ], [
-        'informe_tipo_id' => 35,
+        'informe_tipo_id' => 32,
         'estado_trabajo' => $request->input('estado_trabajo'),
         'infinal9' => $request->input('infinal9'),
         'infinal10' => $request->input('infinal10'),

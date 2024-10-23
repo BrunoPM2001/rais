@@ -80,7 +80,7 @@ class InformePsinfipuController extends S3Controller {
       ->updateOrInsert([
         'proyecto_id' => $request->input('proyecto_id')
       ], [
-        'informe_tipo_id' => 35,
+        'informe_tipo_id' => 38,
         'resumen_ejecutivo' => $request->input('resumen_ejecutivo'),
         'infinal1' => $request->input('infinal1'),
         'estado' => 0,

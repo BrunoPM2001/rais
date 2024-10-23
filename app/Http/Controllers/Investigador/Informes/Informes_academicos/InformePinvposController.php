@@ -61,7 +61,7 @@ class InformePinvposController extends S3Controller {
       ->updateOrInsert([
         'proyecto_id' => $request->input('proyecto_id')
       ], [
-        'informe_tipo_id' => 35,
+        'informe_tipo_id' => 43,
         'objetivos_taller' => $request->input('objetivos_taller'),
         'fecha_evento' => $request->input('fecha_evento'),
         'propuestas_taller' => $request->input('propuestas_taller'),
