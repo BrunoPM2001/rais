@@ -455,6 +455,18 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
     //  Proyectos FEX
     Route::prefix('fex')->group(function () {
       Route::get('listado', [ProyectoFEXController::class, 'listado']);
+      Route::get('lineasUnmsm', [ProyectoFEXController::class, 'lineasUnmsm']);
+      Route::post('registrarPaso1', [ProyectoFEXController::class, 'registrarPaso1']);
+      Route::post('registrarPaso2', [ProyectoFEXController::class, 'registrarPaso2']);
+
+      Route::post('registrarPaso3', [ProyectoFEXController::class, 'registrarPaso3']);
+      Route::put('updateDoc', [ProyectoFEXController::class, 'updateDoc']);
+      Route::delete('deleteDoc', [ProyectoFEXController::class, 'deleteDoc']);
+
+      Route::get('datosPaso1', [ProyectoFEXController::class, 'datosPaso1']);
+      Route::get('datosPaso2', [ProyectoFEXController::class, 'datosPaso2']);
+      Route::get('datosPaso3', [ProyectoFEXController::class, 'datosPaso3']);
+      Route::get('datosPaso4', [ProyectoFEXController::class, 'datosPaso4']);
     });
     //  Proyectos multidisciplinario
     Route::prefix('multi')->group(function () {
