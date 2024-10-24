@@ -230,7 +230,7 @@
         <tr>
           <td style="width: 20%;"><strong>Evaluación técnica</strong></td>
           <td style="width: 1%;">:</td>
-          <td style="width: 79%;">{{ $detalles->estado_tecnico }}</td>
+          <td style="width: 79%;">Aprobado</td>
         </tr>
         <tr>
           <td style="width: 20%;"><strong>Autoridad</strong></td>

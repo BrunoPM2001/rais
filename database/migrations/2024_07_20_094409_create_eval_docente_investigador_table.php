@@ -39,8 +39,6 @@ return new class extends Migration {
       $table->boolean('confirmar')->nullable();
       $table->text('confirmar_descripcion')->nullable();
       $table->string('estado')->nullable();
-      $table->string('estado_tecnico')->nullable();
-      $table->string('estado_real')->nullable();
       $table->date('fecha_envio_mail')->nullable();
       $table->string('directiva_evaluacion')->nullable();
       $table->timestamps();

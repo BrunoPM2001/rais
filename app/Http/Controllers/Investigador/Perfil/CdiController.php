@@ -301,17 +301,7 @@ class CdiController extends S3Controller {
         'd3',
         'd4',
         'd6',
-        DB::raw("CASE 
-            WHEN estado = 'ENVIADO' THEN 'Enviado'
-            WHEN estado = 'TRAMITE' THEN 'En trámite'
-            WHEN estado = 'CONSTANCIA' THEN 'Constancia'
-            WHEN estado = 'NO_APROBADO' THEN 'No aprobado'
-            WHEN estado = 'PROCESO' THEN 'Observado'
-            WHEN estado = 'PENDIENTE' THEN 'Pendiente'
-            ELSE ''
-        END AS estado"),
-        'estado_tecnico',
-        'estado_real',
+        'estado',
         'created_at'
       ])
       ->where('investigador_id',  '=', $request->attributes->get('token_decoded')->investigador_id)
@@ -835,7 +825,7 @@ class CdiController extends S3Controller {
       ])
       ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
       ->where('a.tipo_eval', '=', 'Constancia')
-      ->where('a.fecha_fin', '>', Carbon::now())
+      ->where('a.estado', '=', 'Vigente')
       ->first();
 
     return $constancia;
@@ -1123,7 +1113,7 @@ class CdiController extends S3Controller {
         'd2' => $d2,
         'd3' => $d3,
         'd4' => $d4,
-        'estado' => 'ENVIADO',
+        'estado' => 'Enviado',
         'updated_at' => Carbon::now(),
       ]);
 

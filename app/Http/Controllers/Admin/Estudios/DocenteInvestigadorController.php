@@ -36,14 +36,7 @@ class DocenteInvestigadorController extends S3Controller {
       ->leftJoin('Facultad AS d', 'd.id', '=', 'b.facultad_id')
       ->select([
         'a.id',
-        DB::raw("CASE 
-                WHEN a.estado = 'ENVIADO' THEN 'Enviado'
-                WHEN a.estado = 'TRAMITE' THEN 'En trámite'
-                WHEN a.estado = 'CONSTANCIA' THEN 'Constancia'
-                WHEN a.estado = 'NO_APROBADO' THEN 'No aprobado'
-                WHEN a.estado = 'PROCESO ' THEN 'Observado'
-                ELSE ''
-            END AS estado"),
+        'a.estado',
         'a.tipo_eval',
         DB::raw("CONCAT('/minio/declaracion-jurada/', c.key) AS url"),
         'b.tipo',
@@ -59,7 +52,7 @@ class DocenteInvestigadorController extends S3Controller {
         'a.created_at'
       ])
       ->where('a.tipo_eval', '=', 'Solicitud')
-      ->whereIn('a.estado', ['ENVIADO', 'TRAMITE', 'NO_APROBADO', 'PROCESO'])
+      ->whereIn('a.estado', ['ENVIADO', 'EN TRÁMITE', 'NO APROBADO', 'OBSERVADO'])
       ->groupBy('a.id')
       ->get();
 
@@ -72,10 +65,7 @@ class DocenteInvestigadorController extends S3Controller {
       ->leftJoin('Facultad AS c', 'c.id', '=', 'b.facultad_id')
       ->select([
         'a.id',
-        DB::raw("CASE 
-              WHEN a.fecha_fin < now() THEN 'No vigente'
-              ELSE 'Vigente'
-          END AS estado"),
+        'a.estado',
         DB::raw("DATE(a.fecha_constancia) AS fecha_constancia"),
         DB::raw("DATE(a.fecha_fin) AS fecha_fin"),
         'b.tipo',
@@ -111,17 +101,7 @@ class DocenteInvestigadorController extends S3Controller {
       ->select([
         DB::raw("CONCAT('/minio/', d.bucket, '/', d.key) AS url"),
         'a.nombres',
-        DB::raw("CASE 
-                WHEN a.estado = 'ENVIADO' THEN 'Enviado'
-                WHEN a.estado = 'TRAMITE' THEN 'En trámite'
-                WHEN a.estado = 'CONSTANCIA' THEN 'Constancia'
-                WHEN a.estado = 'NO_APROBADO' THEN 'No aprobado'
-                WHEN a.estado = 'PROCESO' THEN 'Observado'
-                WHEN a.estado = 'PENDIENTE' THEN 'Pendiente'
-                WHEN a.estado = 'Aprobado' THEN 'Aprobado'
-                ELSE ''
-            END AS estado"),
-        'a.estado_tecnico',
+        'a.estado',
         'a.doc_numero',
         'c.ser_fech_in_unmsm AS fecha',
         'b.id AS investigador_id',
@@ -383,7 +363,7 @@ class DocenteInvestigadorController extends S3Controller {
   public function observar(Request $request) {
     $count = DB::table('Eval_docente_investigador')
       ->where('id', '=', $request->input('id'))
-      ->where('estado', '=', 'PROCESO')
+      ->where('estado', '=', 'Observado')
       ->count();
 
     if ($count == 1) {
@@ -402,7 +382,8 @@ class DocenteInvestigadorController extends S3Controller {
       DB::table('Eval_docente_investigador')
         ->where('id', '=', $request->input('id'))
         ->update([
-          'estado' => 'PROCESO'
+          'estado' => 'Observado',
+          'updated_at' => $date
         ]);
       return ['message' => 'info', 'detail' => 'Solicitud observada correctamente'];
     }
@@ -427,8 +408,7 @@ class DocenteInvestigadorController extends S3Controller {
       ->update([
         'tipo_investigador' => 'DOCENTE INVESTIGADOR',
         'fecha_tramite' => Carbon::now(),
-        'estado_tecnico' => $request->input('estado_tecnico')["value"],
-        'estado' => 'TRAMITE',
+        'estado' => $request->input('estado_tecnico')["value"],
         'updated_at' => Carbon::now()
       ]);
   }
@@ -445,7 +425,7 @@ class DocenteInvestigadorController extends S3Controller {
           'tipo_eval' => 'Constancia',
           'fecha_constancia' => $date,
           'fecha_fin' => $dateFin,
-          'estado' => 'PENDIENTE',
+          'estado' => 'Pendiente',
           'directiva_evaluacion' => $request->input('norma')["value"],
           'confirmar' => $request->input('confirmar')["value"],
           'confirmar_descripcion' => $request->input('descripcion'),
@@ -455,7 +435,7 @@ class DocenteInvestigadorController extends S3Controller {
       DB::table('Eval_docente_investigador')
         ->where('id', '=', $request->input('id'))
         ->update([
-          'estado' => 'NO_APROBADO',
+          'estado' => 'No aprobado',
           'confirmar' => $request->input('confirmar')["value"],
           'confirmar_descripcion' => $request->input('descripcion'),
           'updated_at' => $date
@@ -486,7 +466,7 @@ class DocenteInvestigadorController extends S3Controller {
       DB::table('Eval_docente_investigador')
         ->where('id', '=', $request->input('id'))
         ->update([
-          'estado' => 'APROBADO',
+          'estado' => 'Vigente',
           'updated_at' => $date
         ]);
       return ['message' => 'success', 'detail' => 'Constancia cargada correctamente'];
@@ -514,7 +494,6 @@ class DocenteInvestigadorController extends S3Controller {
         'a.orcid',
         'e.nombre AS facultad',
         'c.des_dep_cesantes',
-        'a.estado_tecnico',
         'a.confirmar',
         'a.d1',
         'a.d2',
@@ -635,8 +614,8 @@ class DocenteInvestigadorController extends S3Controller {
       ->select([
         DB::raw("CONCAT(c.ser_ape_pat, ' ', c.ser_ape_mat, ', ', c.ser_nom) AS nombres"),
         'c.ser_cod_ant',
-        'a.fecha_constancia',
-        'a.fecha_fin',
+        DB::raw("DATE(a.fecha_constancia) AS fecha_constancia"),
+        DB::raw("DATE(a.fecha_fin) AS fecha_fin"),
       ])
       ->where('a.id', '=', $request->query('id'))
       ->first();
