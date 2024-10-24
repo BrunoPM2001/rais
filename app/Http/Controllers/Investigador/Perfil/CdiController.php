@@ -309,7 +309,7 @@ class CdiController extends S3Controller {
         $query->where('tipo_eval', '=', 'Solicitud')
           ->orWhere(function ($query) {
             $query->where('tipo_eval', '=', 'Constancia')
-              ->where('estado', '=', 'PENDIENTE');
+              ->where('estado', '=', 'Pendiente');
           });
       })
       ->orderByDesc('created_at')
@@ -775,7 +775,7 @@ class CdiController extends S3Controller {
         'd3' => $d3,
         'd4' => $d4,
         'd6' => json_encode($d6),
-        'estado' => 'ENVIADO',
+        'estado' => 'Enviado',
         'created_at' => Carbon::now(),
         'updated_at' => Carbon::now(),
       ]);

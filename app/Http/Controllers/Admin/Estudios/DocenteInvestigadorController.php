@@ -52,7 +52,7 @@ class DocenteInvestigadorController extends S3Controller {
         'a.created_at'
       ])
       ->where('a.tipo_eval', '=', 'Solicitud')
-      ->whereIn('a.estado', ['ENVIADO', 'EN TRÁMITE', 'NO APROBADO', 'OBSERVADO'])
+      ->whereIn('a.estado', ['Enviado', 'En trámite', 'No aprobado', 'Observado'])
       ->groupBy('a.id')
       ->get();
 
