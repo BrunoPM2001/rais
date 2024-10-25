@@ -185,7 +185,7 @@ class ProyectoFEXController extends S3Controller {
   public function datosPaso4(Request $request) {
     $miembros = DB::table('Proyecto_integrante AS a')
       ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
-      ->join('Facultad AS c', 'c.id', '=', 'b.facultad_id')
+      ->leftJoin('Facultad AS c', 'c.id', '=', 'b.facultad_id')
       ->join('Proyecto_integrante_tipo AS d', 'd.id', '=', 'a.proyecto_integrante_tipo_id')
       ->select([
         'd.nombre AS tipo_integrante',
@@ -558,29 +558,64 @@ class ProyectoFEXController extends S3Controller {
   }
 
   public function agregarExterno(Request $request) {
-    $investigador_id = DB::table('Usuario_investigador')
-      ->insertGetId([
-        'codigo_orcid' => $request->input('codigo_orcid'),
-        'apellido1' => $request->input('apellido1'),
-        'apellido2' => $request->input('apellido2'),
-        'nombres' => $request->input('nombres'),
-        'sexo' => $request->input('sexo'),
-        'institucion' => $request->input('institucion'),
-        'tipo' => 'Externo',
-        'pais' => $request->input('pais'),
-        'direccion1' => $request->input('direccion1'),
-        'doc_tipo' => $request->input('doc_tipo'),
-        'doc_numero' => $request->input('doc_numero'),
-        'telefono_movil' => $request->input('telefono_movil'),
-        'titulo_profesional' => $request->input('titulo_profesional'),
-        'grado' => $request->input('grado'),
-        'especialidad' => $request->input('especialidad'),
-        'researcher_id' => $request->input('researcher_id'),
-        'scopus_id' => $request->input('scopus_id'),
-        'link' => $request->input('link'),
-        'posicion_unmsm' => $request->input('posicion_unmsm'),
-        'biografia' => $request->input('biografia'),
-      ]);
+    if ($request->input('tipo') == "Nuevo") {
+
+      $investigador_id = DB::table('Usuario_investigador')
+        ->insertGetId([
+          'codigo_orcid' => $request->input('codigo_orcid'),
+          'apellido1' => $request->input('apellido1'),
+          'apellido2' => $request->input('apellido2'),
+          'nombres' => $request->input('nombres'),
+          'sexo' => $request->input('sexo'),
+          'institucion' => $request->input('institucion'),
+          'tipo' => 'Externo',
+          'pais' => $request->input('pais'),
+          'direccion1' => $request->input('direccion1'),
+          'doc_tipo' => $request->input('doc_tipo'),
+          'doc_numero' => $request->input('doc_numero'),
+          'telefono_movil' => $request->input('telefono_movil'),
+          'titulo_profesional' => $request->input('titulo_profesional'),
+          'grado' => $request->input('grado'),
+          'especialidad' => $request->input('especialidad'),
+          'researcher_id' => $request->input('researcher_id'),
+          'scopus_id' => $request->input('scopus_id'),
+          'link' => $request->input('link'),
+          'posicion_unmsm' => $request->input('posicion_unmsm'),
+          'biografia' => $request->input('biografia'),
+          'created_at' => Carbon::now(),
+          'updated_at' => Carbon::now(),
+        ]);
+
+      DB::table('Proyecto_integrante')
+        ->insert([
+          'proyecto_id' => $request->input('proyecto_id'),
+          'investigador_id' => $investigador_id,
+          'proyecto_integrante_tipo_id' => 90,
+          'created_at' => Carbon::now(),
+          'updated_at' => Carbon::now(),
+        ]);
+    } else {
+
+      $cuenta = DB::table('Proyecto_integrante')
+        ->where('proyecto_id', '=', $request->input('proyecto_id'))
+        ->where('investigador_id', '=', $request->input('investigador_id'))
+        ->count();
+
+      if ($cuenta > 0) {
+        return ['message' => 'error', 'detail' => 'Esta persona ya figura como integrante del proyecto'];
+      }
+
+      DB::table('Proyecto_integrante')
+        ->insert([
+          'proyecto_id' => $request->input('proyecto_id'),
+          'investigador_id' => $request->input('investigador_id'),
+          'proyecto_integrante_tipo_id' => 90,
+          'created_at' => Carbon::now(),
+          'updated_at' => Carbon::now(),
+        ]);
+    }
+
+    return ['message' => 'success', 'detail' => 'Integrante añadido correctamente'];
   }
 
   public function validar($proyecto_id, $investigador_id) {
