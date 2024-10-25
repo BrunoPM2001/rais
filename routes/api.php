@@ -463,6 +463,13 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
       Route::put('updateDoc', [ProyectoFEXController::class, 'updateDoc']);
       Route::delete('deleteDoc', [ProyectoFEXController::class, 'deleteDoc']);
 
+      Route::get('searchDocente', [ProyectoFEXController::class, 'searchDocente']);
+      Route::post('agregarDocente', [ProyectoFEXController::class, 'agregarDocente']);
+      Route::get('searchEstudiante', [ProyectoFEXController::class, 'searchEstudiante']);
+      Route::post('agregarEstudiante', [ProyectoFEXController::class, 'agregarEstudiante']);
+      Route::get('searchExterno', [ProyectoFEXController::class, 'searchExterno']);
+      Route::post('agregarExterno', [ProyectoFEXController::class, 'agregarExterno']);
+
       Route::get('datosPaso1', [ProyectoFEXController::class, 'datosPaso1']);
       Route::get('datosPaso2', [ProyectoFEXController::class, 'datosPaso2']);
       Route::get('datosPaso3', [ProyectoFEXController::class, 'datosPaso3']);

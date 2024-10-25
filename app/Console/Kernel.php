@@ -19,9 +19,9 @@ class Kernel extends ConsoleKernel {
         DB::table('Eval_docente_investigador')
           ->where('tipo_eval', '=', 'Constancia')
           ->where(DB::raw('DATE(fecha_fin)'), '<', Carbon::now())
-          ->where('estado_real', '!=', 'NO VIGENTE')
+          ->where('estado', '!=', 'NO VIGENTE')
           ->update([
-            'estado_real' => 'NO VIGENTE'
+            'estado' => 'NO VIGENTE'
           ]);
         Log::info('Constancias no vigentes actualizadas');
       } catch (\Exception $e) {

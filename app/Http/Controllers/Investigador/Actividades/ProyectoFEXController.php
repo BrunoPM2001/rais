@@ -428,6 +428,161 @@ class ProyectoFEXController extends S3Controller {
     return ['message' => 'info', 'detail' => 'Archivo eliminado correctamente'];
   }
 
+  public function searchDocente(Request $request) {
+    $investigadores = DB::table('Repo_rrhh AS a')
+      ->join('Usuario_investigador AS b', 'b.doc_numero', '=', 'a.ser_doc_id_act')
+      ->leftJoin('Licencia AS c', 'c.investigador_id', '=', 'b.id')
+      ->leftJoin('Licencia_tipo AS d', 'c.licencia_tipo_id', '=', 'd.id')
+      ->leftJoin('Facultad AS e', 'e.id', '=', 'b.facultad_id')
+      ->select(
+        DB::raw("CONCAT(TRIM(a.ser_cod_ant), ' | ', a.ser_doc_id_act, ' | ', a.ser_ape_pat, ' ', a.ser_ape_mat, ' ', a.ser_nom) AS value"),
+        'a.id',
+        'b.id AS investigador_id',
+        DB::raw("CONCAT(a.ser_ape_pat, ' ', a.ser_ape_mat, ' ', a.ser_nom) AS nombres"),
+        'ser_cod_ant AS codigo',
+        'ser_doc_id_act AS doc_numero',
+        DB::raw("CASE
+          WHEN SUBSTRING_INDEX(ser_cat_act, '-', 1) = '1' THEN 'Principal'
+          WHEN SUBSTRING_INDEX(ser_cat_act, '-', 1) = '2' THEN 'Asociado'
+          WHEN SUBSTRING_INDEX(ser_cat_act, '-', 1) = '3' THEN 'Auxiliar'
+          WHEN SUBSTRING_INDEX(ser_cat_act, '-', 1) = '4' THEN 'Jefe de Práctica'
+          ELSE 'Sin categoría'
+        END AS categoria"),
+        DB::raw("CASE
+          WHEN SUBSTRING_INDEX(SUBSTRING_INDEX(ser_cat_act, '-', 2), '-', -1) = '1' THEN 'Dedicación Exclusiva'
+          WHEN SUBSTRING_INDEX(SUBSTRING_INDEX(ser_cat_act, '-', 2), '-', -1) = '2' THEN 'Tiempo Completo'
+          WHEN SUBSTRING_INDEX(SUBSTRING_INDEX(ser_cat_act, '-', 2), '-', -1) = '3' THEN 'Tiempo Parcial'
+          ELSE 'Sin clase'
+        END AS clase"),
+        DB::raw("SUBSTRING_INDEX(ser_cat_act, '-', -1) AS horas"),
+        'des_dep_cesantes',
+        'e.nombre AS facultad',
+      )
+      ->where('des_tip_ser', 'LIKE', 'DOCENTE%')
+      ->where(function ($query) {
+        $query->where('c.fecha_fin', '<', date('Y-m-d'))
+          ->orWhere('d.id', '=', 9)
+          ->orWhereNull('d.tipo');
+      })
+      ->groupBy('ser_cod_ant')
+      ->having('value', 'LIKE', '%' . $request->query('query') . '%')
+      ->limit(10)
+      ->get();
+
+    return $investigadores;
+  }
+
+  public function agregarDocente(Request $request) {
+    $cuenta = DB::table('Proyecto_integrante')
+      ->where('proyecto_id', '=', $request->input('proyecto_id'))
+      ->where('investigador_id', '=', $request->input('investigador_id'))
+      ->count();
+
+    if ($cuenta > 0) {
+      return ['message' => 'error', 'detail' => 'Esta persona ya figura como integrante del proyecto'];
+    }
+
+    DB::table('Proyecto_integrante')
+      ->insert([
+        'proyecto_id' => $request->input('proyecto_id'),
+        'investigador_id' => $request->input('investigador_id'),
+        'proyecto_integrante_tipo_id' => $request->input('condicion'),
+        'created_at' => Carbon::now(),
+        'updated_at' => Carbon::now(),
+      ]);
+
+    return ['message' => 'success', 'detail' => 'Integrante añadido correctamente'];
+  }
+
+  public function searchEstudiante(Request $request) {
+    $estudiantes = DB::table('Repo_sum AS a')
+      ->leftJoin('Usuario_investigador AS b', 'b.codigo', '=', 'a.codigo_alumno')
+      ->select(
+        DB::raw("CONCAT(TRIM(a.codigo_alumno), ' | ', a.dni, ' | ', a.apellido_paterno, ' ', a.apellido_materno, ', ', a.nombres, ' | ', a.programa) AS value"),
+        'a.id',
+        'b.id AS investigador_id',
+        DB::raw("CONCAT(a.apellido_paterno, ' ', a.apellido_materno, ', ', a.nombres) AS nombres"),
+        'a.codigo_alumno',
+        'a.dni',
+        'a.facultad',
+        'a.permanencia',
+        'a.programa',
+        'a.ultimo_periodo_matriculado',
+      )
+      ->whereIn('a.permanencia', ['Activo', 'Reserva de Matricula', 'Egresado'])
+      ->having('value', 'LIKE', '%' . $request->query('query') . '%')
+      ->limit(10)
+      ->get();
+
+    return $estudiantes;
+  }
+
+  public function agregarEstudiante(Request $request) {
+    $cuenta = DB::table('Proyecto_integrante')
+      ->where('proyecto_id', '=', $request->input('proyecto_id'))
+      ->where('investigador_id', '=', $request->input('investigador_id'))
+      ->count();
+
+    if ($cuenta > 0) {
+      return ['message' => 'error', 'detail' => 'Esta persona ya figura como integrante del proyecto'];
+    }
+
+    DB::table('Proyecto_integrante')
+      ->insert([
+        'proyecto_id' => $request->input('proyecto_id'),
+        'investigador_id' => $request->input('investigador_id'),
+        'proyecto_integrante_tipo_id' => $request->input('condicion'),
+        'created_at' => Carbon::now(),
+        'updated_at' => Carbon::now(),
+      ]);
+
+    return ['message' => 'success', 'detail' => 'Integrante añadido correctamente'];
+  }
+
+  public function searchExterno(Request $request) {
+    $investigadores = DB::table('Usuario_investigador AS a')
+      ->select(
+        DB::raw("CONCAT(doc_numero, ' | ', apellido1, ' ', apellido2, ', ', nombres) AS value"),
+        'id AS investigador_id',
+        'doc_numero',
+        'apellido1',
+        'apellido2',
+        'nombres'
+      )
+      ->where('tipo', '=', 'EXTERNO')
+      ->having('value', 'LIKE', '%' . $request->query('query') . '%')
+      ->limit(10)
+      ->get();
+
+    return $investigadores;
+  }
+
+  public function agregarExterno(Request $request) {
+    $investigador_id = DB::table('Usuario_investigador')
+      ->insertGetId([
+        'codigo_orcid' => $request->input('codigo_orcid'),
+        'apellido1' => $request->input('apellido1'),
+        'apellido2' => $request->input('apellido2'),
+        'nombres' => $request->input('nombres'),
+        'sexo' => $request->input('sexo'),
+        'institucion' => $request->input('institucion'),
+        'tipo' => 'Externo',
+        'pais' => $request->input('pais'),
+        'direccion1' => $request->input('direccion1'),
+        'doc_tipo' => $request->input('doc_tipo'),
+        'doc_numero' => $request->input('doc_numero'),
+        'telefono_movil' => $request->input('telefono_movil'),
+        'titulo_profesional' => $request->input('titulo_profesional'),
+        'grado' => $request->input('grado'),
+        'especialidad' => $request->input('especialidad'),
+        'researcher_id' => $request->input('researcher_id'),
+        'scopus_id' => $request->input('scopus_id'),
+        'link' => $request->input('link'),
+        'posicion_unmsm' => $request->input('posicion_unmsm'),
+        'biografia' => $request->input('biografia'),
+      ]);
+  }
+
   public function validar($proyecto_id, $investigador_id) {
     $cuenta = DB::table('Proyecto_integrante')
       ->where('proyecto_id', '=', $proyecto_id)

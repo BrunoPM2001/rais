@@ -78,8 +78,8 @@ class DashboardController extends Controller {
 
     $cuenta = DB::table('Eval_docente_investigador')
       ->where('tipo_eval', '=', 'Constancia')
-      ->where('estado_real', '=', 'VIGENTE')
-      ->where(DB::raw('DATE(fecha_fin)'), '>', $now->subMonths(2))
+      ->where('estado', '=', 'Vigente')
+      ->where(DB::raw('DATE(fecha_fin)'), '<', $now->addMonths(2))
       ->where('investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
       ->count();
 
