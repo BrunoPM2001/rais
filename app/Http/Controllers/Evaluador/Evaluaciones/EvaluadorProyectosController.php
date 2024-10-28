@@ -352,16 +352,48 @@ class EvaluadorProyectosController extends S3Controller {
   }
 
   public function visualizarProyecto(Request $request) {
-    $proyecto = DB::table('Proyecto AS a')
-      ->leftJoin('Ocde AS b', 'b.id', '=', 'a.ocde_id')
+
+    $proyecto = DB::table('Proyecto AS p')
+      ->leftJoin('Facultad AS f', 'f.id', '=', 'p.facultad_id')
+      ->leftJoin('Ocde AS o', 'o.id', '=', 'p.ocde_id')
+      ->leftJoin('Linea_investigacion AS li', 'li.id', '=', 'p.linea_investigacion_id')
+      ->leftJoin('Grupo AS g', 'g.id', '=', 'p.grupo_id') // Se añadió el prefijo 'AS'
+      ->leftJoin('Area AS a', 'a.id', '=', 'f.area_id')
       ->select([
-        'a.titulo',
-        'b.linea',
-        'a.localizacion',
-        'a.palabras_clave'
+        'p.id',
+        'p.tipo_proyecto',
+        'p.titulo',
+        'f.nombre AS facultad',
+        'o.linea AS ocde',
+        'li.nombre AS linea_investigacion',
+        'g.grupo_nombre AS grupo',
+        'p.localizacion',
+        'a.nombre AS area'
       ])
-      ->where('a.id', '=', $request->query('proyecto_id'))
+      ->where('p.id', '=', $request->query('proyecto_id'))
       ->first();
+
+    $responsable = DB::table('Proyecto AS p')
+      ->select([
+        'i.id',
+        DB::raw('concat(i.apellido1, " ", i.apellido2, " ", i.nombres) AS responsable'),
+        'i.codigo_orcid',
+        'i.scopus_id',
+        'i.google_scholar',
+        'pub.editorial',
+        'pub.url',
+        'pub.tipo_publicacion'
+      ])
+      ->leftJoin('Proyecto_integrante AS pint', 'pint.proyecto_id', '=', 'p.id')
+      ->leftJoin('Usuario_investigador AS i', 'i.id', '=', 'pint.investigador_id')
+      ->leftJoin('Publicacion_proyecto AS pp', 'pp.investigador_id', '=', 'i.id')
+      ->leftJoin('Publicacion AS pub', 'pub.id', '=', 'pp.publicacion_id')
+      ->where('pint.condicion', '=', 'Responsable')
+      ->where('p.id', '=', $request->query('proyecto_id'))
+      ->distinct() // Agrega esto si hay duplicados
+      ->first();
+
+
 
     $descripciones = DB::table('Proyecto_descripcion')
       ->select([
@@ -395,11 +427,40 @@ class EvaluadorProyectosController extends S3Controller {
       ->orderBy('a.tipo')
       ->get();
 
+    $integrantes = DB::table('Proyecto_integrante AS pint')
+      ->select(
+        'i.id',
+        'ptipo.nombre AS tipo_integrante',
+        DB::raw('concat(i.apellido1, " ", i.apellido2, " ", i.nombres) AS integrante'),
+        'i.tipo AS tipo',
+        'f.nombre AS facultad',
+        'gi.condicion AS tipo_integrante_grupo',
+        'gi.tesista AS grado_academico',
+        'gi.titulo_proyecto_tesis AS titulo_tesis'
+      )
+      ->join('Proyecto_integrante_tipo AS ptipo', 'ptipo.id', '=', 'pint.proyecto_integrante_tipo_id')
+      ->join('Usuario_investigador AS i', 'i.id', '=', 'pint.investigador_id')
+      ->join('Facultad AS f', 'f.id', '=', 'i.facultad_id')
+      ->join('Grupo_integrante AS gi', 'gi.investigador_id', '=', 'pint.investigador_id')
+      ->where('pint.proyecto_id', '=', $request->query('proyecto_id'))
+      ->where(function ($query) {
+        $query->where('gi.condicion', 'NOT LIKE', 'Ex%')
+          ->orWhere('gi.condicion', '=', 'Externo');
+      })
+      ->orderBy('ptipo.id', 'asc') // Aquí se agrega el ordenamiento
+      ->get();
+
+
+
+
+
     return [
       'proyecto' => $proyecto,
       'detalles' => $descripciones,
       'calendario' => $calendario,
-      'presupuesto' => $presupuesto
+      'presupuesto' => $presupuesto,
+      'integrantes' => $integrantes,
+      'responsable' => $responsable
     ];
   }
 }
