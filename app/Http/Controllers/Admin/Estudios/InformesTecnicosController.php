@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin\Estudios;
 
 use App\Http\Controllers\S3Controller;
 use Carbon\Carbon;
+use Illuminate\Database\Query\JoinClause;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -99,18 +100,14 @@ class InformesTecnicosController extends S3Controller {
   }
 
   public function getDataInforme(Request $request) {
+    $proyecto = [];
     $actividades = [];
     $detalles = DB::table('Informe_tecnico AS a')
       ->join('Proyecto AS b', 'b.id', '=', 'a.proyecto_id')
-      ->leftJoin('Facultad AS c', 'c.id', '=', 'b.facultad_id')
       ->select([
         'b.id AS proyecto_id',
         'b.codigo_proyecto',
         'b.tipo_proyecto',
-        'b.titulo',
-        'b.periodo',
-        'b.resolucion_rectoral',
-        'c.nombre AS facultad',
         'a.*',
       ])
       ->where('a.id', '=', $request->query('informe_tecnico_id'))
@@ -124,8 +121,35 @@ class InformesTecnicosController extends S3Controller {
       ->where('proyecto_id', '=', $detalles->proyecto_id)
       ->where('estado', '=', 1);
 
+    $miembros = DB::table('Proyecto_integrante AS a')
+      ->leftJoin('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
+      ->join('Proyecto_integrante_tipo AS c', 'c.id', '=', 'a.proyecto_integrante_tipo_id')
+      ->select([
+        'b.codigo',
+        DB::raw("CONCAT(b.apellido1, ' ', b.apellido2, ' ', b.nombres) AS nombres"),
+        'c.nombre AS condicion',
+        'b.tipo'
+      ])
+      ->where('a.proyecto_id', '=', $detalles->proyecto_id)
+      ->get();
+
     switch ($detalles->tipo_proyecto) {
       case "ECI":
+        $proyecto = DB::table('Proyecto AS a')
+          ->leftJoin('Facultad AS b', 'b.id', '=', 'a.facultad_id')
+          ->leftJoin('Grupo AS c', 'c.id', '=', 'a.grupo_id')
+          ->select([
+            'a.titulo',
+            'a.codigo_proyecto',
+            'a.tipo_proyecto',
+            'a.resolucion_rectoral',
+            'a.periodo',
+            'c.grupo_nombre',
+            'b.nombre AS facultad',
+          ])
+          ->where('a.id', '=', $detalles->proyecto_id)
+          ->first();
+
         $archivos = $archivos
           ->where('nombre', '=', 'Anexos proyecto ECI')
           ->get()
@@ -139,6 +163,30 @@ class InformesTecnicosController extends S3Controller {
       case "PSINFIPU":
       case "PTPBACHILLER":
       case "PTPDOCTO":
+        $proyecto = DB::table('Proyecto AS a')
+          ->leftJoin('Facultad AS b', 'b.id', '=', 'a.facultad_id')
+          ->leftJoin('Grupo AS c', 'c.id', '=', 'a.grupo_id')
+          ->leftJoin('Linea_investigacion AS d', 'd.id', '=', 'a.linea_investigacion_id')
+          ->leftJoin('Proyecto_descripcion AS e', function (JoinClause $join) {
+            $join->on('e.proyecto_id', '=', 'a.id')
+              ->where('e.codigo', '=', 'tipo_investigacion');
+          })
+          ->leftJoin('Proyecto_presupuesto AS f', 'f.proyecto_id', '=', 'a.id')
+          ->select([
+            'a.titulo',
+            'a.codigo_proyecto',
+            'a.tipo_proyecto',
+            'a.resolucion_rectoral',
+            'a.periodo',
+            'c.grupo_nombre',
+            'a.localizacion',
+            'b.nombre AS facultad',
+            'd.nombre AS linea',
+            'e.detalle AS tipo_investigacion',
+            DB::raw("SUM(f.monto) AS monto")
+          ])
+          ->where('a.id', '=', $detalles->proyecto_id)
+          ->first();
         $archivos = $archivos
           ->get()
           ->mapWithKeys(function ($item) {
@@ -147,6 +195,27 @@ class InformesTecnicosController extends S3Controller {
         break;
       case "PMULTI":
       case "PINTERDIS":
+      case "PINVPOS":
+        $proyecto = DB::table('Proyecto AS a')
+          ->leftJoin('Facultad AS b', 'b.id', '=', 'a.facultad_id')
+          ->leftJoin('Grupo AS c', 'c.id', '=', 'a.grupo_id')
+          ->leftJoin('Linea_investigacion AS d', 'd.id', '=', 'a.linea_investigacion_id')
+          ->leftJoin('Proyecto_presupuesto AS f', 'f.proyecto_id', '=', 'a.id')
+          ->select([
+            'a.titulo',
+            'a.codigo_proyecto',
+            'a.tipo_proyecto',
+            'a.resolucion_rectoral',
+            'a.periodo',
+            'c.grupo_nombre',
+            'a.localizacion',
+            'b.nombre AS facultad',
+            'd.nombre AS linea',
+            DB::raw("SUM(f.monto) AS monto")
+          ])
+          ->where('a.id', '=', $detalles->proyecto_id)
+          ->first();
+
         $archivos = $archivos
           ->get()
           ->mapWithKeys(function ($item) {
@@ -169,7 +238,13 @@ class InformesTecnicosController extends S3Controller {
         break;
     }
 
-    return ['detalles' => $detalles, 'archivos' => $archivos, 'actividades' => $actividades];
+    return [
+      'detalles' => $detalles,
+      'archivos' => $archivos,
+      'actividades' => $actividades,
+      'proyecto' => $proyecto,
+      'miembros' => $miembros
+    ];
   }
 
   public function updateInforme(Request $request) {

@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\Estudios\DeudaProyectosController;
 use App\Http\Controllers\Admin\Estudios\DocenteInvestigadorController;
 use App\Http\Controllers\Admin\Estudios\GestionSUMController;
 use App\Http\Controllers\Admin\Estudios\GruposController;
+use App\Http\Controllers\Admin\Estudios\Informes_tecnicos\UtilInformeAdminController;
 use App\Http\Controllers\Admin\Estudios\InformesTecnicosController;
 use App\Http\Controllers\Admin\Estudios\InvestigadoresController;
 use App\Http\Controllers\Admin\Estudios\LaboratoriosController;
@@ -187,6 +188,8 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
       Route::get('getDataInforme', [InformesTecnicosController::class, 'getDataInforme']);
       Route::post('updateInforme', [InformesTecnicosController::class, 'updateInforme']);
       Route::post('loadActividad', [InformesTecnicosController::class, 'loadActividad']);
+
+      Route::get('reporte', [UtilInformeAdminController::class, 'reporte']);
     });
 
     //  Monitoreo
@@ -469,6 +472,9 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
       Route::post('agregarEstudiante', [ProyectoFEXController::class, 'agregarEstudiante']);
       Route::get('searchExterno', [ProyectoFEXController::class, 'searchExterno']);
       Route::post('agregarExterno', [ProyectoFEXController::class, 'agregarExterno']);
+      Route::delete('eliminarMiembro', [ProyectoFEXController::class, 'eliminarMiembro']);
+
+      Route::post('enviar', [ProyectoFEXController::class, 'enviar']);
 
       Route::get('datosPaso1', [ProyectoFEXController::class, 'datosPaso1']);
       Route::get('datosPaso2', [ProyectoFEXController::class, 'datosPaso2']);

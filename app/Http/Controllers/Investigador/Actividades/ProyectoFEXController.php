@@ -188,6 +188,7 @@ class ProyectoFEXController extends S3Controller {
       ->leftJoin('Facultad AS c', 'c.id', '=', 'b.facultad_id')
       ->join('Proyecto_integrante_tipo AS d', 'd.id', '=', 'a.proyecto_integrante_tipo_id')
       ->select([
+        'a.id',
         'd.nombre AS tipo_integrante',
         DB::raw("CONCAT(b.apellido1, ' ', b.apellido2, ', ', b.nombres) AS nombres"),
         'b.doc_numero',
@@ -379,6 +380,13 @@ class ProyectoFEXController extends S3Controller {
 
   //  Paso 3
   public function registrarPaso3(Request $request) {
+
+    $investigador_id = $request->attributes->get('token_decoded')->investigador_id;
+
+    if ($this->validar($request->input('id'), $investigador_id)) {
+      return response()->json(['error' => 'Unauthorized'], 401);
+    }
+
     $date = Carbon::now();
     $date_name = $date->format('Ymd-His');
 
@@ -473,6 +481,13 @@ class ProyectoFEXController extends S3Controller {
   }
 
   public function agregarDocente(Request $request) {
+
+    $investigador_id = $request->attributes->get('token_decoded')->investigador_id;
+
+    if ($this->validar($request->input('proyecto_id'), $investigador_id)) {
+      return response()->json(['error' => 'Unauthorized'], 401);
+    }
+
     $cuenta = DB::table('Proyecto_integrante')
       ->where('proyecto_id', '=', $request->input('proyecto_id'))
       ->where('investigador_id', '=', $request->input('investigador_id'))
@@ -518,23 +533,72 @@ class ProyectoFEXController extends S3Controller {
   }
 
   public function agregarEstudiante(Request $request) {
-    $cuenta = DB::table('Proyecto_integrante')
-      ->where('proyecto_id', '=', $request->input('proyecto_id'))
-      ->where('investigador_id', '=', $request->input('investigador_id'))
-      ->count();
 
-    if ($cuenta > 0) {
-      return ['message' => 'error', 'detail' => 'Esta persona ya figura como integrante del proyecto'];
+    $investigador_id = $request->attributes->get('token_decoded')->investigador_id;
+
+    if ($this->validar($request->input('proyecto_id'), $investigador_id)) {
+      return response()->json(['error' => 'Unauthorized'], 401);
     }
 
-    DB::table('Proyecto_integrante')
-      ->insert([
-        'proyecto_id' => $request->input('proyecto_id'),
-        'investigador_id' => $request->input('investigador_id'),
-        'proyecto_integrante_tipo_id' => $request->input('condicion'),
-        'created_at' => Carbon::now(),
-        'updated_at' => Carbon::now(),
-      ]);
+    if ($request->input('investigador_id') == null) {
+      $sumData = DB::table('Repo_sum')
+        ->select([
+          'id_facultad',
+          'codigo_alumno',
+          'nombres',
+          'apellido_paterno',
+          'apellido_materno',
+          'dni',
+          'sexo',
+          'correo_electronico',
+        ])
+        ->where('id', '=', $request->input('sum_id'))
+        ->first();
+
+      $id_investigador = DB::table('Usuario_investigador')
+        ->insertGetId([
+          'facultad_id' => $sumData->id_facultad,
+          'codigo' => $sumData->codigo_alumno,
+          'nombres' => $sumData->nombres,
+          'apellido1' => $sumData->apellido_paterno,
+          'apellido2' => $sumData->apellido_materno,
+          'doc_tipo' => 'DNI',
+          'doc_numero' => $sumData->dni,
+          'sexo' => $sumData->sexo,
+          'email3' => $sumData->correo_electronico,
+          'tipo' => $request->input('tipo'),
+          'created_at' => Carbon::now(),
+          'updated_at' => Carbon::now(),
+          'tipo_investigador' => 'Estudiante'
+        ]);
+
+      DB::table('Proyecto_integrante')
+        ->insert([
+          'proyecto_id' => $request->input('proyecto_id'),
+          'investigador_id' => $id_investigador,
+          'proyecto_integrante_tipo_id' => $request->input('condicion'),
+          'created_at' => Carbon::now(),
+          'updated_at' => Carbon::now(),
+        ]);
+    } else {
+      $cuenta = DB::table('Proyecto_integrante')
+        ->where('proyecto_id', '=', $request->input('proyecto_id'))
+        ->where('investigador_id', '=', $request->input('investigador_id'))
+        ->count();
+
+      if ($cuenta > 0) {
+        return ['message' => 'error', 'detail' => 'Esta persona ya figura como integrante del proyecto'];
+      }
+
+      DB::table('Proyecto_integrante')
+        ->insert([
+          'proyecto_id' => $request->input('proyecto_id'),
+          'investigador_id' => $request->input('investigador_id'),
+          'proyecto_integrante_tipo_id' => $request->input('condicion'),
+          'created_at' => Carbon::now(),
+          'updated_at' => Carbon::now(),
+        ]);
+    }
 
     return ['message' => 'success', 'detail' => 'Integrante añadido correctamente'];
   }
@@ -558,6 +622,13 @@ class ProyectoFEXController extends S3Controller {
   }
 
   public function agregarExterno(Request $request) {
+
+    $investigador_id = $request->attributes->get('token_decoded')->investigador_id;
+
+    if ($this->validar($request->input('proyecto_id'), $investigador_id)) {
+      return response()->json(['error' => 'Unauthorized'], 401);
+    }
+
     if ($request->input('tipo') == "Nuevo") {
 
       $investigador_id = DB::table('Usuario_investigador')
@@ -616,6 +687,31 @@ class ProyectoFEXController extends S3Controller {
     }
 
     return ['message' => 'success', 'detail' => 'Integrante añadido correctamente'];
+  }
+
+  public function eliminarMiembro(Request $request) {
+    DB::table('Proyecto_integrante')
+      ->where('id', '=', $request->query('id'))
+      ->delete();
+
+    return ['message' => 'info', 'detail' => 'Integrante eliminado'];
+  }
+
+  public function enviar(Request $request) {
+
+    $investigador_id = $request->attributes->get('token_decoded')->investigador_id;
+
+    if ($this->validar($request->input('id'), $investigador_id)) {
+      return response()->json(['error' => 'Unauthorized'], 401);
+    }
+
+    DB::table('Proyecto')
+      ->where('id', '=', $request->input('id'))
+      ->update([
+        'estado' => 5
+      ]);
+
+    return ['message' => 'info', 'detail' => 'Proyecto enviado para evaluación'];
   }
 
   public function validar($proyecto_id, $investigador_id) {
