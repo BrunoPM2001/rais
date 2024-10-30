@@ -140,4 +140,25 @@ class InformeUtilsController extends S3Controller {
       return ['message' => 'error', 'detail' => 'Error al cargar archivo'];
     }
   }
+
+  public function reporte(Request $request) {
+    switch ($request->query('tipo_proyecto')) {
+      case "PCONFIGI":
+        $util = new InformePconfigiController();
+        return $util->reporte($request);
+        break;
+      case "PCONFIGI-INV":
+        $util = new InformePconfigiInvController();
+        return $util->reporte($request);
+        break;
+      case "PSINFINV":
+        $util = new InformePsinfinvController();
+        return $util->reporte($request);
+        break;
+      case "PSINFIPU":
+        $util = new InformePsinfipuController();
+        return $util->reporte($request);
+        break;
+    }
+  }
 }

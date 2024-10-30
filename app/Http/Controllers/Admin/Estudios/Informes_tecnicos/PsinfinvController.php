@@ -69,6 +69,7 @@ class PsinfinvController extends Controller {
       'detalles' => $detalles,
       'informe' => $request->query('tipo_informe')
     ]);
+
     return $pdf->stream();
   }
 }

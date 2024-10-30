@@ -838,6 +838,8 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
       Route::post('sendData', [InformeUtilsController::class, 'sendData']);
       Route::put('presentar', [InformeUtilsController::class, 'presentar']);
       Route::post('loadActividad', [InformeUtilsController::class, 'loadActividad']);
+
+      Route::get('reporte', [InformeUtilsController::class, 'reporte']);
     });
   });
 
