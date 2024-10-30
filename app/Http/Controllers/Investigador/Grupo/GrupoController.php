@@ -641,6 +641,88 @@ class GrupoController extends S3Controller {
     }
   }
 
+  public function reporteGrupo(Request $request) {
+    $grupo = DB::table('Grupo')
+      ->select([
+        'grupo_nombre',
+        'grupo_nombre_corto',
+        'telefono',
+        'anexo',
+        'oficina',
+        'direccion',
+        'web',
+        'email',
+        'presentacion',
+        'objetivos',
+        'servicios',
+        'infraestructura_ambientes',
+        DB::raw("CASE 
+            WHEN infraestructura_sgestion IS NULL THEN 'No'
+            ELSE 'Sí'
+          END AS anexo"),
+        DB::raw("CASE (estado)
+          WHEN -2 THEN 'Disuelto'
+          WHEN -1 THEN 'Eliminado'
+          WHEN 0 THEN 'No aprobado'
+          WHEN 2 THEN 'Observado'
+          WHEN 4 THEN 'Registrado'
+          WHEN 5 THEN 'Enviado'
+          WHEN 6 THEN 'En proceso'
+          WHEN 12 THEN 'Reg. observado'
+          ELSE 'Estado desconocido'
+        END AS estado")
+      ])
+      ->where('id', '=', $request->query('id'))
+      ->first();
+
+    $integrantes = DB::table('Grupo_integrante AS a')
+      ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
+      ->leftJoin('Facultad AS c', 'c.id', '=', 'b.facultad_id')
+      ->select([
+        'b.doc_numero',
+        DB::raw("CONCAT(b.apellido1, ' ', b.apellido2, ', ', b.nombres) AS nombres"),
+        DB::raw("CASE 
+          WHEN a.cargo IS NOT NULL THEN CONCAT(a.condicion, '(', a.cargo, ')')
+          ELSE a.condicion
+          END AS condicion"),
+        'b.tipo',
+        'c.nombre AS facultad'
+      ])
+      ->whereNot('condicion', 'LIKE', 'Ex%')
+      ->where('a.grupo_id', '=', $request->query('id'))
+      ->get();
+
+    $lineas = DB::table('Grupo_linea AS a')
+      ->join('Linea_investigacion AS b', 'b.id', '=', 'a.linea_investigacion_id')
+      ->select([
+        'a.id',
+        'b.codigo',
+        'b.nombre',
+      ])
+      ->where('a.grupo_id', '=', $request->query('id'))
+      ->get();
+
+    $laboratorios = DB::table('Grupo_infraestructura AS a')
+      ->join('Laboratorio AS b', 'b.id', '=', 'a.laboratorio_id')
+      ->select([
+        'a.id',
+        'b.codigo',
+        'b.laboratorio',
+        'b.responsable',
+      ])
+      ->where('a.grupo_id', '=', $request->query('id'))
+      ->get();
+
+    $pdf = Pdf::loadView('investigador.grupo.reporte_grupo', [
+      'grupo' => $grupo,
+      'integrantes' => $integrantes,
+      'lineas' => $lineas,
+      'laboratorios' => $laboratorios,
+    ]);
+
+    return $pdf->stream();
+  }
+
   /**
    *  Otros
    */

@@ -685,6 +685,8 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
     Route::post('agregarMiembro', [InvestigadorGrupoController::class, 'agregarMiembro']);
     Route::put('excluirMiembro', [InvestigadorGrupoController::class, 'excluirMiembro']);
     Route::get('visualizarMiembro', [InvestigadorGrupoController::class, 'visualizarMiembro']);
+
+    Route::get('reporteGrupo', [InvestigadorGrupoController::class, 'reporteGrupo']);
   });
 
   //  Convocatorias
