@@ -241,4 +241,73 @@ class CriteriosUtilsController extends Controller {
         'puntaje' => $total
       ]);
   }
+
+  public function totalpuntajeIntegrantesRenacyt(Request $request) {
+    $proyectoId = $request->query('proyecto_id');
+    $fechaInicial = date("Y") - 7;
+    $fechaFinal = date("Y") - 1;
+    $totalPuntajeUltimos = 0;
+
+    // Capturar los IDs de los integrantes
+    $integrantes = DB::table('Proyecto_integrante as t1')
+      ->leftJoin('Proyecto_integrante_tipo as t2', 't1.proyecto_integrante_tipo_id', '=', 't2.id')
+      ->leftJoin('Usuario_investigador as t3', 't1.investigador_id', '=', 't3.id')
+      ->where('t1.proyecto_id', $proyectoId)
+      ->whereIn('t2.nombre', ['Responsable', 'Co Responsable', 'Miembro Docente', 'Autor Corresponsal', 'Co-Autor'])
+      ->get();
+
+    // Iterar sobre los IDs de los integrantes y calcular el puntaje total
+    foreach ($integrantes as $integrante) {
+      // Suma del puntaje de la tabla publicacion_autor
+      $publicacionPuntaje = DB::table('Publicacion_autor as t1')
+        ->select(DB::raw('SUM(t1.puntaje) as total'))
+        ->join('Publicacion as t2', 't1.publicacion_id', '=', 't2.id')
+        ->where('t1.investigador_id', $integrante->investigador_id)
+        ->where('t2.validado', 1)
+        ->whereBetween(DB::raw('YEAR(t2.fecha_publicacion)'), [$fechaInicial, $fechaFinal])
+        ->first();
+
+      // Suma del puntaje de la tabla patente_autor
+      $patentePuntaje = DB::table('Patente_autor')
+        ->select(DB::raw('SUM(puntaje) as total'))
+        ->where('investigador_id', $integrante->investigador_id)
+        ->whereBetween(DB::raw('YEAR(created_at)'), [$fechaInicial, $fechaFinal])
+        ->first();
+
+      $renacyt = DB::table('Usuario_investigador')
+        ->select('renacyt')
+        ->where('id', $integrante->investigador_id)
+        ->whereNotNull('renacyt')
+        ->where('renacyt', '!=', '')
+        ->first();
+
+      // Asegurar que los valores no sean nulos
+      $publicacionPuntaje = $publicacionPuntaje->total ?? 0;
+      $patentePuntaje = $patentePuntaje->total ?? 0;
+      $renacyt = isset($renacyt->renacyt) ? 4 : 0;
+
+      // Suma total de ambos puntajes para el investigador actual
+      $totalPuntajeUltimos += (float)$publicacionPuntaje + (float)$patentePuntaje + $renacyt;
+    }
+
+    // Evitar la división por cero
+    if (count($integrantes) > 0) {
+      $puntajeIntegrantes = $totalPuntajeUltimos / count($integrantes);
+    } else {
+      $puntajeIntegrantes = 0;
+    }
+
+    $total = $puntajeIntegrantes * 0.1;
+    $total = $total >= 10 ? 10 : $total;
+
+    // Actualizar puntaje
+    DB::table('Evaluacion_proyecto')
+      ->updateOrInsert([
+        'proyecto_id' => $request->query('proyecto_id'),
+        'evaluador_id' => $request->attributes->get('token_decoded')->evaluador_id,
+        'evaluacion_opcion_id' => 1184
+      ], [
+        'puntaje' => $total
+      ]);
+  }
 }

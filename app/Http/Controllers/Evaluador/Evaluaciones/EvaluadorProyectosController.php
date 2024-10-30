@@ -348,6 +348,14 @@ class EvaluadorProyectosController extends S3Controller {
         $utils->addgiTotal($request);
         $utils->totalpuntajeIntegrantes($request);
         break;
+
+      case "PSINFINV":
+        $utils->totalpuntajeIntegrantesRenacyt($request);
+        break;
+
+      case "PSINFIPU":
+        $utils->totalpuntajeIntegrantesRenacyt($request);
+        break;
     }
   }
 
@@ -404,6 +412,8 @@ class EvaluadorProyectosController extends S3Controller {
       ->pluck('detalle', 'codigo')
       ->toArray();
 
+
+
     $calendario = DB::table('Proyecto_actividad')
       ->select([
         'actividad',
@@ -450,8 +460,32 @@ class EvaluadorProyectosController extends S3Controller {
       ->orderBy('ptipo.id', 'asc') // Aquí se agrega el ordenamiento
       ->get();
 
+    $documentos = DB::table('File as f')
+      ->select([
+        'f.recurso',
+        DB::raw("CONCAT('/minio/', f.bucket, '/', f.key) AS url")
+      ])
+      ->where('f.tabla_id', '=', $request->query('proyecto_id'))
+      ->where('f.bucket', '=', 'proyecto-doc')
+      ->whereIn('f.recurso', ['METODOLOGIA_TRABAJO', 'PROPIEDAD_INTELECTUAL'])
+      ->where('f.estado', '=', 20)
+      ->get()
+      ->mapWithKeys(function ($item) {
+        return [$item->recurso => $item->url, 'recurso' => $item->recurso];
+      });
 
-
+    $proyectoDoc = DB::table('Proyecto_doc as pdoc')
+      ->select([
+        'pdoc.comentario',
+        'pdoc.categoria',
+        'pdoc.nombre',
+        DB::raw("CONCAT('/minio/', 'proyecto-doc' , '/' , pdoc.archivo ) AS url")
+      ])
+      ->where('pdoc.proyecto_id', '=', $request->query('proyecto_id'))
+      ->get()
+      ->mapWithKeys(function ($item) {
+        return [$item->categoria => $item->url, 'comentario' => $item->comentario, 'categoria' => $item->categoria, 'nombre' => $item->nombre];
+      });
 
 
     return [
@@ -460,7 +494,9 @@ class EvaluadorProyectosController extends S3Controller {
       'calendario' => $calendario,
       'presupuesto' => $presupuesto,
       'integrantes' => $integrantes,
-      'responsable' => $responsable
+      'responsable' => $responsable,
+      'documentos' => $documentos,
+      'proyectoDoc' => $proyectoDoc
     ];
   }
 }
