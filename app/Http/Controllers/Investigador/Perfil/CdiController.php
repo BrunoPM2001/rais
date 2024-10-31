@@ -774,7 +774,7 @@ class CdiController extends S3Controller {
         'd2' => $d2,
         'd3' => $d3,
         'd4' => $d4,
-        'd6' => json_encode($d6),
+        'd6' => json_encode($d6, JSON_UNESCAPED_UNICODE),
         'estado' => 'Enviado',
         'created_at' => Carbon::now(),
         'updated_at' => Carbon::now(),

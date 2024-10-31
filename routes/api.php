@@ -129,7 +129,7 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
       Route::put('disolverGrupo', [GruposController::class, 'disolverGrupo']);
 
       Route::get('miembros/{grupo_id}/{estado}', [GruposController::class, 'miembros']);
-      Route::get('docs/{grupo_id}', [GruposController::class, 'docs']);
+      Route::get('docs', [GruposController::class, 'docs']);
       Route::get('lineas/{grupo_id}', [GruposController::class, 'lineas']);
       Route::get('proyectos/{grupo_id}', [GruposController::class, 'proyectos']);
       Route::get('publicaciones/{grupo_id}', [GruposController::class, 'publicaciones']);
@@ -188,6 +188,7 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
       Route::get('getDataInforme', [InformesTecnicosController::class, 'getDataInforme']);
       Route::post('updateInforme', [InformesTecnicosController::class, 'updateInforme']);
       Route::post('loadActividad', [InformesTecnicosController::class, 'loadActividad']);
+      Route::get('verAuditoria', [InformesTecnicosController::class, 'verAuditoria']);
 
       Route::get('reporte', [UtilInformeAdminController::class, 'reporte']);
     });

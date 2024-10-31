@@ -206,7 +206,7 @@ class GestionTransferenciasController extends Controller {
       ]
     ];
 
-    $audit = json_encode($audit);
+    $audit = json_encode($audit, JSON_UNESCAPED_UNICODE);
 
     if ($request->input('estado') == 1) {
       DB::table('Geco_operacion')

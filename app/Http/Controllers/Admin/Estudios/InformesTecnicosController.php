@@ -290,6 +290,8 @@ class InformesTecnicosController extends S3Controller {
         'estado_trabajo' => $request->input('estado_trabajo'),
       ]);
 
+    $this->agregarAudit($request);
+
     return [
       'message' => 'success',
       'detail' => 'Informe actualizado exitosamente',
@@ -327,5 +329,49 @@ class InformesTecnicosController extends S3Controller {
     } else {
       return ['message' => 'error', 'detail' => 'Error al cargar archivo'];
     }
+  }
+
+  /**
+   * AUDITORÍA:
+   * Dentro de la columna audit (JSON almacenado como string) se guardarán
+   * los cambios de estado por parte de los administradores.
+   */
+
+  public function agregarAudit(Request $request) {
+    $documento = DB::table('Informe_tecnico')
+      ->select([
+        'audit'
+      ])
+      ->where('id', '=', $request->input('informe_tecnico_id'))
+      ->first();
+
+    $audit = json_decode($documento->audit ?? "[]");
+
+    $audit[] = [
+      'fecha' => Carbon::now()->format('Y-m-d H:i:s'),
+      'nombres' => $request->attributes->get('token_decoded')->nombre,
+      'apellidos' => $request->attributes->get('token_decoded')->apellidos
+    ];
+
+    $audit = json_encode($audit, JSON_UNESCAPED_UNICODE);
+
+    DB::table('Informe_tecnico')
+      ->where('id', '=', $request->input('informe_tecnico_id'))
+      ->update([
+        'audit' => $audit
+      ]);
+  }
+
+  public function verAuditoria(Request $request) {
+    $documento = DB::table('Informe_tecnico')
+      ->select([
+        'audit'
+      ])
+      ->where('id', '=', $request->query('id'))
+      ->first();
+
+    $audit = json_decode($documento->audit ?? "[]");
+
+    return $audit;
   }
 }

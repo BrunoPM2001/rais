@@ -598,7 +598,7 @@ class PublicacionesUtilsController extends S3Controller {
         'apellidos' => $investigador->apellidos
       ];
 
-      $audit = json_encode($audit);
+      $audit = json_encode($audit, JSON_UNESCAPED_UNICODE);
 
       $count1 = DB::table('Publicacion')
         ->where('id', '=', $request->input('publicacion_id'))

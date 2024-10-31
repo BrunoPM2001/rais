@@ -244,7 +244,7 @@ class PublicacionesController extends S3Controller {
             'apellidos' => $request->attributes->get('token_decoded')->apellidos
           ];
 
-          $audit = json_encode($audit);
+          $audit = json_encode($audit, JSON_UNESCAPED_UNICODE);
 
           DB::table('Publicacion')
             ->where('id', '=', $request->input('id'))
@@ -362,7 +362,7 @@ class PublicacionesController extends S3Controller {
       'apellidos' => $request->attributes->get('token_decoded')->apellidos
     ];
 
-    $audit = json_encode($audit);
+    $audit = json_encode($audit, JSON_UNESCAPED_UNICODE);
 
     DB::table('Publicacion')
       ->where('id', '=', $request->input('id'))

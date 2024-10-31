@@ -366,7 +366,7 @@ class GestionComprobantesController extends S3Controller {
       'nombre' => $request->attributes->get('token_decoded')->nombre . " " . $request->attributes->get('token_decoded')->apellidos
     ];
 
-    $audit = json_encode($audit);
+    $audit = json_encode($audit, JSON_UNESCAPED_UNICODE);
 
     DB::table('Geco_documento')
       ->where('id', '=', $request->input('geco_documento_id'))

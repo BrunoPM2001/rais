@@ -269,23 +269,26 @@ class GruposController extends S3Controller {
     $miembros = $estado == 1 ? $miembros->whereNot('a.condicion', 'LIKE', 'Ex%') : $miembros->where('a.condicion', 'LIKE', 'Ex%');
 
     $miembros = $miembros->groupBy('a.id')
+      ->orderByDesc('a.cargo')
+      ->orderByDesc('a.condicion')
+      ->orderBy('nombres')
       ->get();
 
     return ['data' => $miembros];
   }
 
-  public function docs($grupo_id) {
-    $docs = DB::table('Grupo_integrante_doc')
+  public function docs(Request $request) {
+    $docs = DB::table('Grupo_integrante_doc AS a')
       ->select(
-        'id',
-        'nombre',
-        'archivo_tipo',
-        'fecha'
+        'a.id',
+        'a.nombre',
+        DB::raw("CONCAT(a.key, '.pdf') AS url"),
+        'a.fecha'
       )
-      ->where('grupo_id', '=', $grupo_id)
+      ->where('grupo_id', '=', $request->query('grupo_id'))
       ->get();
 
-    return ['data' => $docs];
+    return $docs;
   }
 
   public function lineas($grupo_id) {
@@ -765,16 +768,23 @@ class GruposController extends S3Controller {
         'b.codigo',
         'b.doc_numero',
         'b.docente_categoria',
-        'b.docente_categoria',
         'c.dependencia',
         'd.nombre AS facultad',
         'b.codigo_orcid',
         'b.researcher_id',
         'b.scopus_id',
-        'a.fecha_inclusion',
+        'b.biografia',
         'a.resolucion_oficina',
+        'a.fecha_inclusion',
         'a.resolucion',
         'a.resolucion_fecha',
+        'a.observacion',
+        //  Para adherente
+        'b.tipo_investigador_estado',
+        'b.tipo',
+        'b.telefono_movil',
+        'b.telefono_casa',
+        'b.telefono_trabajo'
       ])
       ->where('a.id', '=', $request->query('grupo_integrante_id'))
       ->first();
@@ -782,11 +792,14 @@ class GruposController extends S3Controller {
     $proyectos = DB::table('Grupo_integrante AS a')
       ->join('Proyecto_integrante AS b', 'b.grupo_integrante_id', '=', 'a.id')
       ->join('Proyecto AS c', 'c.id', '=', 'b.proyecto_id')
+      ->leftJoin('Proyecto_integrante_tipo AS d', 'd.id', '=', 'b.proyecto_integrante_tipo_id')
       ->select([
         'c.codigo_proyecto',
-        'c.titulo',
         'c.tipo_proyecto',
-        'c.periodo'
+        'c.titulo',
+        'd.nombre AS condicion',
+        'c.periodo',
+        'c.estado'
       ])
       ->where('a.id', '=', $request->query('grupo_integrante_id'))
       ->where('c.estado', '=', 1)
