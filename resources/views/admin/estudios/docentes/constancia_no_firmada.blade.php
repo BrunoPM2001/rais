@@ -126,9 +126,7 @@
     <p class="nombre">{{ $detalles->nombres }}<br>Código docente: {{ $detalles->ser_cod_ant }}</p>
     <br>
 
-    <p class="parrafo">Cumple con los requisitos establecidos en la Directiva para Docentes Investigadores de la
-      Universidad Nacional Mayor de San Marcos (RR N° 009077-2024-R/UNMSM) y por tanto es designado(a) como Docente
-      Investigador.</p>
+    <p class="parrafo">Cumple con los requisitos establecidos en la Directiva para Docentes Investigadores de la Universidad Nacional Mayor de San Marcos (RR N° 009077-2024-R/UNMSM y modificatoria RR N° 012521-2024-R/UNMSM) y por tanto es designado(a) como Docente Investigador.</p>
 
     <br>
     <p>Periodo de vigencia: {{ $detalles->fecha_constancia }} al {{ $detalles->fecha_fin }}</p>
