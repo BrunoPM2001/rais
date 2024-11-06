@@ -487,6 +487,52 @@ class EvaluadorProyectosController extends S3Controller {
         return [$item->categoria => $item->url, 'comentario' => $item->comentario, 'categoria' => $item->categoria, 'nombre' => $item->nombre];
       });
 
+    $investigacion_base = isset($descripciones['investigacion_base']) ? $descripciones['investigacion_base'] : null;
+    $proyectoId = $investigacion_base ? explode('-', $investigacion_base)[0] : 0;
+
+    $inv_unmsm = DB::table('Proyecto as p')
+      ->select([
+        'p.id as proyecto_id',
+        'p.titulo',
+        'p.codigo_proyecto',
+        'p.tipo_proyecto',
+        'p.periodo',
+        'f.nombre as facultad',
+        'o.linea as ocde',
+        'li.nombre as linea_investigacion',
+        'g.grupo_nombre as grupo',
+        'p.localizacion',
+        'a.nombre as area'
+      ])
+      ->leftJoin('Facultad as f', 'f.id', '=', 'p.facultad_id')
+      ->leftJoin('Ocde as o', 'o.id', '=', 'p.ocde_id')
+      ->leftJoin('Linea_investigacion as li', 'li.id', '=', 'p.linea_investigacion_id')
+      ->leftJoin('Grupo as g', 'g.id', '=', 'p.grupo_id')
+      ->leftJoin('Area as a', 'a.id', '=', 'f.area_id')
+      ->where('p.id', '=', $proyectoId)
+      ->first();
+
+
+
+    foreach ($integrantes as $integrante) {
+      $deudas = DB::table('view_deudores as vdeuda')
+        ->select([
+          'vdeuda.investigador_id',
+          'vdeuda.proyecto_integrante_id',
+          'vdeuda.categoria',
+          'vdeuda.detalle',
+          'vdeuda.fecha_deuda',
+          'vdeuda.fecha_sub',
+          'vdeuda.periodo',
+          'vdeuda.ptipo',
+          'vdeuda.pcodigo'
+        ])
+        ->where('vdeuda.proyecto_integrante_id', '=', $integrante->id)
+        ->get();
+
+      $integrante->deudas = $deudas;
+    }
+
 
     return [
       'proyecto' => $proyecto,
@@ -496,7 +542,8 @@ class EvaluadorProyectosController extends S3Controller {
       'integrantes' => $integrantes,
       'responsable' => $responsable,
       'documentos' => $documentos,
-      'proyectoDoc' => $proyectoDoc
+      'proyectoDoc' => $proyectoDoc,
+      'investigacion' => $inv_unmsm
     ];
   }
 }

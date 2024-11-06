@@ -380,9 +380,13 @@ class CdiController extends S3Controller {
 
     $d4 = json_decode($solicitud->d4, true);
     $filiacion = 0;
+    $sinFiliacion = 0;
     foreach ($d4 as $item) {
       if ($item["filiacion"] == 1) {
         $filiacion++;
+      }
+      if ($item["filiacion"] == 0) {
+        $sinFiliacion++;
       }
     }
 
@@ -580,6 +584,7 @@ class CdiController extends S3Controller {
         ],
         'd4' => [
           'cumple' => $filiacion,
+          'evaluacion' => $sinFiliacion,
           'lista' => $d4
         ],
         'd5' => [

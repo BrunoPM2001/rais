@@ -282,13 +282,21 @@ class GruposController extends S3Controller {
       ->select(
         'a.id',
         'a.nombre',
-        DB::raw("CONCAT(a.key, '.pdf') AS url"),
+        DB::raw("CONCAT('/minio/grupo-integrante-doc/', a.key, '.pdf') AS url"),
         'a.fecha'
       )
-      ->where('grupo_id', '=', $request->query('grupo_id'))
+      ->where('grupo_id', '=', $request->query('id'))
       ->get();
 
     return $docs;
+  }
+
+  public function eliminarDoc(Request $request) {
+    DB::table('Grupo_integrante_doc')
+      ->where('id', '=', $request->query('id'))
+      ->delete();
+
+    return ['message' => 'info', 'detail' => 'Documento eliminado correctamente'];
   }
 
   public function lineas($grupo_id) {
@@ -298,7 +306,7 @@ class GruposController extends S3Controller {
       ->select(
         'a.id',
         'c.codigo',
-        'c.nombre'
+        'c.nombre',
       )
       ->whereNull('a.concytec_codigo')
       ->where('a.grupo_id', '=', $grupo_id)
@@ -308,18 +316,52 @@ class GruposController extends S3Controller {
   }
 
   public function proyectos($grupo_id) {
-    //  TODO - Averiguar los criterios para colocar un proyecto como válido
-    $proyectos = DB::table('Proyecto')
-      ->select(
-        'id',
-        'titulo',
-        'periodo',
-        'tipo_proyecto'
-      )
-      ->where('grupo_id', '=', $grupo_id)
+    $miembros = DB::table('Grupo AS a')
+      ->join('Grupo_integrante AS b', 'b.grupo_id', '=', 'a.id')
+      ->join('Usuario_investigador AS c', 'c.id', 'b.investigador_id')
+      ->select([
+        'c.id AS id',
+        DB::raw("null AS investigador_id"),
+        DB::raw("CONCAT(c.apellido1, ' ', c.apellido2, ', ', c.nombres) AS nombres"),
+        DB::raw("CONCAT(c.id, '_i') AS id_unico")
+      ])
+      ->where('a.id', '=', $grupo_id)
+      ->whereNot('b.condicion', 'LIKE', 'Ex%')
       ->get();
 
-    return ['data' => $proyectos];
+    $proyectos_nuevos = DB::table('Grupo AS a')
+      ->join('Grupo_integrante AS b', 'b.grupo_id', '=', 'a.id')
+      ->join('Proyecto_integrante AS c', 'c.investigador_id', '=', 'b.investigador_id')
+      ->join('Proyecto AS d', 'd.id', '=', 'c.proyecto_id')
+      ->select([
+        DB::raw("null AS id"),
+        'd.id AS proyecto_id',
+        'd.titulo',
+        'd.periodo',
+        'd.tipo_proyecto',
+        'b.investigador_id',
+        DB::raw("CONCAT(d.id, '_ph_', b.investigador_id) AS id_unico")
+      ])
+      ->where('a.id', '=', $grupo_id);
+
+    $proyectos = DB::table('Grupo AS a')
+      ->join('Grupo_integrante AS b', 'b.grupo_id', '=', 'a.id')
+      ->join('Proyecto_integrante_H AS c', 'c.investigador_id', '=', 'b.investigador_id')
+      ->join('Proyecto_H AS d', 'd.id', '=', 'c.proyecto_id')
+      ->select([
+        DB::raw("null AS id"),
+        'd.id AS proyecto_id',
+        'd.titulo',
+        'd.periodo',
+        'd.tipo AS tipo_proyecto',
+        'b.investigador_id',
+        DB::raw("CONCAT(d.id, '_p_', b.investigador_id) AS id_unico")
+      ])
+      ->where('a.id', '=', $grupo_id)
+      ->union($proyectos_nuevos)
+      ->get();
+
+    return $miembros->merge($proyectos);
   }
 
   public function publicaciones($grupo_id) {
@@ -833,6 +875,147 @@ class GruposController extends S3Controller {
       'message' => 'info',
       'detail' => 'Cargo actualizado exitosamente'
     ];
+  }
+
+  public function editarMiembroData(Request $request) {
+    $id = $request->query('id');
+
+    $tipo = DB::table('Grupo_integrante AS a')
+      ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
+      ->select('a.condicion', 'b.tipo')
+      ->where('a.id', '=', $id)
+      ->first();
+
+    switch ($tipo->condicion) {
+      case "Titular":
+        $miembro = DB::table('Grupo_integrante AS a')
+          ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
+          ->leftJoin('Facultad AS c', 'c.id', '=', 'b.facultad_id')
+          ->leftJoin('Dependencia AS d', 'd.id', '=', 'b.dependencia_id')
+          ->leftJoin('Instituto AS e', 'e.id', '=', 'b.instituto_id')
+          ->select([
+            DB::raw("CONCAT(b.apellido1, ' ', b.apellido2, ', ', b.nombres) AS nombres"),
+            'b.codigo',
+            'b.doc_numero',
+            DB::raw("CASE
+          WHEN SUBSTRING_INDEX(docente_categoria, '-', 1) = '1' THEN 'Principal'
+          WHEN SUBSTRING_INDEX(docente_categoria, '-', 1) = '2' THEN 'Asociado'
+          WHEN SUBSTRING_INDEX(docente_categoria, '-', 1) = '3' THEN 'Auxiliar'
+          WHEN SUBSTRING_INDEX(docente_categoria, '-', 1) = '4' THEN 'Jefe de Práctica'
+          ELSE 'Sin categoría'
+          END AS categoria"),
+            DB::raw("CASE
+          WHEN SUBSTRING_INDEX(SUBSTRING_INDEX(docente_categoria, '-', 2), '-', -1) = '1' THEN 'Dedicación Exclusiva'
+          WHEN SUBSTRING_INDEX(SUBSTRING_INDEX(docente_categoria, '-', 2), '-', -1) = '2' THEN 'Tiempo Completo'
+          WHEN SUBSTRING_INDEX(SUBSTRING_INDEX(docente_categoria, '-', 2), '-', -1) = '3' THEN 'Tiempo Parcial'
+          ELSE 'Sin clase'
+          END AS clase"),
+            DB::raw("SUBSTRING_INDEX(docente_categoria, '-', -1) AS horas"),
+            'c.nombre AS facultad',
+            'd.dependencia',
+            'b.cti_vitae',
+            'b.dep_academico',
+            'b.especialidad',
+            'b.titulo_profesional',
+            'b.grado',
+            'e.instituto',
+            'b.codigo_orcid',
+            'b.email3',
+            'b.telefono_casa',
+            'b.telefono_trabajo',
+            'b.telefono_movil',
+            'b.google_scholar',
+            'a.fecha_inclusion',
+            'a.resolucion',
+            'a.resolucion_fecha',
+            'a.observacion'
+          ])
+          ->where('a.id', '=', $id)
+          ->get();
+
+        return $miembro;
+        break;
+      case "Adherente":
+        if ($tipo->tipo == "Externo") {
+          $miembro = DB::table('Grupo_integrante AS a')
+            ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
+            ->leftJoin('Facultad AS c', 'c.id', '=', 'b.facultad_id')
+            ->leftJoin('Dependencia AS d', 'd.id', '=', 'b.dependencia_id')
+            ->leftJoin('Instituto AS e', 'e.id', '=', 'b.instituto_id')
+            ->select([
+              'b.codigo_orcid',
+              'b.apellido1',
+              'b.apellido2',
+              'b.nombres',
+              'b.sexo',
+              'b.institucion',
+              'b.pais',
+              'b.email1',
+              'b.doc_tipo',
+              'b.doc_numero',
+              'b.telefono_movil',
+              'b.titulo_profesional',
+              'b.grado',
+              'b.especialidad',
+              'b.researcher_id',
+              'b.scopus_id',
+              'b.link',
+              'b.posicion_unmsm',
+              'b.biografia',
+
+
+              'b.codigo',
+              DB::raw("CASE
+            WHEN SUBSTRING_INDEX(SUBSTRING_INDEX(docente_categoria, '-', 2), '-', -1) = '1' THEN 'Dedicación Exclusiva'
+            WHEN SUBSTRING_INDEX(SUBSTRING_INDEX(docente_categoria, '-', 2), '-', -1) = '2' THEN 'Tiempo Completo'
+            WHEN SUBSTRING_INDEX(SUBSTRING_INDEX(docente_categoria, '-', 2), '-', -1) = '3' THEN 'Tiempo Parcial'
+            ELSE 'Sin clase'
+            END AS clase"),
+              DB::raw("SUBSTRING_INDEX(docente_categoria, '-', -1) AS horas"),
+              'c.nombre AS facultad',
+              'd.dependencia',
+              'b.cti_vitae',
+              'b.dep_academico',
+              'e.instituto',
+              'b.email3',
+              'b.telefono_casa',
+              'b.telefono_trabajo',
+
+              'b.google_scholar',
+              'a.fecha_inclusion',
+              'a.resolucion',
+              'a.resolucion_fecha',
+              'a.observacion'
+            ])
+            ->where('a.id', '=', $id)
+            ->get();
+
+          return $miembro;
+        } else {
+
+          $miembro = DB::table('Grupo_integrante AS a')
+            ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
+            ->leftJoin('Facultad AS c', 'c.id', '=', 'b.facultad_id')
+            ->select([
+              DB::raw("CONCAT(b.apellido1, ' ', b.apellido2, ', ', b.nombres) AS nombres"),
+              'b.codigo',
+              'c.nombre AS facultad',
+              'b.doc_numero',
+              'b.email3',
+              'b.telefono_movil',
+              'b.telefono_casa',
+              'b.telefono_trabajo',
+            ])
+            ->where('a.id', '=', $id)
+            ->get();
+
+          return $miembro;
+        }
+        break;
+      default:
+        return [];
+        break;
+    }
   }
   //  ARCHIVO EXTERNO SE GUARDA EN GRUPO
   //  TODO - implementar reporte de calificación e imprimir

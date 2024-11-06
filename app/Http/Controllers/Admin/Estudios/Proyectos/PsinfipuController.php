@@ -29,6 +29,11 @@ class PsinfipuController extends Controller {
           ->where('h.nombre', '=', 'Tesis Maestría')
           ->where('h.estado', '=', 1);
       })
+      ->leftJoin('Proyecto_descripcion AS i', function (JoinClause $join) {
+        $join->on('i.proyecto_id', '=', 'a.id')
+          ->where('i.codigo', '=', 'investigacion_base');
+      })
+      ->leftJoin('Proyecto AS j', 'j.id', '=', 'i.proyecto_id')
       ->select(
         'a.titulo',
         'a.codigo_proyecto',
@@ -43,7 +48,8 @@ class PsinfipuController extends Controller {
         'f.linea AS ocde',
         'a.localizacion',
         DB::raw("CONCAT('/minio/proyecto-doc/', g.archivo) AS url1"),
-        DB::raw("CONCAT('/minio/proyecto-doc/', h.archivo) AS url2")
+        DB::raw("CONCAT('/minio/proyecto-doc/', h.archivo) AS url2"),
+        DB::raw("CONCAT('/admin/estudios/proyectos_grupos/detalle/', LOWER(j.tipo_proyecto), '?id=', SUBSTRING_INDEX(i.detalle, '-', 1)) AS url3"),
       )
       ->where('a.id', '=', $request->query('proyecto_id'))
       ->first();
