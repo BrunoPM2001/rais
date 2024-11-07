@@ -865,5 +865,6 @@ Route::prefix('evaluador')->middleware('checkRole:Usuario_evaluador')->group(fun
     Route::get('fichaEvaluacion', [EvaluadorProyectosController::class, 'fichaEvaluacion']);
     Route::post('cargarFicha', [EvaluadorProyectosController::class, 'cargarFicha']);
     Route::get('visualizarProyecto', [EvaluadorProyectosController::class, 'visualizarProyecto']);
+    Route::get('reportePasado', [ProyectosGrupoController::class, 'reporte']);
   });
 });

@@ -230,7 +230,9 @@
 
     <h6>Resultados esperados</h6>
     <div class="desc">
-      {!! $detalles['resumen_esperado'] !!}
+      @if (isset($detalles['resumen_esperado']))
+        {!! $detalles['resumen_esperado'] !!}
+      @endif
     </div>
 
     <h5>III. Datos del responsable:</h5>
