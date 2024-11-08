@@ -148,6 +148,9 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
       Route::get('visualizarMiembro', [GruposController::class, 'visualizarMiembro']);
       Route::put('cambiarCondicion', [GruposController::class, 'cambiarCondicion']);
       Route::put('cambiarCargo', [GruposController::class, 'cambiarCargo']);
+
+      //  Reporte
+      Route::get('reporte', [GruposController::class, 'reporte']);
     });
 
     //  Proyectos grupo

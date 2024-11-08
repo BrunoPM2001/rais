@@ -308,7 +308,7 @@
         @if (sizeof($laboratorios) == 0)
           <tr>
             <td colspan="3" align="center">
-              No hay líneas registrados
+              No hay equipos registrados
             </td>
           </tr>
         @endif
