@@ -893,33 +893,36 @@ class GruposController extends S3Controller {
           ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
           ->leftJoin('Facultad AS c', 'c.id', '=', 'b.facultad_id')
           ->leftJoin('Dependencia AS d', 'd.id', '=', 'b.dependencia_id')
-          ->leftJoin('Instituto AS e', 'e.id', '=', 'b.instituto_id')
+          ->leftJoin('View_puntaje_investigador AS f', 'f.investigador_id', '=', 'a.investigador_id')
           ->select([
+            'b.id AS investigador_id',
             DB::raw("CONCAT(b.apellido1, ' ', b.apellido2, ', ', b.nombres) AS nombres"),
             'b.codigo',
             'b.doc_numero',
             DB::raw("CASE
-          WHEN SUBSTRING_INDEX(docente_categoria, '-', 1) = '1' THEN 'Principal'
-          WHEN SUBSTRING_INDEX(docente_categoria, '-', 1) = '2' THEN 'Asociado'
-          WHEN SUBSTRING_INDEX(docente_categoria, '-', 1) = '3' THEN 'Auxiliar'
-          WHEN SUBSTRING_INDEX(docente_categoria, '-', 1) = '4' THEN 'Jefe de Práctica'
+          WHEN SUBSTRING_INDEX(b.docente_categoria, '-', 1) = '1' THEN 'Principal'
+          WHEN SUBSTRING_INDEX(b.docente_categoria, '-', 1) = '2' THEN 'Asociado'
+          WHEN SUBSTRING_INDEX(b.docente_categoria, '-', 1) = '3' THEN 'Auxiliar'
+          WHEN SUBSTRING_INDEX(b.docente_categoria, '-', 1) = '4' THEN 'Jefe de Práctica'
           ELSE 'Sin categoría'
           END AS categoria"),
             DB::raw("CASE
-          WHEN SUBSTRING_INDEX(SUBSTRING_INDEX(docente_categoria, '-', 2), '-', -1) = '1' THEN 'Dedicación Exclusiva'
-          WHEN SUBSTRING_INDEX(SUBSTRING_INDEX(docente_categoria, '-', 2), '-', -1) = '2' THEN 'Tiempo Completo'
-          WHEN SUBSTRING_INDEX(SUBSTRING_INDEX(docente_categoria, '-', 2), '-', -1) = '3' THEN 'Tiempo Parcial'
+          WHEN SUBSTRING_INDEX(SUBSTRING_INDEX(b.docente_categoria, '-', 2), '-', -1) = '1' THEN 'Dedicación Exclusiva'
+          WHEN SUBSTRING_INDEX(SUBSTRING_INDEX(b.docente_categoria, '-', 2), '-', -1) = '2' THEN 'Tiempo Completo'
+          WHEN SUBSTRING_INDEX(SUBSTRING_INDEX(b.docente_categoria, '-', 2), '-', -1) = '3' THEN 'Tiempo Parcial'
           ELSE 'Sin clase'
           END AS clase"),
-            DB::raw("SUBSTRING_INDEX(docente_categoria, '-', -1) AS horas"),
+            DB::raw("SUBSTRING_INDEX(b.docente_categoria, '-', -1) AS horas"),
             'c.nombre AS facultad',
             'd.dependencia',
+            'f.puntaje_total',
+            'f.puntaje_7_años',
             'b.cti_vitae',
             'b.dep_academico',
             'b.especialidad',
             'b.titulo_profesional',
             'b.grado',
-            'e.instituto',
+            'b.instituto_id AS instituto',
             'b.codigo_orcid',
             'b.email3',
             'b.telefono_casa',
@@ -932,9 +935,17 @@ class GruposController extends S3Controller {
             'a.observacion'
           ])
           ->where('a.id', '=', $id)
+          ->first();
+
+        $institutos = DB::table('Instituto')
+          ->select([
+            'id AS value',
+            'instituto AS label'
+          ])
+          ->where('estado', '=', 1)
           ->get();
 
-        return $miembro;
+        return ['detalle' => $miembro, 'institutos' => $institutos];
         break;
       case "Adherente":
         if ($tipo->tipo == "Externo") {
@@ -989,7 +1000,7 @@ class GruposController extends S3Controller {
               'a.observacion'
             ])
             ->where('a.id', '=', $id)
-            ->get();
+            ->first();
 
           return $miembro;
         } else {
@@ -998,6 +1009,7 @@ class GruposController extends S3Controller {
             ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
             ->leftJoin('Facultad AS c', 'c.id', '=', 'b.facultad_id')
             ->select([
+              'b.id AS investigador_id',
               DB::raw("CONCAT(b.apellido1, ' ', b.apellido2, ', ', b.nombres) AS nombres"),
               'b.codigo',
               'c.nombre AS facultad',
@@ -1008,7 +1020,7 @@ class GruposController extends S3Controller {
               'b.telefono_trabajo',
             ])
             ->where('a.id', '=', $id)
-            ->get();
+            ->first();
 
           return $miembro;
         }
@@ -1018,6 +1030,55 @@ class GruposController extends S3Controller {
         break;
     }
   }
+
+  public function editarMiembro(Request $request) {
+    switch ($request->input('tipo')) {
+      case "titular":
+        DB::table('Usuario_investigador')
+          ->where('id', '=', $request->input('investigador_id'))
+          ->update([
+            'cti_vitae' => $request->input('cti_vitae'),
+            'dep_academico' => $request->input('dep_academico'),
+            'especialidad' => $request->input('especialidad'),
+            'titulo_profesional' => $request->input('titulo_profesional'),
+            'grado' => $request->input('grado'),
+            'instituto_id' => $request->input('instituto'),
+            'codigo_orcid' => $request->input('codigo_orcid'),
+            'email3' => $request->input('email3'),
+            'telefono_casa' => $request->input('telefono_casa'),
+            'telefono_trabajo' => $request->input('telefono_trabajo'),
+            'telefono_movil' => $request->input('telefono_movil'),
+            'google_scholar' => $request->input('google_scholar'),
+            'updated_at' => Carbon::now()
+          ]);
+
+        DB::table('Grupo_integrante')
+          ->where('id', '=', $request->input('id'))
+          ->update([
+            'fecha_inclusion' => $request->input('fecha_inclusion'),
+            'resolucion' => $request->input('resolucion'),
+            'resolucion_fecha' => $request->input('resolucion_fecha'),
+            'observacion' => $request->input('observacion'),
+            'updated_at' => Carbon::now()
+          ]);
+
+        return ['message' => 'info', 'detail' => 'Titular actualizado correctamente'];
+      case "interno":
+        DB::table('Usuario_investigador')
+          ->where('id', '=', $request->input('investigador_id'))
+          ->update([
+            'doc_numero' => $request->input('doc_numero'),
+            'email3' => $request->input('email3'),
+            'telefono_movil' => $request->input('telefono_movil'),
+            'telefono_casa' => $request->input('telefono_casa'),
+            'telefono_trabajo' => $request->input('telefono_trabajo'),
+            'updated_at' => Carbon::now()
+          ]);
+
+        return ['message' => 'info', 'detail' => 'Adherente actualizado correctamente'];
+    }
+  }
+
   //  ARCHIVO EXTERNO SE GUARDA EN GRUPO
   //  TODO - implementar reporte de calificación e imprimir
   public function reporte(Request $request) {
