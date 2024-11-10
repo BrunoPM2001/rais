@@ -136,7 +136,11 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
       Route::get('lineas/{grupo_id}', [GruposController::class, 'lineas']);
       Route::get('proyectos/{grupo_id}', [GruposController::class, 'proyectos']);
       Route::get('publicaciones/{grupo_id}', [GruposController::class, 'publicaciones']);
-      Route::get('laboratorios/{grupo_id}', [GruposController::class, 'laboratorios']);
+
+      Route::get('laboratorios', [GruposController::class, 'laboratorios']);
+      Route::get('searchLaboratorio', [GruposController::class, 'searchLaboratorio']);
+      Route::post('agregarLaboratorio', [GruposController::class, 'agregarLaboratorio']);
+
       //  Miembros
       Route::get('searchDocenteRrhh', [GruposController::class, 'searchDocenteRrhh']);
       Route::get('searchEstudiante', [GruposController::class, 'searchEstudiante']);
@@ -149,7 +153,7 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
       Route::put('cambiarCargo', [GruposController::class, 'cambiarCargo']);
 
       Route::get('editarMiembroData', [GruposController::class, 'editarMiembroData']);
-      Route::put('editarMiembro', [GruposController::class, 'editarMiembro']);
+      Route::post('editarMiembro', [GruposController::class, 'editarMiembro']);
 
       //  Reporte
       Route::get('reporte', [GruposController::class, 'reporte']);

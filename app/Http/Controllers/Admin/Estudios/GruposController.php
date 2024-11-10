@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin\Estudios;
 use App\Http\Controllers\S3Controller;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
+use Illuminate\Database\Query\JoinClause;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -283,10 +284,11 @@ class GruposController extends S3Controller {
       ->select(
         'a.id',
         'a.nombre',
-        DB::raw("CONCAT('/minio/grupo-integrante-doc/', a.key, '.pdf') AS url"),
+        DB::raw("CONCAT('/minio/grupo-integrante-doc/', a.grupo_id, '/', a.key, '.pdf') AS url"),
         'a.fecha'
       )
       ->where('grupo_id', '=', $request->query('id'))
+      ->where('estado', '=', 1)
       ->get();
 
     return $docs;
@@ -317,21 +319,21 @@ class GruposController extends S3Controller {
   }
 
   public function proyectos($grupo_id) {
-    $miembros = DB::table('Grupo AS a')
-      ->join('Grupo_integrante AS b', 'b.grupo_id', '=', 'a.id')
+    $miembros = DB::table('Grupo_integrante AS b')
       ->join('Usuario_investigador AS c', 'c.id', 'b.investigador_id')
+      ->join('Proyecto_integrante AS d', 'd.investigador_id', '=', 'c.id')
       ->select([
         'c.id AS id',
         DB::raw("null AS investigador_id"),
         DB::raw("CONCAT(c.apellido1, ' ', c.apellido2, ', ', c.nombres) AS nombres"),
         DB::raw("CONCAT(c.id, '_i') AS id_unico")
       ])
-      ->where('a.id', '=', $grupo_id)
+      ->where('b.grupo_id', '=', $grupo_id)
       ->whereNot('b.condicion', 'LIKE', 'Ex%')
+      ->groupBy('c.id')
       ->get();
 
-    $proyectos_nuevos = DB::table('Grupo AS a')
-      ->join('Grupo_integrante AS b', 'b.grupo_id', '=', 'a.id')
+    $proyectos_nuevos = DB::table('Grupo_integrante AS b')
       ->join('Proyecto_integrante AS c', 'c.investigador_id', '=', 'b.investigador_id')
       ->join('Proyecto AS d', 'd.id', '=', 'c.proyecto_id')
       ->select([
@@ -343,10 +345,9 @@ class GruposController extends S3Controller {
         'b.investigador_id',
         DB::raw("CONCAT(d.id, '_ph_', b.investigador_id) AS id_unico")
       ])
-      ->where('a.id', '=', $grupo_id);
+      ->where('b.grupo_id', '=', $grupo_id);
 
-    $proyectos = DB::table('Grupo AS a')
-      ->join('Grupo_integrante AS b', 'b.grupo_id', '=', 'a.id')
+    $proyectos = DB::table('Grupo_integrante AS b')
       ->join('Proyecto_integrante_H AS c', 'c.investigador_id', '=', 'b.investigador_id')
       ->join('Proyecto_H AS d', 'd.id', '=', 'c.proyecto_id')
       ->select([
@@ -358,7 +359,7 @@ class GruposController extends S3Controller {
         'b.investigador_id',
         DB::raw("CONCAT(d.id, '_p_', b.investigador_id) AS id_unico")
       ])
-      ->where('a.id', '=', $grupo_id)
+      ->where('b.grupo_id', '=', $grupo_id)
       ->union($proyectos_nuevos)
       ->get();
 
@@ -383,21 +384,51 @@ class GruposController extends S3Controller {
     return ['data' => $publicaciones];
   }
 
-  public function laboratorios($grupo_id) {
-    $laboratorios = DB::table('Grupo AS a')
-      ->join('Grupo_infraestructura AS b', 'b.grupo_id', '=', 'a.id')
-      ->join('Laboratorio AS c', 'c.id', '=', 'b.laboratorio_id')
+  public function laboratorios(Request $request) {
+    $laboratorios = DB::table('Grupo_infraestructura AS a')
+      ->join('Laboratorio AS b', 'b.id', '=', 'a.laboratorio_id')
       ->select(
-        'c.codigo',
-        'c.laboratorio',
-        'c.ubicacion',
-        'c.responsable'
+        'b.codigo',
+        'b.laboratorio',
+        'b.ubicacion',
+        'b.responsable'
       )
-      ->where('a.id', '=', $grupo_id)
-      ->where('b.categoria', '=', 'laboratorio')
+      ->where('a.grupo_id', '=', $request->query('grupo_id'))
+      ->where('a.categoria', '=', 'laboratorio')
       ->get();
 
-    return ['data' => $laboratorios];
+    return $laboratorios;
+  }
+
+  public function searchLaboratorio(Request $request) {
+    $laboratorios = DB::table('Laboratorio AS a')
+      ->leftJoin('Facultad AS b', 'b.id', '=', 'a.facultad_id')
+      ->select([
+        DB::raw("CONCAT(a.codigo, ' | ', a.laboratorio, ' | ', b.nombre) AS value"),
+        'a.id',
+        'a.responsable',
+        'a.laboratorio',
+        'a.codigo',
+        'b.nombre AS facultad',
+        'a.categoria_uso',
+        'a.ubicacion'
+      ])
+      ->having('value', 'LIKE', '%' . $request->query('query') . '%')
+      ->limit(10)
+      ->get();
+
+    return $laboratorios;
+  }
+
+  public function agregarLaboratorio(Request $request) {
+    DB::table('Grupo_infraestructura')
+      ->insert([
+        'grupo_id' => $request->input('grupo_id'),
+        'laboratorio_id' => $request->input('laboratorio_id'),
+        'categoria' => 'laboratorio',
+        'created_at' => Carbon::now(),
+        'updated_at' => Carbon::now(),
+      ]);
   }
 
   //  Incluir miembro
@@ -951,10 +982,14 @@ class GruposController extends S3Controller {
         if ($tipo->tipo == "Externo") {
           $miembro = DB::table('Grupo_integrante AS a')
             ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
-            ->leftJoin('Facultad AS c', 'c.id', '=', 'b.facultad_id')
-            ->leftJoin('Dependencia AS d', 'd.id', '=', 'b.dependencia_id')
-            ->leftJoin('Instituto AS e', 'e.id', '=', 'b.instituto_id')
+            ->leftJoin('Grupo_integrante_doc AS c', function (JoinClause $join) {
+              $join->on('c.grupo_id', '=', 'a.grupo_id')
+                ->on('c.investigador_id', '=', 'a.investigador_id')
+                ->where('c.estado', '=', 1);
+            })
             ->select([
+              'a.grupo_id',
+              'a.investigador_id',
               'b.codigo_orcid',
               'b.apellido1',
               'b.apellido2',
@@ -974,35 +1009,17 @@ class GruposController extends S3Controller {
               'b.link',
               'b.posicion_unmsm',
               'b.biografia',
-
-
-              'b.codigo',
-              DB::raw("CASE
-            WHEN SUBSTRING_INDEX(SUBSTRING_INDEX(docente_categoria, '-', 2), '-', -1) = '1' THEN 'Dedicación Exclusiva'
-            WHEN SUBSTRING_INDEX(SUBSTRING_INDEX(docente_categoria, '-', 2), '-', -1) = '2' THEN 'Tiempo Completo'
-            WHEN SUBSTRING_INDEX(SUBSTRING_INDEX(docente_categoria, '-', 2), '-', -1) = '3' THEN 'Tiempo Parcial'
-            ELSE 'Sin clase'
-            END AS clase"),
-              DB::raw("SUBSTRING_INDEX(docente_categoria, '-', -1) AS horas"),
-              'c.nombre AS facultad',
-              'd.dependencia',
-              'b.cti_vitae',
-              'b.dep_academico',
-              'e.instituto',
-              'b.email3',
-              'b.telefono_casa',
-              'b.telefono_trabajo',
-
-              'b.google_scholar',
-              'a.fecha_inclusion',
-              'a.resolucion',
-              'a.resolucion_fecha',
-              'a.observacion'
+              DB::raw("CONCAT('/minio/grupo-integrante-doc/', a.grupo_id, '/', c.key, '.pdf') AS url")
             ])
             ->where('a.id', '=', $id)
             ->first();
 
-          return $miembro;
+          $paises = DB::table('Pais')
+            ->select([
+              'name AS value'
+            ])->get();
+
+          return ['detalle' => $miembro, 'paises' => $paises];
         } else {
 
           $miembro = DB::table('Grupo_integrante AS a')
@@ -1075,6 +1092,58 @@ class GruposController extends S3Controller {
             'updated_at' => Carbon::now()
           ]);
 
+        return ['message' => 'info', 'detail' => 'Adherente actualizado correctamente'];
+      case "externo":
+        DB::table('Usuario_investigador')
+          ->where('id', '=', $request->input('investigador_id'))
+          ->update([
+            'codigo_orcid' => $request->input('codigo_orcid'),
+            'apellido1' => $request->input('apellido1'),
+            'apellido2' => $request->input('apellido2'),
+            'nombres' => $request->input('nombres'),
+            'sexo' => $request->input('sexo'),
+            'institucion' => $request->input('institucion'),
+            'pais' => $request->input('pais'),
+            'email1' => $request->input('email1'),
+            'doc_tipo' => $request->input('doc_tipo'),
+            'doc_numero' => $request->input('doc_numero'),
+            'telefono_movil' => $request->input('telefono_movil'),
+            'titulo_profesional' => $request->input('titulo_profesional'),
+            'grado' => $request->input('grado'),
+            'especialidad' => $request->input('especialidad'),
+            'researcher_id' => $request->input('researcher_id'),
+            'scopus_id' => $request->input('scopus_id'),
+            'link' => $request->input('link'),
+            'posicion_unmsm' => $request->input('posicion_unmsm'),
+            'biografia' => $request->input('biografia'),
+          ]);
+
+        if ($request->hasFile('file')) {
+
+          $id = $request->input('grupo_id');
+          $date = Carbon::now();
+          $name = $id . "-formato_adhesion-" . $date->format('Ymd-His');
+
+          $nameFile = $id . "/" . $name . "." . $request->file('file')->getClientOriginalExtension();
+          $this->uploadFile($request->file('file'), "grupo-integrante-doc", $nameFile);
+
+          DB::table('Grupo_integrante_doc')
+            ->where('grupo_id', '=', $request->input('grupo_id'))
+            ->where('investigador_id', '=', $request->input('investigador_id'))
+            ->update([
+              'estado' => 0
+            ]);
+
+          DB::table('Grupo_integrante_doc')
+            ->insert([
+              'grupo_id' => $request->input('grupo_id'),
+              'investigador_id' => $request->input('investigador_id'),
+              'nombre' => 'Formato de adhesión',
+              'key' => $name,
+              'fecha' => $date,
+              'estado' => 1
+            ]);
+        }
         return ['message' => 'info', 'detail' => 'Adherente actualizado correctamente'];
     }
   }
