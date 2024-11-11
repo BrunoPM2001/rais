@@ -437,7 +437,10 @@ class PublicacionesUtilsController extends S3Controller {
 
   public function getPaises() {
     $paises = DB::table('Pais')
-      ->select(['name AS value'])
+      ->select([
+        'name AS value',
+        'code'
+      ])
       ->get();
 
     return $paises;

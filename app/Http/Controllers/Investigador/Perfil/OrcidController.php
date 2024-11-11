@@ -12,7 +12,7 @@ class OrcidController extends Controller {
 
   const URL_DEV = "https://sandbox.orcid.org/oauth/";
   const URL_PROD = "https://orcid.org/oauth/";
-  const BASE_URL = self::URL_DEV;
+  const BASE_URL = self::URL_PROD;
 
   public function validarRegistro(Request $request) {
     $count = DB::table('Token_investigador_orcid')

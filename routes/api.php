@@ -137,11 +137,15 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
       Route::get('proyectos/{grupo_id}', [GruposController::class, 'proyectos']);
       Route::get('publicaciones/{grupo_id}', [GruposController::class, 'publicaciones']);
 
+      Route::put('updateAmbientes', [GruposController::class, 'updateAmbientes']);
+      Route::post('updateDocumento', [GruposController::class, 'updateDocumento']);
+
       Route::get('laboratorios', [GruposController::class, 'laboratorios']);
       Route::get('searchLaboratorio', [GruposController::class, 'searchLaboratorio']);
       Route::post('agregarLaboratorio', [GruposController::class, 'agregarLaboratorio']);
 
       //  Miembros
+      Route::get('validarOrcid', [GruposController::class, 'validarOrcid']);
       Route::get('searchDocenteRrhh', [GruposController::class, 'searchDocenteRrhh']);
       Route::get('searchEstudiante', [GruposController::class, 'searchEstudiante']);
       Route::get('searchEgresado', [GruposController::class, 'searchEgresado']);

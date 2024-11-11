@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers\Admin\Estudios;
 
+use App\Http\Controllers\OrcidController;
 use App\Http\Controllers\S3Controller;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Database\Query\JoinClause;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class GruposController extends S3Controller {
 
@@ -163,6 +165,9 @@ class GruposController extends S3Controller {
           'direccion' => $request->input('direccion'),
           'email' => $request->input('email'),
           'web' => $request->input('web'),
+          'presentacion' => $request->input('presentacion'),
+          'objetivos' => $request->input('objetivos'),
+          'servicios' => $request->input('servicios'),
           'updated_at' => Carbon::now()
         ]);
     } else {
@@ -184,6 +189,9 @@ class GruposController extends S3Controller {
           'direccion' => $request->input('direccion'),
           'email' => $request->input('email'),
           'web' => $request->input('web'),
+          'presentacion' => $request->input('presentacion'),
+          'objetivos' => $request->input('objetivos'),
+          'servicios' => $request->input('servicios'),
           'updated_at' => Carbon::now()
         ]);
     }
@@ -432,6 +440,11 @@ class GruposController extends S3Controller {
   }
 
   //  Incluir miembro
+  public function validarOrcid(Request $request) {
+    $ctrl = new OrcidController();
+    $data = $ctrl->fetchData($request);
+    return $data;
+  }
 
   public function searchDocenteRrhh(Request $request) {
     $investigadores = DB::table('Repo_rrhh AS a')
@@ -853,6 +866,12 @@ class GruposController extends S3Controller {
         'a.resolucion',
         'a.resolucion_fecha',
         'a.observacion',
+        //  Exclusion
+        'a.resolucion_oficina_exclusion',
+        'a.fecha_exclusion',
+        'a.resolucion_exclusion',
+        'a.resolucion_exclusion_fecha',
+        'a.observacion_excluir',
         //  Para adherente
         'b.tipo_investigador_estado',
         'b.tipo',
@@ -1230,5 +1249,35 @@ class GruposController extends S3Controller {
     ]);
 
     return $pdf->stream();
+  }
+
+  public function updateAmbientes(Request $request) {
+    DB::table('Grupo')
+      ->where('id', '=', $request->input('grupo_id'))
+      ->update([
+        'infraestructura_ambientes' => $request->input('infraestructura_ambientes'),
+        'updated_at' => Carbon::now()
+      ]);
+
+    return ['message' => 'info', 'detail' => 'Información actualizada correctamente'];
+  }
+
+  public function updateDocumento(Request $request) {
+    if ($request->hasFile('file')) {
+
+      $nameFile = Str::random(32) . "." . $request->file('file')->getClientOriginalExtension();
+      $this->uploadFile($request->file('file'), "grupo-infraestructura-sgestion", $nameFile);
+
+      DB::table('Grupo')
+        ->where('id', '=', $request->input('grupo_id'))
+        ->update([
+          'infraestructura_sgestion' => $nameFile,
+          'updated_at' => Carbon::now()
+        ]);
+
+      return ['message' => 'info', 'detail' => 'Archivo actualizado correctamente'];
+    } else {
+      return ['message' => 'warning', 'detail' => 'No ha cargado ningún achivo'];
+    }
   }
 }
