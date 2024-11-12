@@ -1,9 +1,5 @@
 @php
   use Carbon\Carbon;
-  $currentFacultad = '';
-  $counter = 0;
-  $totalSum = [];
-  $total = 0;
 @endphp
 <!DOCTYPE html>
 <html lang="es">

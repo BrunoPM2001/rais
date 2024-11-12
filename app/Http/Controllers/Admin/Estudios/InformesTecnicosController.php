@@ -158,6 +158,7 @@ class InformesTecnicosController extends S3Controller {
           });
         break;
       case "PCONFIGI":
+      case "PRO-CTIE":
       case "PCONFIGI-INV":
       case "PSINFINV":
       case "PSINFIPU":

@@ -12,6 +12,10 @@ class UtilInformeAdminController extends Controller {
         $util = new PconfigiController();
         return $util->reporte($request);
         break;
+      case "PRO-CTIE":
+        $util = new ProctieController();
+        return $util->reporte($request);
+        break;
       case "PCONFIGI-INV":
         $util = new PconfigiInvController();
         return $util->reporte($request);

@@ -237,63 +237,63 @@
 
     <h5>3.1 Resumen</h5>
     <div class="desc">
-      {!! $proyecto->resumen_ejecutivo !!}
+      {!! $detalles->resumen_ejecutivo !!}
     </div>
 
     <h5>3.2 Palabras clave</h5>
     <div class="desc">
-      {!! $proyecto->palabras_clave !!}
+      {!! $detalles->palabras_clave !!}
     </div>
 
     <h5>3.3 Introducción</h5>
     <div class="desc">
-      {!! $proyecto->infinal1 !!}
+      {!! $detalles->infinal1 !!}
     </div>
 
     <h5>3.4 Metodología</h5>
     <div class="desc">
-      {!! $proyecto->infinal2 !!}
+      {!! $detalles->infinal2 !!}
     </div>
 
     <h5>3.5 Resultados (capítulos, títulos, subtítulos, tablas, gráficos según corresponda)</h5>
     <div class="desc">
-      {!! $proyecto->infinal3 !!}
+      {!! $detalles->infinal3 !!}
     </div>
 
     <h5>3.6 Discusión</h5>
     <div class="desc">
-      {!! $proyecto->infinal4 !!}
+      {!! $detalles->infinal4 !!}
     </div>
 
     <h5>3.7 Conclusiones</h5>
     <div class="desc">
-      {!! $proyecto->infinal5 !!}
+      {!! $detalles->infinal5 !!}
     </div>
 
     <h5>3.8 Recomendaciones</h5>
     <div class="desc">
-      {!! $proyecto->infinal6 !!}
+      {!! $detalles->infinal6 !!}
     </div>
 
     <h5>3.9 Referencias bibliográficas</h5>
     <div class="desc">
-      {!! $proyecto->infinal7 !!}
+      {!! $detalles->infinal7 !!}
     </div>
 
     <h5>3.10 Anexos</h5>
     <div class="desc">
-      {!! $proyecto->infinal8 !!}
+      {!! $detalles->infinal8 !!}
     </div>
 
     <h5>IV. Impacto</h5>
     <h5>4.1 Aplicación práctica e impacto</h5>
     <div class="desc">
-      {!! $proyecto->infinal9 !!}
+      {!! $detalles->infinal9 !!}
     </div>
 
     <h5>4.2 Publicación</h5>
     <div class="desc">
-      {!! $proyecto->infinal10 !!}
+      {!! $detalles->infinal10 !!}
     </div>
 
   </div>

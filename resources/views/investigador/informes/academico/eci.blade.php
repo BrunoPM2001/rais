@@ -198,38 +198,38 @@
 
     <h5>2.1 Resumen</h5>
     <div class="desc">
-      {!! $proyecto->resumen_ejecutivo !!}
+      {!! $detalles->resumen_ejecutivo !!}
     </div>
 
     <h5>2.2 Procesos de instalación</h5>
     <div class="desc">
-      {!! $proyecto->infinal1 !!}
+      {!! $detalles->infinal1 !!}
     </div>
 
     <h5>2.3 Funcionamiento</h5>
     <div class="desc">
-      {!! $proyecto->infinal2 !!}
+      {!! $detalles->infinal2 !!}
     </div>
 
     <h5>2.4 Gestión del uso</h5>
     <div class="desc">
-      {!! $proyecto->infinal3 !!}
+      {!! $detalles->infinal3 !!}
     </div>
 
     <h5>III. Impacto</h5>
     <h5>3.1 Aplicación práctica e impacto</h5>
     <div class="desc">
-      {!! $proyecto->infinal4 !!}
+      {!! $detalles->infinal4 !!}
     </div>
 
     <h5>3.2 Uso</h5>
     <div class="desc">
-      {!! $proyecto->infinal5 !!}
+      {!! $detalles->infinal5 !!}
     </div>
 
     <h5>IV. Dificultades encontradas</h5>
     <div class="desc">
-      {!! $proyecto->infinal6 !!}
+      {!! $detalles->infinal6 !!}
     </div>
 
   </div>
