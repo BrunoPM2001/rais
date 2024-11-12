@@ -4,31 +4,47 @@ namespace App\Http\Controllers\Admin\Reportes;
 
 use App\Http\Controllers\Controller;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class GrupoController extends Controller {
-  public function reporte($estado, $facultad, $miembros) {
+  public function reporte(Request $request) {
     $lista = DB::table('Grupo AS a')
       ->join('Grupo_integrante AS b', 'b.grupo_id', '=', 'a.id')
       ->join('Usuario_investigador AS c', 'c.id', '=', 'b.investigador_id')
       ->join('Facultad AS d', 'd.id', '=', 'a.facultad_id')
-      ->join('Facultad AS e', 'e.id', '=', 'b.facultad_id')
+      ->leftJoin('Facultad AS e', 'e.id', '=', 'c.facultad_id')
+      ->join('Area AS f', 'f.id', '=', 'd.area_id')
       ->select(
         'a.grupo_nombre_corto',
         'a.grupo_nombre',
+        'f.nombre AS area',
         'd.nombre AS facultad_grupo',
+        'a.grupo_categoria',
         'a.estado',
-        'b.condicion',
+        DB::raw("CASE
+          WHEN b.cargo = 'Coordinador'  THEN 'Coordinador'
+          WHEN b.condicion = 'Titular' THEN 'Titular'
+          WHEN b.condicion = 'Adherente' AND c.tipo != 'Externo' THEN 'Adherente'
+          WHEN b.condicion = 'Adherente' AND c.tipo = 'Externo' THEN 'Adherente externo'
+          ELSE b.condicion
+        END AS condicion"),
         'c.codigo',
         DB::raw('CONCAT(c.apellido1, " ", c.apellido2, ", ", c.nombres) AS nombre'),
-        'b.tipo',
+        'c.tipo',
         'e.nombre AS facultad_miembro'
       )
-      ->where('a.facultad_id', '=', $facultad)
-      ->where('a.estado', '=', $estado)
+      ->where('a.facultad_id', '=', $request->query('facultad'))
+      ->where('a.estado', '=', $request->query('estado'))
       ->whereNull('b.fecha_exclusion')
       ->orderBy('a.grupo_nombre')
-      ->orderBy('b.condicion', 'desc')
+      ->orderByRaw("CASE
+        WHEN b.cargo = 'Coordinador' THEN 1
+        WHEN b.condicion = 'Titular' THEN 2
+        WHEN b.condicion = 'Adherente' AND c.tipo != 'Externo' THEN 3
+        WHEN b.condicion = 'Adherente' AND c.tipo = 'Externo' THEN 4
+        ELSE 5
+      END")
       ->get();
 
     $pdf = Pdf::loadView('admin.reportes.grupoPDF', ['lista' => $lista]);

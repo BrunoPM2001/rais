@@ -3,6 +3,7 @@
   $numGrupoActual = 1;
   $firstEl = 0;
   $currentTipo = '';
+  $cant_miembros = 0;
 @endphp
 <!DOCTYPE html>
 <html lang="es">
@@ -87,6 +88,15 @@
       margin: 20px 0;
     }
 
+    .table_area_fac {
+      width: 100%;
+      font-style: oblique;
+    }
+
+    .table_area_fac>tbody td {
+      font-size: 11px;
+    }
+
     .table1 {
       width: 100%;
       border-collapse: separate;
@@ -113,8 +123,9 @@
 
     .table2 {
       width: 100%;
+      padding-bottom: 5px;
       border-collapse: separate;
-      margin-bottom: 60px;
+      border-bottom: 1.5px solid #000;
     }
 
     .table2>thead {
@@ -127,6 +138,13 @@
       font-size: 11px;
       text-align: center;
       padding-top: 2px;
+    }
+
+    .cuenta {
+      font-size: 11px;
+      font-weight: bold;
+      margin-top: 5px;
+      margin-bottom: 40px;
     }
 
     .extra-1 {
@@ -171,7 +189,7 @@
     </p>
     <br>
     <p class="user">
-      ichajaya
+      rortega
     </p>
   </div>
   <div class="div"></div>
@@ -183,10 +201,20 @@
         @if ($firstEl == 1)
           </tbody>
           </table>
+          <p class="cuenta">Total de integrantes: {{ $cant_miembros }}</p>
         @endif
         @php
+          $cant_miembros = 0;
           $firstEl = 1;
         @endphp
+        <table class="table_area_fac">
+          <tbody>
+            <tr>
+              <td style="text-align: left; width: 50%"><strong>Area: </strong>{{ $item->area }}</td>
+              <td style="text-align: right; width: 50%"><strong>Facultad: </strong>{{ $item->facultad_grupo }}</td>
+            </tr>
+          </tbody>
+        </table>
         <table class="table1">
           <thead>
             <tr>
@@ -194,7 +222,7 @@
               <th style="width: 15%;">Nombre corto GI</th>
               <th style="width: 60%;">Nombre de Grupo</th>
               <th style="width: 10%;">Estado</th>
-              <th style="width: 20%;">Facultad</th>
+              <th style="width: 20%;">Categoría</th>
             </tr>
           </thead>
           <tbody>
@@ -225,7 +253,7 @@
                   @break
                 @endswitch
               </td>
-              <td>{{ $item->facultad_grupo }}</td>
+              <td>{{ $item->grupo_categoria }}</td>
             </tr>
           </tbody>
         </table>
@@ -261,6 +289,7 @@
         <td>{{ $item->facultad_miembro }}</td>
       </tr>
       @php
+        $cant_miembros++;
         $currentTipo = $item->condicion;
         $grupoActual = $item->grupo_nombre;
       @endphp

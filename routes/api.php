@@ -363,7 +363,7 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
   //  Reportes
   Route::prefix('reportes')->group(function () {
     Route::get('estudio/{tipo}/{periodo}/{facultad}', [EstudioController::class, 'reporte']);
-    Route::get('grupo/{estado}/{facultad}/{miembros}', [GrupoController::class, 'reporte']);
+    Route::get('grupo', [GrupoController::class, 'reporte']);
     Route::get('proyecto/{facultad}/{tipo}/{periodo}', [ProyectoController::class, 'reporte']);
     Route::get('docente/{investigador_id}', [DocenteController::class, 'reporte']);
     Route::get('consolidadoGeneral/{periodo}', [ConsolidadoGeneralController::class, 'reporte']);
