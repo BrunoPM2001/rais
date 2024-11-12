@@ -54,6 +54,7 @@ class InformePsinfipuController extends S3Controller {
         'id',
         'resumen_ejecutivo',
         'infinal1',
+        'observaciones',
         'estado'
       ])
       ->where('proyecto_id', '=', $request->get('proyecto_id'))

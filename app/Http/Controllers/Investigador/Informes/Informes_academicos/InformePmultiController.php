@@ -62,6 +62,7 @@ class InformePmultiController extends S3Controller {
         'infinal7',
         'infinal9',
         'infinal10',
+        'observaciones',
         'estado'
       ])
       ->where('proyecto_id', '=', $request->get('proyecto_id'))

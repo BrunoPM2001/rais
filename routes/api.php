@@ -850,7 +850,6 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
     Route::prefix('informe_academico')->group(function () {
       Route::get('listadoPendientes', [Informe_academicoController::class, 'listadoPendientes']);
       Route::get('listadoAceptados', [Informe_academicoController::class, 'listadoAceptados']);
-      Route::get('verInforme', [Informe_academicoController::class, 'verInforme']);
 
       Route::get('getData', [InformeUtilsController::class, 'getData']);
       Route::post('sendData', [InformeUtilsController::class, 'sendData']);

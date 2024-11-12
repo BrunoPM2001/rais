@@ -33,6 +33,7 @@ class InformePinvposController extends S3Controller {
         'conclusion_taller',
         'recomendacion_taller',
         'asistencia_taller',
+        'observaciones',
         'estado'
       ])
       ->where('proyecto_id', '=', $request->get('proyecto_id'))

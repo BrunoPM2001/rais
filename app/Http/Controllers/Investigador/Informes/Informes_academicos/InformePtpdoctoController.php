@@ -57,6 +57,7 @@ class InformePtpdoctoController extends S3Controller {
         'a.infinal2',
         'a.infinal3',
         'a.infinal7',
+        'observaciones',
         'a.estado',
       ])
       ->where('a.proyecto_id', '=', $request->get('proyecto_id'))

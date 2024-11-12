@@ -41,6 +41,7 @@ class InformeEciController extends S3Controller {
         'infinal4',
         'infinal5',
         'infinal6',
+        'observaciones',
         'estado'
       ])
       ->where('proyecto_id', '=', $request->get('proyecto_id'))
