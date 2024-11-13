@@ -73,12 +73,34 @@ class SessionController extends Controller {
           'evaluador_id' => $table->tabla_id,
           'exp' => time() + 7200
         ], env('JWT_SECRET'), 'HS256');
+      } else if ($table->tabla == "Usuario_facultad") {
+
+        $usuario = DB::table('Usuario_facultad as uf')
+          ->select([
+            'f.nombre as nombres'
+
+          ])
+          ->leftJoin('Facultad as f', 'uf.facultad_id', '=', 'f.id')
+          ->where('uf.id', '=', $table->tabla_id)
+          ->first();
+
+        $jwt = JWT::encode([
+          'id' => $table->tabla_id,
+          'tabla' => $table->tabla,
+          'nombre' => $usuario->nombres,
+          'exp' => time() + 8200
+        ], env('JWT_SECRET'), 'HS256');
       }
-      return ['data' => [
-        'usuario' => $usuario->apellidos  . ", " . $usuario->nombres,
-        'tabla' => $table->tabla,
-        'token' => $jwt
-      ]];
+
+      return [
+        'data' => [
+          'usuario' => isset($usuario->apellidos)
+            ? $usuario->apellidos . ", " . $usuario->nombres
+            : $usuario->nombres,
+          'tabla' => $table->tabla,
+          'token' => $jwt
+        ]
+      ];
     } else {
       return ['data' => "Error"];
     }

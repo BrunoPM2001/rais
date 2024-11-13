@@ -155,7 +155,7 @@
         @default
           Sin estado
       @endswitch
-      {{ Carbon::parse($detalles->updated_at)->format('d/m/Y') }}
+      {{ Carbon::parse($detalles->fecha_estado)->format('d/m/Y') }}
     </strong>
   </p>
 

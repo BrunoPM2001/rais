@@ -15,6 +15,7 @@ class PsinfinvController extends Controller {
         'b.id AS proyecto_id',
         'b.codigo_proyecto',
         'b.tipo_proyecto',
+        DB::raw("COALESCE(a.fecha_registro_csi, a.fecha_envio) AS fecha_estado"),
         'a.*',
       ])
       ->where('a.id', '=', $request->query('informe_tecnico_id'))

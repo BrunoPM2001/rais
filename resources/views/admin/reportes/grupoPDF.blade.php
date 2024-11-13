@@ -293,6 +293,12 @@
         $currentTipo = $item->condicion;
         $grupoActual = $item->grupo_nombre;
       @endphp
+
+      @if ($loop->last)
+          </tbody>
+        </table>
+        <p class="cuenta">Total de integrantes: {{ $cant_miembros }}</p>
+      @endif
     @endforeach
   </div>
 
