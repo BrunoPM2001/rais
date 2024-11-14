@@ -34,6 +34,7 @@ use App\Http\Controllers\Admin\Reportes\GrupoController;
 use App\Http\Controllers\Admin\Reportes\PresupuestoController;
 use App\Http\Controllers\Admin\Reportes\ProyectoController;
 use App\Http\Controllers\Evaluador\Evaluaciones\EvaluadorProyectosController;
+use App\Http\Controllers\Facultad\Listado\FacultadListadoController;
 use App\Http\Controllers\Investigador\Actividades\AsesoriaTesisPosController;
 use App\Http\Controllers\Investigador\Actividades\AsesoriaTesisPreController;
 use App\Http\Controllers\Investigador\Actividades\ComiteEditorialController;
@@ -881,5 +882,53 @@ Route::prefix('evaluador')->middleware('checkRole:Usuario_evaluador')->group(fun
     Route::post('cargarFicha', [EvaluadorProyectosController::class, 'cargarFicha']);
     Route::get('visualizarProyecto', [EvaluadorProyectosController::class, 'visualizarProyecto']);
     Route::get('reportePasado', [ProyectosGrupoController::class, 'reporte']);
+  });
+});
+
+Route::prefix('facultad')->middleware('checkRole:Usuario_facultad')->group(function () {
+
+  //  Facultad
+  Route::get('dashboard', [FacultadListadoController::class, 'index']);
+
+  Route::prefix('listado')->group(function () {
+
+    Route::prefix('investigadores')->group(function () {
+      Route::get('listado', [FacultadListadoController::class, 'ListadoInvestigadores']);
+    });
+
+    Route::prefix('docente_investigador')->group(function () {
+      Route::get('listado', [FacultadListadoController::class, 'DocenteInvestigador']);
+    });
+
+    Route::prefix('proyectos')->group(function () {
+      Route::get('listado', [FacultadListadoController::class, 'ListadoProyectos']);
+    });
+
+    Route::prefix('proyectos_gi')->group(function () {
+      Route::get('listado', [FacultadListadoController::class, 'ListadoProyectosGI']);
+    });
+
+    Route::prefix('proyectos_fex')->group(function () {
+      Route::get('listado', [FacultadListadoController::class, 'ListadoProyectosFEX']);
+    });
+
+    Route::prefix('grupos')->group(function () {
+      Route::get('listado', [FacultadListadoController::class, 'ListadoGrupos']);
+    });
+
+    Route::prefix('publicaciones')->group(function () {
+      Route::get('listado', [FacultadListadoController::class, 'ListadoPublicaciones']);
+    });
+
+    Route::prefix('informes')->group(function () {
+      Route::get('listado', [FacultadListadoController::class, 'ListadoInformes']);
+    });
+
+    Route::prefix('deudas')->group(function () {
+      Route::get('listado', [FacultadListadoController::class, 'ListadoDeudas']);
+    });
+  });
+
+  Route::prefix('reportes')->group(function () {
   });
 });

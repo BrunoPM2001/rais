@@ -30,7 +30,6 @@
 
     .head-1 img {
       margin-left: 280px;
-      background: red;
       height: 85px;
     }
 

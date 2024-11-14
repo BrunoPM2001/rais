@@ -29,6 +29,10 @@ class AuthServiceProvider extends ServiceProvider {
       return $usuario->tabla == "Usuario_evaluador";
     });
 
+    Gate::define('Facultad', function (Usuario $usuario) {
+      return $usuario->tabla == "Usuario_facultad";
+    });
+
     //  ...
   }
 }

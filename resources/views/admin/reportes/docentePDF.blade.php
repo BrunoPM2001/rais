@@ -24,7 +24,6 @@
 
     .head-1 img {
       margin-left: 120px;
-      background: red;
       height: 85px;
     }
 

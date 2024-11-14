@@ -31,8 +31,13 @@
 
     .head-1 img {
       margin-left: 120px;
-      background: red;
       height: 85px;
+    }
+
+    .head-0 {
+      position: fixed;
+      top: -135px;
+      left: 0;
     }
 
     .head-2 {
@@ -50,9 +55,9 @@
       margin-bottom: 0;
     }
 
-    .head-2 .fecha {
-      font-size: 5px;
-      margin-top: 0;
+    .head-0 .fecha {
+      font-size: 8px;
+      margin-top: 10px;
     }
 
     .head-2 .user {
@@ -181,12 +186,15 @@
       </strong>
     </p>
   </div>
-  <div class="head-2">
-    <p class="rais">© RAIS</p>
+  <div class="head-0">
     <p class="fecha">
       Fecha: {{ date('d/m/Y') }}<br>
       Hora: {{ date('H:i:s') }}
     </p>
+    <br>
+  </div>
+  <div class="head-2">
+    <p class="rais">© RAIS</p>
     <br>
     <p class="user">
       rortega
