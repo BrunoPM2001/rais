@@ -49,6 +49,7 @@ use App\Http\Controllers\Investigador\Actividades\ProyectoMultidisciplinarioCont
 use App\Http\Controllers\Investigador\Actividades\ProyectoSinFinanciamientoController;
 use App\Http\Controllers\Investigador\Actividades\PublicacionLibrosUniController;
 use App\Http\Controllers\Investigador\Actividades\TalleresController;
+use App\Http\Controllers\Investigador\Convocatorias\PconfigiController;
 use App\Http\Controllers\Investigador\Convocatorias\PinvposController;
 use App\Http\Controllers\Investigador\Convocatorias\ProCTIController;
 use App\Http\Controllers\Investigador\Convocatorias\PsinfinvController;
@@ -713,6 +714,43 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
 
   //  Convocatorias
   Route::prefix('convocatorias')->group(function () {
+
+    Route::prefix('pconfigi')->group(function () {
+      Route::get('verificar', [PconfigiController::class, 'verificar']);
+
+      Route::get('verificar1', [PconfigiController::class, 'verificar1']);
+      Route::post('registrar1', [PconfigiController::class, 'registrar1']);
+
+      Route::get('verificar2', [PconfigiController::class, 'verificar2']);
+      Route::post('agregarDoc', [PconfigiController::class, 'agregarDoc']);
+      Route::delete('eliminarDoc', [PconfigiController::class, 'eliminarDoc']);
+
+      Route::get('verificar3', [PconfigiController::class, 'verificar3']);
+      Route::post('registrar3', [PconfigiController::class, 'registrar3']);
+
+      Route::get('verificar4', [PconfigiController::class, 'verificar4']);
+      Route::post('addActividad', [PconfigiController::class, 'addActividad']);
+      Route::put('editActividad', [PconfigiController::class, 'editActividad']);
+      Route::delete('eliminarActividad', [PconfigiController::class, 'eliminarActividad']);
+
+      Route::get('verificar5', [PconfigiController::class, 'verificar5']);
+      Route::post('agregarPartida', [PconfigiController::class, 'agregarPartida']);
+      Route::put('actualizarPartida', [PconfigiController::class, 'actualizarPartida']);
+      Route::delete('eliminarPartida', [PconfigiController::class, 'eliminarPartida']);
+
+      Route::get('verificar6', [PconfigiController::class, 'verificar6']);
+
+      Route::get('verificar7', [PconfigiController::class, 'verificar7']);
+      Route::get('listadoGrupoDocente', [PconfigiController::class, 'listadoGrupoDocente']);
+      Route::get('listadoGrupoExterno', [PconfigiController::class, 'listadoGrupoExterno']);
+      Route::get('listadoGrupoEstudiante', [PconfigiController::class, 'listadoGrupoEstudiante']);
+      Route::post('agregarIntegrante', [PconfigiController::class, 'agregarIntegrante']);
+      Route::delete('eliminarIntegrante', [PconfigiController::class, 'eliminarIntegrante']);
+
+      Route::get('verificar8', [PconfigiController::class, 'verificar8']);
+      Route::get('reporte', [PconfigiController::class, 'reporte']);
+      Route::post('enviar', [PconfigiController::class, 'enviar']);
+    });
 
     Route::prefix('pinvpos')->group(function () {
       Route::get('verificar', [PinvposController::class, 'verificar']);
