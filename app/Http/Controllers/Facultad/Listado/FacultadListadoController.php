@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Facultad\Listado;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Database\Query\JoinClause;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class FacultadListadoController extends Controller {
-
 
   public function facultadId(Request $request) {
     $usuarioFacultadId = $request->attributes->get('token_decoded')->id;
@@ -352,39 +352,68 @@ class FacultadListadoController extends Controller {
   public function ListadoProyectos(Request $request) {
     $facultadId = $this->facultadId($request);
 
-    $proyectos = DB::table('view_facultad_proyecto')
+    $proyectos_nuevos = DB::table('Proyecto AS a')
+      ->leftJoin('Proyecto_integrante AS b', function (JoinClause $join) {
+        $join->on('b.proyecto_id', '=', 'a.id')
+          ->where('condicion', '=', 'Responsable');
+      })
+      ->leftJoin('Usuario_investigador AS c', 'c.id', '=', 'b.investigador_id')
       ->select([
-        'proyecto_id',
-        'codigo',
-        'tipo',
-        'periodo',
-        'xtitulo',
-        'responsable',
-        'facultad',
-        'nro_informe_p',
-        DB::raw("CASE(deuda)
-                WHEN 0 THEN 'Sin deuda'
-                WHEN 1 THEN 'Deuda Académica'
-                WHEN 2 THEN 'Deuda Económica'
-                WHEN 3 THEN 'Deuda Académica y Económica'
-              ELSE 'Subsanado' END AS deuda"),
-        DB::raw("CASE(estado)
-                WHEN -1 THEN 'Eliminado'
-                WHEN 0 THEN 'No aprobado'
-                WHEN 1 THEN 'Aprobado'
-                WHEN 3 THEN 'En evaluacion'
-                WHEN 5 THEN 'Enviado'
-                WHEN 6 THEN 'En proceso'
-                WHEN 7 THEN 'Anulado'
-                WHEN 8 THEN 'Sustentado'
-                WHEN 9 THEN 'En ejecución'
-                WHEN 10 THEN 'Ejecutado'
-                WHEN 11 THEN 'Concluído'
-              ELSE 'Sin estado' END AS estado"),
-        'fecha_inscripcion'
-
+        'a.id',
+        'a.tipo_proyecto',
+        'a.codigo_proyecto',
+        'a.titulo',
+        'a.periodo',
+        'a.resolucion_rectoral',
+        DB::raw("CONCAT(c.apellido1, ' ', c.apellido2, ', ', c.nombres) AS responsable"),
+        'a.fecha_inscripcion',
+        DB::raw("CASE(a.estado)
+          WHEN -1 THEN 'Eliminado'
+          WHEN 0 THEN 'No aprobado'
+          WHEN 1 THEN 'Aprobado'
+          WHEN 3 THEN 'En evaluacion'
+          WHEN 5 THEN 'Enviado'
+          WHEN 6 THEN 'En proceso'
+          WHEN 7 THEN 'Anulado'
+          WHEN 8 THEN 'Sustentado'
+          WHEN 9 THEN 'En ejecución'
+          WHEN 10 THEN 'Ejecutado'
+          WHEN 11 THEN 'Concluído'
+        ELSE 'Sin estado' END AS estado"),
       ])
-      ->where('facultad_id', $facultadId)
+      ->where('a.facultad_id', '=', $facultadId);
+
+    $proyectos = DB::table('Proyecto_H AS a')
+      ->leftJoin('Proyecto_integrante_H AS b', function (JoinClause $join) {
+        $join->on('b.proyecto_id', '=', 'a.id')
+          ->where('condicion', '=', 'Responsable');
+      })
+      ->leftJoin('Usuario_investigador AS c', 'c.id', '=', 'b.investigador_id')
+      ->select([
+        'a.id',
+        'a.tipo AS tipo_proyecto',
+        'a.codigo AS codigo_proyecto',
+        'a.titulo',
+        'a.periodo',
+        'a.resolucion AS resolucion_rectoral',
+        DB::raw("CONCAT(c.apellido1, ' ', c.apellido2, ', ', c.nombres) AS responsable"),
+        DB::raw("DATE(a.fecha_inscripcion) AS fecha_inscripcion"),
+        DB::raw("CASE(a.status)
+          WHEN -1 THEN 'Eliminado'
+          WHEN 0 THEN 'No aprobado'
+          WHEN 1 THEN 'Aprobado'
+          WHEN 3 THEN 'En evaluacion'
+          WHEN 5 THEN 'Enviado'
+          WHEN 6 THEN 'En proceso'
+          WHEN 7 THEN 'Anulado'
+          WHEN 8 THEN 'Sustentado'
+          WHEN 9 THEN 'En ejecución'
+          WHEN 10 THEN 'Ejecutado'
+          WHEN 11 THEN 'Concluído'
+        ELSE 'Sin estado' END AS estado"),
+      ])
+      ->where('a.facultad_id', '=', $facultadId)
+      ->union($proyectos_nuevos)
       ->get();
 
     return $proyectos;
