@@ -140,9 +140,10 @@
     }
 
     .table2>tbody td {
-      font-size: 11px;
-      text-align: center;
+      font-size: 10px;
+      text-align: left;
       padding-top: 2px;
+      padding-left: 2px;
     }
 
     .cuenta {
@@ -204,6 +205,14 @@
   <div class="foot-1">RAIS - Registro de Actividades de Investigación de San Marcos</div>
 
   <div class="cuerpo">
+    <table class="table_area_fac">
+      <tbody>
+        <tr>
+          <td style="text-align: left; width: 50%"><strong>Área: </strong>{{ $item->sigla }} {{ $item->area }}</td>
+          <td style="text-align: right; width: 50%"><strong>Facultad: </strong>{{ $item->facultad_grupo }}</td>
+        </tr>
+      </tbody>
+    </table>
     @foreach ($lista as $item)
       @if ($grupoActual != $item->grupo_nombre)
         @if ($firstEl == 1)
@@ -215,14 +224,6 @@
           $cant_miembros = 0;
           $firstEl = 1;
         @endphp
-        <table class="table_area_fac">
-          <tbody>
-            <tr>
-              <td style="text-align: left; width: 50%"><strong>Area: </strong>{{ $item->area }}</td>
-              <td style="text-align: right; width: 50%"><strong>Facultad: </strong>{{ $item->facultad_grupo }}</td>
-            </tr>
-          </tbody>
-        </table>
         <table class="table1">
           <thead>
             <tr>
@@ -292,7 +293,7 @@
       <tr>
         <td></td>
         <td>{{ $item->codigo }}</td>
-        <td>{{ $item->nombre }}</td>
+        <td style="text-transform: uppercase">{{ $item->nombre }}</td>
         <td>{{ $item->tipo }}</td>
         <td>{{ $item->facultad_miembro }}</td>
       </tr>
