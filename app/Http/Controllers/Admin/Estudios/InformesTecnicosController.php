@@ -116,7 +116,8 @@ class InformesTecnicosController extends S3Controller {
     $archivos = DB::table('Proyecto_doc')
       ->select([
         'categoria',
-        DB::raw("CONCAT('/minio/proyecto-doc/', archivo) AS url")
+        DB::raw("CONCAT('/minio/proyecto-doc/', archivo) AS url"),
+        'comentario'
       ])
       ->where('proyecto_id', '=', $detalles->proyecto_id)
       ->where('estado', '=', 1);
@@ -154,7 +155,10 @@ class InformesTecnicosController extends S3Controller {
           ->where('nombre', '=', 'Anexos proyecto ECI')
           ->get()
           ->mapWithKeys(function ($item) {
-            return [$item->categoria => $item->url];
+            return [$item->categoria => [
+              'url' => $item->url,
+              'fecha' => $item->comentario
+            ]];
           });
         break;
       case "PCONFIGI":
@@ -191,7 +195,10 @@ class InformesTecnicosController extends S3Controller {
         $archivos = $archivos
           ->get()
           ->mapWithKeys(function ($item) {
-            return [$item->categoria => $item->url];
+            return [$item->categoria => [
+              'url' => $item->url,
+              'fecha' => $item->comentario
+            ]];
           });
         break;
       case "PMULTI":
@@ -220,8 +227,12 @@ class InformesTecnicosController extends S3Controller {
         $archivos = $archivos
           ->get()
           ->mapWithKeys(function ($item) {
-            return [$item->categoria => $item->url];
+            return [$item->categoria => [
+              'url' => $item->url,
+              'fecha' => $item->comentario
+            ]];
           });
+
         $actividades = DB::table('Proyecto_actividad AS a')
           ->join('Proyecto_integrante AS b', 'b.id', '=', 'a.proyecto_integrante_id')
           ->join('Usuario_investigador AS c', 'c.id', '=', 'b.investigador_id')
