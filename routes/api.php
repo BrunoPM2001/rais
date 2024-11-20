@@ -932,6 +932,8 @@ Route::prefix('facultad')->middleware('checkRole:Usuario_facultad')->group(funct
 
     Route::prefix('investigadores')->group(function () {
       Route::get('listado', [FacultadListadoController::class, 'ListadoInvestigadores']);
+      Route::get('excelInvestigadores', [FacultadListadoController::class, 'excelInvestigadores']);
+      Route::get('pdfInvestigadores', [FacultadListadoController::class, 'pdfInvestigadores']);
     });
 
     Route::prefix('docente_investigador')->group(function () {

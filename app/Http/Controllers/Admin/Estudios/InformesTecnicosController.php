@@ -53,22 +53,26 @@ class InformesTecnicosController extends S3Controller {
           'a.proyecto_id',
           DB::raw('CONCAT(b.apellido1, " " , b.apellido2, ", ", b.nombres) AS responsable')
         )
-        ->where('condicion', '=', 'Responsable');
+        ->where('a.condicion', '=', 'Responsable');
 
       $proyectos = DB::table('Proyecto_H AS a')
         ->leftJoin('Informe_tecnico_H AS b', 'b.proyecto_id', '=', 'a.id')
         ->leftJoin('Facultad AS c', 'c.id', '=', 'a.facultad_id')
-        ->leftJoinSub($responsable, 'res', 'res.proyecto_id', '=', 'a.id')
+        ->leftJoin('Proyecto_integrante_H AS d', function (JoinClause $join) {
+          $join->on('d.proyecto_id', '=', 'a.id')
+            ->where('d.condicion', '=', 'Responsable');
+        })
+        ->leftJoin('Usuario_investigador AS e', 'e.id', '=', 'd.investigador_id')
         ->select(
           'a.id',
           'a.tipo AS tipo_proyecto',
           'a.codigo AS codigo_proyecto',
           'a.titulo',
           DB::raw('COUNT(b.id) AS cantidad_informes'),
-          'res.responsable',
+          DB::raw("CONCAT(e.apellido1, ' ', e.apellido2, ', ', e.nombres) AS responsable"),
           'c.nombre AS facultad',
           'a.periodo',
-          DB::raw("CASE(b.estado)
+          DB::raw("CASE(b.status)
             WHEN 0 THEN 'En proceso'
             WHEN 1 THEN 'Aprobado'
             WHEN 2 THEN 'Presentado'
@@ -76,9 +80,11 @@ class InformesTecnicosController extends S3Controller {
             ELSE 'No tiene informe'
           END AS estado")
         )
-        ->where('a.estado', '>', 0)
+        ->where('a.status', '>', 0)
         ->groupBy('a.id')
         ->get();
+
+      return $proyectos;
     }
   }
 

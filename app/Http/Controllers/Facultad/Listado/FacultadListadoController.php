@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers\Facultad\Listado;
 
+use App\Exports\Facultad\InvestigadoresExport;
 use App\Http\Controllers\Controller;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Database\Query\JoinClause;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Maatwebsite\Excel\Facades\Excel;
 
 class FacultadListadoController extends Controller {
 
@@ -308,6 +311,66 @@ class FacultadListadoController extends Controller {
     return $investigadores;
   }
 
+  public function excelInvestigadores(Request $request) {
+    $facultadId = $this->facultadId($request);
+    $export = new InvestigadoresExport($facultadId);
+
+    return Excel::download($export, 'investigadores.xlsx');
+  }
+
+  public function pdfInvestigadores(Request $request) {
+    $fechaInicio = date('Y') - 7;
+    $fechaFin = date('Y') - 1;
+    $facultadId = $this->facultadId($request);
+
+    $publicacion_query = DB::table('Publicacion_autor AS a')
+      ->join('Publicacion AS b', 'a.publicacion_id', '=', 'b.id')
+      ->select([
+        'a.investigador_id',
+        DB::raw("COUNT(b.id) AS publicaciones"),
+        DB::raw("SUM(a.puntaje) AS puntaje")
+      ])
+      ->where('b.validado', 1)
+      ->whereBetween(DB::raw('YEAR(b.fecha_publicacion)'), [$fechaInicio, $fechaFin])
+      ->groupBy('a.investigador_id');
+
+    $patente_query = DB::table('Patente_autor AS a')
+      ->join('Patente AS b', 'a.patente_id', '=', 'b.id')
+      ->select([
+        'a.investigador_id',
+        DB::raw("COUNT(b.id) AS publicaciones"),
+        DB::raw('SUM(a.puntaje) AS puntaje')
+      ])
+      ->whereBetween(DB::raw('YEAR(b.created_at)'), [$fechaInicio, $fechaFin])
+      ->groupBy('a.investigador_id');
+
+    $investigadores = DB::table('Usuario_investigador AS a')
+      ->leftJoinSub($publicacion_query, 'pub', 'pub.investigador_id', '=', 'a.id')
+      ->leftJoinSub($patente_query, 'pat', 'pat.investigador_id', '=', 'a.id')
+      ->select([
+        'a.codigo',
+        DB::raw("CONCAT(a.apellido1, ' ', a.apellido2, ', ', a.nombres) AS nombres"),
+        DB::raw("COALESCE(SUM(pub.publicaciones), 0) + COALESCE(SUM(pat.publicaciones), 0)  AS publicaciones"),
+        DB::raw('COALESCE(SUM(pub.puntaje), 0) + COALESCE(SUM(pat.puntaje), 0) as puntaje'),
+      ])
+      ->where('a.facultad_id', '=', $facultadId)
+      ->where('a.tipo', '=', 'DOCENTE PERMANENTE')
+      ->groupBy('a.id')
+      ->get();
+
+    $facultad = DB::table('Facultad AS A')
+      ->join('Area AS b', 'b.id', '=', 'a.area_id')
+      ->select([
+        'b.nombre AS area',
+        'a.nombre AS facultad',
+      ])
+      ->where('a.id', '=', $facultadId)
+      ->first();
+
+    $pdf = Pdf::loadView('facultad.listado.investigador', ['lista' => $investigadores, 'facultad' => $facultad]);
+    return $pdf->stream();
+  }
+
   public function DocenteInvestigador(Request $request) {
     $facultadId = $this->facultadId($request);
     $docenteInvestigador = DB::table('Eval_docente_investigador as t1')
@@ -571,24 +634,24 @@ class FacultadListadoController extends Controller {
       ->select([
         't1.*',
         't1.id AS idx',
+        DB::raw("YEAR(t1.fecha_publicacion) AS year_publicacion"),
         DB::raw("CASE 
-                        WHEN t1.tipo_publicacion = 'evento' THEN 'R. Evento Cientifico'
-                        WHEN t1.tipo_publicacion = 'articulo' THEN 'Artículo de Revista'
-                        WHEN t1.tipo_publicacion = 'capitulo' THEN 'Capítulo de Libro'
-                        WHEN t1.tipo_publicacion = 'libro' THEN 'Libro'
-                        WHEN t1.tipo_publicacion = 'tesis' THEN 'Tesis'
-                        ELSE t1.tipo_publicacion 
-                     END AS xtipo_publicacion"),
-        DB::raw("CASE(t1.estado)
-                     
-                     WHEN 1 THEN 'Registrado'
-                     WHEN 2 THEN 'Observado'
-                     WHEN 5 THEN 'Enviado'
-                     WHEN 6 THEN 'En proceso'
-                     WHEN 7 THEN 'Anulado'
-                     WHEN 8 THEN 'No Registrado'
-                     WHEN 9 THEN 'Reg. Duplicado'
-                 ELSE 'Sin estado' END AS estado"),
+          WHEN t1.tipo_publicacion = 'evento' THEN 'R. Evento Cientifico'
+          WHEN t1.tipo_publicacion = 'articulo' THEN 'Artículo de Revista'
+          WHEN t1.tipo_publicacion = 'capitulo' THEN 'Capítulo de Libro'
+          WHEN t1.tipo_publicacion = 'libro' THEN 'Libro'
+          WHEN t1.tipo_publicacion = 'tesis' THEN 'Tesis'
+          ELSE t1.tipo_publicacion 
+        END AS xtipo_publicacion"),
+        DB::raw("CASE(t1.estado)                     
+          WHEN 1 THEN 'Registrado'
+          WHEN 2 THEN 'Observado'
+          WHEN 5 THEN 'Enviado'
+          WHEN 6 THEN 'En proceso'
+          WHEN 7 THEN 'Anulado'
+          WHEN 8 THEN 'No Registrado'
+          WHEN 9 THEN 'Reg. Duplicado'
+        ELSE 'Sin estado' END AS estado"),
         't2.investigador_id'
       ])
       ->leftJoin('Publicacion_autor AS t2', 't1.id', '=', 't2.publicacion_id')
@@ -612,24 +675,57 @@ class FacultadListadoController extends Controller {
   public function ListadoInformes(Request $request) {
     $facultadId = $this->facultadId($request);
 
-    $informes = DB::table('view_informe_proyectos as t1')
+    $responsable = DB::table('Proyecto_integrante AS a')
+      ->leftJoin('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
       ->select(
-        '*',
-        DB::raw("CASE(estado)
-            WHEN 0 THEN 'En proceso'
-            WHEN 1 THEN 'Aprobado'
-            WHEN 2 THEN 'Presentado'
-            WHEN 3 THEN 'Observado'
-            ELSE 'No tiene informe'
-          END AS estado")
+        'a.proyecto_id',
+        DB::raw('CONCAT(b.apellido1, " " , b.apellido2, ", ", b.nombres) AS responsable')
       )
-      ->join('Proyecto as t2', 't1.proyecto_id', '=', 't2.id', 'left')
-      ->where('t1.facultad_id', $facultadId)
-      ->orderBy('t1.fecha_inscripcion', 'desc')
-      ->orderBy('t1.facultad_id', 'desc')
+      ->where('condicion', '=', 'Responsable');
+
+    $proyectos_nuevos = DB::table('Proyecto AS a')
+      ->leftJoin('Informe_tecnico AS b', 'b.proyecto_id', '=', 'a.id')
+      ->leftJoin('Facultad AS c', 'c.id', '=', 'a.facultad_id')
+      ->leftJoinSub($responsable, 'res', 'res.proyecto_id', '=', 'a.id')
+      ->select(
+        'a.id',
+        'a.tipo_proyecto',
+        'a.codigo_proyecto',
+        'a.titulo',
+        DB::raw('COUNT(b.id) AS cantidad_informes'),
+        'res.responsable',
+        'a.periodo',
+        'a.fecha_inscripcion'
+      )
+      ->where('a.estado', '>', 0)
+      ->where('a.facultad_id', '=', $facultadId)
+      ->groupBy('a.id');
+
+    $proyectos = DB::table('Proyecto_H AS a')
+      ->leftJoin('Informe_tecnico_H AS b', 'b.proyecto_id', '=', 'a.id')
+      ->leftJoin('Facultad AS c', 'c.id', '=', 'a.facultad_id')
+      ->leftJoin('Proyecto_integrante_H AS d', function (JoinClause $join) {
+        $join->on('d.proyecto_id', '=', 'a.id')
+          ->where('d.condicion', '=', 'Responsable');
+      })
+      ->leftJoin('Usuario_investigador AS e', 'e.id', '=', 'd.investigador_id')
+      ->select(
+        'a.id',
+        'a.tipo AS tipo_proyecto',
+        'a.codigo AS codigo_proyecto',
+        'a.titulo',
+        DB::raw('COUNT(b.id) AS cantidad_informes'),
+        DB::raw("CONCAT(e.apellido1, ' ', e.apellido2, ', ', e.nombres) AS responsable"),
+        'a.periodo',
+        DB::raw("DATE(a.fecha_inscripcion) AS fecha_inscripcion"),
+      )
+      ->where('a.status', '>', 0)
+      ->where('a.facultad_id', '=', $facultadId)
+      ->groupBy('a.id')
+      ->union($proyectos_nuevos)
       ->get();
 
-    return $informes;
+    return $proyectos;
   }
 
   public function ListadoDeudas(Request $request) {
