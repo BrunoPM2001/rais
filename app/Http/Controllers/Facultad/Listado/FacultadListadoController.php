@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Facultad\Listado;
 
+use App\Exports\Facultad\DeudasExport;
 use App\Exports\Facultad\DocenteInvestigadorExport;
 use App\Exports\Facultad\GrupoIntegrantesExport;
 use App\Exports\Facultad\InvestigadoresExport;
@@ -866,6 +867,13 @@ class FacultadListadoController extends Controller {
   public function excelGrupos(Request $request) {
     $facultadId = $this->facultadId($request);
     $export = new GrupoIntegrantesExport($facultadId);
+
+    return Excel::download($export, 'grupos.xlsx');
+  }
+
+  public function excelDeudas(Request $request) {
+    $facultadId = $this->facultadId($request);
+    $export = new DeudasExport($facultadId);
 
     return Excel::download($export, 'grupos.xlsx');
   }

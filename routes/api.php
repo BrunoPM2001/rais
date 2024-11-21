@@ -975,5 +975,6 @@ Route::prefix('facultad')->middleware('checkRole:Usuario_facultad')->group(funct
 
   Route::prefix('reportes')->group(function () {
     Route::get('excelGrupos', [FacultadListadoController::class, 'excelGrupos']);
+    Route::get('excelDeudas', [FacultadListadoController::class, 'excelDeudas']);
   });
 });
