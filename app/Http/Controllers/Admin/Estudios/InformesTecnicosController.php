@@ -306,6 +306,7 @@ class InformesTecnicosController extends S3Controller {
         'infinal10' => $request->input('infinal10'),
         'infinal11' => $request->input('infinal11'),
         'estado_trabajo' => $request->input('estado_trabajo'),
+        'updated_at' => Carbon::now()
       ]);
 
     $this->agregarAudit($request);

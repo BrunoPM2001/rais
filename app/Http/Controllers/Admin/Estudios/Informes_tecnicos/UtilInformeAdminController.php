@@ -28,6 +28,10 @@ class UtilInformeAdminController extends Controller {
         $util = new PsinfipuController();
         return $util->reporte($request);
         break;
+      case "ECI":
+        $util = new EciController();
+        return $util->reporte($request);
+        break;
     }
   }
 }

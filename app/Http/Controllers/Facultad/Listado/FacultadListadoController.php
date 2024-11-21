@@ -394,7 +394,7 @@ class FacultadListadoController extends Controller {
         'b.email3',
       ])
       ->where('b.facultad_id', '=', $facultadId)
-      ->whereRaw('a.created_at = (SELECT MAX(_t1.created_at) FROM eval_docente_investigador as _t1 WHERE _t1.investigador_id = a.investigador_id)')
+      ->whereRaw('a.created_at = (SELECT MAX(_t1.created_at) FROM Eval_docente_investigador as _t1 WHERE _t1.investigador_id = a.investigador_id)')
       ->orderBy('b.apellido1')
       ->orderBy('b.apellido2')
       ->orderBy('b.nombres')
