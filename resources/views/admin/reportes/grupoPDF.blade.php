@@ -205,14 +205,6 @@
   <div class="foot-1">RAIS - Registro de Actividades de Investigación de San Marcos</div>
 
   <div class="cuerpo">
-    <table class="table_area_fac">
-      <tbody>
-        <tr>
-          <td style="text-align: left; width: 50%"><strong>Área: </strong>{{ $item->sigla }} {{ $item->area }}</td>
-          <td style="text-align: right; width: 50%"><strong>Facultad: </strong>{{ $item->facultad_grupo }}</td>
-        </tr>
-      </tbody>
-    </table>
     @foreach ($lista as $item)
       @if ($grupoActual != $item->grupo_nombre)
         @if ($firstEl == 1)
@@ -224,6 +216,14 @@
           $cant_miembros = 0;
           $firstEl = 1;
         @endphp
+        <table class="table_area_fac">
+          <tbody>
+            <tr>
+              <td style="text-align: left; width: 50%"><strong>Área: </strong>{{ $item->sigla }} {{ $item->area }}</td>
+              <td style="text-align: right; width: 50%"><strong>Facultad: </strong>{{ $item->facultad_grupo }}</td>
+            </tr>
+          </tbody>
+        </table>
         <table class="table1">
           <thead>
             <tr>

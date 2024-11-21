@@ -938,6 +938,7 @@ Route::prefix('facultad')->middleware('checkRole:Usuario_facultad')->group(funct
 
     Route::prefix('docente_investigador')->group(function () {
       Route::get('listado', [FacultadListadoController::class, 'DocenteInvestigador']);
+      Route::get('excelDocentes', [FacultadListadoController::class, 'excelDocentes']);
     });
 
     Route::prefix('proyectos')->group(function () {
@@ -954,10 +955,12 @@ Route::prefix('facultad')->middleware('checkRole:Usuario_facultad')->group(funct
 
     Route::prefix('grupos')->group(function () {
       Route::get('listado', [FacultadListadoController::class, 'ListadoGrupos']);
+      Route::get('pdfGrupo', [FacultadListadoController::class, 'pdfGrupo']);
     });
 
     Route::prefix('publicaciones')->group(function () {
       Route::get('listado', [FacultadListadoController::class, 'ListadoPublicaciones']);
+      Route::get('reporte', [PublicacionesController::class, 'reporte']);
     });
 
     Route::prefix('informes')->group(function () {
@@ -966,9 +969,11 @@ Route::prefix('facultad')->middleware('checkRole:Usuario_facultad')->group(funct
 
     Route::prefix('deudas')->group(function () {
       Route::get('listado', [FacultadListadoController::class, 'ListadoDeudas']);
+      Route::get('pdfDeudas', [FacultadListadoController::class, 'pdfDeudas']);
     });
   });
 
   Route::prefix('reportes')->group(function () {
+    Route::get('excelGrupos', [FacultadListadoController::class, 'excelGrupos']);
   });
 });

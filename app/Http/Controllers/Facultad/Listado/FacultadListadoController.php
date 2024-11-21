@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Facultad\Listado;
 
+use App\Exports\Facultad\DocenteInvestigadorExport;
+use App\Exports\Facultad\GrupoIntegrantesExport;
 use App\Exports\Facultad\InvestigadoresExport;
 use App\Http\Controllers\Controller;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -358,7 +360,7 @@ class FacultadListadoController extends Controller {
       ->groupBy('a.id')
       ->get();
 
-    $facultad = DB::table('Facultad AS A')
+    $facultad = DB::table('Facultad AS a')
       ->join('Area AS b', 'b.id', '=', 'a.area_id')
       ->select([
         'b.nombre AS area',
@@ -373,43 +375,39 @@ class FacultadListadoController extends Controller {
 
   public function DocenteInvestigador(Request $request) {
     $facultadId = $this->facultadId($request);
-    $docenteInvestigador = DB::table('Eval_docente_investigador as t1')
+
+    $docenteInvestigador = DB::table('Eval_docente_investigador AS a')
+      ->join('Usuario_investigador AS b', 'a.investigador_id', '=', 'b.id')
       ->select([
-        '*',
-        DB::raw('IF(t1.estado="APROBADO", DATE_FORMAT(t1.fecha_constancia, "%Y-%m-%d"), NULL) as fecha_constancia_const'),
-        DB::raw('IF(t1.estado="APROBADO", DATE_FORMAT(t1.fecha_fin, "%Y-%m-%d"), NULL) as fecha_fin_const'),
-        DB::raw('(
-                CASE
-                    WHEN t1.estado = "PENDIENTE" THEN "Pendiente"
-                    WHEN t1.estado = "APROBADO" AND TIMESTAMPDIFF(YEAR, t1.fecha_constancia, NOW()) >= 2 THEN "No vigente"
-                    WHEN t1.estado = "APROBADO" AND TIMESTAMPDIFF(YEAR, t1.fecha_constancia, NOW()) < 2 THEN "Vigente"
-                    WHEN t1.estado = "ANULADO" THEN "Anulado"
-                    WHEN t1.estado = "ENVIADO" THEN "Enviado"
-                    WHEN t1.estado = "PROCESO" THEN "Observado"
-                    WHEN t1.estado = "TRAMITE" THEN "En trámite"
-                END
-            ) as status_const')
+        'a.estado',
+        'a.tipo_eval',
+        DB::raw("DATE(a.fecha_constancia) AS fecha_constancia"),
+        DB::raw("DATE(a.fecha_fin) AS fecha_fin"),
+        'a.tipo_docente',
+        'a.orcid',
+        'b.apellido1',
+        'b.apellido2',
+        'b.nombres',
+        'b.doc_tipo',
+        'b.doc_numero',
+        'b.telefono_movil',
+        'b.email3',
       ])
-      ->join('Usuario_investigador as t2', 't1.investigador_id', '=', 't2.id')
-      ->leftJoin('Facultad as t3', 't2.facultad_id', '=', 't3.id')
-      ->addSelect([
-        't2.tipo',
-        DB::raw('(SELECT orcid FROM token_investigador_orcid WHERE investigador_id = t1.investigador_id ORDER BY id DESC LIMIT 1) as orcid'),
-        't2.apellido1',
-        't2.apellido2',
-        't2.nombres',
-        't2.doc_tipo',
-        't2.telefono_movil',
-        't2.email3',
-      ])
-      ->where('t2.facultad_id', $facultadId)
-      ->whereRaw('t1.created_at = (SELECT MAX(_t1.created_at) FROM eval_docente_investigador as _t1 WHERE _t1.investigador_id = t1.investigador_id)')
-      ->orderBy('t2.apellido1')
-      ->orderBy('t2.apellido2')
-      ->orderBy('t2.nombres')
+      ->where('b.facultad_id', '=', $facultadId)
+      ->whereRaw('a.created_at = (SELECT MAX(_t1.created_at) FROM eval_docente_investigador as _t1 WHERE _t1.investigador_id = a.investigador_id)')
+      ->orderBy('b.apellido1')
+      ->orderBy('b.apellido2')
+      ->orderBy('b.nombres')
       ->get();
 
     return $docenteInvestigador;
+  }
+
+  public function excelDocentes(Request $request) {
+    $facultadId = $this->facultadId($request);
+    $export = new DocenteInvestigadorExport($facultadId);
+
+    return Excel::download($export, 'docentes.xlsx');
   }
 
   public function ListadoProyectos(Request $request) {
@@ -628,6 +626,88 @@ class FacultadListadoController extends Controller {
     return $grupos;
   }
 
+  public function pdfGrupo(Request $request) {
+    $grupo = DB::table('Grupo')
+      ->select([
+        'grupo_nombre',
+        'grupo_nombre_corto',
+        'telefono',
+        'anexo',
+        'oficina',
+        'direccion',
+        'web',
+        'email',
+        'presentacion',
+        'objetivos',
+        'servicios',
+        'infraestructura_ambientes',
+        DB::raw("CASE 
+            WHEN infraestructura_sgestion IS NULL THEN 'No'
+            ELSE 'Sí'
+          END AS anexo"),
+        DB::raw("CASE (estado)
+          WHEN -2 THEN 'Disuelto'
+          WHEN -1 THEN 'Eliminado'
+          WHEN 0 THEN 'No aprobado'
+          WHEN 2 THEN 'Observado'
+          WHEN 4 THEN 'Registrado'
+          WHEN 5 THEN 'Enviado'
+          WHEN 6 THEN 'En proceso'
+          WHEN 12 THEN 'Reg. observado'
+          ELSE 'Estado desconocido'
+        END AS estado")
+      ])
+      ->where('id', '=', $request->query('id'))
+      ->first();
+
+    $integrantes = DB::table('Grupo_integrante AS a')
+      ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
+      ->leftJoin('Facultad AS c', 'c.id', '=', 'b.facultad_id')
+      ->select([
+        'b.doc_numero',
+        DB::raw("CONCAT(b.apellido1, ' ', b.apellido2, ', ', b.nombres) AS nombres"),
+        DB::raw("CASE 
+          WHEN a.cargo IS NOT NULL THEN CONCAT(a.condicion, '(', a.cargo, ')')
+          ELSE a.condicion
+          END AS condicion"),
+        'b.tipo',
+        'c.nombre AS facultad'
+      ])
+      ->whereNot('condicion', 'LIKE', 'Ex%')
+      ->where('a.grupo_id', '=', $request->query('id'))
+      ->get();
+
+    $lineas = DB::table('Grupo_linea AS a')
+      ->join('Linea_investigacion AS b', 'b.id', '=', 'a.linea_investigacion_id')
+      ->select([
+        'a.id',
+        'b.codigo',
+        'b.nombre',
+      ])
+      ->where('a.grupo_id', '=', $request->query('id'))
+      ->get();
+
+    $laboratorios = DB::table('Grupo_infraestructura AS a')
+      ->join('Laboratorio AS b', 'b.id', '=', 'a.laboratorio_id')
+      ->select([
+        'a.id',
+        'b.codigo',
+        'b.laboratorio',
+        'b.responsable',
+      ])
+      ->where('a.grupo_id', '=', $request->query('id'))
+      ->get();
+
+    $pdf = Pdf::loadView('investigador.grupo.reporte_grupo', [
+      'grupo' => $grupo,
+      'integrantes' => $integrantes,
+      'lineas' => $lineas,
+      'laboratorios' => $laboratorios,
+    ]);
+
+    return $pdf->stream();
+  }
+
   public function ListadoPublicaciones(Request $request) {
     $facultadId = $this->facultadId($request);
     $publicaciones = DB::table('Publicacion AS t1')
@@ -749,5 +829,44 @@ class FacultadListadoController extends Controller {
       ->get();  // Ejecuta la consulta y obtiene los resultados
 
     return $deudas;
+  }
+
+  public function pdfDeudas(Request $request) {
+    $facultadId = $this->facultadId($request);
+
+    $deudas = DB::table('view_deudores as t1')
+      ->join('Usuario_investigador as t2', 't1.investigador_id', '=', 't2.id')
+      ->select(
+        't2.id',
+        't1.coddoc',
+        DB::raw('CONCAT(t1.apellido1, " ", t1.apellido2, ", ", t1.nombres) as nombres'),
+        't1.ptipo',
+        't1.pcodigo',
+        't1.condicion',
+        't1.categoria',
+        't1.periodo'
+      )
+      ->where('t2.facultad_id', $facultadId)
+      ->get();
+
+    $facultad = DB::table('Facultad AS a')
+      ->join('Area AS b', 'b.id', '=', 'a.area_id')
+      ->select([
+        'b.nombre AS area',
+        'a.nombre AS facultad',
+      ])
+      ->where('a.id', '=', $facultadId)
+      ->first();
+
+    $pdf = Pdf::loadView('facultad.listado.deudores', ['lista' => $deudas, 'facultad' => $facultad]);
+    $pdf->setPaper('A4', 'landscape');
+    return $pdf->stream();
+  }
+
+  public function excelGrupos(Request $request) {
+    $facultadId = $this->facultadId($request);
+    $export = new GrupoIntegrantesExport($facultadId);
+
+    return Excel::download($export, 'grupos.xlsx');
   }
 }
