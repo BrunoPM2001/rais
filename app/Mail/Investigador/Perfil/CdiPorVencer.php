@@ -1,25 +1,20 @@
 <?php
 
-namespace App\Mail;
+namespace App\Mail\Investigador\Perfil;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
-use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-class SampleMailable extends Mailable {
+class CdiPorVencer extends Mailable {
   use Queueable, SerializesModels;
-
-  public $pdf;
 
   /**
    * Create a new message instance.
    */
-  public function __construct($pdf) {
-    $this->pdf = $pdf;
+  public function __construct(public $investigador) {
   }
 
   /**
@@ -27,7 +22,7 @@ class SampleMailable extends Mailable {
    */
   public function envelope(): Envelope {
     return new Envelope(
-      subject: 'Ejemplo de asunto',
+      subject: 'URGENTE - CDI POR VENCER',
     );
   }
 
@@ -36,7 +31,8 @@ class SampleMailable extends Mailable {
    */
   public function content(): Content {
     return new Content(
-      view: 'mail.ejemplo',
+      view: 'mail.cdi_por_vencer',
+
     );
   }
 
@@ -46,9 +42,6 @@ class SampleMailable extends Mailable {
    * @return array<int, \Illuminate\Mail\Mailables\Attachment>
    */
   public function attachments(): array {
-    return [
-      Attachment::fromData(fn () => $this->pdf, 'Constancia.pdf')
-        ->withMime('application/pdf'),
-    ];
+    return [];
   }
 }

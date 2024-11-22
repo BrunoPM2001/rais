@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Admin\Estudios;
 
 use App\Http\Controllers\S3Controller;
-use App\Mail\SampleMailable;
+use App\Mail\Admin\Estudios\DocenteInvestigador\ConstanciaCdi;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Database\Query\JoinClause;
@@ -640,26 +640,49 @@ class DocenteInvestigadorController extends S3Controller {
     return $constancia;
   }
 
-  public function enviarCorreo(Request $request) {
-    //  Generar constancia
-    $detalles = DB::table('Eval_docente_investigador AS a')
-      ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
-      ->join('Repo_rrhh AS c', 'c.ser_cod_ant', '=', 'b.codigo')
-      ->join('Grupo AS d', 'd.id', '=', 'a.d2')
-      ->join('Facultad AS e', 'e.id', '=', 'b.facultad_id')
+  // public function enviarCorreo(Request $request) {
+  //   //  Generar constancia
+  //   $detalles = DB::table('Eval_docente_investigador AS a')
+  //     ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
+  //     ->join('Repo_rrhh AS c', 'c.ser_cod_ant', '=', 'b.codigo')
+  //     ->join('Grupo AS d', 'd.id', '=', 'a.d2')
+  //     ->join('Facultad AS e', 'e.id', '=', 'b.facultad_id')
+  //     ->select([
+  //       DB::raw("CONCAT(c.ser_ape_pat, ' ', c.ser_ape_mat, ', ', c.ser_nom) AS nombres"),
+  //       'c.ser_cod_ant',
+  //       'a.fecha_constancia',
+  //       'a.fecha_fin',
+  //     ])
+  //     ->where('a.id', '=', $request->input('id'))
+  //     ->first();
+
+  //   $pdf = Pdf::loadView('admin.estudios.docentes.constancia_no_firmada', ['detalles' => $detalles]);
+  //   $adjunto = $pdf->output();
+
+  //   // Mail::to('alefran2020@gmail.com')->send(new ConstanciaCdi($adjunto));
+
+  //   return ['message' => 'info', 'detail' => 'Correo enviado exitosamente'];
+  // }
+
+  public function enviarCdiCorreo(Request $request) {
+    $constancia = DB::table('File AS a')
+      ->join('Eval_docente_investigador AS b', 'b.id', '=', 'a.tabla_id')
+      ->join('Usuario_investigador AS c', 'c.id', '=', 'b.investigador_id')
       ->select([
-        DB::raw("CONCAT(c.ser_ape_pat, ' ', c.ser_ape_mat, ', ', c.ser_nom) AS nombres"),
-        'c.ser_cod_ant',
-        'a.fecha_constancia',
-        'a.fecha_fin',
+        'a.bucket',
+        'a.key',
+        'b.nombres',
+        'c.email3 AS email'
       ])
-      ->where('a.id', '=', $request->input('id'))
+      ->where('a.tabla', '=', 'Eval_docente_investigador')
+      ->where('a.tabla_id', '=', $request->query('id'))
+      ->where('a.recurso', '=', 'CONSTANCIA_FIRMADA')
+      ->where('a.estado', '=', 20)
       ->first();
 
-    $pdf = Pdf::loadView('admin.estudios.docentes.constancia_no_firmada', ['detalles' => $detalles]);
-    $adjunto = $pdf->output();
+    $file = $this->getFile($constancia->bucket, $constancia->key);
 
-    Mail::to('alefran2020@gmail.com')->send(new SampleMailable($adjunto));
+    Mail::to($constancia->email)->send(new ConstanciaCdi($constancia->nombres, $file));
 
     return ['message' => 'info', 'detail' => 'Correo enviado exitosamente'];
   }

@@ -18,19 +18,22 @@ class FexExport implements FromQuery, WithHeadings, ShouldAutoSize, WithStyles {
 
   public function headings(): array {
     return [
-      'N° de doc',
-      'Código',
-      'Nombres',
-      'Año',
-      'Tipo de proyecto',
+      'Id',
       'Código de proyecto',
-      'Condición',
-      'Tipo',
-      'Categoría',
-      'Detalle.',
-      // 'Licencia',
-      // 'Resolución',
-      'Correo institucional',
+      'Título',
+      'Responsable',
+      'Facultad',
+      'Moneda',
+      'Aporte no unmsm',
+      'Aporte unmsm',
+      'Financiamiento fuente externa',
+      'Monto asignado',
+      'Participación unmsm',
+      'Fuente fin.',
+      'Periodo',
+      'Registrado',
+      'Actualizado',
+      'Estado'
     ];
   }
 

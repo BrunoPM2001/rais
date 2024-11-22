@@ -329,7 +329,8 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
       Route::get('fichaEvaluacion', [DocenteInvestigadorController::class, 'fichaEvaluacion']);
       Route::get('constanciaCDI', [DocenteInvestigadorController::class, 'constanciaCDI']);
       Route::get('constanciaCDIFirmada', [DocenteInvestigadorController::class, 'constanciaCDIFirmada']);
-      Route::post('enviarCorreo', [DocenteInvestigadorController::class, 'enviarCorreo']);
+      // Route::post('enviarCorreo', [DocenteInvestigadorController::class, 'enviarCorreo']);
+      Route::get('enviarCdiCorreo', [DocenteInvestigadorController::class, 'enviarCdiCorreo']);
     });
 
     //  Gestión de SUM

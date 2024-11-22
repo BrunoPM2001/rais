@@ -7,8 +7,8 @@ use Exception;
 
 class S3Controller extends Controller {
 
-  protected $s3Client;
-  protected $s3ClientPut;
+  protected S3Client $s3Client;
+  protected S3Client $s3ClientPut;
 
   public function __construct() {
     $this->initializeS3Clients();
@@ -66,6 +66,22 @@ class S3Controller extends Controller {
     } catch (Exception $e) {
       return response()->json([
         'message' => 'Error al subir el archivo',
+        'error' => $e->getMessage(),
+      ], 500);
+    }
+  }
+
+  public function getFile($bucket, $dir) {
+    try {
+      $file = $this->s3ClientPut->getObject([
+        'Bucket' => $bucket,
+        'Key' => $dir
+      ]);
+
+      return $file['Body']->getContents();
+    } catch (Exception $e) {
+      return response()->json([
+        'message' => 'Error al obtener el archivo',
         'error' => $e->getMessage(),
       ], 500);
     }
