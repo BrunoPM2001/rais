@@ -82,6 +82,10 @@
       background: #000;
     }
 
+    .cuerpo {
+      margin-top: 10px;
+    }
+
     .titulo {
       width: 754px;
       font-size: 16px;
@@ -184,6 +188,8 @@
     <p class="titulo">
       <strong>
         Grupos de Investigación
+        <br>
+        Año - {{ date('Y') }}
       </strong>
     </p>
   </div>

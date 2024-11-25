@@ -42,7 +42,7 @@ class GestionComprobantesController extends S3Controller {
 
     $proyectos = DB::table('Geco_proyecto AS a')
       ->join('Proyecto AS b', 'b.id', '=', 'a.proyecto_id')
-      ->join('Facultad AS c', 'c.id', '=', 'b.facultad_id')
+      ->leftJoin('Facultad AS c', 'c.id', '=', 'b.facultad_id')
       ->leftJoinSub($responsable, 'res', 'res.proyecto_id', '=', 'b.id')
       ->leftJoinSub($pendientes, 'd', 'd.geco_proyecto_id', '=', 'a.id')
       ->leftJoinSub($revisados, 'e', 'e.geco_proyecto_id', '=', 'a.id')
