@@ -172,7 +172,7 @@
         <tr>
           <td style="width: 12%;"><strong>Facultad</strong></td>
           <td style="width: 1%;">:</td>
-          <td style="width: 87%;">{{ $proyecto->facultad }}</td>
+          <td style="width: 87%;">{{ $proyecto->facultad ?? "" }}</td>
         </tr>
         <tr>
           <td style="width: 12%;"><strong>Estado</strong></td>

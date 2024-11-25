@@ -304,7 +304,7 @@ class GestionTransferenciasController extends Controller {
 
     $proyecto = DB::table('Geco_proyecto AS a')
       ->join('Proyecto AS b', 'b.id', '=', 'a.proyecto_id')
-      ->join('Facultad AS c', 'c.id', '=', 'b.facultad_id')
+      ->leftJoin('Facultad AS c', 'c.id', '=', 'b.facultad_id')
       ->leftJoinSub($responsable, 'res', 'res.proyecto_id', '=', 'b.id')
       ->select([
         'b.periodo',
