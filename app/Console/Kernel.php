@@ -10,8 +10,8 @@ class Kernel extends ConsoleKernel {
    * Define the application's command schedule.
    */
   protected function schedule(Schedule $schedule): void {
-    $schedule->command('app:actualizar-cdi-no-vigente')->daily();
-    $schedule->command('app:recordar-vencimiento-cdi')->mondays();
+    $schedule->command('app:actualizar-cdi-no-vigente')->daily()->at('05:00');
+    $schedule->command('app:recordar-vencimiento-cdi')->mondays()->at('08:00');
   }
 
 
