@@ -12,6 +12,7 @@ class Kernel extends ConsoleKernel {
   protected function schedule(Schedule $schedule): void {
     $schedule->command('app:actualizar-cdi-no-vigente')->daily()->at('05:00');
     $schedule->command('app:recordar-vencimiento-cdi')->mondays()->at('08:00');
+    $schedule->command('app:update-rrhh')->daily()->at('00:00');
   }
 
 
