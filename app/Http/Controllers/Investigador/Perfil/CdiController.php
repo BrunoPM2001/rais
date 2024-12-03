@@ -21,36 +21,9 @@ class CdiController extends S3Controller {
    *  3: Tiene solicitud en curso
    *  4: Constancia emitida 
    */
-  public function cdiEstado(Request $request) {
 
-    $constancia = $this->constanciaCdi($request);
-    if ($constancia) {
-      return [
-        'estado' => 4,
-        'fecha_fin' => $constancia->fecha_fin,
-        'url' => $constancia->url,
-      ];
-    }
-
-    $solicitud = $this->estadoSolicitud($request);
-    if ($solicitud["solicitud"] == 1) {
-      return [
-        'estado' => 3,
-        'solicitud' => $solicitud
-      ];
-    }
-
-    $rrhh = $this->rrhhCdi($request);
-    if (!$rrhh) {
-      return ['estado' => 0];
-    }
-
-
-    $preReq = $this->preCdi($request);
-    if ($preReq == 0) {
-      return ['estado' => 1];
-    }
-
+  public function dataSolicitar(Request $request, $investigador_id) {
+    //  Últimos dos años
     $currentYear = (int)date("Y");
     $lastTwoYears = [$currentYear - 2, $currentYear - 1];
 
@@ -59,7 +32,7 @@ class CdiController extends S3Controller {
         'renacyt',
         'renacyt_nivel'
       ])
-      ->where('id', '=', $request->attributes->get('token_decoded')->investigador_id)
+      ->where('id', '=', $investigador_id)
       ->first();
 
     $req2 = DB::table('Grupo_integrante AS a')
@@ -72,7 +45,7 @@ class CdiController extends S3Controller {
         'b.grupo_nombre_corto',
         'a.condicion',
       ])
-      ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+      ->where('a.investigador_id', '=', $investigador_id)
       ->whereNot('a.condicion', 'LIKE', 'Ex%')
       ->first();
 
@@ -89,7 +62,7 @@ class CdiController extends S3Controller {
         'a.periodo',
         'b.condicion AS name'
       ])
-      ->where('b.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+      ->where('b.investigador_id', '=', $investigador_id)
       ->where('a.estado', '=', 1)
       ->where('a.tipo_proyecto', '!=', 'PFEX')
       ->whereIn('a.periodo', $lastTwoYears)
@@ -107,7 +80,7 @@ class CdiController extends S3Controller {
         'a.periodo',
         'b.condicion AS name'
       ])
-      ->where('b.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+      ->where('b.investigador_id', '=', $investigador_id)
       ->where('a.estado', '=', 1)
       ->where('a.tipo_proyecto', '=', 'PFEX')
       ->whereIn('a.periodo', $lastTwoYears)
@@ -125,7 +98,7 @@ class CdiController extends S3Controller {
         DB::raw("YEAR(a.fecha_publicacion) AS periodo"),
         'b.categoria AS name'
       ])
-      ->where('b.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+      ->where('b.investigador_id', '=', $investigador_id)
       ->where('a.estado', '=', 1)
       ->where('a.tipo_publicacion', '=', 'tesis-asesoria')
       ->where('b.categoria', '=', 'Asesor')
@@ -141,9 +114,18 @@ class CdiController extends S3Controller {
         DB::raw("YEAR(a.fecha_publicacion) AS periodo"),
         'a.codigo_registro',
         DB::raw("GROUP_CONCAT(d.nombre SEPARATOR ', ') AS indexada"),
-        'b.filiacion'
+        DB::raw("CASE(b.filiacion)
+              WHEN 1 THEN 'Sí'
+              WHEN 0 THEN 'No'
+              ELSE '-'
+            END AS filiacion"),
+        DB::raw("CASE(b.filiacion_unica)
+              WHEN 1 THEN 'Sí'
+              WHEN 0 THEN 'No'
+              ELSE '-'
+            END AS filiacion_unica"),
       ])
-      ->where('b.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+      ->where('b.investigador_id', '=', $investigador_id)
       ->where('a.estado', '=', 1)
       ->whereIn(DB::raw("YEAR(a.fecha_publicacion)"), $lastTwoYears)
       ->groupBy('a.id')
@@ -159,38 +141,244 @@ class CdiController extends S3Controller {
         'b.id AS id_deuda',
         'b.detalle'
       ])
-      ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+      ->where('a.investigador_id', '=', $investigador_id)
       ->whereNull('b.fecha_sub')
       ->get();
 
-    $req6 = DB::table('Eval_declaracion_jurada AS a')
-      ->join('File AS b', function (JoinClause $join) {
-        $join->on('b.tabla_id', '=', 'a.id')
-          ->where('b.tabla', '=', 'Eval_docente_investigador')
-          ->where('b.recurso', '=', 'DECLARACION_JURADA');
-      })
-      ->select([
-        DB::raw("CONCAT('/minio/declaracion-jurada/', b.key) AS url"),
-        'a.fecha_inicio',
-        'a.fecha_fin'
-      ])
-      ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
-      ->get();
-
     $actividades_extra = $this->actividadesExtra($request);
-
+    $rrhh = $this->rrhhCdi($request);
     //  Result
     return [
-      'estado' => 2,
-      'rrhh' => $rrhh,
       'req1' => $req1,
       'req2' => $req2,
       'req3' => $req3A->merge($req3B)->merge($req3C),
       'req4' => $req4,
       'req5' => $req5,
-      'req6' => $req6,
-      'actividades_extra' => $actividades_extra
+      'actividades_extra' => $actividades_extra,
+      'rrhh' => $rrhh
     ];
+  }
+
+  public function dataSolicitud(Request $request, $solicitud_id) {
+    $currentYear = (int)date("Y");
+    $lastTwoYears = [$currentYear - 2, $currentYear - 1];
+
+    $solicitud = DB::table('Eval_docente_investigador')
+      ->select([
+        'id',
+        'd1',
+        'd2',
+        'd3',
+        'd4',
+        'd6',
+        'estado',
+        'created_at'
+      ])
+      ->where('id',  '=', $solicitud_id)
+      ->first();
+
+    $d2 = DB::table('Grupo_integrante AS a')
+      ->join('Grupo AS b', function (JoinClause $join) {
+        $join->on('b.id', '=', 'a.grupo_id')
+          ->where('b.tipo', '=', 'grupo');
+      })
+      ->select([
+        'b.grupo_nombre',
+        'b.grupo_nombre_corto',
+        'a.condicion',
+      ])
+      ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+      ->where('b.id', '=', $solicitud->d2)
+      ->whereNot('a.condicion', 'LIKE', 'Ex%')
+      ->first();
+
+    $d3 = json_decode($solicitud->d3, true);
+
+    $d3Extra = DB::table('Actividad_investigador AS a')
+      ->join('Eval_docente_actividad AS b', 'b.id', '=', 'a.eval_docente_actividad_id')
+      ->select([
+        'a.id',
+        'b.tipo AS categoria',
+        'a.periodo'
+      ])
+      ->where('b.eval_docente_investigador_id', '=', $solicitud->id)
+      ->whereIn('a.periodo', $lastTwoYears)
+      ->get();
+
+    $d3Complete = [];
+    foreach ($d3 as $element) {
+      $d3Complete[] = $element;
+    }
+
+    foreach ($d3Extra as $element) {
+      $d3Complete[] = [
+        'id' => $element->id,
+        'categoria' => $element->categoria,
+        'periodo' => $element->periodo,
+      ];
+    }
+
+    // Inicializar un array para verificar la presencia de los años
+    $yearsFound = array_fill_keys($lastTwoYears, false);
+
+    // Recorrer el array y marcar los años encontrados
+    foreach ($d3Complete as $element) {
+      if (in_array((int)$element["periodo"], $lastTwoYears)) {
+        $yearsFound[(int)$element["periodo"]] = true;
+      }
+    }
+
+    // Verificar si se encontraron los dos años
+    $allYearsFound = !in_array(false, $yearsFound);
+
+    $d4 = json_decode($solicitud->d4, true);
+    $filiacion = 0;
+    foreach ($d4 as $item) {
+      if ($item["filiacion"] == "1") {
+        $filiacion++;
+      }
+    }
+
+    $d5 = $this->deudasInvestigador($request);
+
+    $d6 = json_decode($solicitud->d6, true);
+    $d6_valid = $d6["fecha_fin"] > Carbon::now() ? true : false;
+
+    $obs = $this->observaciones($solicitud_id);
+    $rrhh = $this->rrhhCdi($request);
+
+    return [
+      'obs' => $obs,
+      'antiguo' => $rrhh->antiguedad,
+      'estado' => $solicitud->estado,
+      'fecha' => $solicitud->created_at,
+      'd1' => [
+        'cumple' => $solicitud->d1 != "" ? true : false,
+        'valor' => $solicitud->d1,
+      ],
+      'd2' => [
+        'cumple' => $d2 != "" ? true : false,
+        'valor' => $d2,
+      ],
+      'd3' => [
+        'cumple' => $allYearsFound,
+        'lista' => $d3Complete
+      ],
+      'd4' => [
+        'cumple' => $filiacion > 0 ? true : false,
+        'lista' => $d4,
+      ],
+      'd5' => [
+        'cumple' => sizeof($d5) == 0 ? true : false,
+        'lista' => $d5
+      ],
+      'd6' => [
+        'cumple' => $d6_valid,
+        'lista' => $d6
+      ]
+    ];
+  }
+
+  public function verificarEstado3($investigador_id) {
+    return DB::table('Eval_docente_investigador')
+      ->select([
+        'id',
+      ])
+      ->where('investigador_id', '=', $investigador_id)
+      ->whereNotIn('estado', ['Vigente', 'No vigente', 'Anulado', 'No aprobado'])
+      ->first();
+  }
+
+  public function verificarEstado4($investigador_id) {
+    return DB::table('Eval_docente_investigador AS a')
+      ->join('File AS b', function (JoinClause $join) {
+        $join->on('a.id', '=', 'b.tabla_id')
+          ->where('b.tabla', '=', 'Eval_docente_investigador')
+          ->where('b.recurso', '=', 'CONSTANCIA_FIRMADA');
+      })
+      ->select([
+        'a.id',
+        DB::raw("DATE(a.fecha_constancia) AS fecha_constancia"),
+        DB::raw("DATE(a.fecha_fin) AS fecha_fin"),
+        DB::raw("CONCAT('/minio/', b.bucket, '/', b.key) AS url")
+      ])
+      ->where('a.investigador_id', '=', $investigador_id)
+      ->where('a.tipo_eval', '=', 'Constancia')
+      ->where('a.estado', '=', 'Vigente')
+      ->orderByDesc('a.id')
+      ->first();
+  }
+
+  public function verificarEstado6($investigador_id, $constancia_id) {
+    return DB::table('Eval_docente_investigador')
+      ->select([
+        'id'
+      ])
+      ->where('investigador_id', '=', $investigador_id)
+      ->where('id', '>', $constancia_id)
+      ->first();
+  }
+
+  public function cdiEstado(Request $request) {
+    $investigador_id = $request->attributes->get('token_decoded')->investigador_id;
+    $ultimaConstanciaVigente = $this->verificarEstado4($investigador_id);
+
+    if ($ultimaConstanciaVigente) {
+      $fecha1 = Carbon::now()->addMonths(2);
+      $fecha2 = Carbon::parse($ultimaConstanciaVigente->fecha_fin);
+
+      //  Tiene constancia vigente
+      if ($fecha1->greaterThan($fecha2)) {
+
+        $solicitudNueva = $this->verificarEstado6($investigador_id, $ultimaConstanciaVigente->id);
+
+        //  Sí ya hay una solicitud en curso
+        if ($solicitudNueva) {
+
+          $info = $this->dataSolicitud($request, $solicitudNueva->id);
+          return [
+            "estado" => 6,
+            "constancia" => $ultimaConstanciaVigente,
+            "solicitud" => $info
+          ];
+        } else {
+          //  Enviar info para la solicitud y su constancia vigente
+          $info = $this->dataSolicitar($request, $investigador_id);
+          return [
+            "estado" => 5,
+            "constancia" => $ultimaConstanciaVigente,
+            "solicitar" => $info
+          ];
+        }
+      } else {
+        //  Enviar constancia
+        return [
+          "estado" => 4,
+          "constancia" => $ultimaConstanciaVigente
+        ];
+      }
+    } else {
+      $solicitud = $this->verificarEstado3($investigador_id);
+      if ($solicitud) {
+        $info = $this->dataSolicitud($request, $solicitud->id);
+        return [
+          "estado" => 3,
+          "solicitud" => $info
+        ];
+      } elseif (!$this->rrhhCdi($request)) {
+        //  No está registrado en RRHH
+        return ['estado' => 0];
+      } elseif (!$this->preCdi($request)) {
+        //  No cumple los prerrequisitos
+        return ['estado' => 1];
+      } else {
+        $info = $this->dataSolicitar($request, $investigador_id);
+        return [
+          "estado" => 2,
+          "solicitar" => $info
+        ];
+      }
+    }
   }
 
   /**
@@ -284,319 +472,6 @@ class CdiController extends S3Controller {
       'fecha_inicio' => $date,
       'fecha_fin' => $date_end
     ];
-  }
-
-  /**
-   *  Ver el estado de una solicitud en curso
-   */
-  public function estadoSolicitud(Request $request) {
-    $currentYear = (int)date("Y");
-    $lastTwoYears = [$currentYear - 2, $currentYear - 1];
-
-    $solicitud = DB::table('Eval_docente_investigador')
-      ->select([
-        'id',
-        'd1',
-        'd2',
-        'd3',
-        'd4',
-        'd6',
-        'estado',
-        'created_at'
-      ])
-      ->where('investigador_id',  '=', $request->attributes->get('token_decoded')->investigador_id)
-      ->where(function ($query) {
-        $query->where('tipo_eval', '=', 'Solicitud')
-          ->orWhere(function ($query) {
-            $query->where('tipo_eval', '=', 'Constancia')
-              ->where('estado', '=', 'Pendiente');
-          });
-      })
-      ->orderByDesc('created_at')
-      ->first();
-
-    if (!$solicitud) {
-      return [
-        'solicitud' => 0
-      ];
-    }
-
-    //  Observaciones
-    $obs = $this->observaciones($solicitud->id);
-
-    $d2 = DB::table('Grupo_integrante AS a')
-      ->join('Grupo AS b', function (JoinClause $join) {
-        $join->on('b.id', '=', 'a.grupo_id')
-          ->where('b.tipo', '=', 'grupo');
-      })
-      ->select([
-        'b.grupo_nombre',
-        'b.grupo_nombre_corto',
-        'a.condicion',
-      ])
-      ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
-      ->where('b.id', '=', $solicitud->d2)
-      ->whereNot('a.condicion', 'LIKE', 'Ex%')
-      ->first();
-
-    $d3 = json_decode($solicitud->d3, true);
-
-    $d3Extra = DB::table('Actividad_investigador AS a')
-      ->join('Eval_docente_actividad AS b', 'b.id', '=', 'a.eval_docente_actividad_id')
-      ->select([
-        'a.id',
-        'b.tipo AS categoria',
-        'a.periodo'
-      ])
-      ->where('b.eval_docente_investigador_id', '=', $solicitud->id)
-      ->whereIn('a.periodo', $lastTwoYears)
-      ->get();
-
-    $d3Complete = [];
-    foreach ($d3 as $element) {
-      $d3Complete[] = $element;
-    }
-
-    foreach ($d3Extra as $element) {
-      $d3Complete[] = [
-        'id' => $element->id,
-        'categoria' => $element->categoria,
-        'periodo' => $element->periodo,
-      ];
-    }
-
-    // Inicializar un array para verificar la presencia de los años
-    $yearsFound = array_fill_keys($lastTwoYears, false);
-
-    // Recorrer el array y marcar los años encontrados
-    foreach ($d3Complete as $element) {
-      if (in_array((int)$element["periodo"], $lastTwoYears)) {
-        $yearsFound[(int)$element["periodo"]] = true;
-      }
-    }
-
-    // Verificar si se encontraron los dos años
-    $allYearsFound = !in_array(false, $yearsFound);
-
-    $d4 = json_decode($solicitud->d4, true);
-    $filiacion = 0;
-    $sinFiliacion = 0;
-    foreach ($d4 as $item) {
-      if ($item["filiacion"] == 1) {
-        $filiacion++;
-      }
-      if ($item["filiacion"] == 0) {
-        $sinFiliacion++;
-      }
-    }
-
-    $d5 = $this->deudasInvestigador($request);
-
-    $d6 = json_decode($solicitud->d6, true);
-    $d6_valid = $d6["fecha_fin"] > Carbon::now() ? true : false;
-
-    $req6 = DB::table('Eval_declaracion_jurada AS a')
-      ->join('File AS b', function (JoinClause $join) {
-        $join->on('b.tabla_id', '=', 'a.id')
-          ->where('b.tabla', '=', 'Eval_docente_investigador')
-          ->where('b.recurso', '=', 'DECLARACION_JURADA');
-      })
-      ->select([
-        DB::raw("CONCAT('/minio/declaracion-jurada/', b.key) AS url"),
-        'a.fecha_inicio',
-        'a.fecha_fin'
-      ])
-      ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
-      ->orderByDesc('b.created_at')
-      ->limit(1)
-      ->get();
-
-    if ($solicitud->estado == 'Observado') {
-      $req1 = DB::table('Usuario_investigador')
-        ->select([
-          'renacyt',
-          'renacyt_nivel'
-        ])
-        ->where('id', '=', $request->attributes->get('token_decoded')->investigador_id)
-        ->first();
-
-      $req2 = DB::table('Grupo_integrante AS a')
-        ->join('Grupo AS b', function (JoinClause $join) {
-          $join->on('b.id', '=', 'a.grupo_id')
-            ->where('b.tipo', '=', 'grupo');
-        })
-        ->select([
-          'b.grupo_nombre',
-          'b.grupo_nombre_corto',
-          'a.condicion',
-        ])
-        ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
-        ->whereNot('a.condicion', 'LIKE', 'Ex%')
-        ->first();
-
-
-      //  Proyectos (a)
-      $req3A = DB::table('Proyecto AS a')
-        ->join('Proyecto_integrante AS b', 'b.proyecto_id', '=', 'a.id')
-        ->select([
-          'a.id',
-          DB::raw("'A. Proyectos de investigación con financiamiento Institucional' AS categoria"),
-          DB::raw("'a' AS sub_categoria"),
-          'a.tipo_proyecto',
-          'a.codigo_proyecto',
-          'a.periodo',
-          'b.condicion AS name'
-        ])
-        ->where('b.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
-        ->where('a.estado', '=', 1)
-        ->where('a.tipo_proyecto', '!=', 'PFEX')
-        ->whereIn('a.periodo', $lastTwoYears)
-        ->get();
-
-      //  Proyectos fex (b)
-      $req3B = DB::table('Proyecto AS a')
-        ->join('Proyecto_integrante AS b', 'b.proyecto_id', '=', 'a.id')
-        ->select([
-          'a.id',
-          DB::raw("'B. Proyectos de investigación con financiamiento externo' AS categoria"),
-          DB::raw("'a' AS sub_categoria"),
-          'a.tipo_proyecto',
-          'a.codigo_proyecto',
-          'a.periodo',
-          'b.condicion AS name'
-        ])
-        ->where('b.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
-        ->where('a.estado', '=', 1)
-        ->where('a.tipo_proyecto', '=', 'PFEX')
-        ->whereIn('a.periodo', $lastTwoYears)
-        ->get();
-
-      //  Asesorías (c)
-      $req3C = DB::table('Publicacion AS a')
-        ->join('Publicacion_autor AS b', 'b.publicacion_id', '=', 'a.id')
-        ->select([
-          'a.id',
-          DB::raw("'C. Asesoría de trabajo de investigación o tesis' AS categoria"),
-          DB::raw("'c' AS sub_categoria"),
-          'a.tipo_publicacion AS tipo_proyecto',
-          'a.codigo_registro AS codigo_proyecto',
-          DB::raw("YEAR(a.fecha_publicacion) AS periodo"),
-          'b.categoria AS name'
-        ])
-        ->where('b.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
-        ->where('a.estado', '=', 1)
-        ->where('a.tipo_publicacion', '=', 'tesis-asesoria')
-        ->where('b.categoria', '=', 'Asesor')
-        ->whereIn(DB::raw("YEAR(a.fecha_publicacion)"), $lastTwoYears)
-        ->get();
-
-      $req4 = DB::table('Publicacion AS a')
-        ->join('Publicacion_autor AS b', 'b.publicacion_id', '=', 'a.id')
-        ->leftJoin('Publicacion_index AS c', 'c.publicacion_id', '=', 'a.id')
-        ->leftJoin('Publicacion_db_indexada AS d', 'd.id', '=', 'c.publicacion_db_indexada_id')
-        ->select([
-          'a.titulo',
-          DB::raw("CASE (a.tipo_publicacion)
-            WHEN 'articulo' THEN 'Artículo en revista'
-            WHEN 'capitulo' THEN 'Capítulo de libro'
-            WHEN 'libro' THEN 'Libro'
-            WHEN 'evento' THEN 'R. en evento científico'
-            WHEN 'ensayo' THEN 'Ensayo'
-          ELSE tipo_publicacion END AS tipo_publicacion"),
-          DB::raw("YEAR(a.fecha_publicacion) AS periodo"),
-          'a.codigo_registro',
-          DB::raw("GROUP_CONCAT(d.nombre SEPARATOR ', ') AS indexada"),
-          'b.filiacion'
-        ])
-        ->where('b.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
-        ->where('a.estado', '=', 1)
-        ->whereIn(DB::raw("YEAR(a.fecha_publicacion)"), $lastTwoYears)
-        ->whereNotIn('a.tipo_publicacion', ['tesis-asesoria', 'tesis'])
-        ->groupBy('a.id')
-        ->get();
-
-      $req6 = DB::table('Eval_declaracion_jurada AS a')
-        ->join('File AS b', function (JoinClause $join) {
-          $join->on('b.tabla_id', '=', 'a.id')
-            ->where('b.tabla', '=', 'Eval_docente_investigador')
-            ->where('b.recurso', '=', 'DECLARACION_JURADA');
-        })
-        ->select([
-          DB::raw("CONCAT('/minio/declaracion-jurada/', b.key) AS url"),
-          'a.fecha_inicio',
-          'a.fecha_fin'
-        ])
-        ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
-        ->get();
-
-      $rrhh = $this->rrhhCdi($request);
-
-      return [
-        'obs' => $obs,
-        'antiguo' => $rrhh->antiguedad,
-        'solicitud' => 1,
-        'id' => $solicitud->id,
-        'estado' => $solicitud->estado,
-        'fecha' => $solicitud->created_at,
-        'd1' => [
-          'cumple' => $solicitud->d1 != "" ? true : false,
-          'valor' => $req1->renacyt,
-        ],
-        'd2' => [
-          'cumple' => $d2 != "" ? true : false,
-          'valor' => $req2,
-        ],
-        'd3' => [
-          'cumple' => $allYearsFound,
-          'lista' => $req3A->merge($req3B)->merge($req3C)
-        ],
-        'd4' => [
-          'cumple' => $filiacion,
-          'lista' => $req4
-        ],
-        'd5' => [
-          'cumple' => sizeof($d5) == 0 ? true : false,
-          'lista' => $d5
-        ],
-        'd6' => [
-          'cumple' => $d6_valid,
-          'lista' => $req6
-        ]
-      ];
-    } else {
-      return [
-        'obs' => $obs,
-        'solicitud' => 1,
-        'id' => $solicitud->id,
-        'estado' => $solicitud->estado,
-        'fecha' => $solicitud->created_at,
-        'd1' => [
-          'cumple' => $solicitud->d1 != "" ? true : false,
-          'valor' => $solicitud->d1,
-        ],
-        'd2' => [
-          'cumple' => $d2 != "" ? true : false,
-          'valor' => $d2,
-        ],
-        'd3' => [
-          'cumple' => $allYearsFound,
-          'lista' => $d3Complete
-        ],
-        'd4' => [
-          'cumple' => $filiacion,
-          'evaluacion' => $sinFiliacion,
-          'lista' => $d4
-        ],
-        'd5' => [
-          'cumple' => sizeof($d5) == 0 ? true : false,
-          'lista' => $d5
-        ],
-        'd6' => [
-          'cumple' => $d6_valid,
-          'lista' => $req6
-        ]
-      ];
-    }
   }
 
   /**
@@ -746,7 +621,16 @@ class CdiController extends S3Controller {
         DB::raw("YEAR(a.fecha_publicacion) AS periodo"),
         'a.codigo_registro',
         DB::raw("GROUP_CONCAT(d.nombre SEPARATOR ', ') AS indexada"),
-        'b.filiacion'
+        DB::raw("CASE(b.filiacion)
+          WHEN 1 THEN 1
+          WHEN 0 THEN 0
+          ELSE '-'
+        END AS filiacion"),
+        DB::raw("CASE(b.filiacion_unica)
+          WHEN 1 THEN 1
+          WHEN 0 THEN 0
+          ELSE '-'
+        END AS filiacion_unica"),
       ])
       ->where('b.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
       ->where('a.estado', '=', 1)
@@ -802,7 +686,7 @@ class CdiController extends S3Controller {
    *  a Carlos Monge y Maria R.
    */
   public function preCdi(Request $request) {
-    $cuenta = DB::table('Usuario_investigador AS a')
+    return DB::table('Usuario_investigador AS a')
       ->join('Token_investigador_orcid AS b', 'b.investigador_id', '=', 'a.id')
       ->where('a.id', '=', $request->attributes->get('token_decoded')->investigador_id)
       ->where('a.cti_vitae', '!=', '')
@@ -810,30 +694,6 @@ class CdiController extends S3Controller {
       ->whereNot('a.renacyt_nivel', 'LIKE', '%Monge%')
       ->where('a.google_scholar', '!=', '')
       ->count();
-
-    return $cuenta;
-  }
-
-  /**
-   *  Verificar si el investigador tiene  una constancia vigente
-   */
-  public function constanciaCdi(Request $request) {
-    $constancia = DB::table('Eval_docente_investigador AS a')
-      ->join('File AS b', function (JoinClause $join) {
-        $join->on('a.id', '=', 'b.tabla_id')
-          ->where('b.tabla', '=', 'Eval_docente_investigador')
-          ->where('b.recurso', '=', 'CONSTANCIA_FIRMADA');
-      })
-      ->select([
-        'a.fecha_fin',
-        DB::raw("CONCAT('/minio/', b.bucket, '/', b.key) AS url")
-      ])
-      ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
-      ->where('a.tipo_eval', '=', 'Constancia')
-      ->where('a.estado', '=', 'Vigente')
-      ->first();
-
-    return $constancia;
   }
 
   /**
@@ -1084,7 +944,16 @@ class CdiController extends S3Controller {
         DB::raw("YEAR(a.fecha_publicacion) AS periodo"),
         'a.codigo_registro',
         DB::raw("GROUP_CONCAT(d.nombre SEPARATOR ', ') AS indexada"),
-        'b.filiacion'
+        DB::raw("CASE(b.filiacion)
+          WHEN 1 THEN 1
+          WHEN 0 THEN 0
+          ELSE '-'
+        END AS filiacion"),
+        DB::raw("CASE(b.filiacion_unica)
+          WHEN 1 THEN 1
+          WHEN 0 THEN 0
+          ELSE '-'
+        END AS filiacion_unica"),
       ])
       ->where('b.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
       ->where('a.estado', '=', 1)

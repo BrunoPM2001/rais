@@ -90,7 +90,7 @@
         .table-texto2 {
             width: 100%;
             table-layout: fixed;
-           
+
         }
 
         .table-texto2 td {
@@ -112,7 +112,7 @@
 
         .table-content {
             width: 100%;
-            font-size: 12px;
+            font-size: 11px;
             margin-bottom: 20px;
             border-collapse: collapse;
         }
@@ -128,12 +128,12 @@
 
         .table-content tbody td {
             border-bottom: 1px dashed black;
-            /* Línea inferior para cada fila del cuerpo */
             padding: 8px;
+
         }
 
         .table-content tbody tr:last-child td {
-            border-bottom: 1px dashed black;
+            border-bottom: 1px solid black;
             /* Línea inferior más gruesa en la última fila */
         }
 
@@ -175,7 +175,7 @@
 
     <table class="cuerpo-table">
         <tr class="title">
-            <td><b>Constancia de Grupos de Investigación de la<br>Universidad Nacional Mayor de San Marcos</b></td>
+            <td><b>Constancia de participación en Proyectos de Tesis</b></td>
         </tr>
     </table>
     <table class="table-texto">
@@ -188,52 +188,81 @@
 
         <tr>
             <td>Apellidos :</td>
-          
-            <td><strong>{{ $grupo[0]->apellido1 . ' ' . $grupo[0]->apellido2 }}</strong></td>
+
+            <td><strong>{{ $docente->apellido1 . ' ' . $docente->apellido2 }}</strong></td>
         </tr>
         <tr>
             <td>Nombres :</td>
-   
-            <td><strong>{{ $grupo[0]->nombres }}</strong></td>
+
+            <td><strong>{{ $docente->nombres }}</strong></td>
         </tr>
         <tr>
             <td>Facultad :</td>
-            <td><strong>{{ $grupo[0]->facultad }}</strong></td>
+            <td><strong>{{ $docente->facultad }}</strong></td>
         </tr>
         <tr>
             <td>DNI :</td>
-            <td> <strong>{{ $grupo[0]->doc_numero }}</strong></td>
+            <td> <strong>{{ $docente->doc_numero }}</strong></td>
         </tr>
     </table>
 
-    <table class="table-texto3">
+    <table style="font-size: 12px;padding-top:5px; ">
         <tr>
-            <td>Ha registrado participación en el(los) siguiente(s) Grupo(s) de Investigación:</td>
+            <td>Ha registrado participación en el(los) siguiente(s) proyectos de tesis de
+                pregrado/posgrado:</td>
         </tr>
     </table>
+
 
     <table class="table-content">
         <thead>
             <tr>
-                <th>Nombre corto GI</th>
-                <th style="text-align: center;">Nombre de Grupo</th>
+                <th>Periodo</th>
+                <th>Código</th>
+                <th style="text-align: center;">Título</th>
                 <th>Condición</th>
-                <th>Resolución<br>Rectoral</th>
-                <th>Fecha Creación GI</th>
+                <th>Tipo</th>
+
             </tr>
         </thead>
         <tbody>
-            @foreach ($grupo as $item)
+
+            @foreach ($tesis as $item)
                 <tr>
-                    <td>{{ $item->grupo_nombre_corto }}</td>
-                    <td>{{ $item->grupo_nombre }}</td>
-                    <td>{{ $item->condicion }}</td>
-                    <td>{{ $item->resolucion_rectoral }}</td>
-                    <td>{{ $item->resolucion_creacion_fecha }}</td>
+                    <td>{{ $item->periodo }}</td>
+                    <td>{{ $item->codigo_proyecto }}</td>
+                    <td>{{ $item->titulo }}</td>
+                    <td>{{ $item->condicion_proyecto }}</td>
+
+                    @switch($item->tipo_proyecto)
+                        @case('PTPBACHILLER')
+                            <td>Pregrado</td>
+                        @break
+
+                        @case('PTPMAEST')
+                            <td>Maestría</td>
+                        @break
+
+                        @case('PTPDOCTO')
+                            <td>Doctorado</td>
+                        @break
+
+                        @case('Tesis')
+                            <td>{{ $item->tesis_tipo }}</td>
+                        @break
+
+                        @default
+                        <td> </td>
+                    @endswitch
+        
                 </tr>
             @endforeach
+
         </tbody>
+
+
     </table>
+
     <table>
         <tr>
             <td class="extra-1">Se expide la presente constancia a solicitud del(de la) interesado(a) para los fines que
