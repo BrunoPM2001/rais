@@ -485,10 +485,10 @@ class CdiController extends S3Controller {
     $year3 = $year1 - 2;
 
     $rrhh = DB::table('Repo_rrhh AS a')
-      ->join('Usuario_investigador AS b', 'b.codigo', '=', 'a.ser_cod_ant')
+      ->join('Usuario_investigador AS b', 'b.doc_numero', '=', 'a.ser_doc_id_act')
       ->join('Facultad AS c', 'c.id', '=', 'b.facultad_id')
       ->select([
-        'a.ser_cod AS doc_numero',
+        'a.ser_doc_id_act AS doc_numero',
         DB::raw("CONCAT(a.ser_ape_pat, ' ', a.ser_ape_mat, ' ', a.ser_nom) AS nombres"),
         'b.cti_vitae',
         'b.renacyt',

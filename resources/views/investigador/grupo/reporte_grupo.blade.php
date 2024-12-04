@@ -15,7 +15,7 @@
     }
 
     @page {
-      margin: 145px 40px 20px 40px;
+      margin: 145px 40px 35px 40px;
     }
 
     .head-1 {
@@ -52,7 +52,7 @@
 
     .foot-1 {
       position: fixed;
-      bottom: 0px;
+      bottom: -15px;
       left: 0px;
       text-align: left;
       font-size: 11px;
