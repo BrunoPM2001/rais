@@ -385,9 +385,9 @@ class CdiController extends S3Controller {
    *  Inserción del archivo de la DJ
    */
   public function presentarDJ(Request $request) {
-    $date = Carbon::now();
-    $date_end = Carbon::now()->addMonths(3);
-    $nameFile = "Constancia-dj_" . $date->format('Ymd-His') . "-" . Str::random(8) . ".pdf";
+    $date = Carbon::now()->format("Y-m-d");
+    $date_end = Carbon::now()->addMonths(3)->format('Y-m-d');
+    $nameFile = "Constancia-dj_" . $date . "-" . Str::random(8) . ".pdf";
 
     $id = DB::table('Eval_declaracion_jurada')
       ->insertGetId([
@@ -470,7 +470,8 @@ class CdiController extends S3Controller {
 
     return [
       'fecha_inicio' => $date,
-      'fecha_fin' => $date_end
+      'fecha_fin' => $date_end,
+      'url' => '/minio/declaracion-jurada/' . $nameFile
     ];
   }
 
