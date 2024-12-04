@@ -19,7 +19,7 @@ class CdiController extends S3Controller {
    *  1: No cumple con los prerrequisitos (Art. 7)
    *  2: Cumple con los prerrequisitos (No tiene constancia vigente ni ha enviado una solicitud)
    *  3: Tiene solicitud en curso
-   *  4: Constancia emitida 
+   *  4: Constancia emitida
    */
 
   public function dataSolicitar(Request $request, $investigador_id) {
@@ -248,6 +248,7 @@ class CdiController extends S3Controller {
     $rrhh = $this->rrhhCdi($request);
 
     return [
+      'id' => $solicitud_id,
       'obs' => $obs,
       'antiguo' => $rrhh->antiguedad,
       'estado' => $solicitud->estado,
