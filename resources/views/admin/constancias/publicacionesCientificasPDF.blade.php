@@ -12,6 +12,10 @@
     foreach ($publicaciones as $item) {
         $puntajetotal += $item->puntaje;
     }
+
+    foreach ($patentes as $patente) {
+        $puntajetotal += $patente->puntaje;
+    }
 @endphp
 <!DOCTYPE html>
 <html lang="es">
@@ -25,6 +29,10 @@
         * {
             font-family: Arial, sans-serif;
         }
+
+        /* @page {
+         margin: 145px 20px 20px 20px;
+            } */
 
         .header-table {
             width: 100%;
@@ -161,7 +169,7 @@
         .table {
             width: 100%;
             border-collapse: separate;
-            margin-bottom: 30px;
+            margin-bottom: 10px;
         }
 
         .table>thead {
@@ -196,11 +204,11 @@
             width: 100%;
         }
 
-        .extra-2 {
+        /* .extra-2 {
             font-size: 11px;
             text-align: right;
             width: 100%;
-        }
+        } */
 
         .extra-firma {
             font-size: 11px;
@@ -222,9 +230,26 @@
             font-size: 13px;
             font-weight: bold;
             text-align: right;
-            padding-top:5px;
-            margin-top:5px;
-           
+            padding-top: 5px;
+            margin-top: 5px;
+
+        }
+
+        .table-footer {
+            width: 100%;
+            text-align: center;
+            margin-top: 90px;
+
+        }
+
+        .extra-1,
+        .extra-2,
+        {
+            font-size: 12px;
+
+        }
+        .extra-firma{
+            font-size: 14px;
         }
     </style>
 </head>
@@ -241,7 +266,7 @@
             </td>
             <td class="header-right">
                 <span>© RAIS</span><br>
-                <span>Usuario: ichajaya</span>
+                <span>Usuario: OMontes</span>
             </td>
         </tr>
     </table>
@@ -294,15 +319,15 @@
             </td>
 
             <!-- Segunda columna (50%) -->
-            <td style="width: 35%; vertical-align: top;border-collapse: collapse;border: 1px solid #111111">
-                <table style="width: 100%; height: 70px;padding: 10px;height: 70px;">
+            <td style="width: 35%; vertical-align: middle; border-collapse: collapse; border: 1px solid #111111">
+                <table style="width: 100%; padding: 10px; height: 70px; border-collapse: collapse;">
                     <tr>
                         <td>Numero de publicaciones:</td>
-                        <td><strong>{{ sizeof($publicaciones) }}</strong></td>
+                        <td><strong>{{ sizeof($publicaciones) + sizeof($patentes) }}</strong></td>
                     </tr>
                     <tr>
                         <td>Puntaje total:</td>
-                        <td><strong>{{ $puntajetotal }}</strong></td>
+                        <td><strong>{{ number_format($puntajetotal, 2) }}</strong></td>
                     </tr>
                 </table>
             </td>
@@ -368,33 +393,35 @@
                                     @case('Libro')
                                         <th style="width: 5%;">Año</th>
                                         <th style="width: 55%;">Título</th>
-                                        <th style="width: 30%;">Publicación</th>
+                                        <th style="width: 30%;text-align: center;">Publicación</th>
                                         <th style="width: 20%;">ISBN</th>
                                     @break
+
                                     @case('Libro de Resúmenes')
                                         <th style="width: 5%;">Año</th>
                                         <th style="width: 55%;">Título</th>
-                                        <th style="width: 30%;">Publicación</th>
-                                        <th style="width: 20%;">ISBN</th>
+                                        <th style="width: 30%;">Libro</th>
+                                        <th style="width: 10%;">Ciudad</th>
                                     @break
+
                                     @case('Capítulo en Libro')
                                         <th style="width: 5%;">Año</th>
                                         <th style="width: 55%;">Título</th>
-                                        <th style="width: 30%;">Publicación</th>
+                                        <th style="width: 30%;">Capítulo</th>
                                     @break
 
                                     @case('Tesis')
                                         <th style="width: 5%;">Año</th>
                                         <th style="width: 45%;">Título</th>
                                         <th style="width: 25%;">Universidad</th>
-                                        <th style="width: 15%; text-align: left;">País</th>
+                                        <th style="width: 15%; text-align: center;">País</th>
                                     @break
 
                                     @case('Tesis asesoria')
                                         <th style="width: 5%;">Año</th>
                                         <th style="width: 45%;">Título</th>
                                         <th style="width: 25%;">Universidad</th>
-                                        <th style="width: 15%; text-align: left;">País</th>
+                                        <th style="width: 15%; text-align: center;">País</th>
                                     @break
                                 @endswitch
                             </tr>
@@ -417,7 +444,7 @@
                         @case('Libro')
                             <td style="text-align: center;">{{ $publicacion->año }}</td>
                             <td style="font-size: 11px; text-align: justify;">{{ $publicacion->titulo }}</td>
-                            <td style="font-size: 11px; text-align: left;">{{ $publicacion->publicacion_nombre }}</td>
+                            <td style="font-size: 11px; text-align: center;">{{ $publicacion->publicacion_nombre }}</td>
                             <td style="text-align: center;">{{ $publicacion->isbn }}</td>
                         @break
 
@@ -425,26 +452,27 @@
                             <td style="text-align: center;">{{ $publicacion->año }}</td>
                             <td style="font-size: 11px; text-align: justify;">{{ $publicacion->titulo }}</td>
                             <td style="font-size: 11px; text-align: left;">{{ $publicacion->publicacion_nombre }}</td>
-                            <td style="text-align: center;">{{ $publicacion->isbn }}</td>
+                            <td style="font-size: 11px; text-align: center;">{{ $publicacion->lugar_publicacion }}</td>
                         @break
+
                         @case('Capítulo en Libro')
                             <td style="text-align: center;">{{ $publicacion->año }}</td>
                             <td style="font-size: 11px; text-align: justify;">{{ $publicacion->titulo }}</td>
                             <td style="font-size: 11px; text-align: left;">{{ $publicacion->publicacion_nombre }}</td>
-                           
                         @break
+
                         @case('Tesis')
                             <td style="text-align: center;">{{ $publicacion->año }}</td>
                             <td style="font-size: 11px; text-align: justify;">{{ $publicacion->titulo }}</td>
                             <td style="font-size: 11px;text-align: left;">{{ $publicacion->universidad }}</td>
-                            <td >{{ $publicacion->pais }}</td>
+                            <td style="font-size: 11px;text-align: center;">{{ $publicacion->pais }}</td>
                         @break
 
                         @case('Tesis asesoria')
                             <td style="text-align: center;">{{ $publicacion->año }}</td>
                             <td style="font-size: 11px; text-align: justify;">{{ $publicacion->titulo }}</td>
                             <td style="font-size: 11px;text-align: left;">{{ $publicacion->universidad }}</td>
-                            <td>{{ $publicacion->pais }}</td>
+                            <td style="font-size: 11px;text-align: center;">{{ $publicacion->pais }}</td>
                         @break
                     @endswitch
                 </tr>
@@ -456,22 +484,59 @@
                 $subtitulo = $publicacion->categoria ?? null;
             @endphp
         @endforeach
+
+
+
     </div>
 
+    {{-- @if (!empty($patentes->tipo)) --}}
+    <table style="width: 100%; margin: 0; padding: 0;">
+        <tr>
+            <td colspan="100%" style="margin: 0; padding: 0;">
+                <h4
+                    style="width: 100%; padding: 10px; background-color: #f5f5f5; border: 1px solid #ddd; border-radius: 10px;margin-bottom: 3px;">
+                    Patente
+                </h4>
+            </td>
+        </tr>
+    </table>
+    <table class="table">
+        <thead>
+            <tr>
+                <th style="font-size: 11px; text-align: center;">Año</th>
+                <th style="font-size: 11px; text-align: center;">Título</th>
+                <th style="font-size: 11px; text-align: center;">Lugar registro</th>
+                <th style="font-size: 11px; text-align: center;">Titular</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach ($patentes as $patente)
+                <tr>
+                    <td style="font-size: 11px;">{{ $patente->año }}</td>
+                    <td style="font-size: 11px; text-align: justify;">{{ $patente->titulo }}</td>
+                    <td style="font-size: 11px;">{{ $patente->oficina_presentacion }}</td>
+                    <td style="font-size: 11px;">{{ $patente->titular }}</td>
+            @endforeach
 
+        </tbody>
+    </table>
+    {{-- @endif --}}
 
-    <p class="extra-1"><strong>Se expide la presente constancia a solicitud de interesado(a).</strong></p>
-    <br>
-    <p class="extra-2"><strong>Lima {{ $fecha->isoFormat('DD') }} de {{ ucfirst($fecha->monthName) }} de
-            {{ $fecha->year }}</strong></p>
-    <br>
-    <p class="extra-firma">
-        <strong>
-            Dr. José Segundo Niño Montero
-            <br>
-            Vicerrector
-        </strong>
-    </p>
+    <table>
+        <tr>
+            <td class="extra-1">Se expide la presente constancia a solicitud del(de la) interesado(a) para los fines que
+                considere conveniente.</td>
+        </tr><br>
+        <tr>
+            <td class="extra-2">Lima, {{ $fecha->isoFormat('DD') }} de {{ ucfirst($fecha->monthName) }}
+                de {{ $fecha->year }}</td>
+        </tr>
+    </table>
+    <table class="table-footer">
+        <tr class="extra-firma">
+            <td>Dr. José Segundo Niño Montero <br><strong>Vicerrector</strong></td>
+        </tr>
+    </table>
     <div class="foot-1">
         <hr>
         <p style="padding: 0; margin:0;">Registro de Actividades de Investigación de San Marcos - ©RAIS</p>

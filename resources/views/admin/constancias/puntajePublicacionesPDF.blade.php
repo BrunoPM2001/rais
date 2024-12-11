@@ -4,13 +4,19 @@
     $fecha = Carbon::now();
     $currentTipo = '';
     $subtotal = 0;
+    $cantidad = 0;
     $puntajetotal = 0.0;
 
-    //  Calcular el puntaje total
     foreach ($publicaciones as $item) {
         $puntajetotal += $item->puntaje;
+        $cantidad +=$item->cantidad;
     }
-    
+
+    foreach ($patentes as $patente) {
+        $puntajetotal += $patente->puntaje;
+        $cantidad +=$patente->cantidad;
+    }
+
 @endphp
 <!DOCTYPE html>
 <html lang="es">
@@ -24,6 +30,10 @@
         * {
             font-family: Arial, sans-serif;
         }
+
+        /* @page {
+        margin: 145px 20px 20px 20px;
+        } */
 
         .header-table {
             width: 100%;
@@ -73,7 +83,7 @@
             text-align: center;
             border-collapse: collapse;
             table-layout: fixed;
-            margin-bottom: 20px;
+            margin-bottom: 5px;
         }
 
         .title {
@@ -101,6 +111,8 @@
             background: #000;
         }
 
+
+
         .texto,
         .texto-1 {
             font-size: 12px;
@@ -119,7 +131,7 @@
         .table {
             width: 100%;
             border-collapse: separate;
-            margin-bottom: 60px;
+            margin-bottom: 40px;
         }
 
         .table>tbody {
@@ -156,19 +168,24 @@
             padding-right: 10px;
         }
 
-       
+
         .extra-1,
         .extra-2,
-        .extra-firma {
+        {
             font-size: 12px;
 
         }
+        .extra-firma{
+            font-size: 14px;
+        }
+
         .table-footer {
             width: 100%;
             text-align: center;
-            margin-top: 170px;
+            margin-top: 70px;
 
         }
+
         .foot-1 {
             position: fixed;
             bottom: -20px;
@@ -176,8 +193,6 @@
             text-align: left;
             font-size: 10px;
         }
-
-
     </style>
 </head>
 
@@ -244,15 +259,15 @@
             </td>
 
             <!-- Segunda columna (50%) -->
-            <td style="width: 35%; vertical-align: top;border-collapse: collapse;border: 1px solid #111111">
-                <table style="width: 100%; height: 70px;padding: 10px;height: 70px;">
+            <td style="width: 35%; vertical-align: middle; border-collapse: collapse; border: 1px solid #111111">
+                <table style="width: 100%; padding: 10px; height: 70px; border-collapse: collapse;">
                     <tr>
                         <td>Numero de publicaciones:</td>
-                        <td><strong>{{ sizeof($publicaciones) }}</strong></td>
+                        <td><strong>{{ $cantidad }}</strong></td>
                     </tr>
                     <tr>
                         <td>Puntaje total:</td>
-                        <td><strong>{{ $puntajetotal }}</strong></td>
+                        <td><strong>{{ number_format($puntajetotal, 2) }}</strong></td>
                     </tr>
                 </table>
             </td>
@@ -266,7 +281,7 @@
 
     <div class="cuerpo">
 
-        <p class="subhead"><strong>Puntaje de publicaciones registradas a partir del 1ro de abril de 2008</strong></p>
+        {{-- <p class="subhead"><strong>Puntaje de publicaciones registradas a partir del 1ro de abril de 2008</strong></p> --}}
 
         <table class="table">
             <thead>
@@ -296,16 +311,34 @@
                     @php
                         $currentTipo = $item->titulo;
                         $subtotal += $item->cantidad;
-                        $puntajetotal += $item->puntaje;
                     @endphp
                 @endforeach
+                @if (count($patentes) > 0)
+                    <tr>
+                        <td class="row-left">Patente</td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                    @foreach ($patentes as $patente)
+                        <tr>
+                            <td></td>
+                            <td class="row-left">{{ $patente->tipo }}</td>
+                            <td class="row-center">{{ $patente->cantidad }}</td>
+                            <td class="row-right">{{ $patente->puntaje }}</td>
+                        </tr>
+                    @php
+                        $subtotal += $patente->cantidad;
+                    @endphp
+                    @endforeach
+                @endif
             </tbody>
             <tfoot>
                 <tr>
                     <td></td>
                     <td class="row-right">Sub-Total</td>
                     <td class="row-center">{{ $subtotal }}</td>
-                    <td class="row-right">{{ $puntajetotal }}</td>
+                    <td class="row-right">{{ number_format($puntajetotal, 2)}}</td>
                 </tr>
             </tfoot>
         </table>

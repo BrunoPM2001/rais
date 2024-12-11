@@ -11,6 +11,133 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Reporte</title>
+    {{-- <style>
+        * {
+            font-family: Arial, sans-serif;
+        }
+
+        @page {
+            margin: 145px 60px 20px 60px;
+            /* Margen superior, derecho, inferior e izquierdo */
+        }
+
+        .head-1 {
+            position: fixed;
+            top: -115px;
+            left: 0px;
+            height: 90px;
+        }
+
+        .head-1 img {
+            margin-left: 120px;
+            background: red;
+            height: 85px;
+        }
+
+        .head-2 {
+            position: fixed;
+            top: -115px;
+            right: 0;
+        }
+
+        .head-2 p {
+            text-align: right;
+        }
+
+        .head-2 .rais {
+            font-size: 11px;
+            margin-bottom: 0;
+        }
+
+        .head-2 .fecha {
+            font-size: 5px;
+            margin-top: 0;
+        }
+
+        .head-2 .user {
+            font-size: 11px;
+            margin-top: 0;
+        }
+
+        .foot-1 {
+            position: fixed;
+            bottom: 0px;
+            left: 0px;
+            text-align: left;
+            font-size: 11px;
+            font-style: oblique;
+        }
+
+        .div {
+            position: fixed;
+            top: -15px;
+            width: 100%;
+            height: 0.5px;
+            background: #000;
+        }
+
+        .titulo {
+            font-size: 25px;
+            text-align: center;
+            color: #000080;
+        }
+
+        .texto {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 16px;
+            margin: 20px 0;
+            padding: 3px;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: separate;
+            margin-bottom: 60px;
+        }
+
+        .table>tbody {
+            border-bottom: 1.5px solid #000;
+            padding: 10px;
+
+        }
+
+        .table>tbody td,
+        .table>thead th {
+            padding: 3px 10px; /* padding: arriba-abajo izquierda-derecha */
+       
+        }
+
+        .table>thead {
+            font-size: 12px;
+            font-weight: bold;
+            border-top: 1.5px solid #000;
+            border-bottom: 1.5px solid #000;
+        }
+
+        .table>tbody td {
+            font-size: 11px;
+            text-align: justify;
+            padding-top: 2px;
+        }
+
+        .extra-1 {
+            font-size: 11px;
+            text-align: left;
+            width: 100%;
+        }
+
+        .extra-2 {
+            font-size: 11px;
+            text-align: right;
+            width: 100%;
+        }
+
+        .extra-firma {
+            font-size: 11px;
+            text-align: center;
+            width: 100%;
+        }
+    </style> --}}
 
     <style>
         * {
@@ -106,7 +233,7 @@
         .table-footer {
             width: 100%;
             text-align: center;
-            margin-top: 170px;
+            margin-top: 90px;
 
         }
 
@@ -139,9 +266,12 @@
 
         .extra-1,
         .extra-2,
-        .extra-firma {
+        {
             font-size: 12px;
 
+        }
+        .extra-firma{
+            font-size: 14px;
         }
 
         .foot-1 {
@@ -168,7 +298,7 @@
             </td>
             <td class="header-right">
                 <span>© RAIS</span><br>
-                <span>Usuario: ichajaya</span>
+                <span>Usuario: OMontes</span>
             </td>
         </tr>
     </table>
@@ -182,6 +312,12 @@
         <tr>
             <td>El Vicerrector de Investigación y Posgrado hace constar que:</td>
         </tr>
+
+
+        {{-- <tr>
+            <td><strong>{{ $grupo[0]->nombre }}</strong>,<span> </span>{{ strtolower($grupo[0]->tipo) }} de la Facultad de
+                {{ $grupo[0]->facultad }} <span> </span>ha registrado participación en el(los) siguiente(s) Grupo(s) de Investigación:</td>
+        </tr> --}}
 
     </table>
     <table class="table-texto2">

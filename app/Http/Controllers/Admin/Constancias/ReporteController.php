@@ -105,6 +105,8 @@ class ReporteController extends Controller {
           $con_incentivo[] = $proyecto;
           break;
         case 'PCONFIGI':
+        case 'PRO-CTIE':
+        case 'PINTERDIS':
         case 'PCONFIGI-INV':
           $financiamiento_gi[] = $proyecto;
           break;
@@ -235,7 +237,32 @@ class ReporteController extends Controller {
       ->get()
       ->toArray();
 
-    $pdf = Pdf::loadView('admin.constancias.puntajePublicacionesPDF', ['docente' => $docente[0], 'publicaciones' => $publicaciones]);
+    $patentes = DB::table('Patente AS a')
+      ->leftJoin('Patente_autor AS b', 'b.patente_id', '=', 'a.id')
+      ->leftJoin('Patente_entidad AS c', 'c.patente_id', '=', 'a.id')
+      ->select(
+        'a.tipo',
+        DB::raw('COUNT(*) AS cantidad'),
+        DB::raw('SUM(b.puntaje) AS puntaje') // Sumar los puntajes agrupados
+      )
+      ->where('b.es_presentador', 1)
+      ->where('b.investigador_id', $investigador_id)
+      ->groupBy('a.tipo') // Agrupación solo por tipo
+      ->orderBy('a.tipo') // Ordenar por tipo
+      ->get()
+      ->toArray();
+
+
+
+
+    $pdf = Pdf::loadView(
+      'admin.constancias.puntajePublicacionesPDF',
+      [
+        'docente' => $docente[0],
+        'publicaciones' => $publicaciones,
+        'patentes' => $patentes
+      ]
+    );
     return $pdf->stream();
   }
 
@@ -288,7 +315,6 @@ class ReporteController extends Controller {
   }
   //  TODO - Verificar que las observaciones sean de esa columna
   public function getConstanciaPublicacionesCientificas($investigador_id) {
-
     $docente = $this->getDatosDocente($investigador_id);
 
     $publicaciones = DB::table('Publicacion_autor AS a')
@@ -300,6 +326,7 @@ class ReporteController extends Controller {
         'c.tipo',
         'c.categoria',
         'a.puntaje',
+        'b.lugar_publicacion',
         DB::raw('YEAR(b.fecha_publicacion) AS año'),
         'b.step',
         'b.titulo',
@@ -313,9 +340,28 @@ class ReporteController extends Controller {
       )
       ->where('a.investigador_id', '=', $investigador_id)
       ->where('b.validado', '=', 1)
-      ->orderBy('c.tipo')
-      ->orderBy('c.categoria')
-      ->orderByDesc('año')
+      ->orderBy('c.tipo') // Ordenar por tipo de publicación
+      ->orderBy('c.categoria') // Luego por categoría
+      ->orderByDesc('año') // Después por año, de forma descendente
+      ->orderBy('b.titulo') // Finalmente, por título de publicación
+      ->get();
+
+    $patentes = DB::table('Patente AS a')
+      ->leftJoin('Patente_autor AS b', 'b.patente_id', '=', 'a.id')
+      ->leftJoin('Patente_entidad AS c', 'c.patente_id', '=', 'a.id')
+      ->select(
+        'a.titulo',
+        'a.tipo',
+        'c.titular',
+        'b.puntaje',
+        'a.oficina_presentacion',
+        DB::raw('YEAR(c.updated_at) año'), // Captura solo el año
+      )
+      ->where('b.es_presentador', '=', 1)
+      ->where('b.investigador_id', '=', $investigador_id)
+      ->orderBy('a.tipo') // Ordenar por tipo de publicación
+      ->orderByDesc('c.updated_at') // Después por año, de forma descendente
+      ->orderBy('a.titulo') // Finalmente, por título de publicación
       ->get();
 
 
@@ -323,12 +369,14 @@ class ReporteController extends Controller {
       'admin.constancias.publicacionesCientificasPDF',
       [
         'docente' => $docente[0],
-        'publicaciones' => $publicaciones
-
+        'publicaciones' => $publicaciones,
+        'patentes' => $patentes
       ]
     );
+
     return $pdf->stream();
   }
+
 
   public function getConstanciaGrupoInvestigacion($investigador_id) {
     $grupo = DB::table('Usuario_investigador AS a')
