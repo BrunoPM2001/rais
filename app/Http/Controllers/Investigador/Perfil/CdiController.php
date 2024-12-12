@@ -142,6 +142,7 @@ class CdiController extends S3Controller {
         'b.detalle'
       ])
       ->where('a.investigador_id', '=', $investigador_id)
+      ->whereIn('b.tipo', [1, 2, 3])
       ->whereNull('b.fecha_sub')
       ->get();
 
@@ -412,10 +413,10 @@ class CdiController extends S3Controller {
       ]);
 
     $req = DB::table('Repo_rrhh AS a')
-      ->join('Usuario_investigador AS b', 'b.codigo', '=', 'a.ser_cod_ant')
+      ->join('Usuario_investigador AS b', 'b.doc_numero', '=', 'a.ser_doc_id_act')
       ->join('Facultad AS c', 'c.id', '=', 'b.facultad_id')
       ->select([
-        'a.ser_cod',
+        'a.ser_doc_id_act',
         'a.ser_ape_pat',
         'a.ser_ape_mat',
         'a.ser_nom',
@@ -713,6 +714,7 @@ class CdiController extends S3Controller {
         'b.detalle'
       ])
       ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+      ->whereIn('b.tipo', [1, 2, 3])
       ->whereNull('b.fecha_sub')
       ->get();
 
