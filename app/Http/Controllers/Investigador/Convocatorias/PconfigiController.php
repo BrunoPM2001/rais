@@ -11,10 +11,154 @@ use Illuminate\Support\Str;
 use Carbon\Carbon;
 
 class PconfigiController extends S3Controller {
-  //  Verifica las condiciones para participar
+  public function listado(Request $request) {
+    $listado = DB::table('Proyecto_integrante AS a')
+      ->join('Proyecto AS b', 'b.id', '=', 'a.proyecto_id')
+      ->select([
+        'b.id',
+        'b.titulo',
+        'b.step',
+        DB::raw("CASE(b.estado)
+            WHEN -1 THEN 'Eliminado'
+            WHEN 0 THEN 'No aprobado'
+            WHEN 1 THEN 'Aprobado'
+            WHEN 3 THEN 'En evaluacion'
+            WHEN 5 THEN 'Enviado'
+            WHEN 6 THEN 'En proceso'
+            WHEN 7 THEN 'Anulado'
+            WHEN 8 THEN 'Sustentado'
+            WHEN 9 THEN 'En ejecución'
+            WHEN 10 THEN 'Ejecutado'
+            WHEN 11 THEN 'Concluído'
+          ELSE 'Sin estado' END AS estado"),
+      ])
+      ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+      ->where('a.condicion', '=', 'Responsable')
+      ->where('b.tipo_proyecto', '=', 'PCONFIGI')
+      ->where('b.periodo', '=', 2025)
+      ->get();
+
+    return $listado;
+  }
+
+  public function validarDatos(Request $request) {
+    $errores = [];
+    $detail = null;
+
+    /* DATOS GENERALES*/
+    $datosGenerales = DB::table('Usuario_investigador AS i')
+      ->select(['i.cti_vitae', 'i.codigo_orcid', 'i.google_scholar']) // Selecciona solo lo necesario
+      ->whereNotNull('i.cti_vitae')
+      ->where('i.cti_vitae', '!=', '')
+      ->whereNotNull('i.codigo_orcid')
+      ->where('i.codigo_orcid', '!=', '')
+      ->whereNotNull('i.google_scholar')
+      ->where('i.google_scholar', '!=', '')
+      ->where('i.id', '=', $request->attributes->get('token_decoded')->investigador_id)
+      ->exists(); // Solo verifica existencia
+
+    !$datosGenerales &&
+      $errores[] = [
+        'message' => 'Todos los docentes que participen en el concurso deben contar con: 
+                      <b>Google Scholar</b> gestionado con el correo institucional con dominio unmsm.edu.pe, 
+                      <b>CTI vitae</b> y <b>código Orcid</b> <br>
+                      (<a href="https://vrip.unmsm.edu.pe/wp-content/uploads/2024/12/directiva_pconfigi_2025.pdf" target="_blank">ver Anexo 1</a>).',
+        'isHtml' => true
+      ];
+
+    /* DEUDAS */
+    $deudas = DB::table('view_deudores AS vdeuda')
+      ->select(['vdeuda.ptipo', 'vdeuda.categoria', 'vdeuda.periodo'])
+      ->where('vdeuda.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+      ->get();
+    if ($deudas->isNotEmpty()) {
+      // Genera los detalles de las deudas
+      $detallesDeuda = $deudas->map(function ($deuda) {
+        return "Tipo: {$deuda->ptipo}, Categoría: {$deuda->categoria}, Período: {$deuda->periodo}";
+      })->implode('<br>'); // Combina los detalles en una cadena con saltos de línea HTML
+
+      // Agrega el mensaje de error
+      $errores[] = [
+        'message' => 'Existen deudas pendientes que deben ser resueltas para participar en el concurso:<br>' . $detallesDeuda,
+        'isHtml' => true
+      ];
+    }
+    /* TITULAR GI */
+    $titularGI = DB::table('Usuario_investigador AS a')
+      ->join('Grupo_integrante AS b', function (JoinClause $join) {
+        $join->on('b.investigador_id', '=', 'a.id')
+          ->where('b.condicion', '=', 'Titular');
+      })
+      ->where('a.id', '=', $request->attributes->get('token_decoded')->investigador_id)
+      ->count();
+
+    $titularGI == 0 && $errores[] = [
+
+      'message' => 'Necesita ser titular de un grupo de investigación',
+      'isHtml' => false
+    ];
+
+    /* PROYECTO ACTUAL */
+    $proyectoActual = DB::table('Proyecto_integrante AS a')
+      ->join('Proyecto AS b', 'b.id', '=', 'a.proyecto_id')
+      ->where('a.condicion', '=', 'Responsable')
+      ->where('b.tipo_proyecto', '=', 'PCONFIGI')
+      ->where('b.periodo', '=', 2025)
+      // ->where('b.estado', '!=', 6)
+      ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+      ->count();
+
+    $proyectoActual > 0 && $errores[] = [
+      'message' => "Actualmente, cuenta con una propuesta de proyecto PCONFIGI 2025 en proceso como Responsable, por lo que no es posible registrar nuevos proyectos en esta categoría. No obstante, puede participar como Miembro Docente en otro proyecto del mismo tipo.",
+      'isHtml' => false
+    ];
+
+
+    return ['estado' => empty($errores), 'errores' => $errores];
+  }
   public function verificar(Request $request, $proyecto_id = null) {
     $errores = [];
     $detail = null;
+
+    $datosGenerales = DB::table('Usuario_investigador AS i')
+      ->select(['i.cti_vitae', 'i.codigo_orcid', 'i.google_scholar']) // Selecciona solo lo necesario
+      ->whereNotNull('i.cti_vitae')
+      ->where('i.cti_vitae', '!=', '')
+      ->whereNotNull('i.codigo_orcid')
+      ->where('i.codigo_orcid', '!=', '')
+      ->whereNotNull('i.google_scholar')
+      ->where('i.google_scholar', '!=', '')
+      ->where('i.id', '=', $request->attributes->get('token_decoded')->investigador_id)
+      ->exists(); // Solo verifica existencia
+
+    !$datosGenerales &&
+      $errores[] = [
+        'message' => 'Todos los docentes que participen en el concurso deben contar con: 
+                      <b>Google Scholar</b> gestionado con el correo institucional con dominio unmsm.edu.pe, 
+                      <b>CTI vitae</b> y <b>código Orcid</b> <br>
+                      (<a href="https://vrip.unmsm.edu.pe/wp-content/uploads/2024/12/directiva_pconfigi_2025.pdf" target="_blank">ver Anexo 1</a>).',
+        'isHtml' => true
+      ];
+
+
+    $deudas = DB::table('view_deudores AS vdeuda')
+      ->select(['vdeuda.ptipo', 'vdeuda.categoria', 'vdeuda.periodo'])
+      ->where('vdeuda.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+      ->get();
+
+    // Verifica si existen deudas
+    if ($deudas->isNotEmpty()) {
+      // Genera los detalles de las deudas
+      $detallesDeuda = $deudas->map(function ($deuda) {
+        return "Tipo: {$deuda->ptipo}, Categoría: {$deuda->categoria}, Período: {$deuda->periodo}";
+      })->implode('<br>'); // Combina los detalles en una cadena con saltos de línea HTML
+
+      // Agrega el mensaje de error
+      $errores[] = [
+        'message' => 'Existen deudas pendientes que deben ser resueltas para participar en el concurso:<br>' . $detallesDeuda,
+        'isHtml' => true
+      ];
+    }
 
     //  Ser titular de un grupo de investigación
     $req1 = DB::table('Usuario_investigador AS a')
@@ -25,7 +169,11 @@ class PconfigiController extends S3Controller {
       ->where('a.id', '=', $request->attributes->get('token_decoded')->investigador_id)
       ->count();
 
-    $req1 == 0 && $errores[] = "Necesita ser titular de un grupo de investigación";
+    $req1 == 0 && $errores[] = [
+      'message' => 'Necesita ser titular de un grupo de investigación',
+      'isHtml' => false
+    ];
+
 
     if ($proyecto_id != null) {
       $req2 = DB::table('Proyecto_integrante AS a')
@@ -36,7 +184,10 @@ class PconfigiController extends S3Controller {
         ->where('b.tipo_proyecto', '=', 'PCONFIGI')
         ->count();
 
-      $req2 == 0 && $errores[] = "No figura como responsable del proyecto";
+      $req2 == 0 && $errores[] = [
+        'message' => 'Necesita ser responsable de un proyecto',
+        'isHtml' => false
+      ];
     } else {
       $req3 = DB::table('Proyecto_integrante AS a')
         ->join('Proyecto AS b', 'b.id', '=', 'a.proyecto_id')
@@ -47,7 +198,10 @@ class PconfigiController extends S3Controller {
         ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
         ->count();
 
-      $req3 > 0 && $errores[] = "Ya ha enviado un proyecto";
+      $req3 > 0 && $errores[] = [
+        'message' => 'Ya se encuentra inscrito en un proyecto',
+        'isHtml' => false
+      ];
 
       $detail = DB::table('Proyecto_integrante AS a')
         ->join('Proyecto AS b', 'b.id', '=', 'a.proyecto_id')
@@ -57,6 +211,7 @@ class PconfigiController extends S3Controller {
         ])
         ->where('a.condicion', '=', 'Responsable')
         ->where('b.tipo_proyecto', '=', 'PCONFIGI')
+        ->where('b.id', '=', $proyecto_id)
         ->where('b.periodo', '=', 2025)
         ->where('b.estado', '=', 6)
         ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
@@ -75,7 +230,6 @@ class PconfigiController extends S3Controller {
   }
 
   public function verificar1(Request $request) {
-
     $res1 = $this->verificar($request, $request->query('id'));
     if (!$res1["estado"]) {
       return $res1;
@@ -450,6 +604,8 @@ class PconfigiController extends S3Controller {
 
 
   public function verificar5(Request $request) {
+    $errores = [];
+
     $res1 = $this->verificar($request, $request->query('id'));
     if (!$res1["estado"]) {
       return $res1;
@@ -521,6 +677,7 @@ class PconfigiController extends S3Controller {
       $info["servicios_porcentaje"] = 0;
       $info["otros_porcentaje"] = 0;
     }
+
 
     return [
       'estado' => true,

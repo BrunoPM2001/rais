@@ -724,6 +724,9 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
   Route::prefix('convocatorias')->group(function () {
 
     Route::prefix('pconfigi')->group(function () {
+      Route::get('listado', [PconfigiController::class, 'listado']);
+      Route::get('validarDatos', [PconfigiController::class, 'validarDatos']);
+
       Route::get('verificar', [PconfigiController::class, 'verificar']);
 
       Route::get('verificar1', [PconfigiController::class, 'verificar1']);
