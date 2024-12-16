@@ -110,7 +110,7 @@
   <p class="titulo"><strong>DECLARACIÓN JURADA</strong></p>
   <div class="cuerpo">
     <p>
-      Quien suscribe, identificado/a con DNI N° {{ $data->ser_cod }}, docente ordinario, {{ $data->categoria }} y a
+      Quien suscribe, identificado/a con DNI N° {{ $data->ser_doc_id_act }}, docente ordinario, {{ $data->categoria }} y a
       {{ $data->clase }}, de la Facultad de {{ $data->facultad }}, Departamento Académico
       {{ $data->des_dep_cesantes }}, declaro no haber incurrido en algún tipo de infracción o tener alguna sanción
       vigente, conforme lo establecido en el Código de Integridad Científica del Consejo Nacional de Ciencia, Tecnología
@@ -128,7 +128,7 @@
   </div>
   <br />
   <p class="center-bold"><strong>{{ $data->ser_ape_pat }} {{ $data->ser_ape_mat }} {{ $data->ser_nom }}</strong></p>
-  <p class="center-bold">DNI: <strong>{{ $data->ser_cod }}</strong></p>
+  <p class="center-bold">DNI: <strong>{{ $data->ser_doc_id_act }}</strong></p>
 
   <script type="text/php">
     if (isset($pdf)) {

@@ -74,14 +74,18 @@ class DashboardController extends Controller {
       ->groupBy('a.tipo_proyecto')
       ->get();
 
-    $now = Carbon::now();
-
-    $cuenta = DB::table('Eval_docente_investigador')
+    $const = DB::table('Eval_docente_investigador')
+      ->select([
+        DB::raw('DATE(fecha_fin) AS fecha_fin')
+      ])
       ->where('tipo_eval', '=', 'Constancia')
       ->where('estado', '=', 'Vigente')
-      ->where(DB::raw('DATE(fecha_fin)'), '<', $now->addMonths(2))
       ->where('investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
-      ->count();
+      ->orderByDesc('fecha_fin')
+      ->first();
+
+    $fecha1 = Carbon::now()->addMonths(2);
+    $fecha2 = Carbon::parse($const->fecha_fin);
 
     return [
       'detalles' => [
@@ -96,7 +100,7 @@ class DashboardController extends Controller {
       ],
       'tipos_publicaciones' => $tipos1,
       'tipos_proyectos' => $tipos2,
-      'alerta' => $cuenta
+      'alerta' => $fecha1->greaterThan($fecha2),
     ];
   }
 }

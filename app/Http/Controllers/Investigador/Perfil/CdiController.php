@@ -19,7 +19,7 @@ class CdiController extends S3Controller {
    *  1: No cumple con los prerrequisitos (Art. 7)
    *  2: Cumple con los prerrequisitos (No tiene constancia vigente ni ha enviado una solicitud)
    *  3: Tiene solicitud en curso
-   *  4: Constancia emitida 
+   *  4: Constancia emitida
    */
 
   public function dataSolicitar(Request $request, $investigador_id) {
@@ -142,6 +142,7 @@ class CdiController extends S3Controller {
         'b.detalle'
       ])
       ->where('a.investigador_id', '=', $investigador_id)
+      ->whereIn('b.tipo', [1, 2, 3])
       ->whereNull('b.fecha_sub')
       ->get();
 
@@ -248,6 +249,7 @@ class CdiController extends S3Controller {
     $rrhh = $this->rrhhCdi($request);
 
     return [
+      'id' => $solicitud_id,
       'obs' => $obs,
       'antiguo' => $rrhh->antiguedad,
       'estado' => $solicitud->estado,
@@ -411,10 +413,10 @@ class CdiController extends S3Controller {
       ]);
 
     $req = DB::table('Repo_rrhh AS a')
-      ->join('Usuario_investigador AS b', 'b.codigo', '=', 'a.ser_cod_ant')
+      ->join('Usuario_investigador AS b', 'b.doc_numero', '=', 'a.ser_doc_id_act')
       ->join('Facultad AS c', 'c.id', '=', 'b.facultad_id')
       ->select([
-        'a.ser_cod',
+        'a.ser_doc_id_act',
         'a.ser_ape_pat',
         'a.ser_ape_mat',
         'a.ser_nom',
@@ -484,10 +486,10 @@ class CdiController extends S3Controller {
     $year3 = $year1 - 2;
 
     $rrhh = DB::table('Repo_rrhh AS a')
-      ->join('Usuario_investigador AS b', 'b.codigo', '=', 'a.ser_cod_ant')
+      ->join('Usuario_investigador AS b', 'b.doc_numero', '=', 'a.ser_doc_id_act')
       ->join('Facultad AS c', 'c.id', '=', 'b.facultad_id')
       ->select([
-        'a.ser_cod AS doc_numero',
+        'a.ser_doc_id_act AS doc_numero',
         DB::raw("CONCAT(a.ser_ape_pat, ' ', a.ser_ape_mat, ' ', a.ser_nom) AS nombres"),
         'b.cti_vitae',
         'b.renacyt',
@@ -712,6 +714,7 @@ class CdiController extends S3Controller {
         'b.detalle'
       ])
       ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+      ->whereIn('b.tipo', [1, 2, 3])
       ->whereNull('b.fecha_sub')
       ->get();
 

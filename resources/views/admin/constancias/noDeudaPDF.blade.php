@@ -139,9 +139,12 @@
 
         .extra-1,
         .extra-2,
-        .extra-firma {
+        {
             font-size: 12px;
 
+        }
+        .extra-firma{
+            font-size: 14px;
         }
 
         .foot-1 {
@@ -168,7 +171,7 @@
             </td>
             <td class="header-right">
                 <span>© RAIS</span><br>
-                <span>Usuario: ichajaya</span>
+                <span>Usuario: OMontes</span>
             </td>
         </tr>
     </table>

@@ -106,14 +106,14 @@
         .table-footer {
             width: 100%;
             text-align: center;
-            margin-top: 170px;
+            margin-top: 100px;
 
         }
 
         .table-content {
             width: 100%;
             font-size: 11px;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
             border-collapse: collapse;
         }
 
@@ -139,11 +139,13 @@
 
         .extra-1,
         .extra-2,
-        .extra-firma {
+        {
             font-size: 12px;
 
         }
-
+        .extra-firma{
+            font-size: 14px;
+        }
         .foot-1 {
             position: fixed;
             bottom: -20px;
@@ -168,7 +170,7 @@
             </td>
             <td class="header-right">
                 <span>© RAIS</span><br>
-                <span>Usuario: ichajaya</span>
+                <span>Usuario: OMontes</span>
             </td>
         </tr>
     </table>
@@ -259,7 +261,7 @@
             </tbody>
         </table>
      
-        <p style="font-size:11px;">Resultado de proyecto de investigación financiado por:</p>
+        <p style="font-size:12px;">Resultado de proyecto de investigación financiado por:</p>
 
         <table class="table-content">
             <thead>

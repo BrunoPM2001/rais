@@ -106,14 +106,14 @@
         .table-footer {
             width: 100%;
             text-align: center;
-            margin-top: 170px;
+            margin-top: 90px;
 
         }
 
         .table-content {
             width: 100%;
             font-size: 11px;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
             border-collapse: collapse;
         }
 
@@ -139,9 +139,12 @@
 
         .extra-1,
         .extra-2,
-        .extra-firma {
+        {
             font-size: 12px;
 
+        }
+        .extra-firma{
+            font-size: 14px;
         }
 
         .foot-1 {

@@ -233,6 +233,7 @@ class DocenteInvestigadorController extends S3Controller {
         'b.detalle'
       ])
       ->where('a.investigador_id', '=', $detalles->investigador_id)
+      ->whereIn('b.tipo', [1, 2, 3])
       ->whereNull('b.fecha_sub')
       ->get();
 
@@ -577,6 +578,7 @@ class DocenteInvestigadorController extends S3Controller {
         'b.detalle'
       ])
       ->where('a.investigador_id', '=', $detalles->investigador_id)
+      ->whereIn('b.tipo', [1, 2, 3])
       ->whereNull('b.fecha_sub')
       ->get();
 
