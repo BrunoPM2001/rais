@@ -84,8 +84,10 @@ class DashboardController extends Controller {
       ->orderByDesc('fecha_fin')
       ->first();
 
-    $fecha1 = Carbon::now()->addMonths(2);
-    $fecha2 = Carbon::parse($const->fecha_fin);
+    if ($const) {
+      $fecha1 = Carbon::now()->addMonths(2);
+      $fecha2 = Carbon::parse($const->fecha_fin);
+    }
 
     return [
       'detalles' => [
@@ -100,7 +102,7 @@ class DashboardController extends Controller {
       ],
       'tipos_publicaciones' => $tipos1,
       'tipos_proyectos' => $tipos2,
-      'alerta' => $fecha1->greaterThan($fecha2),
+      'alerta' => $const ? $fecha1->greaterThan($fecha2) : false
     ];
   }
 }
