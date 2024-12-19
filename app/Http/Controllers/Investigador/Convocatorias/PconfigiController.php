@@ -11,6 +11,7 @@ use Illuminate\Support\Str;
 use Carbon\Carbon;
 
 class PconfigiController extends S3Controller {
+
   public function listado(Request $request) {
     $listado = DB::table('Proyecto_integrante AS a')
       ->join('Proyecto AS b', 'b.id', '=', 'a.proyecto_id')
@@ -116,6 +117,7 @@ class PconfigiController extends S3Controller {
 
     return ['estado' => empty($errores), 'errores' => $errores];
   }
+
   public function verificar(Request $request, $proyecto_id = null) {
     $errores = [];
     $detail = null;
@@ -378,16 +380,6 @@ class PconfigiController extends S3Controller {
           'grupo_id' => $datos->grupo_id,
           'grupo_integrante_id' => $datos->id,
           'condicion' => 'Responsable',
-        ]);
-
-      DB::table('Proyecto_presupuesto')
-        ->insert([
-          'proyecto_id' => $id,
-          'partida_id' => 61,
-          'justificacion' => '',
-          'monto' => 8000,
-          'created_at' => $date,
-          'updated_at' => $date,
         ]);
 
       return ['message' => 'success', 'detail' => 'Datos guardados', 'id' => $id];
@@ -871,12 +863,17 @@ class PconfigiController extends S3Controller {
   }
 
   public function agregarIntegrante(Request $request) {
-    $count = DB::table('Proyecto_integrante')
-      ->where('proyecto_id', '=', $request->input('id'))
-      ->where('investigador_id', '=', $request->input('investigador_id'))
+
+
+    $participacion = DB::table('Proyecto as a')
+      ->join('Proyecto_integrante as b', 'a.id', '=', 'b.proyecto_id')
+      ->where('b.investigador_id', '=', $request->input('investigador_id'))
+      ->where('a.tipo_proyecto', '=', 'PCONFIGI')
+      ->where('a.periodo', '=', 2025)
       ->count();
 
-    if ($count == 0) {
+
+    if ($participacion == 0) {
 
       if ($request->input('tipo_tesis') == null) {
         DB::table('Proyecto_integrante')
@@ -908,7 +905,10 @@ class PconfigiController extends S3Controller {
 
       return ['message' => 'success', 'detail' => 'Integrante añadido'];
     } else {
-      return ['message' => 'error', 'detail' => 'No puede añadir al mismo integrante 2 veces'];
+      return [
+        'message' => 'error',
+        'detail' => 'El integrante seleccionado no puede participar en más de un proyecto. Por favor, elija a otro integrante.'
+      ];
     }
   }
 
