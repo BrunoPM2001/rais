@@ -28,6 +28,7 @@ class DeudaController extends Controller {
                END as deuda")
       ])
       ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+      ->whereIn('b.tipo', [1, 2, 3])
       ->whereNull('b.fecha_sub')
       ->get();
 
