@@ -50,6 +50,7 @@ use App\Http\Controllers\Investigador\Actividades\ProyectoSinFinanciamientoContr
 use App\Http\Controllers\Investigador\Actividades\PublicacionLibrosUniController;
 use App\Http\Controllers\Investigador\Actividades\TalleresController;
 use App\Http\Controllers\Investigador\Convocatorias\PconfigiController;
+use App\Http\Controllers\Investigador\Convocatorias\PicvController;
 use App\Http\Controllers\Investigador\Convocatorias\PinvposController;
 use App\Http\Controllers\Investigador\Convocatorias\ProCTIController;
 use App\Http\Controllers\Investigador\Convocatorias\PsinfinvController;
@@ -840,6 +841,46 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
       Route::get('verificar6', [PsinfipuController::class, 'verificar6']);
       Route::get('reporte', [PsinfipuController::class, 'reporte']);
       Route::post('enviar', [PsinfipuController::class, 'enviar']);
+    });
+
+    Route::prefix('picv')->group(function () {
+
+      Route::get('listado', [PicvController::class, 'listado']);
+      Route::get('validarDatos', [PicvController::class, 'validarDatos']);
+
+      Route::get('verificar', [PicvController::class, 'verificar']);
+      Route::get('datosPaso1', [PicvController::class, 'datosPaso1']);
+      Route::get('getDataToPaso1', [PicvController::class, 'getDataToPaso1']);
+      Route::post('registrarPaso1', [PicvController::class, 'registrarPaso1']);
+
+      Route::get('getDataPaso2', [PicvController::class, 'getDataPaso2']);
+      Route::post('registrarPaso2', [PicvController::class, 'registrarPaso2']);
+
+      Route::get('listarIntegrantes', [PicvController::class, 'listarIntegrantes']);
+      Route::get('searchEstudiante', [PicvController::class, 'searchEstudiante']);
+      Route::get('verificarEstudiante', [PicvController::class, 'verificarEstudiante']);
+      Route::post('agregarIntegrante', [PicvController::class, 'agregarIntegrante']);
+      Route::post('agregarIntegranteExterno', [PicvController::class, 'agregarIntegranteExterno']);
+      Route::delete('eliminarIntegrante', [PicvController::class, 'eliminarIntegrante']);
+
+      Route::get('getDataPaso4', [PicvController::class, 'getDataPaso4']);
+      Route::post('registrarPaso4', [PicvController::class, 'registrarPaso4']);
+
+      Route::get('listarActividades', [PicvController::class, 'listarActividades']);
+      Route::post('agregarActividad', [PicvController::class, 'agregarActividad']);
+      Route::delete('eliminarActividad', [PicvController::class, 'eliminarActividad']);
+
+      Route::get('listarPartidas', [PicvController::class, 'listarPartidas']);
+      Route::get('listarTiposPartidas', [PicvController::class, 'listarTiposPartidas']);
+      Route::post('agregarPartida', [PicvController::class, 'agregarPartida']);
+      Route::delete('eliminarPartida', [PicvController::class, 'eliminarPartida']);
+
+      Route::put('enviarProyecto', [PicvController::class, 'enviarProyecto']);
+      Route::get('reporte', [PicvController::class, 'reporte']);
+
+      //  Extras
+      Route::get('getOcde', [PicvController::class, 'getOcde']);
+      Route::get('getOds', [PicvController::class, 'getOds']);
     });
 
     Route::get('verificar', [ProCTIController::class, 'verificar']);
