@@ -530,21 +530,25 @@ class PicvController extends S3Controller {
   public function searchEstudiante(Request $request) {
 
     $coordinador = DB::table('Grupo AS g')
+      ->join('Grupo_integrante AS gi', 'g.id', '=', 'gi.grupo_id')
       ->select([
         'g.id'
       ])
-      ->join('Grupo_integrante AS gi', 'g.id', '=', 'gi.grupo_id')
       ->where('gi.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+      ->where('gi.condicion', 'LIKE', 'Titular')
+      ->where('gi.condicion', 'NOT LIKE', 'Ex%') // Corrección aquí
       ->first();
 
-    $gi = $coordinador->id;
 
+    $gi = $coordinador->id;
+    $investigadorId = $request->attributes->get('token_decoded')->investigador_id;
     $estudiantesGI = DB::table('Grupo_integrante AS gi')
       ->join('Usuario_investigador AS a', 'a.id', '=', 'gi.investigador_id')
       ->join('Facultad AS f', 'f.id', '=', 'a.facultad_id')
       ->select([
         DB::raw("CONCAT(TRIM(a.codigo), ' | ', a.doc_numero, ' | ', a.apellido1, ' ', a.apellido2, ', ', a.nombres, ' | ', gi.tipo) AS value"),
-        'a.id',
+        'a.id as investigador_id',
+        'gi.id',
         'a.codigo',
         'a.doc_numero',
         'a.apellido1',
@@ -556,7 +560,7 @@ class PicvController extends S3Controller {
         'a.telefono_movil',
         'a.sexo'
       ])
-      ->where('a.codigo', 'LIKE', '%' . $request->query('codigo') . '%')
+      ->where('gi.codigo', 'LIKE', '%' . $request->query('codigo') . '%')
       ->where('gi.grupo_id', '=', $gi)
       ->where('gi.tipo', 'LIKE', '%studiante%') // Busca registros que contengan "Estudiante"
       ->get();
@@ -564,20 +568,46 @@ class PicvController extends S3Controller {
     return $estudiantesGI;
   }
 
+  // public function searchdEstudiante(Request $request) {
+
+  //   $estudiantes = DB::table('Repo_sum AS a')
+  //     ->leftJoin('Usuario_investigador AS b', 'b.codigo', '=', 'a.codigo_alumno')
+  //     ->select(
+  //       DB::raw("CONCAT(TRIM(a.codigo_alumno), ' | ', a.dni, ' | ', a.apellido_paterno, ' ', a.apellido_materno, ', ', a.nombres, ' | ', a.programa) AS value"),
+  //       'a.id',
+  //       'b.id AS investigador_id',
+  //       'a.codigo_alumno',
+  //       'a.dni',
+  //       'a.apellido_paterno',
+  //       'a.apellido_materno',
+  //       'a.nombres',
+  //       'a.facultad',
+  //       'a.programa',
+  //       'a.permanencia',
+  //       'a.correo_electronico'
+  //     )
+  //     ->whereIn('a.permanencia', ['Activo', 'Reserva de Matricula'])
+  //     ->having('value', 'LIKE', '%' . $request->query('query') . '%')
+  //     ->limit(10)
+  //     ->get();
+
+  //   return $estudiantes;
+  // }
+
+
   public function verificarEstudiante(Request $request) {
     $errores = [];
 
     // Obtener la cantidad de proyectos
     $cantidadProyectos = DB::table('Proyecto as p')
       ->leftJoin('Proyecto_integrante as pi', 'p.id', '=', 'pi.proyecto_id')
-      ->leftJoin('Usuario_investigador as ui', 'pi.investigador_id', '=', 'ui.id')
-      ->where('ui.codigo', '=', $request->query('codigo'))
+      ->where('pi.investigador_id', '=', $request->query('investigadorId'))
       ->where('p.periodo', '=', 2025)
       ->where('p.tipo_proyecto', '=', 'PICV')
       ->count();
 
     if ($cantidadProyectos > 0) {
-      $errores[] = "Ya es participante en $cantidadProyectos proyecto(s) PICV de este año.";
+      $errores[] = "Ya es participante en $cantidadProyectos proyecto PICV de este año.";
     }
 
     if (!empty($errores)) {
@@ -1040,6 +1070,7 @@ class PicvController extends S3Controller {
       ->join('Ods AS o', 'o.id', '=', 'lo.ods_id')
       ->join('Ocde AS oc', 'oc.id', '=', 'lo.ods_id')
       ->select([
+        'p.titulo',
         'g.grupo_nombre',
         'f.nombre AS facultad_nombre',
         'a.nombre AS area_nombre',
@@ -1048,7 +1079,21 @@ class PicvController extends S3Controller {
         'l.nombre AS linea_nombre',
         'o.objetivo',
         'oc.linea',
-        'p.localizacion'
+        'p.localizacion',
+        DB::raw("CASE(p.estado)
+        WHEN -1 THEN 'Eliminado'
+        WHEN 0 THEN 'No aprobado'
+        WHEN 1 THEN 'Aprobado'
+        WHEN 3 THEN 'En evaluacion'
+        WHEN 5 THEN 'Enviado'
+        WHEN 6 THEN 'En proceso'
+        WHEN 7 THEN 'Anulado'
+        WHEN 8 THEN 'Sustentado'
+        WHEN 9 THEN 'En ejecución'
+        WHEN 10 THEN 'Ejecutado'
+        WHEN 11 THEN 'Concluído'
+      ELSE 'Sin estado' END AS estado"),
+        'p.updated_at'
       ])
       ->where('pint.condicion', '=', 'Responsable')
       ->where('pint.proyecto_id', '=', $request->query('proyecto_id'))
@@ -1060,7 +1105,7 @@ class PicvController extends S3Controller {
       ->select([
         'p.id',
         'pd.codigo',
-        'pd.detalle'
+        'pd.detalle',
       ])
       ->where('p.id', '=', $request->query('proyecto_id'))
       ->get();
@@ -1116,7 +1161,7 @@ class PicvController extends S3Controller {
       'integrantes' => $integrantes
     ]);
 
-    // $pdf->setPaper('A4', 'landscape');
+
     return $pdf->stream();
   }
 }

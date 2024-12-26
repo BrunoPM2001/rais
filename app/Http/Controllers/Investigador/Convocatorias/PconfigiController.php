@@ -864,16 +864,28 @@ class PconfigiController extends S3Controller {
 
   public function agregarIntegrante(Request $request) {
 
+    $tipoIntegrante = $request->input('proyecto_integrante_tipo_id');
+    $responsable = 0;
+    $coResponsable = 0;
+    $docente = 0;
+    $externo = 0;
+    $tesista = 0;
+    $colaborador = 0;
 
     $participacion = DB::table('Proyecto as a')
       ->join('Proyecto_integrante as b', 'a.id', '=', 'b.proyecto_id')
+      ->where('b.proyecto_integrante_tipo_id', '=', $tipoIntegrante)
       ->where('b.investigador_id', '=', $request->input('investigador_id'))
       ->where('a.tipo_proyecto', '=', 'PCONFIGI')
       ->where('a.periodo', '=', 2025)
       ->count();
 
+    $investigadorProyecto = DB::table('Proyecto_integrante')
+      ->where('proyecto_id', '=', $request->input('id'))
+      ->where('investigador_id', '=', $request->input('investigador_id'))
+      ->count();
 
-    if ($participacion == 0) {
+    if ($participacion == 0 && $investigadorProyecto == 0) {
 
       if ($request->input('tipo_tesis') == null) {
         DB::table('Proyecto_integrante')
@@ -905,6 +917,72 @@ class PconfigiController extends S3Controller {
 
       return ['message' => 'success', 'detail' => 'Integrante añadido'];
     } else {
+
+      switch ($tipoIntegrante) {
+        case 1:
+          $responsable++;
+          break;
+        case 2:
+          $coResponsable++;
+          break;
+        case 3:
+          $docente++;
+          break;
+        case 4:
+          $externo++;
+          break;
+        case 5:
+          $tesista++;
+          break;
+        case 6:
+          $colaborador++;
+          break;
+        default:
+          break;
+      }
+
+      if ($investigadorProyecto > 0) {
+        return [
+          'message' => 'error',
+          'detail' => 'El integrante seleccionado ya se encuentra en el proyecto.  Por favor, elija a otro integrante.'
+        ];
+      }
+      if ($responsable > 0) {
+        return [
+          'message' => 'error',
+          'detail' => 'El integrante seleccionado ya es Responsable de un proyecto. Por favor, elija a otro integrante.'
+        ];
+      }
+      if ($coResponsable >= 0) {
+        return [
+          'message' => 'error',
+          'detail' => 'El integrante seleccionado ya es Co-Responsable de un proyecto. Por favor, elija a otro integrante.'
+        ];
+      }
+      if ($docente >= 0) {
+        return [
+          'message' => 'error',
+          'detail' => 'El integrante seleccionado ya es Miembro Docente de un proyecto. Por favor, elija a otro integrante.'
+        ];
+      }
+      if ($externo >= 0) {
+        return [
+          'message' => 'error',
+          'detail' => 'El integrante seleccionado ya es Colaborador Externo de un proyecto. Por favor, elija a otro integrante.'
+        ];
+      }
+      if ($tesista >= 0) {
+        return [
+          'message' => 'error',
+          'detail' => 'El integrante seleccionado ya es Tesista de un proyecto. Por favor, elija a otro integrante.'
+        ];
+      }
+      if ($colaborador >= 0) {
+        return [
+          'message' => 'error',
+          'detail' => 'El integrante seleccionado ya es Colaborador de un proyecto. Por favor, elija a otro integrante.'
+        ];
+      }
       return [
         'message' => 'error',
         'detail' => 'El integrante seleccionado no puede participar en más de un proyecto. Por favor, elija a otro integrante.'
