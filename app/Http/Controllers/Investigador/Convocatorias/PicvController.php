@@ -527,53 +527,54 @@ class PicvController extends S3Controller {
     return $integrantes;
   }
 
-  public function searchEstudiante(Request $request) {
+  // public function searchEstudiante(Request $request)
+  // {
 
-    $coordinador = DB::table('Grupo AS g')
-      ->join('Grupo_integrante AS gi', 'g.id', '=', 'gi.grupo_id')
-      ->select([
-        'g.id'
-      ])
-      ->where('gi.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
-      ->where('gi.condicion', 'LIKE', 'Titular')
-      ->where('gi.condicion', 'NOT LIKE', 'Ex%') // Corrección aquí
-      ->first();
+  //   $coordinador = DB::table('Grupo AS g')
+  //     ->join('Grupo_integrante AS gi', 'g.id', '=', 'gi.grupo_id')
+  //     ->select([
+  //       'g.id'
+  //     ])
+  //     ->where('gi.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+  //     ->where('gi.condicion', 'LIKE', 'Titular')
+  //     ->where('gi.condicion', 'NOT LIKE', 'Ex%') // Corrección aquí
+  //     ->first();
 
 
-    $gi = $coordinador->id;
-    $investigadorId = $request->attributes->get('token_decoded')->investigador_id;
-    $estudiantesGI = DB::table('Grupo_integrante AS gi')
-      ->join('Usuario_investigador AS a', 'a.id', '=', 'gi.investigador_id')
-      ->join('Facultad AS f', 'f.id', '=', 'a.facultad_id')
-      ->select([
-        DB::raw("CONCAT(TRIM(a.codigo), ' | ', a.doc_numero, ' | ', a.apellido1, ' ', a.apellido2, ', ', a.nombres, ' | ', gi.tipo) AS value"),
-        'a.id as investigador_id',
-        'gi.id',
-        'a.codigo',
-        'a.doc_numero',
-        'a.apellido1',
-        'a.apellido2',
-        'a.nombres',
-        'f.nombre AS facultad',
-        'gi.tipo',
-        'a.email3',
-        'a.telefono_movil',
-        'a.sexo'
-      ])
-      ->where('gi.codigo', 'LIKE', '%' . $request->query('codigo') . '%')
-      ->where('gi.grupo_id', '=', $gi)
-      ->where('gi.tipo', 'LIKE', '%studiante%') // Busca registros que contengan "Estudiante"
-      ->get();
+  //   $gi = $coordinador->id;
+  //   $investigadorId = $request->attributes->get('token_decoded')->investigador_id;
+  //   $estudiantesGI = DB::table('Grupo_integrante AS gi')
+  //     ->join('Usuario_investigador AS a', 'a.id', '=', 'gi.investigador_id')
+  //     ->join('Facultad AS f', 'f.id', '=', 'a.facultad_id')
+  //     ->select([
+  //       DB::raw("CONCAT(TRIM(a.codigo), ' | ', a.doc_numero, ' | ', a.apellido1, ' ', a.apellido2, ', ', a.nombres, ' | ', gi.tipo) AS value"),
+  //       'a.id as investigador_id',
+  //       'gi.id',
+  //       'a.codigo',
+  //       'a.doc_numero',
+  //       'a.apellido1',
+  //       'a.apellido2',
+  //       'a.nombres',
+  //       'f.nombre AS facultad',
+  //       'gi.tipo',
+  //       'a.email3',
+  //       'a.telefono_movil',
+  //       'a.sexo'
+  //     ])
+  //     ->where('gi.codigo', 'LIKE', '%' . $request->query('codigo') . '%')
+  //     ->where('gi.grupo_id', '=', $gi)
+  //     ->where('gi.tipo', 'LIKE', '%studiante%') // Busca registros que contengan "Estudiante"
+  //     ->get();
 
-    return $estudiantesGI;
-  }
+  //   return $estudiantesGI;
+  // }
 
-  // public function searchdEstudiante(Request $request) {
-
+  // public function searchEstudiante(Request $request)
+  // {
   //   $estudiantes = DB::table('Repo_sum AS a')
   //     ->leftJoin('Usuario_investigador AS b', 'b.codigo', '=', 'a.codigo_alumno')
   //     ->select(
-  //       DB::raw("CONCAT(TRIM(a.codigo_alumno), ' | ', a.dni, ' | ', a.apellido_paterno, ' ', a.apellido_materno, ', ', a.nombres, ' | ', a.programa) AS value"),
+  //       DB::raw("CONCAT(TRIM(a.codigo_alumno), ' | ', a.dni, ' | ', a.apellido_paterno, ' ', a.apellido_materno, ', ', a.nombres, ' | ', a.programa , ' | ', b.tipo) AS value"),
   //       'a.id',
   //       'b.id AS investigador_id',
   //       'a.codigo_alumno',
@@ -586,14 +587,48 @@ class PicvController extends S3Controller {
   //       'a.permanencia',
   //       'a.correo_electronico'
   //     )
-  //     ->whereIn('a.permanencia', ['Activo', 'Reserva de Matricula'])
+  //     // ->whereIn('a.permanencia', ['Activo', 'Reserva de Matricula'])
+  //     // ->where(function ($query) {
+  //     //   $query->where('a.año_ciclo_estudio', '>=', 3)
+  //     //     ->orWhereNull('a.año_ciclo_estudio')
+  //     //     ->orWhere('a.año_ciclo_estudio', '=', '');
+  //     // })
   //     ->having('value', 'LIKE', '%' . $request->query('query') . '%')
   //     ->limit(10)
   //     ->get();
-
   //   return $estudiantes;
   // }
 
+  public function searchEstudiante(Request $request) {
+    $estudiantes = DB::table('Repo_sum AS a')
+      ->leftJoin('Usuario_investigador AS b', 'b.codigo', '=', 'a.codigo_alumno')
+      ->select(
+        DB::raw("CONCAT(TRIM(a.codigo_alumno), ' | ', a.dni, ' | ', a.apellido_paterno, ' ', a.apellido_materno, ', ', a.nombres, ' | ', a.programa) AS value"),
+        'a.id',
+        'b.id AS investigador_id',
+        'a.codigo_alumno',
+        'a.dni',
+        'a.apellido_paterno',
+        'a.apellido_materno',
+        'a.nombres',
+        'a.facultad',
+        'a.programa',
+        'a.permanencia',
+        'a.correo_electronico'
+      )
+
+      ->where(function ($query) {
+        $query->where('a.año_ciclo_estudio', '>=', 3)
+          ->orWhereNull('a.año_ciclo_estudio')
+          ->orWhere('a.año_ciclo_estudio', '=', '');
+      })
+      ->whereIn('a.permanencia', ['Activo', 'Reserva de Matricula'])
+      ->having('value', 'LIKE', '%' . $request->query('query') . '%')
+      ->limit(10)
+      ->get();
+
+    return $estudiantes;
+  }
 
   public function verificarEstudiante(Request $request) {
     $errores = [];
@@ -601,7 +636,8 @@ class PicvController extends S3Controller {
     // Obtener la cantidad de proyectos
     $cantidadProyectos = DB::table('Proyecto as p')
       ->leftJoin('Proyecto_integrante as pi', 'p.id', '=', 'pi.proyecto_id')
-      ->where('pi.investigador_id', '=', $request->query('investigadorId'))
+      ->join('Usuario_investigador AS c', 'c.id', '=', 'pi.investigador_id')
+      ->where('c.codigo', '=', $request->query('codigo'))
       ->where('p.periodo', '=', 2025)
       ->where('p.tipo_proyecto', '=', 'PICV')
       ->count();
