@@ -941,7 +941,7 @@ class PconfigiController extends S3Controller {
 
     $numParticipacion = count($participacion);
 
-    if ($numParticipacion == 0 && $investigadorProyecto == 0) {
+    if ($numParticipacion == 0 && $investigadorProyecto == 0 && $tesistaProyecto == 0 && $deudas == 0) {
 
       if ($request->input('tipo_tesis') == null) {
         DB::table('Proyecto_integrante')
