@@ -187,6 +187,10 @@
             text-align: center;
             /* Centra los números en la primera columna */
         }
+
+        .desc {
+            font-size: 11px;
+        }
     </style>
 
 </head>
@@ -347,7 +351,7 @@
             @default
         @endswitch
         @if (!in_array($des->codigo, ['objetivo_ods', 'tipo_investigacion']))
-            <p style="font-size: 12px; text-align: justify;">{{ $des->detalle }}</p>
+            <div class="desc">{!! $des->detalle !!}</div>
         @endif
     @endforeach
 
