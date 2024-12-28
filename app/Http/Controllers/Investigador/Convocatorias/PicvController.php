@@ -115,11 +115,34 @@ class PicvController extends S3Controller {
       'isHtml' => false
     ];
 
+    $grupo_id = DB::table('Grupo_integrante')
+      ->select([
+        'grupo_id'
+      ])
+      ->where('investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+      ->where('condicion', '=', 'Titular')
+      ->first();
+
+    $cuentaProyectosGrupo = DB::table('Proyecto AS a')
+      ->join('Proyecto_integrante AS b', 'a.id', '=', 'b.proyecto_id')
+      ->join('Grupo_integrante AS c', function (JoinClause $join) {
+        $join->on('c.investigador_id', '=', 'b.investigador_id')
+          ->where('c.condicion', '=', 'Titular');
+      })
+      ->where('a.tipo_proyecto', '=', 'PICV')
+      ->where('a.periodo', '=', 2025)
+      ->where('c.grupo_id', '=', $grupo_id->grupo_id)
+      ->count();
+
+    $cuentaProyectosGrupo >= 2 && $errores[] = [
+      'message' => "Ya existen 2 proyectos enviados por otros integrantes de su grupo",
+      'isHtml' => false
+    ];
 
     return ['estado' => empty($errores), 'errores' => $errores];
   }
 
-  public function verificar(Request $request, $proyecto_id = null) {
+  public function verificar(Request $request) {
     $errores = [];
 
     $perteneceGrupo = DB::table('Grupo_integrante')
@@ -527,78 +550,6 @@ class PicvController extends S3Controller {
     return $integrantes;
   }
 
-  // public function searchEstudiante(Request $request)
-  // {
-
-  //   $coordinador = DB::table('Grupo AS g')
-  //     ->join('Grupo_integrante AS gi', 'g.id', '=', 'gi.grupo_id')
-  //     ->select([
-  //       'g.id'
-  //     ])
-  //     ->where('gi.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
-  //     ->where('gi.condicion', 'LIKE', 'Titular')
-  //     ->where('gi.condicion', 'NOT LIKE', 'Ex%') // Corrección aquí
-  //     ->first();
-
-
-  //   $gi = $coordinador->id;
-  //   $investigadorId = $request->attributes->get('token_decoded')->investigador_id;
-  //   $estudiantesGI = DB::table('Grupo_integrante AS gi')
-  //     ->join('Usuario_investigador AS a', 'a.id', '=', 'gi.investigador_id')
-  //     ->join('Facultad AS f', 'f.id', '=', 'a.facultad_id')
-  //     ->select([
-  //       DB::raw("CONCAT(TRIM(a.codigo), ' | ', a.doc_numero, ' | ', a.apellido1, ' ', a.apellido2, ', ', a.nombres, ' | ', gi.tipo) AS value"),
-  //       'a.id as investigador_id',
-  //       'gi.id',
-  //       'a.codigo',
-  //       'a.doc_numero',
-  //       'a.apellido1',
-  //       'a.apellido2',
-  //       'a.nombres',
-  //       'f.nombre AS facultad',
-  //       'gi.tipo',
-  //       'a.email3',
-  //       'a.telefono_movil',
-  //       'a.sexo'
-  //     ])
-  //     ->where('gi.codigo', 'LIKE', '%' . $request->query('codigo') . '%')
-  //     ->where('gi.grupo_id', '=', $gi)
-  //     ->where('gi.tipo', 'LIKE', '%studiante%') // Busca registros que contengan "Estudiante"
-  //     ->get();
-
-  //   return $estudiantesGI;
-  // }
-
-  // public function searchEstudiante(Request $request)
-  // {
-  //   $estudiantes = DB::table('Repo_sum AS a')
-  //     ->leftJoin('Usuario_investigador AS b', 'b.codigo', '=', 'a.codigo_alumno')
-  //     ->select(
-  //       DB::raw("CONCAT(TRIM(a.codigo_alumno), ' | ', a.dni, ' | ', a.apellido_paterno, ' ', a.apellido_materno, ', ', a.nombres, ' | ', a.programa , ' | ', b.tipo) AS value"),
-  //       'a.id',
-  //       'b.id AS investigador_id',
-  //       'a.codigo_alumno',
-  //       'a.dni',
-  //       'a.apellido_paterno',
-  //       'a.apellido_materno',
-  //       'a.nombres',
-  //       'a.facultad',
-  //       'a.programa',
-  //       'a.permanencia',
-  //       'a.correo_electronico'
-  //     )
-  //     // ->whereIn('a.permanencia', ['Activo', 'Reserva de Matricula'])
-  //     // ->where(function ($query) {
-  //     //   $query->where('a.año_ciclo_estudio', '>=', 3)
-  //     //     ->orWhereNull('a.año_ciclo_estudio')
-  //     //     ->orWhere('a.año_ciclo_estudio', '=', '');
-  //     // })
-  //     ->having('value', 'LIKE', '%' . $request->query('query') . '%')
-  //     ->limit(10)
-  //     ->get();
-  //   return $estudiantes;
-  // }
-
   public function searchEstudiante(Request $request) {
     $estudiantes = DB::table('Repo_sum AS a')
       ->leftJoin('Usuario_investigador AS b', 'b.codigo', '=', 'a.codigo_alumno')
@@ -616,12 +567,12 @@ class PicvController extends S3Controller {
         'a.permanencia',
         'a.correo_electronico'
       )
-
       ->where(function ($query) {
         $query->where('a.año_ciclo_estudio', '>=', 3)
           ->orWhereNull('a.año_ciclo_estudio')
           ->orWhere('a.año_ciclo_estudio', '=', '');
       })
+      ->where('a.programa', 'LIKE', 'E.P.%')
       ->whereIn('a.permanencia', ['Activo', 'Reserva de Matricula'])
       ->having('value', 'LIKE', '%' . $request->query('query') . '%')
       ->limit(10)
@@ -632,7 +583,7 @@ class PicvController extends S3Controller {
 
   public function verificarEstudiante(Request $request) {
     $errores = [];
-
+    $investigadorId = $request->query('investigador_id');
     // Obtener la cantidad de proyectos
     $cantidadProyectos = DB::table('Proyecto as p')
       ->leftJoin('Proyecto_integrante as pi', 'p.id', '=', 'pi.proyecto_id')
@@ -642,6 +593,19 @@ class PicvController extends S3Controller {
       ->where('p.tipo_proyecto', '=', 'PICV')
       ->count();
 
+    if (empty($investigadorId)) {
+      $tesistaProyecto = 0;
+    } else {
+      $tesistaProyecto = DB::table('Proyecto_integrante as a')
+        ->join('Proyecto_integrante_tipo as c', 'a.proyecto_integrante_tipo_id', '=', 'c.id')
+        ->where('a.investigador_id', '=', $investigadorId)
+        ->whereIn('c.id', [5, 11, 16, 18, 20, 40, 47, 59, 67, 77])
+        ->count();
+    }
+
+    if ($tesistaProyecto > 0) {
+      $errores[] = "No serán elegibles los estudiantes que estén participando como tesistas en proyectos en curso o que hayan concluido recientemente.";
+    }
     if ($cantidadProyectos > 0) {
       $errores[] = "Ya es participante en $cantidadProyectos proyecto PICV de este año.";
     }
