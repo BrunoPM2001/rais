@@ -606,6 +606,16 @@ class PicvController extends S3Controller {
     if ($tesistaProyecto > 0) {
       $errores[] = "No serán elegibles los estudiantes que estén participando como tesistas en proyectos en curso o que hayan concluido recientemente.";
     }
+    $tesistaProyecto = DB::table('Proyecto_integrante as a')
+      ->join('Proyecto_integrante_tipo as c', 'a.proyecto_integrante_tipo_id', '=', 'c.id')
+      ->where('a.investigador_id', '=', $request->query('investigador_id'))
+      ->whereIn('c.id', [5, 11, 16, 18, 20, 40, 47, 59, 67, 77])
+      ->count();
+
+
+    if ($tesistaProyecto > 0) {
+      $errores[] = "No serán elegibles los estudiantes que estén participando como tesistas en proyectos en curso o que hayan concluido recientemente.";
+    }
     if ($cantidadProyectos > 0) {
       $errores[] = "Ya es participante en $cantidadProyectos proyecto PICV de este año.";
     }

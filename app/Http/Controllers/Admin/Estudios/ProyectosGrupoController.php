@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\Estudios\Proyectos\EciController;
 use App\Http\Controllers\Admin\Estudios\Proyectos\PinvposController;
 use App\Http\Controllers\Admin\Estudios\Proyectos\PsinfinvController;
 use App\Http\Controllers\Admin\Estudios\Proyectos\PsinfipuController;
+use App\Http\Controllers\Admin\Estudios\Proyectos\PicvController;
 use App\Http\Controllers\S3Controller;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -14,6 +15,7 @@ use PhpOffice\PhpWord\IOFactory;
 use PhpOffice\PhpWord\PhpWord;
 
 class ProyectosGrupoController extends S3Controller {
+
   public function listado($periodo) {
     $proyectos = DB::table('Proyecto AS a')
       ->leftJoin('Grupo AS b', 'b.id', '=', 'a.grupo_id')
@@ -136,6 +138,24 @@ class ProyectosGrupoController extends S3Controller {
           'actividades' => $actividades,
           'presupuesto' => $presupuesto,
         ];
+
+      case "PICV":
+        $ctrl = new PicvController();
+
+        $detalle = $ctrl->detalle($request);
+        $descripcion = $ctrl->descripcion($request);
+        $miembros = $ctrl->miembros($request);
+        $documentos = $ctrl->documentos($request);
+        $actividades = $ctrl->actividades($request);
+
+        return [
+          'detalle' => $detalle,
+          'descripcion' => $descripcion,
+          'miembros' => $miembros,
+          'documentos' => $documentos,
+          'actividades' => $actividades,
+        ];
+
       default:
         $detalle = $this->detalle($request);
         $miembros = $this->miembros($request);

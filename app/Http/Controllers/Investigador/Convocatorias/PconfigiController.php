@@ -689,6 +689,22 @@ class PconfigiController extends S3Controller {
     ];
   }
 
+  public function verificarPresupuesto(Request $request) {
+
+    $presupuesto = DB::table('Proyecto_presupuesto AS a')
+      ->select([
+        'a.id',
+        'a.proyecto_id',
+        'a.partida_id',
+        'a.tipo',
+        'a.monto'
+      ])
+      ->where('a.proyecto_id', '=', $request->query('id'))
+      ->orderBy('a.partida_id')
+      ->get();
+
+    return $presupuesto;
+  }
   public function agregarPartida(Request $request) {
     $date = Carbon::now();
 
