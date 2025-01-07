@@ -93,18 +93,7 @@ class InformePinvposController extends S3Controller {
       ->count();
 
     if ($count1 == 0) {
-      return ['message' => 'error', 'detail' => 'Necesita completar los campos de: Resumen, proceso de instalación, funcionamiento, gestión de uso, aplicación práctica e impacto, e impacto de uso.'];
-    }
-
-    $count2 = DB::table('Proyecto_doc')
-      ->where('proyecto_id', '=', $request->input('proyecto_id'))
-      ->where('categoria', '=', 'anexo1')
-      ->where('nombre', '=', 'Anexos proyecto ECI')
-      ->where('estado', '=', 1)
-      ->count();
-
-    if ($count2 == 0) {
-      return ['message' => 'error', 'detail' => 'Necesita cargar al menos el primer anexo'];
+      return ['message' => 'error', 'detail' => 'Necesita completar todos los campos'];
     }
 
     $count = DB::table('Informe_tecnico')

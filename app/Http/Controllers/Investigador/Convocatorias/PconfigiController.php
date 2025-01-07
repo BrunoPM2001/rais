@@ -918,8 +918,10 @@ class PconfigiController extends S3Controller {
     if ($tipoIntegrante == 5) {
 
       $tesistaProyecto = DB::table('Proyecto_integrante as a')
+        ->join('Proyecto as b', 'a.proyecto_id', '=', 'a.id')
         ->join('Proyecto_integrante_tipo as c', 'a.proyecto_integrante_tipo_id', '=', 'c.id')
         ->where('a.investigador_id', '=', $request->input('investigador_id'))
+        ->where('b.estado', '=', '1')
         ->whereIn('c.id', [5, 11, 16, 18, 20, 40, 47, 59, 67, 77])
         ->count();
     }

@@ -63,6 +63,47 @@ class PublicacionesUtilsController extends S3Controller {
     }
   }
 
+  public function eliminarFiliacion(Request $request) {
+    $publicacionId = $request->query('id');
+    $investigadorId = $request->attributes->get('token_decoded')->investigador_id;
+
+    // Verificar si la publicación cuenta con filiación UNMSM
+    $count = DB::table('Publicacion_autor AS a')
+      ->join('Publicacion AS b', 'b.id', '=', 'a.publicacion_id')
+      ->where('a.publicacion_id', '=', $publicacionId)
+      ->where('a.filiacion', '=', 0) // Sin filiación UNMSM
+      ->where('a.investigador_id', '=', $investigadorId)
+      ->count();
+
+    if ($count == 0) {
+      return [
+        'message' => 'error',
+        'detail' => 'Esta publicación no se pueden hacer más cambios.'
+      ];
+    }
+
+    // Eliminar la publicación si no tiene filiación UNMSM
+    $affectedRows = DB::table('Publicacion')
+      ->where('id', '=', $publicacionId)
+      ->update([
+        'estado' => -1,
+        'updated_at' => Carbon::now(),
+      ]);
+
+    if ($affectedRows > 0) {
+      return [
+        'message' => 'info',
+        'detail' => 'Se eliminó correctamente la publicación que no cuenta con filiación UNMSM.'
+      ];
+    }
+
+    return [
+      'message' => 'error',
+      'detail' => 'No se pudo eliminar la publicación, verifique los datos e intente nuevamente.'
+    ];
+  }
+
+
   /*
   |-----------------------------------------------------------
   | Solicitar ser incluído como autor

@@ -637,6 +637,7 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
 
       //  ELiminar
       Route::delete('eliminarPublicacion', [PublicacionesUtilsController::class, 'eliminarPublicacion']);
+      Route::delete('eliminarFiliacion', [PublicacionesUtilsController::class, 'eliminarFiliacion']);
 
       //  Solicitar inclusión
       Route::get('listadoTitulos', [PublicacionesUtilsController::class, 'listadoTitulos']);
