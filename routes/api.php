@@ -52,6 +52,7 @@ use App\Http\Controllers\Investigador\Actividades\TalleresController;
 use App\Http\Controllers\Investigador\Convocatorias\PconfigiController;
 use App\Http\Controllers\Investigador\Convocatorias\PicvController;
 use App\Http\Controllers\Investigador\Convocatorias\PinvposController;
+use App\Http\Controllers\Investigador\Convocatorias\PmultiController;
 use App\Http\Controllers\Investigador\Convocatorias\ProCTIController;
 use App\Http\Controllers\Investigador\Convocatorias\PsinfinvController;
 use App\Http\Controllers\Investigador\Convocatorias\PsinfipuController;
@@ -813,6 +814,35 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
       Route::get('verificar6', [PsinfinvController::class, 'verificar6']);
       Route::get('reporte', [PsinfinvController::class, 'reporte']);
       Route::post('enviar', [PsinfinvController::class, 'enviar']);
+    });
+
+    Route::prefix('pmulti')->group(function () {
+      Route::get('listado', [PmultiController::class, 'listado']);
+
+      Route::get('verificar', [PmultiController::class, 'verificar']);
+
+      Route::get('verificar1', [PmultiController::class, 'verificar1']);
+      Route::post('registrar1', [PmultiController::class, 'registrar1']);
+
+      Route::get('verificar2', [PmultiController::class, 'verificar2']);
+      Route::post('registrar2', [PmultiController::class, 'registrar2']);
+      Route::delete('eliminarArchivo', [PmultiController::class, 'eliminarArchivo']);
+
+      Route::get('verificar3', [PmultiController::class, 'verificar3']);
+
+      Route::get('verificar4', [PmultiController::class, 'verificar4']);
+      Route::get('listadoCorresponsables', [PmultiController::class, 'listadoCorresponsables']);
+      Route::post('agregarIntegrante', [PmultiController::class, 'agregarIntegrante']);
+      Route::delete('eliminarIntegrante', [PmultiController::class, 'eliminarIntegrante']);
+
+      Route::get('verificar5', [PmultiController::class, 'verificar5']);
+      Route::post('addActividad', [PmultiController::class, 'addActividad']);
+      Route::delete('eliminarActividad', [PmultiController::class, 'eliminarActividad']);
+      Route::put('editActividad', [PmultiController::class, 'editActividad']);
+
+      Route::get('verificar6', [PmultiController::class, 'verificar6']);
+      Route::get('reporte', [PmultiController::class, 'reporte']);
+      Route::post('enviar', [PmultiController::class, 'enviar']);
     });
 
     Route::prefix('psinfipu')->group(function () {
