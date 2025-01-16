@@ -831,6 +831,8 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
       Route::get('verificar3', [PmultiController::class, 'verificar3']);
       Route::get('listadoCorresponsables', [PmultiController::class, 'listadoCorresponsables']);
       Route::get('listadoDocentes', [PmultiController::class, 'listadoDocentes']);
+      Route::get('listadoTesistas', [PmultiController::class, 'listadoTesistas']);
+      Route::get('listadoExterno', [PmultiController::class, 'listadoExterno']);
       Route::post('agregarIntegrante', [PmultiController::class, 'agregarIntegrante']);
       Route::delete('eliminarIntegrante', [PmultiController::class, 'eliminarIntegrante']);
 

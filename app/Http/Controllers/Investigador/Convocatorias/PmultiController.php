@@ -401,7 +401,9 @@ class PmultiController extends S3Controller {
         'b.tipo',
         'd.nombre AS facultad',
         'g.grupo_nombre_corto',
-        DB::raw("COALESCE(CONCAT('/minio/carta-compromiso/', e.key), '/minio/proyecto-doc/" . $carta->url . "') AS url")
+        DB::raw("COALESCE(CONCAT('/minio/carta-compromiso/', e.key), '/minio/proyecto-doc/" . $carta->url . "') AS url"),
+        'a.tipo_tesis',
+        'a.titulo_tesis'
       ])
       ->where('a.proyecto_id', '=', $request->query('id'))
       ->groupBy('b.id')
@@ -455,6 +457,10 @@ class PmultiController extends S3Controller {
 
     $listado = Db::table('Grupo_integrante AS a')
       ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
+      ->leftJoin('Eval_docente_investigador AS c', function (JoinClause $join) {
+        $join->on('c.investigador_id', '=', 'b.id')
+          ->where('c.estado', '=', 'Vigente');
+      })
       ->leftJoin('view_deudores AS d', 'd.investigador_id', '=', 'b.id')
       ->leftJoin('Grupo AS e', 'e.id', '=', 'a.grupo_id')
       ->leftJoin('Facultad AS f', 'f.id', '=', 'b.facultad_id')
@@ -466,6 +472,8 @@ class PmultiController extends S3Controller {
         'e.grupo_nombre_corto AS labelTag',
         'f.nombre AS facultad',
         DB::raw("COUNT(d.deuda_id) AS deudas"),
+        'b.renacyt',
+        'c.id AS cdi',
       )
       ->having('value', 'LIKE', '%' . $request->query('query') . '%')
       ->where('a.condicion', '=', 'Titular')
@@ -476,8 +484,94 @@ class PmultiController extends S3Controller {
         $item->tags = [
           $item->facultad,
           'Deudas: ' . $item->deudas,
+          $item->renacyt || $item->renacyt != "" ? 'Tiene renacyt' : 'No tiene renacyt',
+          $item->cdi ? 'Tiene CDI' : 'No tiene CDI',
         ];
-        $item->disabled = $item->deudas == 0  ? false : true;
+        $item->disabled = $item->deudas == 0 && $item->renacyt && $item->renacyt != "" && $item->cdi ? false : true;
+        return $item;
+      });
+
+    return $listado;
+  }
+
+  public function listadoTesistas(Request $request) {
+
+    $grupos = DB::table('Proyecto_integrante AS a')
+      ->select([
+        'a.grupo_id'
+      ])
+      ->where('a.proyecto_id', '=', $request->query('id'))
+      ->whereIn('a.proyecto_integrante_tipo_id', [56, 57, 58])
+      ->pluck('a.grupo_id')
+      ->values();
+
+    $listado = DB::table('Grupo_integrante AS a')
+      ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
+      ->leftJoin('Grupo AS e', 'e.id', '=', 'a.grupo_id')
+      ->leftJoin('Facultad AS f', 'f.id', '=', 'b.facultad_id')
+      ->select(
+        DB::raw("CONCAT(b.doc_numero, ' | ', b.apellido1, ' ', b.apellido2, ', ', b.nombres) AS value"),
+        'b.tipo',
+        'a.investigador_id',
+        'e.id AS grupo_id',
+        'a.id AS grupo_integrante_id',
+        'e.grupo_nombre_corto AS labelTag',
+        'f.nombre AS facultad',
+      )
+      ->having('value', 'LIKE', '%' . $request->query('query') . '%')
+      ->where('a.condicion', '=', 'Adherente')
+      ->where('b.tipo', 'LIKE', 'Estudiante%')
+      ->whereIn('a.grupo_id', $grupos)
+      ->groupBy('b.id')
+      ->limit(10)
+      ->get()
+      ->map(function ($item) {
+        $item->tags = [
+          $item->tipo,
+          $item->facultad,
+        ];
+        return $item;
+      });
+
+    return $listado;
+  }
+
+  public function listadoExterno(Request $request) {
+
+    $grupos = DB::table('Proyecto_integrante AS a')
+      ->select([
+        'a.grupo_id'
+      ])
+      ->where('a.proyecto_id', '=', $request->query('id'))
+      ->whereIn('a.proyecto_integrante_tipo_id', [56, 57, 58])
+      ->pluck('a.grupo_id')
+      ->values();
+
+    $listado = DB::table('Grupo_integrante AS a')
+      ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
+      ->leftJoin('Grupo AS e', 'e.id', '=', 'a.grupo_id')
+      ->leftJoin('Facultad AS f', 'f.id', '=', 'b.facultad_id')
+      ->select(
+        DB::raw("CONCAT(b.doc_numero, ' | ', b.apellido1, ' ', b.apellido2, ', ', b.nombres) AS value"),
+        'b.tipo',
+        'a.investigador_id',
+        'e.id AS grupo_id',
+        'a.id AS grupo_integrante_id',
+        'e.grupo_nombre_corto AS labelTag',
+        'f.nombre AS facultad',
+      )
+      ->having('value', 'LIKE', '%' . $request->query('query') . '%')
+      ->where('a.condicion', '=', 'Adherente')
+      ->where('b.tipo', 'LIKE', 'Externo%')
+      ->whereIn('a.grupo_id', $grupos)
+      ->groupBy('b.id')
+      ->limit(10)
+      ->get()
+      ->map(function ($item) {
+        $item->tags = [
+          $item->tipo,
+          $item->facultad,
+        ];
         return $item;
       });
 
@@ -485,29 +579,26 @@ class PmultiController extends S3Controller {
   }
 
   public function agregarIntegrante(Request $request) {
+    $count = DB::table('Proyecto_integrante')
+      ->where('proyecto_id', '=', $request->input('id'))
+      ->where('investigador_id', '=', $request->input('investigador_id'))
+      ->count();
 
-    if ($request->hasFile('file')) {
+    if ($count == 0) {
+      $integrante_id = DB::table('Proyecto_integrante')
+        ->insertGetId([
+          'proyecto_id' => $request->input('id'),
+          'grupo_id' => $request->input('grupo_id'),
+          'investigador_id' => $request->input('investigador_id'),
+          'grupo_integrante_id' => $request->input('grupo_integrante_id'),
+          'proyecto_integrante_tipo_id' => $request->input('proyecto_integrante_tipo_id'),
+          'tipo_tesis' => $request->input('tipo'),
+          'titulo_tesis' => $request->input('titulo'),
+          'created_at' => Carbon::now(),
+          'updated_at' => Carbon::now(),
+        ]);
 
-      $count = DB::table('Proyecto_integrante')
-        ->where('proyecto_id', '=', $request->input('id'))
-        ->where('investigador_id', '=', $request->input('investigador_id'))
-        ->count();
-
-
-      if ($count == 0) {
-        $integrante_id = DB::table('Proyecto_integrante')
-          ->insertGetId([
-            'proyecto_id' => $request->input('id'),
-            'grupo_id' => $request->input('grupo_id'),
-            'investigador_id' => $request->input('investigador_id'),
-            'grupo_integrante_id' => $request->input('grupo_integrante_id'),
-            'proyecto_integrante_tipo_id' => $request->input('proyecto_integrante_tipo_id'),
-            'contribucion' => $request->input('contribucion'),
-            'created_at' => Carbon::now(),
-            'updated_at' => Carbon::now(),
-          ]);
-
-
+      if ($request->hasFile('file')) {
         $date = Carbon::now();
         $name = $date->format('Ymd-His') . "-" . Str::random(8) . "." . $request->file('file')->getClientOriginalExtension();
         $this->uploadFile($request->file('file'), "carta-compromiso", $name);
@@ -523,13 +614,11 @@ class PmultiController extends S3Controller {
             'created_at' => Carbon::now(),
             'updated_at' => Carbon::now(),
           ]);
-
-        return ['message' => 'success', 'detail' => 'Integrante añadido'];
-      } else {
-        return ['message' => 'error', 'detail' => 'No puede añadir al mismo integrante 2 veces'];
       }
+
+      return ['message' => 'success', 'detail' => 'Integrante añadido'];
     } else {
-      return ['message' => 'error', 'detail' => 'Error al cargar archivo'];
+      return ['message' => 'error', 'detail' => 'No puede añadir al mismo integrante 2 veces'];
     }
   }
 
