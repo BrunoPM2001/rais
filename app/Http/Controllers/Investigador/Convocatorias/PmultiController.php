@@ -630,6 +630,169 @@ class PmultiController extends S3Controller {
     return ['message' => 'info', 'detail' => 'Integrante eliminado'];
   }
 
+  public function verificar4(Request $request) {
+    $res1 = $this->verificar($request, $request->query('id'));
+    if (!$res1["estado"]) {
+      return $res1;
+    }
+
+    $descripcion = DB::table('Proyecto_descripcion')
+      ->select([
+        'codigo',
+        'detalle'
+      ])
+      ->where('proyecto_id', '=', $request->query('id'))
+      ->whereIn('codigo', [
+        'resumen_ejecutivo',
+        'estado_arte',
+        'planteamiento_problema',
+        'justificacion',
+        'contribucion_impacto',
+        'objetivos',
+        'metodologia_trabajo',
+        'referencias_bibliograficas',
+      ])
+      ->get()
+      ->mapWithKeys(function ($item) {
+        return [$item->codigo => $item->detalle];
+      });
+
+    $palabras_clave = DB::table('Proyecto')
+      ->select([
+        'palabras_clave'
+      ])
+      ->where('id', '=', $request->query('id'))
+      ->first();
+
+    $archivo1 = DB::table('Proyecto_doc')
+      ->select([
+        DB::raw("CONCAT('/minio/proyecto-doc/', archivo) AS url")
+      ])
+      ->where('proyecto_id', '=', $request->query('id'))
+      ->where('tipo', '=', 27)
+      ->where('categoria', '=', 'anexo')
+      ->where('nombre', '=', 'Estado del arte')
+      ->where('estado', '=', 1)
+      ->first();
+
+    $archivo2 = DB::table('Proyecto_doc')
+      ->select([
+        DB::raw("CONCAT('/minio/proyecto-doc/', archivo) AS url")
+      ])
+      ->where('proyecto_id', '=', $request->query('id'))
+      ->where('tipo', '=', 26)
+      ->where('categoria', '=', 'anexo')
+      ->where('nombre', '=', 'Metodología de trabajo')
+      ->where('estado', '=', 1)
+      ->first();
+
+    return [
+      'estado' => true,
+      'descripcion' => $descripcion,
+      'palabras_clave' => $palabras_clave->palabras_clave,
+      'archivos' => [
+        'estado_arte' => $archivo1?->url,
+        'metodologia' => $archivo2?->url,
+      ]
+    ];
+  }
+
+  public function registrar4(Request $request) {
+    DB::table('Proyecto_descripcion')->updateOrInsert(['codigo' => 'resumen_ejecutivo', 'proyecto_id' => $request->input('id')], ['detalle' => $request->input('resumen_ejecutivo')]);
+    DB::table('Proyecto_descripcion')->updateOrInsert(['codigo' => 'estado_arte', 'proyecto_id' => $request->input('id')], ['detalle' => $request->input('estado_arte')]);
+    DB::table('Proyecto_descripcion')->updateOrInsert(['codigo' => 'planteamiento_problema', 'proyecto_id' => $request->input('id')], ['detalle' => $request->input('planteamiento_problema')]);
+    DB::table('Proyecto_descripcion')->updateOrInsert(['codigo' => 'justificacion', 'proyecto_id' => $request->input('id')], ['detalle' => $request->input('justificacion')]);
+    DB::table('Proyecto_descripcion')->updateOrInsert(['codigo' => 'contribucion_impacto', 'proyecto_id' => $request->input('id')], ['detalle' => $request->input('contribucion_impacto')]);
+    DB::table('Proyecto_descripcion')->updateOrInsert(['codigo' => 'objetivos', 'proyecto_id' => $request->input('id')], ['detalle' => $request->input('objetivos')]);
+    DB::table('Proyecto_descripcion')->updateOrInsert(['codigo' => 'metodologia_trabajo', 'proyecto_id' => $request->input('id')], ['detalle' => $request->input('metodologia_trabajo')]);
+    DB::table('Proyecto_descripcion')->updateOrInsert(['codigo' => 'referencias_bibliograficas', 'proyecto_id' => $request->input('id')], ['detalle' => $request->input('referencias_bibliograficas')]);
+
+    if ($request->hasFile('file1')) {
+      $date = Carbon::now();
+      $name = $request->input('id') . "/token-" . $date->format('Ymd-His') . "-" . Str::random(8) . "." . $request->file('file1')->getClientOriginalExtension();
+      $this->uploadFile($request->file('file1'), "proyecto-doc", $name);
+
+      DB::table('Proyecto_doc')
+        ->where('proyecto_id', '=', $request->input('id'))
+        ->where('tipo', '=', 27)
+        ->where('categoria', '=', 'anexo')
+        ->where('nombre', '=', 'Estado del arte')
+        ->update([
+          'estado' => 0
+        ]);
+
+      DB::table('Proyecto_doc')
+        ->insert([
+          'proyecto_id' => $request->input('id'),
+          'tipo' => 27,
+          'categoria' => 'anexo',
+          'nombre' => 'Estado del arte',
+          'archivo' => $name,
+          'estado' => 1,
+          'comentario' => Carbon::now(),
+        ]);
+    } else {
+      $count = DB::table('Proyecto_doc')
+        ->where('proyecto_id', '=', $request->input('id'))
+        ->where('tipo', '=', 27)
+        ->where('categoria', '=', 'anexo')
+        ->where('nombre', '=', 'Estado del arte')
+        ->where('estado', '=', 1)
+        ->count();
+
+      if ($count == 0) {
+        return ['message' => 'error', 'detail' => 'Necesita cargar el primer anexo (estado del arte)'];
+      }
+    }
+
+    if ($request->hasFile('file2')) {
+      $date = Carbon::now();
+      $name = $request->input('id') . "/token-" . $date->format('Ymd-His') . "-" . Str::random(8) . "." . $request->file('file2')->getClientOriginalExtension();
+      $this->uploadFile($request->file('file2'), "proyecto-doc", $name);
+
+      DB::table('Proyecto_doc')
+        ->where('proyecto_id', '=', $request->input('id'))
+        ->where('tipo', '=', 26)
+        ->where('categoria', '=', 'anexo')
+        ->where('nombre', '=', 'Metodología de trabajo')
+        ->update([
+          'estado' => 0
+        ]);
+
+      DB::table('Proyecto_doc')
+        ->insert([
+          'proyecto_id' => $request->input('id'),
+          'tipo' => 26,
+          'categoria' => 'anexo',
+          'nombre' => 'Metodología de trabajo',
+          'archivo' => $name,
+          'estado' => 1,
+          'comentario' => Carbon::now(),
+        ]);
+    } else {
+      $count = DB::table('Proyecto_doc')
+        ->where('proyecto_id', '=', $request->input('id'))
+        ->where('tipo', '=', 26)
+        ->where('categoria', '=', 'anexo')
+        ->where('nombre', '=', 'Metodología de trabajo')
+        ->where('estado', '=', 1)
+        ->count();
+
+      if ($count == 0) {
+        return ['message' => 'error', 'detail' => 'Necesita cargar el segundo anexo (metodología de trabajo)'];
+      }
+    }
+
+    DB::table('Proyecto')
+      ->where('id', '=', $request->input('id'))
+      ->update([
+        'palabras_clave' => $request->input('palabras_clave'),
+        'step' => 4,
+      ]);
+
+    return ['message' => 'success', 'detail' => 'Datos guardados'];
+  }
+
   public function verificar5(Request $request) {
     $res1 = $this->verificar($request, $request->query('id'));
     if (!$res1["estado"]) {
@@ -643,6 +806,7 @@ class PmultiController extends S3Controller {
         'a.id',
         'a.proyecto_integrante_id',
         'a.actividad',
+        'a.justificacion',
         DB::raw("CONCAT(c.apellido1, ' ', c.apellido2, ', ', c.nombres) AS responsable"),
         'a.fecha_inicio',
         'a.fecha_fin',
@@ -669,6 +833,7 @@ class PmultiController extends S3Controller {
         'proyecto_id' => $request->input('id'),
         'proyecto_integrante_id' => $request->input('responsable')["value"],
         'actividad' => $request->input('actividad'),
+        'justificacion' => $request->input('justificacion'),
         'fecha_inicio' => $request->input('fecha_inicio'),
         'fecha_fin' => $request->input('fecha_fin'),
       ]);
@@ -690,6 +855,7 @@ class PmultiController extends S3Controller {
       ->update([
         'proyecto_integrante_id' => $request->input('responsable')["value"],
         'actividad' => $request->input('actividad'),
+        'justificacion' => $request->input('justificacion'),
         'fecha_inicio' => $request->input('fecha_inicio'),
         'fecha_fin' => $request->input('fecha_fin'),
       ]);
@@ -698,6 +864,87 @@ class PmultiController extends S3Controller {
   }
 
   public function verificar6(Request $request) {
+    $res1 = $this->verificar($request, $request->query('id'));
+    if (!$res1["estado"]) {
+      return $res1;
+    }
+
+    $presupuesto = DB::table('Proyecto_presupuesto AS a')
+      ->join('Partida AS b', 'b.id', '=', 'a.partida_id')
+      ->select([
+        'a.id',
+        'b.id AS partida_id',
+        'b.codigo',
+        'b.partida',
+        'b.tipo',
+        'a.monto',
+        'a.justificacion'
+      ])
+      ->where('a.proyecto_id', '=', $request->query('id'))
+      ->orderBy('a.tipo')
+      ->get();
+
+    //  Ids no repetidos
+    $partidaIds = $presupuesto->pluck('partida_id');
+
+    $partidas = DB::table('Partida_proyecto AS a')
+      ->join('Partida AS b', 'b.id', '=', 'a.partida_id')
+      ->select([
+        'b.id AS value',
+        DB::raw("CONCAT(b.codigo, ' - ', b.partida) AS label"),
+        'b.tipo',
+      ])
+      ->where('a.tipo_proyecto', '=', 'PMULTI')
+      ->where('a.postulacion', '=', 1)
+      ->whereNotIn('b.id', $partidaIds)
+      ->get();
+
+    //  Info de presupuesto
+    $info = [
+      'bienes_monto' => 0.00,
+      'bienes_cantidad' => 0,
+      'servicios_monto' => 0.00,
+      'servicios_cantidad' => 0,
+      'otros_monto' => 0.00,
+      'otros_cantidad' => 0
+    ];
+
+    foreach ($presupuesto as $data) {
+      if ($data->tipo == "Bienes") {
+        $info["bienes_monto"] += $data->monto;
+        $info["bienes_cantidad"]++;
+      }
+      if ($data->tipo == "Servicios") {
+        $info["servicios_monto"] += $data->monto;
+        $info["servicios_cantidad"]++;
+      }
+      if ($data->tipo == "Otros") {
+        $info["otros_monto"] += $data->monto;
+        $info["otros_cantidad"]++;
+      }
+    }
+
+    $div = ($info["bienes_monto"] + $info["servicios_monto"] + $info["otros_monto"]);
+
+    if ($div != 0) {
+      $info["bienes_porcentaje"] = number_format(($info["bienes_monto"] / $div) * 100, 2);
+      $info["servicios_porcentaje"] = number_format(($info["servicios_monto"] / $div) * 100, 2);
+      $info["otros_porcentaje"] = number_format(($info["otros_monto"] / $div) * 100, 2);
+    } else {
+      $info["bienes_porcentaje"] = 0;
+      $info["servicios_porcentaje"] = 0;
+      $info["otros_porcentaje"] = 0;
+    }
+
+    return [
+      'estado' => true,
+      'partidas' => $partidas,
+      'presupuesto' => $presupuesto,
+      'info' => $info
+    ];
+  }
+
+  public function verificar8(Request $request) {
     $res1 = $this->verificar($request, $request->query('id'));
     if (!$res1["estado"]) {
       return $res1;

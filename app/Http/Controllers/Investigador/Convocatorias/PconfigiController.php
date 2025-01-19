@@ -606,8 +606,6 @@ class PconfigiController extends S3Controller {
 
 
   public function verificar5(Request $request) {
-    $errores = [];
-
     $res1 = $this->verificar($request, $request->query('id'));
     if (!$res1["estado"]) {
       return $res1;

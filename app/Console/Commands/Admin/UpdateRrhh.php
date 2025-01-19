@@ -53,6 +53,7 @@ class UpdateRrhh extends Command {
               'ser_fech_in_unmsm' => $item->fechaingreso,
               'des_dep_cesantes' => $item->nombre_facultad,
               'ser_cat_act' => $item->abreviatura_categoria,
+              'ser_cod_dep_ces' => $item->codigo_facultad,
               'updated_at' => Carbon::now()
             ]);
         }

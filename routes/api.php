@@ -837,6 +837,7 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
       Route::delete('eliminarIntegrante', [PmultiController::class, 'eliminarIntegrante']);
 
       Route::get('verificar4', [PmultiController::class, 'verificar4']);
+      Route::post('registrar4', [PmultiController::class, 'registrar4']);
 
       Route::get('verificar5', [PmultiController::class, 'verificar5']);
       Route::post('addActividad', [PmultiController::class, 'addActividad']);
@@ -844,6 +845,8 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
       Route::put('editActividad', [PmultiController::class, 'editActividad']);
 
       Route::get('verificar6', [PmultiController::class, 'verificar6']);
+
+
       Route::get('reporte', [PmultiController::class, 'reporte']);
       Route::post('enviar', [PmultiController::class, 'enviar']);
     });
