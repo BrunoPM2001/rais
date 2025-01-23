@@ -75,8 +75,18 @@ class Informe_economicoController extends S3Controller {
         ->first();
 
       if ($rendido->total <= $rendido->rendido) {
+        DB::table('Geco_proyecto')
+          ->where('id', '=', $request->query('id'))
+          ->update([
+            'estado' => 1
+          ]);
         $porcentaje = 100;
       } else {
+        DB::table('Geco_proyecto')
+          ->where('id', '=', $request->query('id'))
+          ->update([
+            'estado' => 0
+          ]);
         $porcentaje = round(($rendido->rendido / $rendido->total) * 100, 2);
       }
 

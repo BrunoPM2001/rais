@@ -41,6 +41,40 @@ class PmultiController extends S3Controller {
     return $listado;
   }
 
+  public function eliminarPropuesta(Request $request) {
+    $proyectoId = $request->query('id');
+
+    if ($proyectoId) {
+      DB::table('Proyecto_descripcion')
+        ->where('proyecto_id', '=', $proyectoId)
+        ->delete();
+
+      DB::table('Proyecto_doc')
+        ->where('proyecto_id', '=', $proyectoId)
+        ->delete();
+
+      DB::table('Proyecto_actividad')
+        ->where('proyecto_id', '=', $proyectoId)
+        ->delete();
+
+      DB::table('Proyecto_presupuesto')
+        ->where('proyecto_id', '=', $proyectoId)
+        ->delete();
+
+      DB::table('Proyecto_integrante')
+        ->where('proyecto_id', '=', $proyectoId)
+        ->delete();
+
+      DB::table('Proyecto')
+        ->where('id', '=', $proyectoId)
+        ->delete();
+
+      return ['message' => 'info', 'detail' => 'Propuesta eliminada correctamente'];
+    } else {
+      return ['message' => 'error', 'detail' => 'No se pudo eliminar la propuesta'];
+    }
+  }
+
   //  Verifica las condiciones para participar
   public function verificar(Request $request, $proyecto_id = null) {
     $errores = [];
@@ -75,6 +109,17 @@ class PmultiController extends S3Controller {
 
     $req3 != 0 && $errores[] = "Usted tiene registradas deudas pendientes que deben ser resueltas para participar en el concurso";
 
+    $req4 = DB::table('Usuario_investigador')
+      ->whereNotNull('cti_vitae')
+      ->where('cti_vitae', '!=', '')
+      ->whereNotNull('codigo_orcid')
+      ->where('codigo_orcid', '!=', '')
+      ->whereNotNull('google_scholar')
+      ->where('google_scholar', '!=', '')
+      ->where('id', '=', $request->attributes->get('token_decoded')->investigador_id)
+      ->count();
+
+    $req4 == 0 && $errores[] = "Necesita tener CTI Vitae, orcid registrado y google scholar para participar";
 
     if (!empty($errores)) {
       return ['estado' => false, 'errores' => $errores];
@@ -944,6 +989,82 @@ class PmultiController extends S3Controller {
     ];
   }
 
+  public function agregarPartida(Request $request) {
+    $date = Carbon::now();
+
+    DB::table('Proyecto_presupuesto')
+      ->insert([
+        'proyecto_id' => $request->input('id'),
+        'partida_id' => $request->input('partida')["value"],
+        'monto' => $request->input('monto'),
+        'justificacion' => $request->input('justificacion'),
+        'created_at' => $date,
+        'updated_at' => $date,
+      ]);
+
+    return ['message' => 'success', 'detail' => 'Partida agregada correctamente'];
+  }
+
+  public function eliminarPartida(Request $request) {
+    DB::table('Proyecto_presupuesto')
+      ->where('id', '=', $request->query('id'))
+      ->delete();
+
+    return ['message' => 'info', 'detail' => 'Partida eliminada correctamente'];
+  }
+
+  public function verificar7(Request $request) {
+    $res1 = $this->verificar($request, $request->query('id'));
+    if (!$res1["estado"]) {
+      return $res1;
+    }
+
+    $docs = DB::table('Proyecto_doc')
+      ->select([
+        'id',
+        'comentario',
+        DB::raw("CONCAT('/minio/proyecto-doc/', archivo) AS url")
+      ])
+      ->where('proyecto_id', '=', $request->query('id'))
+      ->where('tipo', '=', 25)
+      ->where('categoria', '=', 'documento')
+      ->where('nombre', '=', 'Documento de colaboración externa')
+      ->get();
+
+    return ['estado' => true, 'docs' => $docs];
+  }
+
+  public function agregarDoc(Request $request) {
+    if ($request->hasFile('file')) {
+      $date = Carbon::now();
+      $name = $request->input('id') . "/" . $date->format('Ymd-His') . "-" . Str::random(8) . "." . $request->file('file')->getClientOriginalExtension();
+      $this->uploadFile($request->file('file'), "proyecto-doc", $name);
+
+      DB::table('Proyecto_doc')
+        ->insert([
+          'proyecto_id' => $request->input('id'),
+          'tipo' => 25,
+          'categoria' => 'documento',
+          'nombre' => 'Documento de colaboración externa',
+          'comentario' => $request->input('comentario'),
+          'archivo' => $name,
+          'estado' => 1,
+        ]);
+
+      return ['message' => 'success', 'detail' => 'Documento añadido'];
+    } else {
+      return ['message' => 'error', 'detail' => 'Error al cargar archivo'];
+    }
+  }
+
+  public function eliminarDoc(Request $request) {
+    DB::table('Proyecto_doc')
+      ->where('id', '=', $request->query('id'))
+      ->delete();
+
+    return ['message' => 'info', 'detail' => 'Documento eliminado correctamente'];
+  }
+
   public function verificar8(Request $request) {
     $res1 = $this->verificar($request, $request->query('id'));
     if (!$res1["estado"]) {
@@ -955,46 +1076,35 @@ class PmultiController extends S3Controller {
 
   public function reporte(Request $request) {
     $proyecto = DB::table('Proyecto AS a')
-      ->join('Proyecto_descripcion AS b', function (JoinClause $join) {
+      ->leftJoin('Proyecto_descripcion AS b', function (JoinClause $join) {
         $join->on('a.id', '=', 'b.proyecto_id')
           ->where('codigo', '=', 'tipo_investigacion');
       })
-      ->join('Grupo AS c', 'c.id', '=', 'a.grupo_id')
-      ->join('Facultad AS d', 'd.id', '=', 'a.facultad_id')
-      ->join('Area AS e', 'e.id', '=', 'd.area_id')
-      ->join('Linea_investigacion AS f', 'f.id', '=', 'a.linea_investigacion_id')
-      ->join('Ocde AS g', 'g.id', '=', 'a.ocde_id')
-      ->leftJoin('Proyecto_doc AS h', function (JoinClause $join) {
-        $join->on('h.proyecto_id', '=', 'a.id')
-          ->where('h.tipo', '=', 3)
-          ->where('h.estado', '=', 1)
-          ->where('h.categoria', '=', 'tesis')
-          ->where('h.nombre', '=', 'Tesis Doctoral');
+      ->leftJoin('Grupo AS c', 'c.id', '=', 'a.grupo_id')
+      ->leftJoin('Facultad AS d', 'd.id', '=', 'a.facultad_id')
+      ->leftJoin('Area AS e', 'e.id', '=', 'd.area_id')
+      ->leftJoin('Linea_investigacion AS f', 'f.id', '=', 'a.linea_investigacion_id')
+      ->leftJoin('Ocde AS g', 'g.id', '=', 'a.ocde_id')
+      ->leftJoin('Proyecto_descripcion AS j', function (JoinClause $join) {
+        $join->on('j.proyecto_id', '=', 'a.id')
+          ->where('j.codigo', '=', 'area_tematica');
       })
-      ->leftJoin('Proyecto_doc AS i', function (JoinClause $join) {
-        $join->on('i.proyecto_id', '=', 'a.id')
-          ->where('i.tipo', '=', 4)
-          ->where('i.estado', '=', 1)
-          ->where('i.categoria', '=', 'tesis')
-          ->where('i.nombre', '=', 'Tesis Maestría');
+      ->leftJoin('Proyecto_descripcion AS k', function (JoinClause $join) {
+        $join->on('k.proyecto_id', '=', 'a.id')
+          ->where('k.codigo', '=', 'objetivo_ods');
       })
+      ->leftJoin('Ods AS l', 'l.id', '=', 'k.detalle')
       ->select([
-        'a.titulo',
         'c.grupo_nombre',
-        'e.nombre AS area',
         'd.nombre AS facultad',
-        'f.nombre AS linea',
-        'b.detalle AS tipo_investigacion',
-        'a.localizacion',
+        'e.nombre AS area',
+        'j.detalle AS area_tematica',
         'g.linea AS ocde',
-        DB::raw("CASE
-          WHEN h.archivo IS NULL THEN 'No'
-          ELSE 'Sí'
-        END AS url1"),
-        DB::raw("CASE
-          WHEN i.archivo IS NULL THEN 'No'
-          ELSE 'Sí'
-        END AS url2"),
+        'a.palabras_clave',
+        'a.titulo',
+        'f.nombre AS linea',
+        'l.descripcion AS ods',
+        'a.localizacion',
       ])
       ->where('a.id', '=', $request->query('id'))
       ->first();
@@ -1010,54 +1120,81 @@ class PmultiController extends S3Controller {
         return [$item->codigo => $item->detalle];
       });
 
-    $responsable = DB::table('Proyecto_integrante AS a')
-      ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
-      ->join('Facultad AS c', 'c.id', '=', 'b.facultad_id')
-      ->join('Dependencia AS d', 'd.id', '=', 'b.dependencia_id')
+    $docs = DB::table('Proyecto_doc')
       ->select([
-        DB::raw("CONCAT(b.apellido1, ' ', b.apellido2, ', ', b.nombres) AS nombre"),
-        'b.codigo',
-        'd.dependencia',
-        'c.nombre AS facultad',
-        'b.cti_vitae',
-        'b.codigo_orcid',
-        'b.scopus_id',
-        'b.google_scholar',
+        'comentario',
+        'archivo',
       ])
-      ->where('a.proyecto_id', '=', $request->query('id'))
-      ->where('a.condicion', '=', 'Responsable')
-      ->first();
+      ->where('proyecto_id', '=', $request->query('id'))
+      ->where('tipo', '=', 25)
+      ->where('nombre', '=', 'Documento de colaboración externa')
+      ->get();
 
     $integrantes = DB::table('Proyecto_integrante AS a')
       ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
       ->join('Proyecto_integrante_tipo AS c', 'c.id', '=', 'a.proyecto_integrante_tipo_id')
+      ->leftJoin('Facultad AS d', 'd.id', '=', 'b.facultad_id')
+      ->leftJoin('File AS e', function (JoinClause $join) {
+        $join->on('e.tabla_id', '=', 'a.id')
+          ->where('e.tabla', '=', 'Proyecto_integrante')
+          ->where('e.bucket', '=', 'carta-compromiso')
+          ->where('e.recurso', '=', 'CARTA_COMPROMISO')
+          ->where('e.estado', '=', 20);
+      })
+      ->leftJoin('Grupo_integrante AS f', function (JoinClause $join) {
+        $join->on('f.investigador_id', '=', 'b.id')
+          ->whereNot('f.condicion', 'LIKE', 'Ex %');
+      })
+      ->leftJoin('Grupo AS g', 'g.id', '=', 'f.grupo_id')
       ->select([
-        'c.nombre AS condicion',
-        DB::raw("CONCAT(b.apellido1, ' ', b.apellido2, ', ', b.nombres) AS integrante"),
+        'a.id',
+        DB::raw("CONCAT(b.apellido1, ' ', b.apellido2, ', ', b.nombres) AS nombre"),
         'b.tipo',
-        'a.tipo_tesis',
-        'a.titulo_tesis',
+        'c.nombre AS tipo_integrante',
+        'd.nombre AS facultad',
+        'g.grupo_nombre',
+        DB::raw("CASE
+          WHEN e.key IS NOT NULL THEN 'Sí'
+          ELSE 'No' END AS compromiso")
+      ])
+      ->where('a.proyecto_id', '=', $request->query('id'))
+      ->groupBy('b.id')
+      ->get();
+
+    $actividades = DB::table('Proyecto_actividad AS a')
+      ->join('Proyecto_integrante AS b', 'b.id', '=', 'a.proyecto_integrante_id')
+      ->join('Usuario_investigador AS c', 'c.id', '=', 'b.investigador_id')
+      ->select([
+        'a.id',
+        'a.actividad',
+        'a.justificacion',
+        DB::raw("CONCAT(c.apellido1, ' ', c.apellido2, ', ', c.nombres) AS responsable"),
+        'a.fecha_inicio',
+        'a.fecha_fin',
       ])
       ->where('a.proyecto_id', '=', $request->query('id'))
       ->get();
 
-    $actividades = DB::table('Proyecto_actividad')
+    $presupuesto = DB::table('Proyecto_presupuesto AS a')
+      ->join('Partida AS b', 'b.id', '=', 'a.partida_id')
       ->select([
-        'id',
-        'actividad',
-        'fecha_inicio',
-        'fecha_fin',
-        'duracion'
+        'a.id',
+        'b.partida',
+        'a.justificacion',
+        'b.tipo',
+        'a.monto',
       ])
-      ->where('proyecto_id', '=', $request->query('id'))
+      ->where('a.proyecto_id', '=', $request->query('id'))
+      ->orderBy('a.tipo')
       ->get();
 
-    $pdf = Pdf::loadView('investigador.convocatorias.psinfipu', [
+    $pdf = Pdf::loadView('investigador.convocatorias.pmulti', [
       'proyecto' => $proyecto,
-      'responsable' => $responsable,
+      'docs' => $docs,
       'integrantes' => $integrantes,
       'detalles' => $detalles,
       'actividades' => $actividades,
+      'presupuesto' => $presupuesto,
     ]);
     return $pdf->stream();
   }

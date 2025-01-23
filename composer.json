@@ -19,7 +19,7 @@
     "laravel/tinker": "^2.8",
     "maatwebsite/excel": "^3.1",
     "phpoffice/phpword": "^1.2",
-    "yajra/laravel-oci8": "^10"
+    "simplesoftwareio/simple-qrcode": "*"
   },
   "require-dev": {
     "fakerphp/faker": "^1.9.1",

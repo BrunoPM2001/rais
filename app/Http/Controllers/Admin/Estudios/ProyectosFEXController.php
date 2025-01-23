@@ -383,4 +383,79 @@ class ProyectosFEXController extends S3Controller {
 
     return ['message' => 'info', 'detail' => 'Archivo eliminado correctamente'];
   }
+
+  public function detalle(Request $request) {
+    $proyecto = DB::table('Proyecto AS a')
+      ->select([
+        'a.codigo_proyecto',
+        'a.estado',
+        'a.resolucion_rectoral',
+        'a.resolucion_fecha',
+        'a.comentario',
+        'a.observaciones_admin'
+      ])
+      ->where('a.id', '=', $request->query('id'))
+      ->first();
+
+    return $proyecto;
+  }
+
+  public function reporte(Request $request) {
+    $proyecto = DB::table('Proyecto')
+      ->select([
+        'codigo_proyecto',
+        'titulo',
+        'linea_investigacion_id',
+        'ocde_id',
+        'aporte_unmsm',
+        'aporte_no_unmsm',
+        'financiamiento_fuente_externa',
+        'entidad_asociada',
+        'resolucion_rectoral',
+        'resolucion_fecha',
+        'fecha_inicio',
+        'fecha_fin',
+        'palabras_clave',
+        'estado',
+        'updated_at'
+      ])
+      ->where('id', '=', $request->query('id'))
+      ->first();
+
+    $extras = DB::table('Proyecto_descripcion')
+      ->select([
+        'codigo',
+        'detalle'
+      ])
+      ->where('proyecto_id', '=', $request->query('id'))
+      ->whereIn('codigo', [
+        'moneda_tipo',
+        'fuente_financiadora',
+        'otra_fuente',
+        'web_fuente',
+        'participacion_unmsm',
+        'pais',
+        'resumen',
+        'objetivos',
+        'duracion_annio',
+        'duracion_mes',
+        'duracion_dia'
+      ])
+      ->get()
+      ->mapWithKeys(function ($item) {
+        return [$item->codigo => $item->detalle];
+      });
+
+    $documentos = DB::table('Proyecto_fex_doc AS a')
+      ->select([
+        'id',
+        'doc_tipo',
+        'nombre',
+        'comentario',
+        'fecha',
+        DB::raw("CONCAT('/minio/', bucket, '/', a.key) AS url")
+      ])
+      ->where('proyecto_id', '=', $request->query('id'))
+      ->get();
+  }
 }

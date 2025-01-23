@@ -1269,4 +1269,80 @@ class GrupoController extends S3Controller {
 
     return ['message' => 'info', 'detail' => 'Laboratorio eliminado correctamente'];
   }
+
+  public function excluirMiembro(Request $request) {
+    DB::table('Grupo_integrante')
+      ->where('id', '=', $request->input('id'))
+      ->update([
+        'condicion' => "Ex " . $request->input('condicion'),
+        'fecha_exclusion' => $request->input('fecha_exclusion'),
+        'resolucion_exclusion' => $request->input('resolucion_exclusion'),
+        'resolucion_exclusion_fecha' => $request->input('resolucion_exclusion_fecha'),
+        'resolucion_oficina_exclusion' => $request->input('resolucion_oficina_exclusion'),
+        'observacion_excluir' => $request->input('observacion_excluir'),
+        'estado' => "-2"
+      ]);
+
+    return [
+      'message' => 'info',
+      'detail' => 'Miembro excluído exitosamente'
+    ];
+  }
+
+  public function visualizarMiembro(Request $request) {
+    $informacion = DB::table('Grupo_integrante AS a')
+      ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
+      ->leftJoin('Dependencia AS c', 'c.id', '=', 'b.dependencia_id')
+      ->leftJoin('Facultad AS d', 'd.id', '=', 'b.facultad_id')
+      ->select([
+        DB::raw("CONCAT(b.apellido1, ' ', b.apellido2, ', ', b.nombres) AS nombre"),
+        'b.codigo',
+        'b.doc_numero',
+        'b.docente_categoria',
+        'c.dependencia',
+        'd.nombre AS facultad',
+        'b.codigo_orcid',
+        'b.researcher_id',
+        'b.scopus_id',
+        'b.biografia',
+        'a.resolucion_oficina',
+        'a.fecha_inclusion',
+        'a.resolucion',
+        'a.resolucion_fecha',
+        'a.observacion',
+        //  Exclusion
+        'a.resolucion_oficina_exclusion',
+        'a.fecha_exclusion',
+        'a.resolucion_exclusion',
+        'a.resolucion_exclusion_fecha',
+        'a.observacion_excluir',
+        //  Para adherente
+        'b.tipo_investigador_estado',
+        'b.tipo',
+        'b.telefono_movil',
+        'b.telefono_casa',
+        'b.telefono_trabajo'
+      ])
+      ->where('a.id', '=', $request->query('grupo_integrante_id'))
+      ->first();
+
+    $proyectos = DB::table('Grupo_integrante AS a')
+      ->join('Proyecto_integrante AS b', 'b.grupo_integrante_id', '=', 'a.id')
+      ->join('Proyecto AS c', 'c.id', '=', 'b.proyecto_id')
+      ->leftJoin('Proyecto_integrante_tipo AS d', 'd.id', '=', 'b.proyecto_integrante_tipo_id')
+      ->select([
+        'c.codigo_proyecto',
+        'c.tipo_proyecto',
+        'c.titulo',
+        'd.nombre AS condicion',
+        'c.periodo',
+        'c.estado'
+      ])
+      ->where('a.id', '=', $request->query('grupo_integrante_id'))
+      ->where('c.estado', '=', 1)
+      ->groupBy('c.id')
+      ->get();
+
+    return ['informacion' => $informacion, 'proyectos' => $proyectos];
+  }
 }

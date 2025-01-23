@@ -49,6 +49,7 @@ use App\Http\Controllers\Investigador\Actividades\ProyectoMultidisciplinarioCont
 use App\Http\Controllers\Investigador\Actividades\ProyectoSinFinanciamientoController;
 use App\Http\Controllers\Investigador\Actividades\PublicacionLibrosUniController;
 use App\Http\Controllers\Investigador\Actividades\TalleresController;
+use App\Http\Controllers\Investigador\Constancias\ReporteController as ConstanciasReporteController;
 use App\Http\Controllers\Investigador\Convocatorias\PconfigiController;
 use App\Http\Controllers\Investigador\Convocatorias\PicvController;
 use App\Http\Controllers\Investigador\Convocatorias\PinvposController;
@@ -200,6 +201,9 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
       Route::get('datosPaso1', [ProyectosFEXController::class, 'datosPaso1']);
       Route::get('datosPaso2', [ProyectosFEXController::class, 'datosPaso2']);
       Route::get('datosPaso3', [ProyectosFEXController::class, 'datosPaso3']);
+
+      //  Detalles
+      Route::get('detalle', [ProyectosFEXController::class, 'detalle']);
     });
 
     //  Informe técnico
@@ -348,6 +352,10 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
     Route::prefix('comprobantes')->group(function () {
       Route::get('listadoProyectos', [GestionComprobantesController::class, 'listadoProyectos']);
       Route::get('detalleProyecto', [GestionComprobantesController::class, 'detalleProyecto']);
+
+      Route::get('reportePresupuesto', [GestionComprobantesController::class, 'reportePresupuesto']);
+      Route::get('detalleGasto', [GestionComprobantesController::class, 'detalleGasto']);
+
       Route::get('listadoComprobantes', [GestionComprobantesController::class, 'listadoComprobantes']);
       Route::get('listadoPartidasComprobante', [GestionComprobantesController::class, 'listadoPartidasComprobante']);
       Route::put('updateEstadoComprobante', [GestionComprobantesController::class, 'updateEstadoComprobante']);
@@ -723,12 +731,26 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
     Route::get('reporteGrupo', [InvestigadorGrupoController::class, 'reporteGrupo']);
   });
 
+  //  Constancias
+  Route::prefix('constancias')->group(function () {
+    Route::get('checkTiposConstancia', [ConstanciasReporteController::class, 'checkTiposConstancia']);
+    Route::get('getConstanciaPuntajePublicaciones', [ConstanciasReporteController::class, 'getConstanciaPuntajePublicaciones']);
+    Route::get('getConstanciaPublicacionesCientificas', [ConstanciasReporteController::class, 'getConstanciaPublicacionesCientificas']);
+    Route::get('getConstanciaGrupoInvestigacion', [ConstanciasReporteController::class, 'getConstanciaGrupoInvestigacion']);
+    Route::get('getConstanciaEstudiosInvestigacion', [ConstanciasReporteController::class, 'getConstanciaEstudiosInvestigacion']);
+    Route::get('getConstanciaEquipamientoCientifico', [ConstanciasReporteController::class, 'getConstanciaEquipamientoCientifico']);
+    Route::get('getConstanciaNoDeuda', [ConstanciasReporteController::class, 'getConstanciaNoDeuda']);
+    Route::get('getConstanciaTesisAsesoria', [ConstanciasReporteController::class, 'getConstanciaTesisAsesoria']);
+    Route::get('getConstanciaCapituloLibro', [ConstanciasReporteController::class, 'getConstanciaCapituloLibro']);
+  });
+
   //  Convocatorias
   Route::prefix('convocatorias')->group(function () {
 
     Route::prefix('pconfigi')->group(function () {
       Route::get('listado', [PconfigiController::class, 'listado']);
       Route::get('validarDatos', [PconfigiController::class, 'validarDatos']);
+      Route::delete('eliminarPropuesta', [PconfigiController::class, 'eliminarPropuesta']);
 
       Route::get('verificar', [PconfigiController::class, 'verificar']);
 
@@ -818,6 +840,7 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
 
     Route::prefix('pmulti')->group(function () {
       Route::get('listado', [PmultiController::class, 'listado']);
+      Route::delete('eliminarPropuesta', [PmultiController::class, 'eliminarPropuesta']);
 
       Route::get('verificar', [PmultiController::class, 'verificar']);
 
@@ -845,8 +868,14 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
       Route::put('editActividad', [PmultiController::class, 'editActividad']);
 
       Route::get('verificar6', [PmultiController::class, 'verificar6']);
+      Route::post('agregarPartida', [PmultiController::class, 'agregarPartida']);
+      Route::delete('eliminarPartida', [PmultiController::class, 'eliminarPartida']);
 
+      Route::get('verificar7', [PmultiController::class, 'verificar7']);
+      Route::post('agregarDoc', [PmultiController::class, 'agregarDoc']);
+      Route::delete('eliminarDoc', [PmultiController::class, 'eliminarDoc']);
 
+      Route::get('verificar8', [PmultiController::class, 'verificar8']);
       Route::get('reporte', [PmultiController::class, 'reporte']);
       Route::post('enviar', [PmultiController::class, 'enviar']);
     });

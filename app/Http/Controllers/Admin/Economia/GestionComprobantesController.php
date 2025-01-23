@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Admin\Economia;
 
 use App\Http\Controllers\S3Controller;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
+use Illuminate\Database\Query\JoinClause;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -91,7 +93,195 @@ class GestionComprobantesController extends S3Controller {
       ->where('a.id', '=', $request->query('geco_id'))
       ->first();
 
-    return $detalle;
+    $porcentaje = 0;
+    $rendido = DB::table('Geco_proyecto_presupuesto AS a')
+      ->join('Partida AS b', 'b.id', '=', 'a.partida_id')
+      ->select([
+        DB::raw("SUM(a.monto) AS total"),
+        DB::raw("SUM(a.monto_rendido) AS rendido")
+      ])
+      ->whereIn('b.tipo', ['Bienes', 'Servicios'])
+      ->where('geco_proyecto_id', '=', $request->query('geco_id'))
+      ->first();
+
+    if ($rendido->total <= $rendido->rendido) {
+      $porcentaje = 100;
+    } else {
+      $porcentaje = round(($rendido->rendido / $rendido->total) * 100, 2);
+    }
+
+    $partidas = DB::table('Geco_proyecto_presupuesto AS a')
+      ->join('Partida AS b', 'b.id', '=', 'a.partida_id')
+      ->where('a.geco_proyecto_id', '=', $request->query('geco_id'))
+      ->where('b.tipo', '!=', 'Otros')
+      ->count();
+
+    $comprobantes_aprobados = DB::table('Geco_documento')
+      ->where('geco_proyecto_id', '=', $request->query('geco_id'))
+      ->where('estado', '=', 1)
+      ->count();
+
+    $transferencias_aprobadas = DB::table('Geco_operacion')
+      ->where('geco_proyecto_id', '=', $request->query('geco_id'))
+      ->where('estado', '=', 1)
+      ->count();
+
+
+
+    return [
+      'tipo_proyecto' => $detalle->tipo_proyecto,
+      'titulo' => $detalle->titulo,
+      'codigo_proyecto' => $detalle->codigo_proyecto,
+      'estado' => $detalle->estado,
+      'responsable' => $detalle->responsable,
+      'email3' => $detalle->email3,
+      'telefono_movil' => $detalle->telefono_movil,
+      'rendido' => $porcentaje,
+      'partidas' => $partidas,
+      'comprobantes' => $comprobantes_aprobados,
+      'transferencias' => $transferencias_aprobadas
+    ];
+  }
+
+  public function reportePresupuesto(Request $request) {
+    $proyecto_id = DB::table('Geco_proyecto')
+      ->select([
+        'proyecto_id AS id'
+      ])
+      ->where('id', '=', $request->query('id'))
+      ->first();
+
+    $proyecto = DB::table('Proyecto AS a')
+      ->join('Proyecto_integrante AS b', function (JoinClause $join) {
+        $join->on('a.id', '=', 'b.proyecto_id')
+          ->where('condicion', '=', 'Responsable');
+      })
+      ->join('Usuario_investigador AS c', 'b.investigador_id', '=', 'c.id')
+      ->leftJoin('Facultad AS d', 'a.facultad_id', '=', 'd.id')
+      ->select([
+        'a.fecha_inscripcion',
+        'a.periodo',
+        'a.tipo_proyecto',
+        'a.codigo_proyecto',
+        'a.titulo',
+        DB::raw("COALESCE(d.nombre, 'No figura') AS facultad"),
+        DB::raw("CONCAT(c.apellido1, ' ', c.apellido2, ' ', c.nombres) AS responsable"),
+        'c.email3',
+        'c.telefono_movil',
+      ])
+      ->where('a.id', '=', $proyecto_id->id)
+      ->first();
+
+    $presupuesto = DB::table('Geco_proyecto AS a')
+      ->join('Geco_proyecto_presupuesto AS b', 'b.geco_proyecto_id', '=', 'a.id')
+      ->join('Partida AS c', 'c.id', '=', 'b.partida_id')
+      ->leftJoin('Proyecto_presupuesto AS d', function (JoinClause $join) use ($proyecto_id) {
+        $join->on('d.partida_id', '=', 'b.partida_id')
+          ->where('d.proyecto_id', '=', $proyecto_id->id);
+      })
+      ->select([
+        'b.id',
+        'c.tipo',
+        'c.partida',
+        DB::raw("COALESCE(d.monto, 0) AS monto_original"),
+        DB::raw("COALESCE(b.monto, 0) AS monto_modificado"),
+        DB::raw("(b.monto_rendido - b.monto_excedido) AS monto_rendido"),
+        DB::raw("(b.monto - b.monto_rendido + b.monto_excedido) AS saldo_rendicion"),
+        'b.monto_excedido'
+      ])
+      ->where('a.proyecto_id', '=', $proyecto_id->id)
+      ->where('c.tipo', '!=', 'Otros')
+      ->orderBy('c.tipo')
+      ->get()
+      ->groupBy('tipo');
+
+    //  Estado
+    $estado = '';
+    $rendido = DB::table('Geco_proyecto_presupuesto AS a')
+      ->join('Partida AS b', 'b.id', '=', 'a.partida_id')
+      ->select([
+        DB::raw("SUM(a.monto) AS total"),
+        DB::raw("SUM(a.monto_rendido) AS rendido")
+      ])
+      ->whereIn('b.tipo', ['Bienes', 'Servicios'])
+      ->where('geco_proyecto_id', '=', $request->query('id'))
+      ->first();
+
+    if ($rendido->total <= $rendido->rendido) {
+      $estado = 'COMPLETADO';
+    } else {
+      $estado = 'PENDIENTE';
+    }
+
+    $pdf = Pdf::loadView('investigador.informes.economico.hoja_resumen', ['proyecto' => $proyecto, 'presupuesto' => $presupuesto, 'estado' => $estado]);
+    return $pdf->stream();
+  }
+
+  public function detalleGasto(Request $request) {
+    $proyecto_id = DB::table('Geco_proyecto')
+      ->select([
+        'proyecto_id AS id'
+      ])
+      ->where('id', '=', $request->query('id'))
+      ->first();
+
+    $proyecto = DB::table('Proyecto AS a')
+      ->join('Proyecto_integrante AS b', function (JoinClause $join) {
+        $join->on('a.id', '=', 'b.proyecto_id')
+          ->where('condicion', '=', 'Responsable');
+      })
+      ->join('Usuario_investigador AS c', 'b.investigador_id', '=', 'c.id')
+      ->leftJoin('Grupo AS d', 'd.id', '=', 'a.grupo_id')
+      ->leftJoin('Facultad AS e', 'e.id', '=', 'd.facultad_id')
+      ->select([
+        'd.grupo_nombre',
+        'e.nombre AS facultad',
+        'a.titulo',
+        DB::raw("CONCAT(c.apellido1, ' ', c.apellido2, ' ', c.nombres) AS responsable"),
+        'c.email3',
+        'c.telefono_movil',
+        'a.codigo_proyecto',
+      ])
+      ->where('a.id', '=', $proyecto_id->id)
+      ->first();
+
+    $bienes = DB::table('Geco_documento AS a')
+      ->join('Geco_documento_item AS b', 'b.geco_documento_id', '=', 'a.id')
+      ->join('Partida AS c', 'c.id', '=', 'b.partida_id')
+      ->select([
+        'a.fecha',
+        'a.tipo',
+        'a.numero',
+        'c.codigo',
+        'c.partida',
+        'b.total'
+      ])
+      ->where('a.geco_proyecto_id', '=', $request->query('id'))
+      ->where('c.tipo', '=', 'Bienes')
+      ->where('a.estado', '=', 1)
+      ->get();
+
+    $servicios = DB::table('Geco_documento AS a')
+      ->join('Geco_documento_item AS b', 'b.geco_documento_id', '=', 'a.id')
+      ->join('Partida AS c', 'c.id', '=', 'b.partida_id')
+      ->select([
+        'a.fecha',
+        'a.tipo',
+        'a.numero',
+        'c.codigo',
+        'c.partida',
+        'b.total'
+      ])
+      ->where('a.geco_proyecto_id', '=', $request->query('id'))
+      ->where('c.tipo', '=', 'Servicios')
+      ->where('a.estado', '=', 1)
+      ->get();
+
+    $pdf = Pdf::loadView(
+      'investigador.informes.economico.detalle_gasto',
+      ['proyecto' => $proyecto, 'bienes' => $bienes, 'servicios' => $servicios]
+    );
+    return $pdf->stream();
   }
 
   public function listadoComprobantes(Request $request) {
