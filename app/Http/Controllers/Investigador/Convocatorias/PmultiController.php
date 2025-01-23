@@ -1200,6 +1200,7 @@ class PmultiController extends S3Controller {
   }
 
   public function enviar(Request $request) {
+
     $count = DB::table('Proyecto')
       ->where('id', '=', $request->input('id'))
       ->where('estado', '=', 6)

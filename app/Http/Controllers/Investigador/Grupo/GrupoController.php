@@ -1345,4 +1345,53 @@ class GrupoController extends S3Controller {
 
     return ['informacion' => $informacion, 'proyectos' => $proyectos];
   }
+
+  public function listarProyectos(Request $request) {
+    $proyectos = DB::table('Grupo_integrante AS a')
+      ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
+      ->join('Proyecto_integrante AS c', 'c.investigador_id', '=', 'b.id')
+      ->join('Proyecto_integrante_tipo AS d', 'd.id', '=', 'c.proyecto_integrante_tipo_id')
+      ->join('Proyecto AS e', 'e.id', '=', 'c.proyecto_id')
+      ->select([
+        'e.id',
+        'e.tipo_proyecto',
+        'e.codigo_proyecto',
+        'e.titulo',
+        DB::raw("CONCAT(b.apellido1, ' ', b.apellido2, ', ', b.nombres) AS responsable"),
+        'e.periodo',
+        'e.resolucion_rectoral',
+        DB::raw("CASE(e.autorizacion_grupo)
+            WHEN 1 THEN 'Sí'
+          ELSE 'No' END AS autorizacion_grupo"),
+        DB::raw("CASE(e.estado)
+            WHEN -1 THEN 'Eliminado'
+            WHEN 0 THEN 'No aprobado'
+            WHEN 1 THEN 'Aprobado'
+            WHEN 3 THEN 'En evaluacion'
+            WHEN 5 THEN 'Enviado'
+            WHEN 6 THEN 'En proceso'
+            WHEN 7 THEN 'Anulado'
+            WHEN 8 THEN 'Sustentado'
+            WHEN 9 THEN 'En ejecución'
+            WHEN 10 THEN 'Ejecutado'
+            WHEN 11 THEN 'Concluído'
+          ELSE 'Sin estado' END AS estado"),
+      ])
+      ->where('a.grupo_id', '=', $request->query('id'))
+      ->whereNot('a.condicion', 'LIKE', 'Ex%')
+      ->whereIn('d.nombre', ['Responsable'])
+      ->get();
+
+    return $proyectos;
+  }
+
+  public function autorizarProyecto(Request $request) {
+    DB::table('Proyecto')
+      ->where('id', '=', $request->input('id'))
+      ->update([
+        'autorizacion_grupo' => $request->input('autorizacion_grupo')
+      ]);
+
+    return ['message' => 'info', 'detail' => 'Cambios guardados correctamente'];
+  }
 }
