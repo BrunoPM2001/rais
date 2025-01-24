@@ -94,6 +94,7 @@ class PicvController extends Controller {
 
     return $detalles;
   }
+
   public function actividades(Request $request) {
 
     $actividades = DB::table('Proyecto_actividad')
@@ -108,6 +109,7 @@ class PicvController extends Controller {
 
     return $actividades;
   }
+
   public function documentos(Request $request) {
 
     $documentos = DB::table('Proyecto_doc')
@@ -235,7 +237,7 @@ class PicvController extends Controller {
       ->where('proyecto_id', '=', $request->query('proyecto_id'))
       ->get();
 
-    $pdf = Pdf::loadView('investigador.convocatorias.psinfipu', [
+    $pdf = Pdf::loadView('investigador.convocatorias.picv', [
       'proyecto' => $proyecto,
       'responsable' => $responsable,
       'integrantes' => $integrantes,
