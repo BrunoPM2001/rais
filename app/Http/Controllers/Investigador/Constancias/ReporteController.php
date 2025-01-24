@@ -369,17 +369,24 @@ class ReporteController extends S3Controller {
       ->orderBy('a.titulo') // Finalmente, por título de publicación
       ->get();
 
+    $date = Carbon::now();
+    $nameFile = $date->format('YmdHis') . Str::random(8) . '.pdf';
 
-    $pdf = Pdf::loadView(
-      'admin.constancias.publicacionesCientificasPDF',
-      [
-        'docente' => $docente[0],
-        'publicaciones' => $publicaciones,
-        'patentes' => $patentes
-      ]
-    );
+    $qrUrl = 'http://localhost:9000/repo/' . $nameFile;
+    $qrCode = base64_encode(QrCode::format('png')->size(300)->generate($qrUrl));
 
-    return $pdf->stream();
+    $pdf = Pdf::loadView('admin.constancias.publicacionesCientificas', [
+      'docente' => $docente[0],
+      'publicaciones' => $publicaciones,
+      'patentes' => $patentes,
+      'file' => $nameFile,
+      'qrCode' => $qrCode
+    ]);
+
+    $file = $pdf->output();
+
+    $this->loadFile($file, 'repo', $nameFile);
+    return $nameFile;
   }
 
   public function getConstanciaGrupoInvestigacion(Request $request) {
@@ -419,6 +426,7 @@ class ReporteController extends S3Controller {
       'file' => $nameFile,
       'qrCode' => $qrCode
     ]);
+
     $file = $pdf->output();
 
     $this->loadFile($file, 'repo', $nameFile);

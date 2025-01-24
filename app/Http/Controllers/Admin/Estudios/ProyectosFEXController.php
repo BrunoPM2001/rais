@@ -179,6 +179,23 @@ class ProyectosFEXController extends S3Controller {
     return $documentos;
   }
 
+  public function datosPaso4(Request $request) {
+    $integrantes = DB::table('Proyecto_integrante AS a')
+      ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
+      ->join('Proyecto_integrante_tipo AS c', 'c.id', '=', 'a.proyecto_integrante_tipo_id')
+      ->join('Facultad AS d', 'd.id', '=', 'b.facultad_id')
+      ->select([
+        'c.nombre AS tipo_integrante',
+        DB::raw("CONCAT(b.apellido1, ' ', b.apellido2, ', ', b.nombres) AS nombre"),
+        'b.doc_numero',
+        'd.nombre AS facultad'
+      ])
+      ->where('a.proyecto_id', '=', $request->query('id'))
+      ->get();
+
+    return $integrantes;
+  }
+
   public function registrarPaso1(Request $request) {
     $date = Carbon::now();
     $id = 0;
@@ -398,6 +415,35 @@ class ProyectosFEXController extends S3Controller {
       ->first();
 
     return $proyecto;
+  }
+
+  public function pasos(Request $request) {
+    $paso1 = $this->datosPaso1($request);
+    $paso2 = $this->datosPaso2($request);
+    $paso3 = $this->datosPaso3($request);
+    $paso4 = $this->datosPaso4($request);
+
+    return [
+      'paso1' => $paso1,
+      'paso2' => $paso2,
+      'paso3' => $paso3,
+      'paso4' => $paso4,
+    ];
+  }
+
+  public function updateDetalle(Request $request) {
+    DB::table('Proyecto')
+      ->where('id', '=', $request->input('id'))
+      ->update([
+        'codigo_proyecto' => $request->input('codigo_proyecto'),
+        'estado' => $request->input('estado'),
+        'resolucion_rectoral' => $request->input('resolucion_rectoral'),
+        'resolucion_fecha' => $request->input('resolucion_fecha'),
+        'comentario' => $request->input('comentario'),
+        'observaciones_admin' => $request->input('observaciones_admin'),
+      ]);
+
+    return ['message' => 'info', 'detail' => 'Información del proyecto actualizada'];
   }
 
   public function reporte(Request $request) {

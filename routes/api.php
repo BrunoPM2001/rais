@@ -204,6 +204,8 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
 
       //  Detalles
       Route::get('detalle', [ProyectosFEXController::class, 'detalle']);
+      Route::put('updateDetalle', [ProyectosFEXController::class, 'updateDetalle']);
+      Route::get('pasos', [ProyectosFEXController::class, 'pasos']);
     });
 
     //  Informe técnico
