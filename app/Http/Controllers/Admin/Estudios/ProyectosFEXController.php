@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Admin\Estudios;
 
 use App\Http\Controllers\S3Controller;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
+use Illuminate\Database\Query\JoinClause;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -447,25 +449,30 @@ class ProyectosFEXController extends S3Controller {
   }
 
   public function reporte(Request $request) {
-    $proyecto = DB::table('Proyecto')
+    $proyecto = DB::table('Proyecto AS a')
+      ->leftJoin('Linea_investigacion AS b', 'b.id', '=', 'a.linea_investigacion_id')
+      ->leftJoin('Ocde AS c', 'c.id', '=', 'a.ocde_id')
+      ->leftJoin('Proyecto_descripcion AS d', function (JoinClause $join) {
+        $join->on('d.proyecto_id', '=', 'a.id')
+          ->where('d.codigo', '=', 'pais');
+      })
+      ->leftJoin('Pais AS e', 'e.code', '=', 'd.detalle')
       ->select([
-        'codigo_proyecto',
-        'titulo',
-        'linea_investigacion_id',
-        'ocde_id',
-        'aporte_unmsm',
-        'aporte_no_unmsm',
-        'financiamiento_fuente_externa',
-        'entidad_asociada',
-        'resolucion_rectoral',
-        'resolucion_fecha',
-        'fecha_inicio',
-        'fecha_fin',
-        'palabras_clave',
-        'estado',
-        'updated_at'
+        'a.codigo_proyecto',
+        'a.titulo',
+        'b.nombre AS linea_investigacion',
+        'c.linea AS linea_ocde',
+        'a.aporte_unmsm',
+        'a.aporte_no_unmsm',
+        'e.name AS pais',
+        'a.resolucion_rectoral',
+        'a.palabras_clave',
+        'a.fecha_inicio',
+        'a.fecha_fin',
+        'a.estado',
+        'a.updated_at'
       ])
-      ->where('id', '=', $request->query('id'))
+      ->where('a.id', '=', $request->query('id'))
       ->first();
 
     $extras = DB::table('Proyecto_descripcion')
@@ -474,19 +481,6 @@ class ProyectosFEXController extends S3Controller {
         'detalle'
       ])
       ->where('proyecto_id', '=', $request->query('id'))
-      ->whereIn('codigo', [
-        'moneda_tipo',
-        'fuente_financiadora',
-        'otra_fuente',
-        'web_fuente',
-        'participacion_unmsm',
-        'pais',
-        'resumen',
-        'objetivos',
-        'duracion_annio',
-        'duracion_mes',
-        'duracion_dia'
-      ])
       ->get()
       ->mapWithKeys(function ($item) {
         return [$item->codigo => $item->detalle];
@@ -494,14 +488,35 @@ class ProyectosFEXController extends S3Controller {
 
     $documentos = DB::table('Proyecto_fex_doc AS a')
       ->select([
-        'id',
         'doc_tipo',
         'nombre',
         'comentario',
-        'fecha',
-        DB::raw("CONCAT('/minio/', bucket, '/', a.key) AS url")
       ])
       ->where('proyecto_id', '=', $request->query('id'))
       ->get();
+
+    $integrantes = DB::table('Proyecto_integrante AS a')
+      ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
+      ->join('Proyecto_integrante_tipo AS c', 'c.id', '=', 'a.proyecto_integrante_tipo_id')
+      ->join('Facultad AS d', 'd.id', '=', 'b.facultad_id')
+      ->select([
+        'c.nombre AS tipo',
+        DB::raw("CONCAT(b.apellido1, ' ', b.apellido2, ', ', b.nombres) AS nombre"),
+        'b.doc_numero',
+        DB::raw("CASE(b.tipo)
+          WHEN 'Externo' THEN 'No'
+        ELSE 'Sí' END AS representa")
+      ])
+      ->where('a.proyecto_id', '=', $request->query('id'))
+      ->get();
+
+    $pdf = Pdf::loadView('admin.estudios.proyectos.pfex', [
+      'proyecto' => $proyecto,
+      'extras' => $extras,
+      'documentos' => $documentos,
+      'integrantes' => $integrantes,
+    ]);
+
+    return $pdf->stream();
   }
 }
