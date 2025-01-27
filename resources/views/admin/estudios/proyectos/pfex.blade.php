@@ -229,8 +229,19 @@
         <tr>
           <td style="width: 24%;" valign="top"><strong>Duración del proyecto</strong></td>
           <td style="width: 1%;" valign="top">:</td>
-          <td style="width: 75%;" valign="top">{{ $extras["duracion_dia"] }} día(s) - {{ $extras["duracion_mes"] }}
-            mes(es) - {{ $extras["duracion_anio"] }} año(s)</td>
+          <td style="width: 75%;" valign="top">
+            @if (isset($extras['duracion_dia']))
+              {{ $extras["duracion_dia"] }}
+            @endif
+             día(s) - 
+            @if (isset($extras['duracion_mes']))
+              {{ $extras["duracion_mes"] }}
+            @endif
+             mes(es) - 
+            @if (isset($extras['duracion_mes']))
+              {{ $extras["duracion_anio"] }}
+            @endif
+             año(s)</td>
         </tr>
       </tbody>
     </table>
@@ -246,7 +257,7 @@
         </tr>
       </thead>
       <tbody>
-        @if ($documentos)
+        @if (sizeof($documentos) > 0)
           @foreach ($documentos as $item)
             <tr>
               <td>{{ $item->doc_tipo }}</td>
@@ -256,7 +267,7 @@
           @endforeach
         @else
           <tr>
-            <td colspan="2">No hay registros</td>
+            <td colspan="3" align="center">No hay registros</td>
           </tr>
         @endif
       </tbody>
@@ -274,14 +285,20 @@
         </tr>
       </thead>
       <tbody>
-        @foreach ($integrantes as $int)
+        @if (sizeof($documentos) > 0)
+          @foreach ($integrantes as $int)
+            <tr>
+              <td>{{ $int->tipo }}</td>
+              <td>{{ $int->nombre }}</td>
+              <td>{{ $int->doc_numero }}</td>
+              <td>{{ $int->representa }}</td>
+            </tr>
+          @endforeach
+        @else
           <tr>
-            <td>{{ $int->tipo }}</td>
-            <td>{{ $int->nombre }}</td>
-            <td>{{ $int->doc_numero }}</td>
-            <td>{{ $int->representa }}</td>
+            <td colspan="4" align="center">No hay registros</td>
           </tr>
-        @endforeach
+        @endif
       </tbody>
     </table>
 

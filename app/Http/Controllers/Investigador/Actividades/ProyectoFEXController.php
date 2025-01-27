@@ -154,7 +154,7 @@ class ProyectoFEXController extends S3Controller {
         'detalle'
       ])
       ->where('proyecto_id', '=', $request->query('id'))
-      ->whereIn('codigo', ['resumen', 'objetivos', 'duracion_annio', 'duracion_mes', 'duracion_dia'])
+      ->whereIn('codigo', ['resumen', 'objetivos', 'duracion_anio', 'duracion_mes', 'duracion_dia'])
       ->get()
       ->mapWithKeys(function ($item) {
         return [$item->codigo => $item->detalle];
@@ -356,7 +356,7 @@ class ProyectoFEXController extends S3Controller {
     DB::table('Proyecto_descripcion')
       ->updateOrInsert([
         'proyecto_id' => $request->input('id'),
-        'codigo' => 'duracion_annio'
+        'codigo' => 'duracion_anio'
       ], [
         'detalle' => $request->input('años') ?? ""
       ]);
@@ -526,6 +526,7 @@ class ProyectoFEXController extends S3Controller {
       )
       ->whereIn('a.permanencia', ['Activo', 'Reserva de Matricula', 'Egresado'])
       ->having('value', 'LIKE', '%' . $request->query('query') . '%')
+      ->groupBy('a.codigo_alumno')
       ->limit(10)
       ->get();
 

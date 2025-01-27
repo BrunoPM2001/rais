@@ -200,10 +200,15 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
 
       Route::get('getInstitutos', [ProyectosFEXController::class, 'getInstitutos']);
       Route::get('searchDocenteRrhh', [ProyectosFEXController::class, 'searchDocenteRrhh']);
+      Route::get('searchEstudiante', [ProyectosFEXController::class, 'searchEstudiante']);
+      Route::post('agregarDocente', [ProyectosFEXController::class, 'agregarDocente']);
+      Route::post('agregarEstudiante', [ProyectosFEXController::class, 'agregarEstudiante']);
+      Route::delete('eliminarMiembro', [ProyectosFEXController::class, 'eliminarMiembro']);
 
       Route::get('datosPaso1', [ProyectosFEXController::class, 'datosPaso1']);
       Route::get('datosPaso2', [ProyectosFEXController::class, 'datosPaso2']);
       Route::get('datosPaso3', [ProyectosFEXController::class, 'datosPaso3']);
+      Route::get('datosPaso4', [ProyectosFEXController::class, 'datosPaso4']);
 
       //  Detalles
       Route::get('detalle', [ProyectosFEXController::class, 'detalle']);
