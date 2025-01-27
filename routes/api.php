@@ -198,6 +198,9 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
       Route::put('updateDoc', [ProyectosFEXController::class, 'updateDoc']);
       Route::delete('deleteDoc', [ProyectosFEXController::class, 'deleteDoc']);
 
+      Route::get('getInstitutos', [ProyectosFEXController::class, 'getInstitutos']);
+      Route::get('searchDocenteRrhh', [ProyectosFEXController::class, 'searchDocenteRrhh']);
+
       Route::get('datosPaso1', [ProyectosFEXController::class, 'datosPaso1']);
       Route::get('datosPaso2', [ProyectosFEXController::class, 'datosPaso2']);
       Route::get('datosPaso3', [ProyectosFEXController::class, 'datosPaso3']);

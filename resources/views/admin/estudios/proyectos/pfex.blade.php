@@ -1,4 +1,6 @@
 @php
+  use Carbon\Carbon;
+   
   $currentFacultad = '';
   $counter = 0;
   $totalSum = [];
@@ -109,6 +111,11 @@
     .desc {
       font-size: 11px;
     }
+
+    .subtitulo {
+      font-size: 14px;
+      text-align: center;
+    }
   </style>
 </head>
 
@@ -129,6 +136,12 @@
   <p class="titulo">
     <strong>
       PROYECTO FEX
+    </strong>
+  </p>
+
+  <p class="subtitulo">
+    <strong>
+      Estado: {{$proyecto->estado}} {{ Carbon::parse($proyecto->updated_at)->format('d/m/Y') }}
     </strong>
   </p>
 
@@ -176,7 +189,7 @@
         <tr>
           <td style="width: 24%;" valign="top"><strong>Fuente financiadora</strong></td>
           <td style="width: 1%;" valign="top">:</td>
-          <td style="width: 75%;" valign="top">{{ $extras->fuente_financiadora }}</td>
+          <td style="width: 75%;" valign="top">{{ $extras["fuente_financiadora"] }}</td>
         </tr>
         <tr>
           <td style="width: 24%;" valign="top"><strong>País</strong></td>
@@ -186,12 +199,12 @@
         <tr>
           <td style="width: 24%;" valign="top"><strong>Web fuente financiadora</strong></td>
           <td style="width: 1%;" valign="top">:</td>
-          <td style="width: 75%;" valign="top">{{ $extras->web_fuente }}</td>
+          <td style="width: 75%;" valign="top">{{ $extras["web_fuente"] }}</td>
         </tr>
         <tr>
           <td style="width: 24%;" valign="top"><strong>La UNMSM participa como</strong></td>
           <td style="width: 1%;" valign="top">:</td>
-          <td style="width: 75%;" valign="top">{{ $extras->participacion_unmsm }}</td>
+          <td style="width: 75%;" valign="top">{{ $extras["participacion_unmsm"] }}</td>
         </tr>
         <tr>
           <td style="width: 24%;" valign="top"><strong>Resolución rectoral</strong></td>
@@ -216,8 +229,8 @@
         <tr>
           <td style="width: 24%;" valign="top"><strong>Duración del proyecto</strong></td>
           <td style="width: 1%;" valign="top">:</td>
-          <td style="width: 75%;" valign="top">{{ $extras->duracion_dia }} día(s) - {{ $extras->duracion_mes }}
-            mes(es) - {{ $extras->duracion_anio }} año(s)</td>
+          <td style="width: 75%;" valign="top">{{ $extras["duracion_dia"] }} día(s) - {{ $extras["duracion_mes"] }}
+            mes(es) - {{ $extras["duracion_anio"] }} año(s)</td>
         </tr>
       </tbody>
     </table>
@@ -233,10 +246,10 @@
         </tr>
       </thead>
       <tbody>
-        @if ($docs)
-          @foreach ($docs as $item)
+        @if ($documentos)
+          @foreach ($documentos as $item)
             <tr>
-              <td>{{ $loop->doc_tipo }}</td>
+              <td>{{ $item->doc_tipo }}</td>
               <td>{{ $item->nombre }}</td>
               <td>{{ $item->comentario }}</td>
             </tr>
@@ -249,7 +262,7 @@
       </tbody>
     </table>
 
-    <h5>III. Integrantes:</h5>
+    <h5>III. Integrantes del proyecto:</h5>
 
     <table class="table">
       <thead>
@@ -272,100 +285,21 @@
       </tbody>
     </table>
 
-    <h5>V. Descripción del Proyecto:</h5>
+    <h5>IV. Resumen ejecutivo:</h5>
 
-    <h6>Resumen ejecutivo</h6>
     <div class="desc">
-      @if (isset($detalles['estado_arte']))
-        {!! $detalles['resumen_ejecutivo'] !!}
+      @if (isset($extras['resumen']))
+        {!! $extras['resumen'] !!}
       @endif
     </div>
 
-    <h6>Palabras clave</h6>
-    <div class="desc">
-      {{ $proyecto->palabras_clave }}
-    </div>
+    <h5>V. Objetivos:</h5>
 
-    <h6>Estado del arte</h6>
     <div class="desc">
-      @if (isset($detalles['estado_arte']))
-        {!! $detalles['estado_arte'] !!}
+      @if (isset($extras['objetivos']))
+        {!! $extras['objetivos'] !!}
       @endif
     </div>
-
-    <h6>Planteamiento del problema</h6>
-    <div class="desc">
-      @if (isset($detalles['planteamiento_problema']))
-        {!! $detalles['planteamiento_problema'] !!}
-      @endif
-    </div>
-
-    <h6>Justificación</h6>
-    <div class="desc">
-      @if (isset($detalles['justificacion']))
-        {!! $detalles['justificacion'] !!}
-      @endif
-    </div>
-
-    <h6>Contribución e impacto</h6>
-    <div class="desc">
-      @if (isset($detalles['contribucion_impacto']))
-        {!! $detalles['contribucion_impacto'] !!}
-      @endif
-    </div>
-
-    <h6>Objetivos</h6>
-    <div class="desc">
-      @if (isset($detalles['objetivos']))
-        {!! $detalles['objetivos'] !!}
-      @endif
-    </div>
-
-    <h6>Metodología de trabajo</h6>
-    <div class="desc">
-      @if (isset($detalles['metodologia_trabajo']))
-        {!! $detalles['metodologia_trabajo'] !!}
-      @endif
-    </div>
-
-    <h6>Referencias bibliográficas</h6>
-    <div class="desc">
-      @if (isset($detalles['referencias_bibliograficas']))
-        {!! $detalles['referencias_bibliograficas'] !!}
-      @endif
-    </div>
-
-    <h5>VI. Calendario de actividades:</h5>
-    <table class="table">
-      <thead>
-        <tr>
-          <th>Nro.</th>
-          <th>Actividad</th>
-          <th>Justificación</th>
-          <th>Responsable</th>
-          <th>Fecha inicial</th>
-          <th>Fecha final</th>
-        </tr>
-      </thead>
-      <tbody>
-        @if ($actividades)
-          @foreach ($actividades as $act)
-            <tr>
-              <td align="center">{{ $loop->iteration }}</td>
-              <td>{{ $act->actividad }}</td>
-              <td>{{ $act->justificacion }}</td>
-              <td>{{ $act->responsable }}</td>
-              <td>{{ $act->fecha_inicio }}</td>
-              <td>{{ $act->fecha_fin }}</td>
-            </tr>
-          @endforeach
-        @else
-          <tr>
-            <td colspan="6">No hay registros</td>
-          </tr>
-        @endif
-      </tbody>
-    </table>
 
   </div>
 

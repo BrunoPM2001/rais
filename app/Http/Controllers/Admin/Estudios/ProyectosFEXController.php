@@ -153,7 +153,7 @@ class ProyectosFEXController extends S3Controller {
         'detalle'
       ])
       ->where('proyecto_id', '=', $request->query('id'))
-      ->whereIn('codigo', ['resumen', 'objetivos', 'duracion_annio', 'duracion_mes', 'duracion_dia'])
+      ->whereIn('codigo', ['resumen', 'objetivos', 'duracion_anio', 'duracion_mes', 'duracion_dia'])
       ->get()
       ->mapWithKeys(function ($item) {
         return [$item->codigo => $item->detalle];
@@ -187,6 +187,7 @@ class ProyectosFEXController extends S3Controller {
       ->join('Proyecto_integrante_tipo AS c', 'c.id', '=', 'a.proyecto_integrante_tipo_id')
       ->join('Facultad AS d', 'd.id', '=', 'b.facultad_id')
       ->select([
+        'a.id',
         'c.nombre AS tipo_integrante',
         DB::raw("CONCAT(b.apellido1, ' ', b.apellido2, ', ', b.nombres) AS nombre"),
         'b.doc_numero',
@@ -330,7 +331,7 @@ class ProyectosFEXController extends S3Controller {
     DB::table('Proyecto_descripcion')
       ->updateOrInsert([
         'proyecto_id' => $request->input('id'),
-        'codigo' => 'duracion_annio'
+        'codigo' => 'duracion_anio'
       ], [
         'detalle' => $request->input('años') ?? ""
       ]);
@@ -378,6 +379,75 @@ class ProyectosFEXController extends S3Controller {
     } else {
       return ['message' => 'error', 'detail' => 'Error al cargar archivo'];
     }
+  }
+
+  public function getInstitutos() {
+    $institutos = DB::table('Instituto')
+      ->select([
+        'id AS value',
+        'instituto AS label'
+      ])
+      ->where('estado', '=', 1)
+      ->get();
+
+    return $institutos;
+  }
+
+  public function searchDocenteRrhh(Request $request) {
+    $investigadores = DB::table('Repo_rrhh AS a')
+      ->leftJoin('Usuario_investigador AS b', 'b.doc_numero', '=', 'a.ser_doc_id_act')
+      ->leftJoin('Licencia AS c', 'c.investigador_id', '=', 'b.id')
+      ->leftJoin('Licencia_tipo AS d', 'c.licencia_tipo_id', '=', 'd.id')
+      ->leftJoin('Facultad AS e', 'e.id', '=', 'b.facultad_id')
+      ->select(
+        DB::raw("CONCAT(TRIM(a.ser_cod_ant), ' | ', a.ser_doc_id_act, ' | ', a.ser_ape_pat, ' ', a.ser_ape_mat, ' ', a.ser_nom) AS value"),
+        'a.id',
+        'b.id AS investigador_id',
+        DB::raw("CONCAT(a.ser_ape_pat, ' ', a.ser_ape_mat, ', ', a.ser_nom) AS nombres"),
+        'ser_cod_ant AS codigo',
+        'ser_doc_id_act AS doc_numero',
+        DB::raw("CASE
+          WHEN SUBSTRING_INDEX(ser_cat_act, '-', 1) = '1' THEN 'Principal'
+          WHEN SUBSTRING_INDEX(ser_cat_act, '-', 1) = '2' THEN 'Asociado'
+          WHEN SUBSTRING_INDEX(ser_cat_act, '-', 1) = '3' THEN 'Auxiliar'
+          WHEN SUBSTRING_INDEX(ser_cat_act, '-', 1) = '4' THEN 'Jefe de Práctica'
+          ELSE 'Sin categoría'
+        END AS categoria"),
+        DB::raw("CASE
+          WHEN SUBSTRING_INDEX(SUBSTRING_INDEX(ser_cat_act, '-', 2), '-', -1) = '1' THEN 'Dedicación Exclusiva'
+          WHEN SUBSTRING_INDEX(SUBSTRING_INDEX(ser_cat_act, '-', 2), '-', -1) = '2' THEN 'Tiempo Completo'
+          WHEN SUBSTRING_INDEX(SUBSTRING_INDEX(ser_cat_act, '-', 2), '-', -1) = '3' THEN 'Tiempo Parcial'
+          ELSE 'Sin clase'
+        END AS clase"),
+        DB::raw("SUBSTRING_INDEX(ser_cat_act, '-', -1) AS horas"),
+        'a.des_dep_cesantes AS dependencia',
+        'a.ser_cod_dep_ces AS dependencia_id',
+        'e.nombre AS facultad',
+        'e.id AS facultad_id',
+
+        'b.cti_vitae',
+        'b.especialidad',
+        'b.titulo_profesional',
+        'b.grado',
+        'b.instituto_id',
+        'b.codigo_orcid',
+        'b.email3',
+        'b.telefono_casa',
+        'b.telefono_trabajo',
+        'b.telefono_movil',
+      )
+      ->where('des_tip_ser', 'LIKE', 'DOCENTE%')
+      ->where(function ($query) {
+        $query->where('c.fecha_fin', '<', date('Y-m-d'))
+          ->orWhere('d.id', '=', 9)
+          ->orWhereNull('d.tipo');
+      })
+      ->groupBy('ser_cod_ant')
+      ->having('value', 'LIKE', '%' . $request->query('query') . '%')
+      ->limit(10)
+      ->get();
+
+    return $investigadores;
   }
 
   public function updateDoc(Request $request) {
@@ -469,7 +539,19 @@ class ProyectosFEXController extends S3Controller {
         'a.palabras_clave',
         'a.fecha_inicio',
         'a.fecha_fin',
-        'a.estado',
+        DB::raw("CASE(a.estado)
+            WHEN -1 THEN 'Eliminado'
+            WHEN 0 THEN 'No aprobado'
+            WHEN 1 THEN 'Aprobado'
+            WHEN 3 THEN 'En evaluacion'
+            WHEN 5 THEN 'Enviado'
+            WHEN 6 THEN 'En proceso'
+            WHEN 7 THEN 'Anulado'
+            WHEN 8 THEN 'Sustentado'
+            WHEN 9 THEN 'En ejecución'
+            WHEN 10 THEN 'Ejecutado'
+            WHEN 11 THEN 'Concluído'
+          ELSE 'Sin estado' END AS estado"),
         'a.updated_at'
       ])
       ->where('a.id', '=', $request->query('id'))

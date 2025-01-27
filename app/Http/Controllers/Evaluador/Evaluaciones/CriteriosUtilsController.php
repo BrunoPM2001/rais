@@ -187,60 +187,61 @@ class CriteriosUtilsController extends Controller {
       ]);
   }
 
-  public function totalpuntajeIntegrantes(Request $request) {
-    $proyectoId = $request->query('proyecto_id');
-    $fechaInicial = date("Y") - 7;
-    $fechaFinal = date("Y") - 1;
-    $totalPuntajeUltimos = 0;
+  // public function totalpuntajeIntegrantes(Request $request)
+  // {
+  //   $proyectoId = $request->query('proyecto_id');
+  //   $fechaInicial = date("Y") - 7;
+  //   $fechaFinal = date("Y") - 1;
+  //   $totalPuntajeUltimos = 0;
 
-    // Capturar los IDs de los integrantes
-    $integrantes = DB::table('Proyecto_integrante as t1')
-      ->join('Proyecto_integrante_tipo as t2', 't1.proyecto_integrante_tipo_id', '=', 't2.id')
-      ->where('t1.proyecto_id', $proyectoId)
-      ->whereIn('t1.proyecto_integrante_tipo_id', [57, 58])
-      ->get();
+  //   // Capturar los IDs de los integrantes
+  //   $integrantes = DB::table('Proyecto_integrante as t1')
+  //     ->join('Proyecto_integrante_tipo as t2', 't1.proyecto_integrante_tipo_id', '=', 't2.id')
+  //     ->where('t1.proyecto_id', $proyectoId)
+  //     ->whereIn('t1.proyecto_integrante_tipo_id', [57, 58])
+  //     ->get();
 
-    // Iterar sobre los IDs de los integrantes y calcular el puntaje total
-    foreach ($integrantes as $integrante) {
-      // Suma del puntaje de la tabla publicacion_autor
-      $publicacionPuntaje = DB::table('Publicacion_autor as t1')
-        ->select(DB::raw('SUM(t1.puntaje) as total'))
-        ->join('Publicacion as t2', 't1.publicacion_id', '=', 't2.id')
-        ->where('t1.investigador_id', $integrante->investigador_id)
-        ->where('t2.validado', 1)
-        ->whereBetween(DB::raw('YEAR(t2.fecha_publicacion)'), [$fechaInicial, $fechaFinal])
-        ->first();
+  //   // Iterar sobre los IDs de los integrantes y calcular el puntaje total
+  //   foreach ($integrantes as $integrante) {
+  //     // Suma del puntaje de la tabla publicacion_autor
+  //     $publicacionPuntaje = DB::table('Publicacion_autor as t1')
+  //       ->select(DB::raw('SUM(t1.puntaje) as total'))
+  //       ->join('Publicacion as t2', 't1.publicacion_id', '=', 't2.id')
+  //       ->where('t1.investigador_id', $integrante->investigador_id)
+  //       ->where('t2.validado', 1)
+  //       ->whereBetween(DB::raw('YEAR(t2.fecha_publicacion)'), [$fechaInicial, $fechaFinal])
+  //       ->first();
 
-      // Suma del puntaje de la tabla patente_autor
-      $patentePuntaje = DB::table('Patente_autor')
-        ->select(DB::raw('SUM(puntaje) as total'))
-        ->where('investigador_id', $integrante->investigador_id)
-        ->whereBetween(DB::raw('YEAR(created_at)'), [$fechaInicial, $fechaFinal])
-        ->first();
+  //     // Suma del puntaje de la tabla patente_autor
+  //     $patentePuntaje = DB::table('Patente_autor')
+  //       ->select(DB::raw('SUM(puntaje) as total'))
+  //       ->where('investigador_id', $integrante->investigador_id)
+  //       ->whereBetween(DB::raw('YEAR(created_at)'), [$fechaInicial, $fechaFinal])
+  //       ->first();
 
-      // Asegurar que los valores no sean nulos
-      $publicacionPuntaje = $publicacionPuntaje->total ?? 0;
-      $patentePuntaje = $patentePuntaje->total ?? 0;
+  //     // Asegurar que los valores no sean nulos
+  //     $publicacionPuntaje = $publicacionPuntaje->total ?? 0;
+  //     $patentePuntaje = $patentePuntaje->total ?? 0;
 
-      // Suma total de ambos puntajes para el investigador actual
-      $totalPuntajeUltimos += (float)$publicacionPuntaje + (float)$patentePuntaje;
-    }
+  //     // Suma total de ambos puntajes para el investigador actual
+  //     $totalPuntajeUltimos += (float)$publicacionPuntaje + (float)$patentePuntaje;
+  //   }
 
-    $puntajeIntegrantes = $totalPuntajeUltimos / count($integrantes);
+  //   $puntajeCat = $totalPuntajeUltimos / count($integrantes);
 
-    $total = $puntajeIntegrantes * 0.1;
-    $total = $total >= 10 ? 10 : $total;
+  //   $total = $puntajeIntegrantes * 0.1;
+  //   $total = $total >= 10 ? 10 : $total;
 
-    //  Actualizar puntaje
-    DB::table('Evaluacion_proyecto')
-      ->updateOrInsert([
-        'proyecto_id' => $request->query('proyecto_id'),
-        'evaluador_id' => $request->attributes->get('token_decoded')->evaluador_id,
-        'evaluacion_opcion_id' => 1153
-      ], [
-        'puntaje' => $total
-      ]);
-  }
+  //   //  Actualizar puntaje
+  //   DB::table('Evaluacion_proyecto')
+  //     ->updateOrInsert([
+  //       'proyecto_id' => $request->query('proyecto_id'),
+  //       'evaluador_id' => $request->attributes->get('token_decoded')->evaluador_id,
+  //       'evaluacion_opcion_id' => 1153
+  //     ], [
+  //       'puntaje' => $total
+  //     ]);
+  // }
 
   public function totalpuntajeIntegrantesRenacyt(Request $request) {
     $proyectoId = $request->query('proyecto_id');
@@ -308,6 +309,179 @@ class CriteriosUtilsController extends Controller {
         'evaluacion_opcion_id' => 1184
       ], [
         'puntaje' => $total
+      ]);
+  }
+  public function docenteInvestigador(Request $request) {
+
+    $proyectoId = $request->query('proyecto_id');
+    $puntajeDocente = 0;
+    $integrantes = DB::table('Proyecto_integrante as t1')
+      ->leftJoin('Proyecto_integrante_tipo as t2', 't1.proyecto_integrante_tipo_id', '=', 't2.id')
+      ->leftJoin('Usuario_investigador as t3', 't1.investigador_id', '=', 't3.id')
+      ->where('t1.proyecto_id', $proyectoId)
+      ->whereIn('t2.nombre', ['Responsable', 'Co Responsable', 'Miembro Docente', 'Autor Corresponsal', 'Co-Autor'])
+      ->get();
+
+
+    foreach ($integrantes as $integrante) {
+
+
+      $cdi = DB::table('Eval_docente_investigador')
+        ->select('estado')
+        ->where('investigador_id', $integrante->investigador_id)
+        ->where('estado', 'vigente')
+        ->where('estado_real', 'VIGENTE')
+        ->where('tipo_eval', 'Constancia')
+        ->orderBy('fecha_fin', 'desc') // Ordena por fecha_fin de manera descendente
+        ->first(); // Obtiene el primer registro
+
+      $renacyt = DB::table('Usuario_investigador')
+        ->select('renacyt')
+        ->where('id', $integrante->investigador_id)
+        ->whereNotNull('renacyt')
+        ->where('renacyt', '!=', '')
+        ->first();
+
+      if ($cdi) {
+        $puntajeDocente += 3;
+      } else if ($renacyt) {
+        $puntajeDocente += 2;
+      } else {
+        $puntajeDocente += 0;
+      }
+    }
+    $puntajeDocente = $puntajeDocente >= 9 ? 9 : $puntajeDocente;
+
+    // Actualizar puntaje
+    DB::table('Evaluacion_proyecto')
+      ->updateOrInsert([
+        'proyecto_id' => $request->query('proyecto_id'),
+        'evaluador_id' => $request->attributes->get('token_decoded')->evaluador_id,
+        'evaluacion_opcion_id' => 1218
+      ], [
+        'puntaje' => $puntajeDocente
+      ]);
+  }
+  public function puntaje7UltimosAños(Request $request) {
+    $proyectoId = $request->query('proyecto_id');
+    $totalPuntajeUltimos = 0;
+    $puntajeIntegrantes = 0;
+    $total = 0;
+    $integrantesSum = [];
+
+    // Capturar los IDs de los integrantes
+    $integrantes = DB::table('Proyecto_integrante as t1')
+      ->select('t1.investigador_id')
+      ->leftJoin('Proyecto_integrante_tipo as t2', 't1.proyecto_integrante_tipo_id', '=', 't2.id')
+      ->leftJoin('Usuario_investigador as t3', 't1.investigador_id', '=', 't3.id')
+      ->where('t1.proyecto_id', $proyectoId)
+      ->whereIn('t2.nombre', ['Responsable', 'Co responsable', 'Miembro docente', 'Autor Corresponsal', 'Co-Autor'])
+      ->get();
+
+    foreach ($integrantes as $integrante) {
+      if (!in_array($integrante->investigador_id, $integrantesSum)) {
+        $integrantesSum[] = $integrante->investigador_id;
+      }
+    }
+
+
+    $totalPuntaje = DB::table('view_puntaje_7u')
+      ->whereIn('investigador_id', $integrantesSum)
+      ->sum('puntaje'); // Suma todos los valores de la columna 'puntaje'
+
+    $puntajeIntegrantes = ($totalPuntaje * 0.1) / count($integrantes);
+
+    $total = $puntajeIntegrantes >= 10 ? 10 : $puntajeIntegrantes;
+
+    // Actualizar puntaje
+    DB::table('Evaluacion_proyecto')
+      ->updateOrInsert([
+        'proyecto_id' => $request->query('proyecto_id'),
+        'evaluador_id' => $request->attributes->get('token_decoded')->evaluador_id,
+        'evaluacion_opcion_id' => 1219
+      ], [
+        'puntaje' => $total,
+      ]);
+  }
+
+  public function giCat(Request $request) {
+    $proyectoId = $request->query('proyecto_id');
+    $puntajeCat = 0;
+
+    $grupo = DB::table('Proyecto')
+      ->select('grupo_id')
+      ->where('id', $proyectoId)
+      ->first();
+
+    $grupoCat = DB::table('Grupo')
+      ->select('grupo_categoria')
+      ->where('id', $grupo->grupo_id)
+      ->first();
+
+    switch ($grupoCat->grupo_categoria) {
+      case 'A':
+        $puntajeCat = 6;
+        break;
+      case 'B':
+        $puntajeCat = 4;
+        break;
+      case 'C':
+        $puntajeCat = 2;
+        break;
+      case 'D':
+        $puntajeCat = 1;
+        break;
+      default:
+        $puntajeCat = 0;
+        break;
+    }
+
+    $total = $puntajeCat >= 6 ? 6 : $puntajeCat;
+
+    // Actualizar puntaje
+    DB::table('Evaluacion_proyecto')
+      ->updateOrInsert([
+        'proyecto_id' => $request->query('proyecto_id'),
+        'evaluador_id' => $request->attributes->get('token_decoded')->evaluador_id,
+        'evaluacion_opcion_id' => 1220
+      ], [
+        'puntaje' => $total
+      ]);
+  }
+
+  public function DocentesRecienteIngresoRRHH(Request $request) {
+    $proyectoId = $request->query('proyecto_id');
+    $puntajeDocente = 0;
+    $integrantes = DB::table('Proyecto_integrante as t1')
+      ->leftJoin('Proyecto_integrante_tipo as t2', 't1.proyecto_integrante_tipo_id', '=', 't2.id')
+      ->leftJoin('Usuario_investigador as t3', 't1.investigador_id', '=', 't3.id')
+      ->where('t1.proyecto_id', $proyectoId)
+      ->get();
+
+    foreach ($integrantes as $integrante) {
+
+      $docente = DB::table('Repo_rrhh')
+        ->where('ser_doc_id_act', $integrante->doc_numero)
+        ->where('ser_doc_id_act', '!=', '')
+        ->where('ser_fech_in_unmsm', '>=', '2023-01-01')
+        ->first();
+
+      if ($docente) {
+        $puntajeDocente += 1;
+      } else {
+        $puntajeDocente += 0;
+      }
+    }
+
+    $puntajeDocente = $puntajeDocente >= 5 ? 5 : $puntajeDocente;
+
+    DB::table('Evaluacion_proyecto')
+      ->updateOrInsert([
+        'proyecto_id' => $request->query('proyecto_id'),
+        'evaluador_id' => $request->attributes->get('token_decoded')->evaluador_id,
+        'evaluacion_opcion_id' => 1221
+      ], [
+        'puntaje' => $puntajeDocente
       ]);
   }
 }

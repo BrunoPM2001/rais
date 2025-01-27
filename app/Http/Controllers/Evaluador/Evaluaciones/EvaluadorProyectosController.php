@@ -356,6 +356,13 @@ class EvaluadorProyectosController extends S3Controller {
       case "PSINFIPU":
         $utils->totalpuntajeIntegrantesRenacyt($request);
         break;
+      case "PCONFIGI":
+        $utils->docenteInvestigador($request);
+        $utils->puntaje7UltimosAños($request);
+        $utils->giCat($request);
+        $utils->DocentesRecienteIngresoRRHH($request);
+
+        break;
     }
   }
 
@@ -431,7 +438,7 @@ class EvaluadorProyectosController extends S3Controller {
         'b.partida',
         'a.justificacion',
         'a.monto',
-        'a.tipo',
+        'b.tipo',
       )
       ->where('a.proyecto_id', '=', $request->query('proyecto_id'))
       ->orderBy('a.tipo')
