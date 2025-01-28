@@ -11,7 +11,7 @@ return new class extends Migration {
   public function up(): void {
     Schema::create('Monitoreo_proyecto', function (Blueprint $table) {
       $table->id();
-      $table->unsignedBigInteger('meta_periodo_id');
+      $table->unsignedBigInteger('meta_periodo_id')->nullable();
       $table->unsignedBigInteger('proyecto_id');
       $table->text('descripcion')->nullable();
       $table->text('observacion')->nullable();

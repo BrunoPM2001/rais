@@ -65,6 +65,7 @@ use App\Http\Controllers\Investigador\Grupo\GrupoController as InvestigadorGrupo
 use App\Http\Controllers\Investigador\Informes\Informe_academicoController;
 use App\Http\Controllers\Investigador\Informes\Informe_economicoController;
 use App\Http\Controllers\Investigador\Informes\Informes_academicos\InformeUtilsController;
+use App\Http\Controllers\Investigador\Informes\MonitoreoController as InformesMonitoreoController;
 use App\Http\Controllers\Investigador\Perfil\CdiController;
 use App\Http\Controllers\Investigador\Perfil\OrcidController;
 use App\Http\Controllers\Investigador\Perfil\PerfilController;
@@ -1031,6 +1032,18 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
       Route::post('loadActividad', [InformeUtilsController::class, 'loadActividad']);
 
       Route::get('reporte', [InformeUtilsController::class, 'reporte']);
+    });
+
+    Route::prefix('monitoreo')->group(function () {
+      Route::get('listadoProyectos', [InformesMonitoreoController::class, 'listadoProyectos']);
+      Route::get('detalles', [InformesMonitoreoController::class, 'detalles']);
+      Route::get('reporte', [InformesMonitoreoController::class, 'reporte']);
+
+      Route::get('publicacionesDisponibles', [InformesMonitoreoController::class, 'publicacionesDisponibles']);
+      Route::post('agregarPublicacion', [InformesMonitoreoController::class, 'agregarPublicacion']);
+      Route::delete('eliminarPublicacion', [InformesMonitoreoController::class, 'eliminarPublicacion']);
+
+      Route::post('remitir', [InformesMonitoreoController::class, 'remitir']);
     });
   });
 
