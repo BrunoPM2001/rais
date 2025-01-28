@@ -3,181 +3,344 @@
 namespace App\Http\Controllers\Admin\Estudios;
 
 use App\Http\Controllers\Controller;
+use Carbon\Carbon;
+use Illuminate\Database\Query\JoinClause;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class MonitoreoController extends Controller {
 
-  public function listadoProyectos($periodo, $tipo_proyecto, $estado_meta) {
-    //  Validar si el periodo coincide con la tabla de Meta_periodo
-    $periodos = DB::table('Meta_periodo')
+  public function listadoProyectos() {
+    $proyectos = DB::table('Proyecto AS a')
+      ->join('Proyecto_integrante AS b', 'b.proyecto_id', '=', 'a.id')
+      ->join('Proyecto_integrante_tipo AS c', 'c.id', '=', 'b.proyecto_integrante_tipo_id')
+      ->join('Meta_tipo_proyecto AS e', function (JoinClause $join) {
+        $join->on('e.tipo_proyecto', '=', 'a.tipo_proyecto')
+          ->where('e.estado', '=', 1);
+      })
+      ->join('Meta_periodo AS f', function (JoinClause $join) {
+        $join->on('f.id', '=', 'e.meta_periodo_id')
+          ->on('f.periodo', '=', 'a.periodo')
+          ->where('f.estado', '=', 1);
+      })
+      ->join('Meta_publicacion AS g', 'g.meta_tipo_proyecto_id', '=', 'e.id')
+      ->leftJoin('Monitoreo_proyecto AS h', 'h.proyecto_id', '=', 'a.id')
       ->select(
-        'id'
+        'a.id',
+        'a.codigo_proyecto',
+        'a.titulo',
+        DB::raw("CASE(a.estado)
+            WHEN -1 THEN 'Eliminado'
+            WHEN 0 THEN 'No aprobado'
+            WHEN 1 THEN 'Aprobado'
+            WHEN 2 THEN 'Observado'
+            WHEN 3 THEN 'En evaluacion'
+            WHEN 5 THEN 'Enviado'
+            WHEN 6 THEN 'En proceso'
+            WHEN 7 THEN 'Anulado'
+            WHEN 8 THEN 'Sustentado'
+            WHEN 9 THEN 'En ejecución'
+            WHEN 10 THEN 'Ejecutado'
+            WHEN 11 THEN 'Concluído'
+          ELSE 'Sin estado' END AS estado"),
+        'a.tipo_proyecto',
+        'a.periodo',
+        DB::raw("CASE(h.estado)
+            WHEN 0 THEN 'No aprobado'
+            WHEN 1 THEN 'Aprobado'
+            WHEN 2 THEN 'Observado'
+            WHEN 5 THEN 'Enviado'
+            WHEN 6 THEN 'En proceso'
+          ELSE 'Por presentar' END AS estado_meta")
       )
-      ->where('periodo', '=', $periodo)
+      ->whereIn('c.nombre', ['Responsable', 'Asesor', 'Autor Corresponsal', 'Coordinador'])
+      ->whereIn('a.estado', [1, 9, 10, 11])
+      ->groupBy('a.id')
       ->get();
 
-    if (sizeof($periodos) > 0) {
-      //  Validar si el tipo de proyecto coincide con la tabla de Meta_tipo_proyecto
-      $tipos_proyecto = DB::table('Meta_tipo_proyecto')
-        ->where('meta_periodo_id', '=', $periodos[0]->id)
-        ->where('tipo_proyecto', '=', $tipo_proyecto)
-        ->get();
-
-      if (sizeof($tipos_proyecto) > 0) {
-        //  Retornar en caso coincida todo
-        $proyectos = DB::table('Proyecto AS a')
-          ->leftJoin('Monitoreo_proyecto AS b', 'b.proyecto_id', '=', 'a.id')
-          ->select(
-            'a.id',
-            'a.codigo_proyecto',
-            'a.titulo',
-            'a.estado',
-            'b.estado AS estado_meta',
-            'a.tipo_proyecto',
-            'a.periodo'
-          )
-          ->where('a.estado', '=', 1)
-          ->where('a.periodo', '=', $periodo)
-          ->where('a.tipo_proyecto', '=', $tipo_proyecto);
-
-        $proyectos = $estado_meta == 'null' ? $proyectos->get() : $proyectos->where('b.estado', '=', $estado_meta)->get();
-
-        return ['data' => $proyectos];
-      } else {
-        return ['data' => [], 'error' => 'Tipo de proyecto inválido'];
-      }
-    } else {
-      return ['data' => [], 'error' => 'Periodo inválido'];
-    }
+    return $proyectos;
   }
 
-  //  TODO - Verificar para qué es la tabla de Monitoreo_proyecto_publicacion
-  public function detalleProyecto($proyecto_id) {
-    $proyecto = DB::table('Proyecto AS a')
-      ->leftJoin('Monitoreo_proyecto AS b', 'b.proyecto_id', '=', 'a.id')
-      ->leftJoin('Facultad AS c', 'c.id', '=', 'a.facultad_id')
-      ->select(
-        'b.estado AS estado_meta',
+  public function detalles(Request $request) {
+    $datos = DB::table('Proyecto AS a')
+      ->join('Proyecto_integrante AS b', 'b.proyecto_id', '=', 'a.id')
+      ->join('Proyecto_integrante_tipo AS c', function (JoinClause $join) {
+        $join->on('c.id', '=', 'b.proyecto_integrante_tipo_id')
+          ->whereIn('c.nombre', ['Responsable', 'Asesor', 'Autor Corresponsal', 'Coordinador']);
+      })
+      ->join('Usuario_investigador AS d', 'd.id', '=', 'b.investigador_id')
+      ->leftJoin('Facultad AS e', 'e.id', '=', 'a.facultad_id')
+      ->leftJoin('Monitoreo_proyecto AS f', 'f.proyecto_id', '=', 'a.id')
+      ->select([
+        'a.titulo',
         'a.tipo_proyecto',
         'a.codigo_proyecto',
-        'a.estado AS estado_proyecto',
-        'a.titulo',
+        DB::raw("CONCAT(d.apellido1, ' ', d.apellido2, ', ', d.nombres) AS responsable"),
+        DB::raw("CASE(a.estado)
+            WHEN -1 THEN 'Eliminado'
+            WHEN 0 THEN 'No aprobado'
+            WHEN 1 THEN 'Aprobado'
+            WHEN 2 THEN 'Observado'
+            WHEN 3 THEN 'En evaluacion'
+            WHEN 5 THEN 'Enviado'
+            WHEN 6 THEN 'En proceso'
+            WHEN 7 THEN 'Anulado'
+            WHEN 8 THEN 'Sustentado'
+            WHEN 9 THEN 'En ejecución'
+            WHEN 10 THEN 'Ejecutado'
+            WHEN 11 THEN 'Concluído'
+          ELSE 'Sin estado' END AS estado"),
         'a.periodo',
-        'c.nombre AS facultad',
-        'b.descripcion'
-      )
-      ->where('a.id', '=', $proyecto_id)
+        'e.nombre AS facultad',
+        DB::raw("CASE(f.estado)
+            WHEN 0 THEN 'No aprobado'
+            WHEN 1 THEN 'Aprobado'
+            WHEN 2 THEN 'Observado'
+            WHEN 5 THEN 'Enviado'
+            WHEN 6 THEN 'En proceso'
+          ELSE 'Por presentar' END AS estado_meta"),
+        'f.descripcion'
+      ])
+      ->where('a.id', '=', $request->query('id'))
+      ->first();
+
+    $metas = DB::table('Meta_publicacion AS a')
+      ->join('Meta_tipo_proyecto AS b', 'b.id', '=', 'a.meta_tipo_proyecto_id')
+      ->join('Meta_periodo AS c', 'c.id', '=', 'b.meta_periodo_id')
+      ->leftJoin('Publicacion AS d', 'd.tipo_publicacion', '=', 'a.tipo_publicacion')
+      ->leftJoin('Publicacion_proyecto AS e', function ($join) use ($request) {
+        $join->on('e.publicacion_id', '=', 'd.id')
+          ->where('e.proyecto_id', '=', $request->query('id'));
+      })
+      ->select([
+        'a.tipo_publicacion',
+        'a.cantidad AS requerido',
+        DB::raw('COUNT(e.id) AS completado')
+      ])
+      ->where('c.periodo', '=', $datos->periodo)
+      ->where('b.tipo_proyecto', '=', $datos->tipo_proyecto)
+      ->where('a.estado', '=', 1)
+      ->groupBy('a.tipo_publicacion', 'a.cantidad')
       ->get();
 
-    $proyecto[0]->estado_label = "Enviado";
-
-    return ['data' => $proyecto];
-  }
-
-  public function metasCumplidas($proyecto_id) {
-    //  TODO - Rehacer de manera adecuada esta query...
-    $metas = DB::table('Meta_publicacion as t1')
-      ->select('tipo_publicacion')
-      ->selectRaw('
-        CASE
-            WHEN t1.tipo_publicacion = "tesis-asesoria" THEN (
-                SELECT COUNT(*)
-                FROM proyecto_integrante pi
-                LEFT JOIN proyecto_integrante_tipo pit ON pi.proyecto_integrante_tipo_id = pit.id
-                WHERE pi.proyecto_id = ' . $proyecto_id . '
-                AND pit.nombre = "Tesista"
-            )
-            ELSE IF(
-                tipo_publicacion = "tesis",
-                (
-                    SELECT COUNT(*)
-                    FROM proyecto_integrante pi,
-                    proyecto_integrante_tipo pt
-                    WHERE pi.proyecto_id = ' . $proyecto_id . '
-                    AND pt.id = pi.proyecto_integrante_tipo_id
-                    AND pt.nombre = "Tesista"
-                ),
-                cantidad
-            )
-        END AS cantidad_requerida
-    ')
-      ->selectRaw('
-        (
-            select
-            count(*)
-            from
-            publicacion_proyecto as pp,
-            publicacion as pub
-            WHERE
-            pub.id = pp.publicacion_id AND
-            pp.proyecto_id = ' . $proyecto_id . ' and
-            pub.tipo_publicacion = t1.tipo_publicacion and
-            pub.estado = 1
-        ) AS cantidad_completada
-    ')
-      ->leftJoin('Meta_tipo_proyecto as t2', 't2.id', '=', 't1.meta_tipo_proyecto_id')
-      ->leftJoin('Meta_periodo as t3', 't3.id', '=', 't2.meta_periodo_id')
-      ->where('t3.periodo', '=', 2021)
-      ->where('t2.tipo_proyecto', '=', 'PCONFIGI')
-      ->orderByDesc('t1.created_at')
-      ->get();
-
-    return ['data' => $metas];
-  }
-
-  public function publicaciones($proyecto_id) {
     $publicaciones = DB::table('Publicacion_proyecto AS a')
       ->join('Publicacion AS b', 'b.id', '=', 'a.publicacion_id')
-      ->select(
-        'b.id',
+      ->select([
+        'a.id',
+        'b.id AS publicacion_id',
         'b.titulo',
         'b.tipo_publicacion',
-        DB::raw('YEAR(b.fecha_publicacion) AS periodo'),
-        'b.estado'
-      )
-      ->where('a.proyecto_id', '=', $proyecto_id)
+        DB::raw("YEAR(b.fecha_publicacion) AS periodo"),
+        DB::raw("CASE(b.estado)
+            WHEN -1 THEN 'Eliminado'
+            WHEN 1 THEN 'Registrado'
+            WHEN 2 THEN 'Observado'
+            WHEN 5 THEN 'Enviado'
+            WHEN 6 THEN 'En proceso'
+            WHEN 7 THEN 'Anulado'
+            WHEN 8 THEN 'No registrado'
+            WHEN 9 THEN 'Duplicado'
+          ELSE 'Sin estado' END AS estado"),
+      ])
+      ->where('a.proyecto_id', '=', $request->query('id'))
       ->get();
 
-    return ['data' => $publicaciones];
+    return [
+      'datos' => $datos,
+      'metas' => $metas,
+      'publicaciones' => $publicaciones
+    ];
   }
 
-  public function listadoPeriodos() {
-    $metas = DB::table('Meta_periodo')
+  public function publicacionesDisponibles(Request $request) {
+    $proyecto = DB::table('Proyecto AS a')
+      ->join('Proyecto_integrante AS b', 'b.proyecto_id', '=', 'a.id')
+      ->join('Proyecto_integrante_tipo AS c', function (JoinClause $join) {
+        $join->on('c.id', '=', 'b.proyecto_integrante_tipo_id')
+          ->whereIn('c.nombre', ['Responsable', 'Asesor', 'Autor Corresponsal', 'Coordinador']);
+      })
+      ->join('Usuario_investigador AS d', 'd.id', '=', 'b.investigador_id')
+      ->select([
+        'a.periodo',
+        'd.id AS investigador_id'
+      ])
+      ->where('a.id', '=', $request->query('id'))
+      ->first();
+
+    $publicaciones = DB::table('Publicacion AS a')
+      ->leftJoin('Publicacion_autor AS b', 'b.publicacion_id', '=', 'a.id')
+      ->leftJoin('Publicacion_proyecto AS c', function (JoinClause $join) use ($request) {
+        $join->on('c.publicacion_id', '=', 'a.id')
+          ->where('c.proyecto_id', '=', $request->query('id'));
+      })
+      ->select(
+        'a.id',
+        'a.titulo',
+        DB::raw('YEAR(a.fecha_publicacion) AS periodo'),
+      )
+      ->where('a.estado', '=', 1)
+      ->whereNull('c.id')
+      ->where('b.investigador_id', '=', $proyecto->investigador_id)
+      ->where('a.tipo_publicacion', '=', $request->query('tipo_publicacion'))
+      ->having('periodo', '>=', $proyecto->periodo)
+      ->orderByDesc('a.updated_at')
+      ->groupBy('a.id')
+      ->get();
+
+    return $publicaciones;
+  }
+
+  public function agregarPublicacion(Request $request) {
+    $proyecto = DB::table('Proyecto AS a')
+      ->join('Proyecto_integrante AS b', 'b.proyecto_id', '=', 'a.id')
+      ->join('Proyecto_integrante_tipo AS c', function (JoinClause $join) {
+        $join->on('c.id', '=', 'b.proyecto_integrante_tipo_id')
+          ->whereIn('c.nombre', ['Responsable', 'Asesor', 'Autor Corresponsal', 'Coordinador']);
+      })
+      ->join('Usuario_investigador AS d', 'd.id', '=', 'b.investigador_id')
+      ->select([
+        'a.titulo',
+        'a.codigo_proyecto',
+        'd.id AS investigador_id'
+      ])
+      ->where('a.id', '=', $request->input('proyecto_id'))
+      ->first();
+
+    DB::table('Publicacion_proyecto')
+      ->insert([
+        'investigador_id' => $proyecto->investigador_id,
+        'publicacion_id' => $request->input('publicacion_id'),
+        'proyecto_id' => $request->input('proyecto_id'),
+        'tipo' => 'INTERNO',
+        'codigo_proyecto' => $proyecto->codigo_proyecto,
+        'nombre_proyecto' => $proyecto->titulo,
+        'entidad_financiadora' => 'UNMSM',
+        'estado' => 1,
+        'created_at' => Carbon::now(),
+        'updated_at' => Carbon::now(),
+      ]);
+
+    return ['message' => 'success', 'detail' => 'Publicación añadida'];
+  }
+
+  public function eliminarPublicacion(Request $request) {
+    DB::table('Publicacion_proyecto')
+      ->where('id', '=', $request->query('id'))
+      ->delete();
+
+    return ['message' => 'info', 'detail' => 'Publicación eliminada correctamente'];
+  }
+
+  //  Metas
+  public function listadoMetas() {
+    $periodos = DB::table('Meta_periodo')
       ->select(
         'id',
         'periodo',
         'descripcion',
-        'estado'
+        DB::raw("CASE
+          WHEN estado = 1 THEN 'Válido'
+          WHEN estado = 0 THEN 'Inválido'
+        END AS estado")
       )
       ->get();
 
-    return ['data' => $metas];
-  }
-
-  public function listadoTipoProyectos($meta_periodo_id) {
-    $metas = DB::table('Meta_tipo_proyecto')
+    $tipos = DB::table('Meta_tipo_proyecto')
       ->select(
         'id',
+        'meta_periodo_id',
         'tipo_proyecto',
-        'estado'
+        DB::raw("CASE
+          WHEN estado = 1 THEN 'Válido'
+          WHEN estado = 0 THEN 'Inválido'
+        END AS estado")
       )
-      ->where('meta_periodo_id', '=', $meta_periodo_id)
       ->get();
 
-    return ['data' => $metas];
-  }
-
-  public function listadoPublicaciones($meta_tipo_proyecto_id) {
-    $metas = DB::table('Meta_publicacion')
+    $publicaciones = DB::table('Meta_publicacion')
       ->select(
         'id',
+        'meta_tipo_proyecto_id',
         'tipo_publicacion',
         'cantidad',
-        'estado'
+        DB::raw("CASE
+          WHEN estado = 1 THEN 'Válido'
+          WHEN estado = 0 THEN 'Inválido'
+        END AS estado")
       )
-      ->where('meta_tipo_proyecto_id', '=', $meta_tipo_proyecto_id)
       ->get();
 
-    return ['data' => $metas];
+    return [
+      'periodos' => $periodos,
+      'tipos' => $tipos,
+      'publicaciones' => $publicaciones,
+    ];
+  }
+
+  public function agregarPeriodo(Request $request) {
+    $now = Carbon::now();
+
+    DB::table('Meta_periodo')
+      ->insert([
+        'periodo' => $request->input('periodo'),
+        'descripcion' => $request->input('descripcion'),
+        'estado' => 1,
+        'created_at' => $now,
+        'updated_at' => $now,
+      ]);
+
+    return ['message' => 'success', 'detail' => 'Periodo agregado correctamente'];
+  }
+
+  public function agregarProyecto(Request $request) {
+    $now = Carbon::now();
+
+    DB::table('Meta_tipo_proyecto')
+      ->insert([
+        'meta_periodo_id' => $request->input('meta_periodo_id'),
+        'tipo_proyecto' => $request->input('tipo_proyecto'),
+        'estado' => 1,
+        'created_at' => $now,
+        'updated_at' => $now,
+      ]);
+
+    return ['message' => 'success', 'detail' => 'Tipo de proyecto agregado correctamente'];
+  }
+
+  public function agregarMeta(Request $request) {
+    $now = Carbon::now();
+
+    DB::table('Meta_publicacion')
+      ->insert([
+        'meta_tipo_proyecto_id' => $request->input('meta_tipo_proyecto_id'),
+        'tipo_publicacion' => $request->input('tipo_publicacion'),
+        'cantidad' => $request->input('cantidad'),
+        'estado' => 1,
+        'created_at' => $now,
+        'updated_at' => $now,
+      ]);
+
+    return ['message' => 'success', 'detail' => 'Meta agregada correctamente'];
+  }
+
+  public function editarMeta(Request $request) {
+    $now = Carbon::now();
+
+    DB::table('Meta_publicacion')
+      ->where('id', '=', $request->input('id'))
+      ->update([
+        'cantidad' => $request->input('cantidad'),
+        'updated_at' => $now,
+      ]);
+
+    return ['message' => 'info', 'detail' => 'Meta editada correctamente'];
+  }
+
+  public function eliminarMeta(Request $request) {
+    DB::table('Meta_publicacion')
+      ->where('id', '=', $request->query('id'))
+      ->delete();
+
+    return ['message' => 'info', 'detail' => 'Meta eliminada correctamente'];
   }
 }

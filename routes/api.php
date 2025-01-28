@@ -232,13 +232,18 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
 
     //  Monitoreo
     Route::prefix('monitoreo')->group(function () {
-      Route::get('listadoProyectos/{periodo}/{tipo_proyecto}/{estado_meta}', [MonitoreoController::class, 'listadoProyectos']);
-      Route::get('detalleProyecto/{proyecto_id}', [MonitoreoController::class, 'detalleProyecto']);
-      Route::get('metasCumplidas/{proyecto_id}', [MonitoreoController::class, 'metasCumplidas']);
-      Route::get('publicaciones/{proyecto_id}', [MonitoreoController::class, 'publicaciones']);
-      Route::get('listadoPeriodos', [MonitoreoController::class, 'listadoPeriodos']);
-      Route::get('listadoTipoProyectos/{meta_periodo_id}', [MonitoreoController::class, 'listadoTipoProyectos']);
-      Route::get('listadoPublicaciones/{meta_tipo_proyecto_id}', [MonitoreoController::class, 'listadoPublicaciones']);
+      Route::get('listadoProyectos', [MonitoreoController::class, 'listadoProyectos']);
+      Route::get('detalles', [MonitoreoController::class, 'detalles']);
+      Route::get('publicacionesDisponibles', [MonitoreoController::class, 'publicacionesDisponibles']);
+      Route::post('agregarPublicacion', [MonitoreoController::class, 'agregarPublicacion']);
+      Route::delete('eliminarPublicacion', [MonitoreoController::class, 'eliminarPublicacion']);
+
+      Route::get('listadoMetas', [MonitoreoController::class, 'listadoMetas']);
+      Route::post('agregarPeriodo', [MonitoreoController::class, 'agregarPeriodo']);
+      Route::post('agregarProyecto', [MonitoreoController::class, 'agregarProyecto']);
+      Route::post('agregarMeta', [MonitoreoController::class, 'agregarMeta']);
+      Route::put('editarMeta', [MonitoreoController::class, 'editarMeta']);
+      Route::delete('eliminarMeta', [MonitoreoController::class, 'eliminarMeta']);
     });
 
     //  Deudas proyecto
