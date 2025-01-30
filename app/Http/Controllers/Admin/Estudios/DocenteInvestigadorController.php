@@ -642,30 +642,6 @@ class DocenteInvestigadorController extends S3Controller {
     return $constancia;
   }
 
-  // public function enviarCorreo(Request $request) {
-  //   //  Generar constancia
-  //   $detalles = DB::table('Eval_docente_investigador AS a')
-  //     ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
-  //     ->join('Repo_rrhh AS c', 'c.ser_cod_ant', '=', 'b.codigo')
-  //     ->join('Grupo AS d', 'd.id', '=', 'a.d2')
-  //     ->join('Facultad AS e', 'e.id', '=', 'b.facultad_id')
-  //     ->select([
-  //       DB::raw("CONCAT(c.ser_ape_pat, ' ', c.ser_ape_mat, ', ', c.ser_nom) AS nombres"),
-  //       'c.ser_cod_ant',
-  //       'a.fecha_constancia',
-  //       'a.fecha_fin',
-  //     ])
-  //     ->where('a.id', '=', $request->input('id'))
-  //     ->first();
-
-  //   $pdf = Pdf::loadView('admin.estudios.docentes.constancia_no_firmada', ['detalles' => $detalles]);
-  //   $adjunto = $pdf->output();
-
-  //   // Mail::to('alefran2020@gmail.com')->send(new ConstanciaCdi($adjunto));
-
-  //   return ['message' => 'info', 'detail' => 'Correo enviado exitosamente'];
-  // }
-
   public function enviarCdiCorreo(Request $request) {
     $constancia = DB::table('File AS a')
       ->join('Eval_docente_investigador AS b', 'b.id', '=', 'a.tabla_id')

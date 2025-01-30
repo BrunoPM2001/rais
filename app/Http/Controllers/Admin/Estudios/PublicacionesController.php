@@ -243,7 +243,17 @@ class PublicacionesController extends S3Controller {
         $pub = DB::table('Publicacion')
           ->select([
             'codigo_registro',
-            'audit'
+            'audit',
+            DB::raw("CASE(estado)
+            WHEN -1 THEN 'Eliminado'
+            WHEN 1 THEN 'Registrado'
+            WHEN 2 THEN 'Observado'
+            WHEN 5 THEN 'Enviado'
+            WHEN 6 THEN 'En proceso'
+            WHEN 7 THEN 'Anulado'
+            WHEN 8 THEN 'No registrado'
+            WHEN 9 THEN 'Duplicado'
+          ELSE 'Sin estado' END AS estado"),
           ])
           ->where('id', '=', $request->input('id'))
           ->first();
@@ -257,13 +267,13 @@ class PublicacionesController extends S3Controller {
             ->first();
 
           //  Audit
-
           $audit = json_decode($pub->audit ?? "[]");
 
           $audit[] = [
             'fecha' => Carbon::now()->format('Y-m-d H:i:s'),
             'nombres' => $request->attributes->get('token_decoded')->nombre,
-            'apellidos' => $request->attributes->get('token_decoded')->apellidos
+            'apellidos' => $request->attributes->get('token_decoded')->apellidos,
+            'accion' => 'Actualización de detalles (estado anterior: ' . $pub->estado . ')'
           ];
 
           $audit = json_encode($audit, JSON_UNESCAPED_UNICODE);
@@ -371,7 +381,17 @@ class PublicacionesController extends S3Controller {
     //  Audit
     $audit_db = DB::table('Publicacion')
       ->select([
-        'audit'
+        'audit',
+        DB::raw("CASE(estado)
+            WHEN -1 THEN 'Eliminado'
+            WHEN 1 THEN 'Registrado'
+            WHEN 2 THEN 'Observado'
+            WHEN 5 THEN 'Enviado'
+            WHEN 6 THEN 'En proceso'
+            WHEN 7 THEN 'Anulado'
+            WHEN 8 THEN 'No registrado'
+            WHEN 9 THEN 'Duplicado'
+          ELSE 'Sin estado' END AS estado"),
       ])
       ->where('id', '=', $request->input('id'))
       ->first();
@@ -381,7 +401,8 @@ class PublicacionesController extends S3Controller {
     $audit[] = [
       'fecha' => Carbon::now()->format('Y-m-d H:i:s'),
       'nombres' => $request->attributes->get('token_decoded')->nombre,
-      'apellidos' => $request->attributes->get('token_decoded')->apellidos
+      'apellidos' => $request->attributes->get('token_decoded')->apellidos,
+      'accion' => 'Actualización de detalles (estado anterior: ' . $audit_db->estado . ')'
     ];
 
     $audit = json_encode($audit, JSON_UNESCAPED_UNICODE);

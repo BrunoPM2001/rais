@@ -45,6 +45,24 @@ class EventoController extends Controller {
 
   public function registrarPaso1(Request $request) {
     if ($request->input('publicacion_id') == null) {
+      //  Registro de audit
+      $investigador = DB::table('Usuario_investigador')
+        ->select([
+          DB::raw("CONCAT(apellido1, ' ', apellido2) AS apellidos"),
+          'nombres'
+        ])
+        ->where('id', '=', $request->attributes->get('token_decoded')->investigador_id)
+        ->first();
+
+      $audit[] = [
+        'fecha' => Carbon::now()->format('Y-m-d H:i:s'),
+        'nombres' => $investigador->nombres,
+        'apellidos' => $investigador->apellidos,
+        'accion' => 'Creación de registro'
+      ];
+
+      $audit = json_encode($audit, JSON_UNESCAPED_UNICODE);
+
       $publicacion_id = DB::table('Publicacion')->insertGetId([
         'titulo' => $request->input('titulo'),
         'tipo_presentacion' => $request->input('tipo_presentacion')["value"],
@@ -68,6 +86,7 @@ class EventoController extends Controller {
         'step' => 2,
         'estado' => 6,
         'tipo_publicacion' => 'evento',
+        'audit' => $audit,
         'created_at' => Carbon::now(),
         'updated_at' => Carbon::now()
       ]);
@@ -94,7 +113,7 @@ class EventoController extends Controller {
       $publicacion_id = $request->input('publicacion_id');
       $count = DB::table('Publicacion')
         ->where('id', '=', $publicacion_id)
-        ->where('estado', '!=', 5)
+        ->whereIn('estado', [2, 6])
         ->update([
           'titulo' => $request->input('titulo'),
           'tipo_presentacion' => $request->input('tipo_presentacion')["value"],

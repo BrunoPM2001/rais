@@ -113,8 +113,6 @@
     .obs {
       background-color: #ff9a9a;
       border-radius: 2px;
-    }
-    .obs {
       width: 100%;
       border-collapse: collapse;
       margin-bottom: 30px;

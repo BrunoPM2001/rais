@@ -46,6 +46,24 @@ class LibrosController extends Controller {
 
   public function registrarPaso1(Request $request) {
     if ($request->input('publicacion_id') == null) {
+      //  Registro de audit
+      $investigador = DB::table('Usuario_investigador')
+        ->select([
+          DB::raw("CONCAT(apellido1, ' ', apellido2) AS apellidos"),
+          'nombres'
+        ])
+        ->where('id', '=', $request->attributes->get('token_decoded')->investigador_id)
+        ->first();
+
+      $audit[] = [
+        'fecha' => Carbon::now()->format('Y-m-d H:i:s'),
+        'nombres' => $investigador->nombres,
+        'apellidos' => $investigador->apellidos,
+        'accion' => 'Creación de registro'
+      ];
+
+      $audit = json_encode($audit, JSON_UNESCAPED_UNICODE);
+
       $publicacion_id = DB::table('Publicacion')->insertGetId([
         'isbn' => $request->input('isbn'),
         'titulo' => $request->input('titulo'),
@@ -58,9 +76,10 @@ class LibrosController extends Controller {
         'fecha_publicacion' => $request->input('fecha_publicacion'),
         'url' => $request->input('url'),
         'validado' => 0,
-        'step' => 1,
+        'step' => 2,
         'tipo_publicacion' => 'libro',
         'estado' => 6,
+        'audit' => $audit,
         'created_at' => Carbon::now(),
         'updated_at' => Carbon::now()
       ]);
@@ -87,7 +106,7 @@ class LibrosController extends Controller {
       $publicacion_id = $request->input('publicacion_id');
       $count = DB::table('Publicacion')
         ->where('id', '=', $publicacion_id)
-        ->where('estado', '!=', 5)
+        ->whereIn('estado', [2, 6])
         ->update([
           'isbn' => $request->input('isbn'),
           'titulo' => $request->input('titulo'),
@@ -100,7 +119,7 @@ class LibrosController extends Controller {
           'fecha_publicacion' => $request->input('fecha_publicacion'),
           'url' => $request->input('url'),
           'validado' => 0,
-          'step' => 1,
+          'step' => 2,
           'tipo_publicacion' => 'libro',
           'estado' => 6,
           'updated_at' => Carbon::now()

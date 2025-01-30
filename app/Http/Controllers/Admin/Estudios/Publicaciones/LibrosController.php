@@ -75,6 +75,7 @@ class LibrosController extends S3Controller {
         'a.url',
         'a.resolucion',
         'a.estado',
+        'a.observaciones_usuario',
         'a.updated_at',
         'b.categoria',
         'c.key AS anexo'

@@ -105,6 +105,19 @@
     .cuerpo>p {
       font-size: 11px;
     }
+    .obs {
+      background-color: #ff9a9a;
+      border-radius: 2px;
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 30px;
+      padding: 2px 4px;
+    }
+
+    .obs>tbody td {
+      font-size: 11px;
+      padding: 5px 3px 6px 3px;
+    }
   </style>
 </head>
 
@@ -166,6 +179,18 @@
          {{ Carbon::parse($publicacion->updated_at)->format("d/m/Y") }}
       </strong>
     </p>
+
+    @if ($publicacion->estado == 2)
+      <table class="obs">
+        <tbody>
+          <tr>
+            <td style="width: 12%;" valign="top"><strong>Observaciones</strong></td>
+            <td style="width: 1%;" valign="top">:</td>
+            <td style="width: 87%;" valign="top">{{ $publicacion->observaciones_usuario }}</td>
+          </tr>
+        </tbody>
+      </table>
+    @endif
   
     @if ($publicacion->categoria != null)
     <p class="subtitulo-1">

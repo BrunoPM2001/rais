@@ -45,6 +45,24 @@ class TesisPropiasController extends Controller {
 
   public function registrarPaso1(Request $request) {
     if ($request->input('publicacion_id') == null) {
+      //  Registro de audit
+      $investigador = DB::table('Usuario_investigador')
+        ->select([
+          DB::raw("CONCAT(apellido1, ' ', apellido2) AS apellidos"),
+          'nombres'
+        ])
+        ->where('id', '=', $request->attributes->get('token_decoded')->investigador_id)
+        ->first();
+
+      $audit[] = [
+        'fecha' => Carbon::now()->format('Y-m-d H:i:s'),
+        'nombres' => $investigador->nombres,
+        'apellidos' => $investigador->apellidos,
+        'accion' => 'Creación de registro'
+      ];
+
+      $audit = json_encode($audit, JSON_UNESCAPED_UNICODE);
+
       $publicacion_id = DB::table('Publicacion')->insertGetId([
         'titulo' => $request->input('titulo'),
         'url' => $request->input('url'),
@@ -58,6 +76,7 @@ class TesisPropiasController extends Controller {
         'step' => 2,
         'tipo_publicacion' => 'tesis',
         'estado' => 6,
+        'audit' => $audit,
         'created_at' => Carbon::now(),
         'updated_at' => Carbon::now()
       ]);

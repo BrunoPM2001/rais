@@ -48,6 +48,24 @@ class ArticulosController extends S3Controller {
 
       $util = new PublicacionesUtilsController();
       if ($util->verificarTituloUnico($request)) {
+        //  Registro de audit
+        $investigador = DB::table('Usuario_investigador')
+          ->select([
+            DB::raw("CONCAT(apellido1, ' ', apellido2) AS apellidos"),
+            'nombres'
+          ])
+          ->where('id', '=', $request->attributes->get('token_decoded')->investigador_id)
+          ->first();
+
+        $audit[] = [
+          'fecha' => Carbon::now()->format('Y-m-d H:i:s'),
+          'nombres' => $investigador->nombres,
+          'apellidos' => $investigador->apellidos,
+          'accion' => 'Creación de registro'
+        ];
+
+        $audit = json_encode($audit, JSON_UNESCAPED_UNICODE);
+
         $publicacion_id = DB::table('Publicacion')->insertGetId([
           'doi' => $request->input('doi'),
           'art_tipo' => $request->input('art_tipo')["value"],
@@ -62,9 +80,10 @@ class ArticulosController extends S3Controller {
           'edicion' => $request->input('edicion'),
           'url' => $request->input('url'),
           'validado' => 0,
-          'step' => 1,
+          'step' => 2,
           'tipo_publicacion' => 'articulo',
           'estado' => 6,
+          'audit' => $audit,
           'created_at' => Carbon::now(),
           'updated_at' => Carbon::now()
         ]);
@@ -101,6 +120,7 @@ class ArticulosController extends S3Controller {
       }
     } else {
       $publicacion_id = $request->input('publicacion_id');
+
       $count = DB::table('Publicacion')
         ->where('id', '=', $publicacion_id)
         ->whereIn('estado', [2, 6])
@@ -119,19 +139,12 @@ class ArticulosController extends S3Controller {
           'url' => $request->input('url'),
           'validado' => 0,
           'tipo_publicacion' => 'articulo',
-          'estado' => 6,
+          'step' => 2,
           'updated_at' => Carbon::now()
         ]);
 
-      DB::table('Publicacion')
-        ->where('id', '=', $publicacion_id)
-        ->where('estado', '!=', 5)
-        ->update([
-          'step' => 2
-        ]);
-
       if ($count == 0) {
-        return ['message' => 'error', 'detail' => 'Esta publicación ya ha sido enviada, no se pueden hacer más cambios'];
+        return ['message' => 'error', 'detail' => 'Ya no puede hacer cambios en esta publicación'];
       }
 
       DB::table('Publicacion_palabra_clave')

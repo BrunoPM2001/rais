@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Investigador\Publicaciones;
 
 use App\Http\Controllers\S3Controller;
+use App\Mail\Investigador\Publicaciones\SolicitarSerAutor;
 use Carbon\Carbon;
 use Illuminate\Database\Query\JoinClause;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
 class PublicacionesUtilsController extends S3Controller {
@@ -202,6 +204,29 @@ class PublicacionesUtilsController extends S3Controller {
     $publicacion->autores = $autores;
 
     return $publicacion;
+  }
+
+  public function solicitarInclusion(Request $request) {
+    $publicacion = DB::table('Publicacion')
+      ->select([
+        'id',
+        'titulo'
+      ])
+      ->where('id', '=', $request->input('id'))
+      ->first();
+
+    $investigador = DB::table('Usuario_investigador')
+      ->select([
+        DB::raw("CONCAT(apellido1, ' ', apellido2, ', ', nombres) AS nombres"),
+        'doc_tipo',
+        'doc_numero'
+      ])
+      ->where('id', '=', $request->attributes->get('token_decoded')->investigador_id)
+      ->first();
+
+    Mail::to('dgitt.vrip@unmsm.edu.pe')->send(new SolicitarSerAutor($publicacion, $investigador));
+
+    return ['message' => 'info', 'detail' => 'Solicitud enviada'];
   }
 
   public function verificarTituloUnico(Request $request) {
@@ -564,7 +589,7 @@ class PublicacionesUtilsController extends S3Controller {
 
     DB::table('Publicacion')
       ->where('id', '=', $request->input('publicacion_id'))
-      ->where('estado', '!=', 5)
+      ->whereIn('estado', [2, 6])
       ->update([
         'step' => 3
       ]);
@@ -618,7 +643,17 @@ class PublicacionesUtilsController extends S3Controller {
       //  Audit del investigador:
       $pub = DB::table('Publicacion')
         ->select([
-          'audit'
+          'audit',
+          DB::raw("CASE(estado)
+            WHEN -1 THEN 'Eliminado'
+            WHEN 1 THEN 'Registrado'
+            WHEN 2 THEN 'Observado'
+            WHEN 5 THEN 'Enviado'
+            WHEN 6 THEN 'En proceso'
+            WHEN 7 THEN 'Anulado'
+            WHEN 8 THEN 'No registrado'
+            WHEN 9 THEN 'Duplicado'
+          ELSE 'Sin estado' END AS estado"),
         ])
         ->where('id', '=', $request->input('publicacion_id'))
         ->first();
@@ -636,7 +671,8 @@ class PublicacionesUtilsController extends S3Controller {
       $audit[] = [
         'fecha' => Carbon::now()->format('Y-m-d H:i:s'),
         'nombres' => $investigador->nombres,
-        'apellidos' => $investigador->apellidos
+        'apellidos' => $investigador->apellidos,
+        'accion' => 'Envío de publicación (estado anterior: ' . $pub->estado . ')'
       ];
 
       $audit = json_encode($audit, JSON_UNESCAPED_UNICODE);
