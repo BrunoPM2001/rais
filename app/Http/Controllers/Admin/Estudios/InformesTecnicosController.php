@@ -41,7 +41,7 @@ class InformesTecnicosController extends S3Controller {
             ELSE 'No tiene informe'
           END AS estado")
         )
-        ->where('a.estado', '>', 0)
+        ->where('a.estado', '=', 1)
         ->groupBy('a.id')
         ->get();
 

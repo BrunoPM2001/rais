@@ -261,7 +261,16 @@ class DocenteInvestigadorController extends S3Controller {
     return [
       'detalles' => $detalles,
       'd1' => [
-        'cumple' => $detalles->d1 != "",
+        'cumple' => preg_match("/^P/", $detalles->renacyt) &&
+          (
+            $detalles->renacyt_nivel == "I" ||
+            $detalles->renacyt_nivel == "II" ||
+            $detalles->renacyt_nivel == "III" ||
+            $detalles->renacyt_nivel == "IV" ||
+            $detalles->renacyt_nivel == "V" ||
+            $detalles->renacyt_nivel == "VI" ||
+            $detalles->renacyt_nivel == "VII" ||
+            $detalles->renacyt_nivel == "Investigador Distinguido"),
         'renacyt' => $detalles->d1
       ],
       'd2' => [
@@ -482,7 +491,7 @@ class DocenteInvestigadorController extends S3Controller {
 
     $detalles = DB::table('Eval_docente_investigador AS a')
       ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
-      ->join('Repo_rrhh AS c', 'c.ser_cod_ant', '=', 'b.codigo')
+      ->join('Repo_rrhh AS c', 'c.ser_doc_id_act', '=', 'b.doc_numero')
       ->leftJoin('Grupo AS d', 'd.id', '=', 'a.d2')
       ->join('Facultad AS e', 'e.id', '=', 'b.facultad_id')
       ->select([
@@ -612,7 +621,7 @@ class DocenteInvestigadorController extends S3Controller {
   public function constanciaCDI(Request $request) {
     $detalles = DB::table('Eval_docente_investigador AS a')
       ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
-      ->join('Repo_rrhh AS c', 'c.ser_cod_ant', '=', 'b.codigo')
+      ->join('Repo_rrhh AS c', 'c.ser_doc_id_act', '=', 'b.doc_numero')
       ->select([
         DB::raw("CONCAT(c.ser_ape_pat, ' ', c.ser_ape_mat, ', ', c.ser_nom) AS nombres"),
         'c.ser_cod_ant',

@@ -139,111 +139,110 @@ class PicvController extends Controller {
   }
 
   public function reporte(Request $request) {
-    $proyecto = DB::table('Proyecto AS a')
-      ->join('Proyecto_descripcion AS b', function (JoinClause $join) {
-        $join->on('a.id', '=', 'b.proyecto_id')
-          ->where('codigo', '=', 'tipo_investigacion');
-      })
-      ->join('Grupo AS c', 'c.id', '=', 'a.grupo_id')
-      ->join('Facultad AS d', 'd.id', '=', 'a.facultad_id')
-      ->join('Area AS e', 'e.id', '=', 'd.area_id')
-      ->join('Linea_investigacion AS f', 'f.id', '=', 'a.linea_investigacion_id')
-      ->join('Ocde AS g', 'g.id', '=', 'a.ocde_id')
-      ->leftJoin('Proyecto_doc AS h', function (JoinClause $join) {
-        $join->on('h.proyecto_id', '=', 'a.id')
-          ->where('h.tipo', '=', 3)
-          ->where('h.estado', '=', 1)
-          ->where('h.categoria', '=', 'tesis')
-          ->where('h.nombre', '=', 'Tesis Doctoral');
-      })
-      ->leftJoin('Proyecto_doc AS i', function (JoinClause $join) {
-        $join->on('i.proyecto_id', '=', 'a.id')
-          ->where('i.tipo', '=', 4)
-          ->where('i.estado', '=', 1)
-          ->where('i.categoria', '=', 'tesis')
-          ->where('i.nombre', '=', 'Tesis Maestría');
-      })
+
+    //  Proyecto
+    $proyecto = DB::table('Proyecto_integrante AS pint')
+      ->join('Proyecto AS p', 'p.id', '=', 'pint.proyecto_id')
+      ->join('Grupo AS g', 'g.id', '=', 'p.grupo_id')
+      ->join('Facultad AS f', 'f.id', '=', 'g.facultad_id')
+      ->join('Area AS a', 'a.id', '=', 'f.area_id')
+      ->join('Linea_investigacion AS l', 'l.id', '=', 'p.linea_investigacion_id')
+      ->join('Linea_investigacion_ods AS lo', 'lo.linea_investigacion_id', '=', 'l.id')
+      ->join('Ods AS o', 'o.id', '=', 'lo.ods_id')
+      ->join('Ocde AS oc', 'oc.id', '=', 'lo.ods_id')
       ->select([
-        'a.titulo',
-        'c.grupo_nombre',
-        'e.nombre AS area',
-        'd.nombre AS facultad',
-        'f.nombre AS linea',
-        'b.detalle AS tipo_investigacion',
-        'a.localizacion',
-        'g.linea AS ocde',
-        DB::raw("CASE
-          WHEN h.archivo IS NULL THEN 'No'
-          ELSE 'Sí'
-        END AS url1"),
-        DB::raw("CASE
-          WHEN i.archivo IS NULL THEN 'No'
-          ELSE 'Sí'
-        END AS url2"),
+        'p.titulo',
+        'g.grupo_nombre',
+        'f.nombre AS facultad_nombre',
+        'a.nombre AS area_nombre',
+        'p.codigo_proyecto',
+        'p.titulo',
+        'l.nombre AS linea_nombre',
+        'o.objetivo',
+        'oc.linea',
+        'p.localizacion',
+        DB::raw("CASE(p.estado)
+        WHEN -1 THEN 'Eliminado'
+        WHEN 0 THEN 'No aprobado'
+        WHEN 1 THEN 'Aprobado'
+        WHEN 3 THEN 'En evaluacion'
+        WHEN 5 THEN 'Enviado'
+        WHEN 6 THEN 'En proceso'
+        WHEN 7 THEN 'Anulado'
+        WHEN 8 THEN 'Sustentado'
+        WHEN 9 THEN 'En ejecución'
+        WHEN 10 THEN 'Ejecutado'
+        WHEN 11 THEN 'Concluído'
+      ELSE 'Sin estado' END AS estado"),
+        'p.updated_at'
       ])
-      ->where('a.id', '=', $request->query('proyecto_id'))
+      ->where('pint.condicion', '=', 'Responsable')
+      ->where('pint.proyecto_id', '=', $request->query('proyecto_id'))
       ->first();
 
-    $detalles = DB::table('Proyecto_descripcion')
+    //  Descripcion
+    $descripcion = DB::table('Proyecto AS p')
+      ->join('Proyecto_descripcion AS pd', 'p.id', '=', 'pd.proyecto_id')
       ->select([
-        'codigo',
-        'detalle'
+        'p.id',
+        'pd.codigo',
+        'pd.detalle',
       ])
-      ->where('proyecto_id', '=', $request->query('proyecto_id'))
-      ->get()
-      ->mapWithKeys(function ($item) {
-        return [$item->codigo => $item->detalle];
-      });
-
-    $responsable = DB::table('Proyecto_integrante AS a')
-      ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
-      ->join('Facultad AS c', 'c.id', '=', 'b.facultad_id')
-      ->join('Dependencia AS d', 'd.id', '=', 'b.dependencia_id')
-      ->select([
-        DB::raw("CONCAT(b.apellido1, ' ', b.apellido2, ', ', b.nombres) AS nombre"),
-        'b.codigo',
-        'd.dependencia',
-        'c.nombre AS facultad',
-        'b.cti_vitae',
-        'b.codigo_orcid',
-        'b.scopus_id',
-        'b.google_scholar',
-      ])
-      ->where('a.proyecto_id', '=', $request->query('proyecto_id'))
-      ->where('a.condicion', '=', 'Responsable')
-      ->first();
-
-    $integrantes = DB::table('Proyecto_integrante AS a')
-      ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
-      ->join('Proyecto_integrante_tipo AS c', 'c.id', '=', 'a.proyecto_integrante_tipo_id')
-      ->select([
-        'c.nombre AS condicion',
-        DB::raw("CONCAT(b.apellido1, ' ', b.apellido2, ', ', b.nombres) AS integrante"),
-        'b.tipo',
-        'a.tipo_tesis',
-        'a.titulo_tesis',
-      ])
-      ->where('a.proyecto_id', '=', $request->query('proyecto_id'))
+      ->where('p.id', '=', $request->query('proyecto_id'))
       ->get();
 
-    $actividades = DB::table('Proyecto_actividad')
+    //  Actividades
+    $actividades = DB::table('Proyecto AS p')
+      ->join('Proyecto_actividad AS pa', 'p.id', '=', 'pa.proyecto_id')
       ->select([
-        'id',
-        'actividad',
-        'fecha_inicio',
-        'fecha_fin',
-        'duracion'
+        'pa.actividad',
+        'pa.fecha_inicio',
+        'pa.fecha_fin'
       ])
-      ->where('proyecto_id', '=', $request->query('proyecto_id'))
+      ->where('pa.proyecto_id', '=', $request->query('proyecto_id'))
       ->get();
 
-    $pdf = Pdf::loadView('investigador.convocatorias.picv', [
+    //  Presupuesto
+    $presupuesto = DB::table('Proyecto AS p')
+      ->join('Proyecto_presupuesto AS pp', 'pp.proyecto_id', '=', 'p.id')
+      ->join('Partida AS pt', 'pt.id', '=', 'pp.partida_id')
+      ->select([
+        'pt.partida',
+        'pp.monto',
+        'pt.tipo'
+      ])
+      ->where('p.id', '=', $request->query('proyecto_id'))
+      ->get();
+
+    //  Integrantes
+    $integrantes = DB::table('Proyecto_integrante AS pint')
+      ->join('Usuario_investigador AS i', 'i.id', '=', 'pint.investigador_id')
+      ->join('Proyecto_integrante_tipo AS pt', 'pt.id', '=', 'pint.proyecto_integrante_tipo_id')
+      ->join('Facultad AS f', 'f.id', '=', 'i.facultad_id')
+      ->leftJoin('Grupo_integrante AS gi', 'gi.investigador_id', '=', 'i.id')
+      ->select([
+        'pt.nombre AS tipo_integrante',
+        DB::raw("CONCAT(i.apellido1, ' ', i.apellido2, ' ', i.nombres) AS integrante"),
+        'f.nombre AS facultad',
+        'gi.tipo',
+        'gi.condicion'
+      ])
+      ->where('pint.proyecto_id', '=', $request->query('proyecto_id'))
+      ->where(function ($query) {
+        $query->where('gi.condicion', 'NOT LIKE', 'Ex%')
+          ->orWhereNull('gi.condicion');
+      })
+      ->get();
+
+    $pdf = Pdf::loadView('admin.estudios.proyectos.sin_detalles.picv', [
       'proyecto' => $proyecto,
-      'responsable' => $responsable,
-      'integrantes' => $integrantes,
-      'detalles' => $detalles,
+      'descripcion' => $descripcion,
       'actividades' => $actividades,
+      'presupuesto' => $presupuesto,
+      'integrantes' => $integrantes
     ]);
+
+
     return $pdf->stream();
   }
 }

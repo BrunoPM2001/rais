@@ -225,7 +225,7 @@ class PsinfinvController extends Controller {
       ->where('proyecto_id', '=', $request->query('proyecto_id'))
       ->get();
 
-    $pdf = Pdf::loadView('investigador.convocatorias.psinfinv', [
+    $pdf = Pdf::loadView('admin.estudios.proyectos.sin_detalles.psinfinv', [
       'proyecto' => $proyecto,
       'responsable' => $responsable,
       'integrantes' => $integrantes,

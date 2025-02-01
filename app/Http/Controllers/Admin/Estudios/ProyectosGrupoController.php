@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Admin\Estudios;
 
 use App\Http\Controllers\Admin\Estudios\Proyectos\EciController;
+use App\Http\Controllers\Admin\Estudios\Proyectos\PconfigiController;
 use App\Http\Controllers\Admin\Estudios\Proyectos\PinvposController;
 use App\Http\Controllers\Admin\Estudios\Proyectos\PsinfinvController;
 use App\Http\Controllers\Admin\Estudios\Proyectos\PsinfipuController;
 use App\Http\Controllers\Admin\Estudios\Proyectos\PicvController;
+use App\Http\Controllers\Admin\Estudios\Proyectos\PmultiController;
 use App\Http\Controllers\S3Controller;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -467,6 +469,12 @@ class ProyectosGrupoController extends S3Controller {
       ->first();
 
     switch ($tipo->tipo_proyecto) {
+      case "PCONFIGI":
+        $ctrl = new PconfigiController();
+        return $ctrl->reporte($request);
+      case "PMULTI":
+        $ctrl = new PmultiController();
+        return $ctrl->reporte($request);
       case "PSINFINV":
         $ctrl = new PsinfinvController();
         return $ctrl->reporte($request);
@@ -475,6 +483,9 @@ class ProyectosGrupoController extends S3Controller {
         return $ctrl->reporte($request);
       case "PINVPOS":
         $ctrl = new PinvposController();
+        return $ctrl->reporte($request);
+      case "PICV":
+        $ctrl = new PicvController();
         return $ctrl->reporte($request);
       default:
     }
