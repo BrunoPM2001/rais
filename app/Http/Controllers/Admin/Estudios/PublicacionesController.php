@@ -60,7 +60,7 @@ class PublicacionesController extends S3Controller {
         ->select([
           DB::raw("CONCAT('0', id) AS id"),
           'nro_registro AS codigo_registro',
-          DB::raw("'Patente' AS tipo"),
+          DB::raw("'Propiedad intelectual' AS tipo"),
           'tipo AS tipo_patente',
           'titulo',
           'created_at',

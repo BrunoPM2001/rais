@@ -18,6 +18,7 @@ use App\Http\Controllers\Admin\Estudios\InformesTecnicosController;
 use App\Http\Controllers\Admin\Estudios\InvestigadoresController;
 use App\Http\Controllers\Admin\Estudios\LaboratoriosController;
 use App\Http\Controllers\Admin\Estudios\MonitoreoController;
+use App\Http\Controllers\Admin\Estudios\PatentesController;
 use App\Http\Controllers\Admin\Estudios\ProyectosFEXController;
 use App\Http\Controllers\Admin\Estudios\ProyectosGrupoController;
 use App\Http\Controllers\Admin\Estudios\Publicaciones\PublicacionesUtilsController as PublicacionesPublicacionesUtilsController;
@@ -295,6 +296,20 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
 
       Route::get('searchDocentePermanente', [PublicacionesPublicacionesUtilsController::class, 'searchDocentePermanente']);
       Route::put('asociarInvestigador', [PublicacionesPublicacionesUtilsController::class, 'asociarInvestigador']);
+    });
+
+    Route::prefix('patentes')->group(function () {
+      Route::get('detalle', [PatentesController::class, 'detalle']);
+      Route::post('updateDetalle', [PatentesController::class, 'updateDetalle']);
+      Route::get('getTabs', [PatentesController::class, 'getTabs']);
+      Route::get('reporte', [PatentesController::class, 'reporte']);
+
+      Route::post('agregarTitular', [PatentesController::class, 'agregarTitular']);
+      Route::delete('eliminarTitular', [PatentesController::class, 'eliminarTitular']);
+
+      Route::post('agregarAutor', [PatentesController::class, 'agregarAutor']);
+      Route::put('editarAutor', [PatentesController::class, 'editarAutor']);
+      Route::delete('eliminarAutor', [PatentesController::class, 'eliminarAutor']);
     });
 
     Route::prefix('sincronizarPub')->group(function () {
