@@ -107,6 +107,7 @@ class ProyectoFEXController extends S3Controller {
     $proyecto = DB::table('Proyecto')
       ->select([
         'titulo',
+        'periodo',
         'linea_investigacion_id',
         'ocde_id',
         'aporte_unmsm',
@@ -219,6 +220,7 @@ class ProyectoFEXController extends S3Controller {
           'linea_investigacion_id' => $request->input('linea_investigacion_id')["value"] ?? null,
           'ocde_id' => $request->input('ocde_3')["value"] ?? null,
           'titulo' => $request->input('titulo'),
+          'periodo' => $request->input('periodo'),
           'resolucion_rectoral' => $request->input('resolucion_rectoral'),
           'aporte_unmsm' => $request->input('aporte_unmsm'),
           'aporte_no_unmsm' => $request->input('aporte_no_unmsm'),
@@ -238,9 +240,9 @@ class ProyectoFEXController extends S3Controller {
           'linea_investigacion_id' => $request->input('linea_investigacion_id')["value"] ?? null,
           'ocde_id' => $request->input('ocde_3')["value"] ?? null,
           'titulo' => $request->input('titulo'),
+          'periodo' => $request->input('periodo'),
           'fecha_inscripcion' => $date,
           'tipo_proyecto' => 'PFEX',
-          'periodo' => $date->format("Y"),
           'resolucion_rectoral' => $request->input('resolucion_rectoral'),
           'aporte_unmsm' => $request->input('aporte_unmsm'),
           'aporte_no_unmsm' => $request->input('aporte_no_unmsm'),

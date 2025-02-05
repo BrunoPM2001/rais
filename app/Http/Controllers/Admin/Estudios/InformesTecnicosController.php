@@ -7,6 +7,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Query\JoinClause;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class InformesTecnicosController extends S3Controller {
   public function proyectosListado(Request $request) {
@@ -19,16 +20,32 @@ class InformesTecnicosController extends S3Controller {
         )
         ->where('condicion', '=', 'Responsable');
 
+      $deuda = DB::table('Proyecto_integrante AS a')
+        ->leftJoin('Proyecto_integrante_deuda AS b', 'b.proyecto_integrante_id', '=', 'a.id')
+        ->select([
+          'a.proyecto_id',
+          DB::raw("CASE
+          WHEN (b.tipo IS NULL OR b.tipo <= 0) THEN 'NO'
+          WHEN b.tipo > 0 AND b.tipo <= 3 THEN 'SI'
+          WHEN b.tipo > 3 THEN 'SUBSANADA'
+        END AS deuda"),
+          'b.categoria'
+        ])
+        ->groupBy('a.proyecto_id');
+
       //  TODO - Incluir deuda dentro de otra consulta para una nueva tabla en la UI
       $proyectos = DB::table('Proyecto AS a')
         ->leftJoin('Informe_tecnico AS b', 'b.proyecto_id', '=', 'a.id')
         ->leftJoin('Facultad AS c', 'c.id', '=', 'a.facultad_id')
         ->leftJoinSub($responsable, 'res', 'res.proyecto_id', '=', 'a.id')
+        ->leftJoinSub($deuda, 'deu', 'deu.proyecto_id', '=', 'a.id')
         ->select(
           'a.id',
           'a.tipo_proyecto',
           'a.codigo_proyecto',
           'a.titulo',
+          'deu.deuda',
+          'deu.categoria AS tipo_deuda',
           DB::raw('COUNT(b.id) AS cantidad_informes'),
           'res.responsable',
           'c.nombre AS facultad',
@@ -55,6 +72,19 @@ class InformesTecnicosController extends S3Controller {
         )
         ->where('a.condicion', '=', 'Responsable');
 
+      $deuda = DB::table('Proyecto_integrante_H AS a')
+        ->leftJoin('Proyecto_integrante_deuda AS b', 'b.proyecto_integrante_h_id', '=', 'a.id')
+        ->select([
+          'a.proyecto_id',
+          DB::raw("CASE
+          WHEN (b.tipo IS NULL OR b.tipo <= 0) THEN 'NO'
+          WHEN b.tipo > 0 AND b.tipo <= 3 THEN 'SI'
+          WHEN b.tipo > 3 THEN 'SUBSANADA'
+        END AS deuda"),
+          'b.categoria'
+        ])
+        ->groupBy('a.proyecto_id');
+
       $proyectos = DB::table('Proyecto_H AS a')
         ->leftJoin('Informe_tecnico_H AS b', 'b.proyecto_id', '=', 'a.id')
         ->leftJoin('Facultad AS c', 'c.id', '=', 'a.facultad_id')
@@ -63,11 +93,14 @@ class InformesTecnicosController extends S3Controller {
             ->where('d.condicion', '=', 'Responsable');
         })
         ->leftJoin('Usuario_investigador AS e', 'e.id', '=', 'd.investigador_id')
+        ->leftJoinSub($deuda, 'deu', 'deu.proyecto_id', '=', 'a.id')
         ->select(
           'a.id',
           'a.tipo AS tipo_proyecto',
           'a.codigo AS codigo_proyecto',
           'a.titulo',
+          'deu.deuda',
+          'deu.categoria AS tipo_deuda',
           DB::raw('COUNT(b.id) AS cantidad_informes'),
           DB::raw("CONCAT(e.apellido1, ' ', e.apellido2, ', ', e.nombres) AS responsable"),
           'c.nombre AS facultad',
@@ -88,21 +121,52 @@ class InformesTecnicosController extends S3Controller {
     }
   }
 
-  public function informes($proyecto_id) {
-    $informes = DB::table('Informe_tecnico AS a')
-      ->leftJoin('Informe_tipo AS b', 'b.id', '=', 'a.informe_tipo_id')
-      ->select(
-        'a.id',
-        'b.informe',
-        'a.estado',
-        'a.fecha_envio',
-        'a.created_at',
-        'a.updated_at'
-      )
-      ->where('a.proyecto_id', '=', $proyecto_id)
-      ->get();
+  public function informes(Request $request) {
+    if ($request->query('tabla') == "nuevos") {
+      $informes = DB::table('Informe_tecnico AS a')
+        ->leftJoin('Informe_tipo AS b', 'b.id', '=', 'a.informe_tipo_id')
+        ->select(
+          'a.id',
+          'b.informe',
+          'a.estado',
+          'a.fecha_envio',
+          'a.created_at',
+          'a.updated_at'
+        )
+        ->where('a.proyecto_id', '=', $request->query('proyecto_id'))
+        ->get();
 
-    return $informes;
+      return $informes;
+    } else {
+      $informes = DB::table('Informe_tecnico_H AS a')
+        ->leftJoin('Informe_tipo AS b', 'b.id', '=', 'a.tipo')
+        ->select(
+          'a.id',
+          'b.informe',
+          'a.status AS estado',
+          'a.fecha_presentacion AS fecha_envio',
+          'a.created_at',
+          'a.updated_at'
+        )
+        ->where('a.proyecto_id', '=', $request->query('proyecto_id'))
+        ->get();
+
+      return $informes;
+    }
+  }
+
+  public function eliminarInforme(Request $request) {
+    if ($request->query('tabla') == "nuevos") {
+      DB::table('Informe_tecnico AS a')
+        ->where('id', '=', $request->query('id'))
+        ->delete();
+    } else {
+      DB::table('Informe_tecnico_H AS a')
+        ->where('id', '=', $request->query('id'))
+        ->delete();
+    }
+
+    return ['message' => 'info', 'detail' => 'Informe eliminado correctamente'];
   }
 
   public function getDataInforme(Request $request) {
@@ -275,6 +339,13 @@ class InformesTecnicosController extends S3Controller {
 
     $request->merge($data);
 
+    $proyecto = DB::table('Informe_tecnico')
+      ->select([
+        'proyecto_id'
+      ])
+      ->where('id', '=', $request->input('informe_tecnico_id'))
+      ->first();
+
     DB::table('Informe_tecnico')
       ->where('id', '=', $request->input('informe_tecnico_id'))
       ->update([
@@ -311,31 +382,272 @@ class InformesTecnicosController extends S3Controller {
 
     $this->agregarAudit($request);
 
+    $proyecto_id = $proyecto->proyecto_id;
+    $date1 = Carbon::now();
+    $date_format =  $date1->format('Ymd-His');
+
+    if ($request->input('tipo_proyecto') == "ECI") {
+      if ($request->hasFile('file1')) {
+        $name = $request->input('proyecto_id') . "/" . $date_format . "-" . Str::random(8) . "." . $request->file('file1')->getClientOriginalExtension();
+        $this->uploadFile($request->file('file1'), "proyecto-doc", $name);
+        $this->updateFile($proyecto_id, $date1, $name, "anexo1");
+      }
+
+      if ($request->hasFile('file2')) {
+        $name = $request->input('proyecto_id') . "/" . $date_format . "-" . Str::random(8) . "." . $request->file('file2')->getClientOriginalExtension();
+        $this->uploadFile($request->file('file2'), "proyecto-doc", $name);
+        $this->updateFile($proyecto_id, $date1, $name, "anexo2");
+      }
+
+      if ($request->hasFile('file3')) {
+        $name = $request->input('proyecto_id') . "/" . $date_format . "-" . Str::random(8) . "." . $request->file('file3')->getClientOriginalExtension();
+        $this->uploadFile($request->file('file3'), "proyecto-doc", $name);
+        $this->updateFile($proyecto_id, $date1, $name, "anexo3");
+      }
+
+      if ($request->hasFile('file4')) {
+        $name = $request->input('proyecto_id') . "/" . $date_format . "-" . Str::random(8) . "." . $request->file('file4')->getClientOriginalExtension();
+        $this->uploadFile($request->file('file4'), "proyecto-doc", $name);
+        $this->updateFile($proyecto_id, $date1, $name, "anexo4");
+      }
+
+      if ($request->hasFile('file5')) {
+        $name = $request->input('proyecto_id') . "/" . $date_format . "-" . Str::random(8) . "." . $request->file('file5')->getClientOriginalExtension();
+        $this->uploadFile($request->file('file5'), "proyecto-doc", $name);
+        $this->updateFile($proyecto_id, $date1, $name, "anexo5");
+      }
+
+      if ($request->hasFile('file6')) {
+        $name = $request->input('proyecto_id') . "/" . $date_format . "-" . Str::random(8) . "." . $request->file('file6')->getClientOriginalExtension();
+        $this->uploadFile($request->file('file6'), "proyecto-doc", $name);
+        $this->updateFile($proyecto_id, $date1, $name, "anexo6");
+      }
+    } else if ($request->input('tipo_proyecto') == "PCONFIGI") {
+      if ($request->hasFile('file1')) {
+        $name = $request->input('proyecto_id') . "/" . $date_format . "-" . Str::random(8) . "." . $request->file('file1')->getClientOriginalExtension();
+        $this->uploadFile($request->file('file1'), "proyecto-doc", $name);
+        $this->updateFile($proyecto_id, $date1, $name, "informe-PCONFIGI-INFORME", "Archivos de informe", 22);
+      }
+
+      if ($request->hasFile('file2')) {
+        $name = $request->input('proyecto_id') . "/" . $date_format . "-" . Str::random(8) . "." . $request->file('file2')->getClientOriginalExtension();
+        $this->uploadFile($request->file('file2'), "proyecto-doc", $name);
+        $this->updateFile($proyecto_id, $date1, $name, "viabilidad", "Actividades", 65);
+      }
+    } else if ($request->input('tipo_proyecto') == "PCONFIGI-INV") {
+      if ($request->hasFile('file1')) {
+        $name = $request->input('proyecto_id') . "/" . $date_format . "-" . Str::random(8) . "." . $request->file('file1')->getClientOriginalExtension();
+        $this->uploadFile($request->file('file1'), "proyecto-doc", $name);
+        $this->updateFile($proyecto_id, $date1, $name, "informe-PCONFIGI-INV-INFORME", "Archivos de informe", 22);
+      }
+    } else if ($request->input('tipo_proyecto') == "PINTERDIS") {
+      if ($request->hasFile('file1')) {
+        $name = $request->input('proyecto_id') . "/" . $date_format . "-" . Str::random(8) . "." . $request->file('file1')->getClientOriginalExtension();
+        $this->uploadFile($request->file('file1'), "proyecto-doc", $name);
+        $this->updateFile($proyecto_id, $date1, $name, "informe-PINTERDIS-INFORME", "Archivos de informe", 22);
+      }
+
+      if ($request->hasFile('file2')) {
+        $name = $request->input('proyecto_id') . "/" . $date_format . "-" . Str::random(8) . "." . $request->file('file2')->getClientOriginalExtension();
+        $this->uploadFile($request->file('file2'), "proyecto-doc", $name);
+        $this->updateFile($proyecto_id, $date1, $name, "articulo1", "Artículos publicados o aceptados en revistas indizadas a SCOPUS O WoS,o un libro,o dos capítulos de libro publicados en editoriales reconocido prestigio, de acuerdo con las normas internas de la universidad.", 65);
+      }
+
+      if ($request->hasFile('file3')) {
+        $name = $request->input('proyecto_id') . "/" . $date_format . "-" . Str::random(8) . "." . $request->file('file3')->getClientOriginalExtension();
+        $this->uploadFile($request->file('file3'), "proyecto-doc", $name);
+        $this->updateFile($proyecto_id, $date1, $name, "articulo2", "Artículos publicados o aceptados en revistas indizadas a SCOPUS O WoS,o un libro,o dos capítulos de libro publicados en editoriales reconocido prestigio, de acuerdo con las normas internas de la universidad.", 65);
+      }
+
+      if ($request->hasFile('file4')) {
+        $name = $request->input('proyecto_id') . "/" . $date_format . "-" . Str::random(8) . "." . $request->file('file4')->getClientOriginalExtension();
+        $this->uploadFile($request->file('file4'), "proyecto-doc", $name);
+        $this->updateFile($proyecto_id, $date1, $name, "tesis1", "Tesis sustentadas Pregrado.", 65);
+      }
+
+      if ($request->hasFile('file5')) {
+        $name = $request->input('proyecto_id') . "/" . $date_format . "-" . Str::random(8) . "." . $request->file('file5')->getClientOriginalExtension();
+        $this->uploadFile($request->file('file5'), "proyecto-doc", $name);
+        $this->updateFile($proyecto_id, $date1, $name, "tesis2", "Tesis sustentadas Pregrado.", 65);
+      }
+
+      if ($request->hasFile('file6')) {
+        $name = $request->input('proyecto_id') . "/" . $date_format . "-" . Str::random(8) . "." . $request->file('file6')->getClientOriginalExtension();
+        $this->uploadFile($request->file('file6'), "proyecto-doc", $name);
+        $this->updateFile($proyecto_id, $date1, $name, "tesis3", "Tesis sustentadas Pregrado.", 65);
+      }
+
+      if ($request->hasFile('file7')) {
+        $name = $request->input('proyecto_id') . "/" . $date_format . "-" . Str::random(8) . "." . $request->file('file7')->getClientOriginalExtension();
+        $this->uploadFile($request->file('file7'), "proyecto-doc", $name);
+        $this->updateFile($proyecto_id, $date1, $name, "tesis4", "Tesis sustentadas Posgrado", 65);
+      }
+
+      if ($request->hasFile('file8')) {
+        $name = $request->input('proyecto_id') . "/" . $date_format . "-" . Str::random(8) . "." . $request->file('file8')->getClientOriginalExtension();
+        $this->uploadFile($request->file('file8'), "proyecto-doc", $name);
+        $this->updateFile($proyecto_id, $date1, $name, "investigacion1", "Trabajos de investigación para obtener el grado de bachiller.", 65);
+      }
+
+      if ($request->hasFile('file9')) {
+        $name = $request->input('proyecto_id') . "/" . $date_format . "-" . Str::random(8) . "." . $request->file('file9')->getClientOriginalExtension();
+        $this->uploadFile($request->file('file9'), "proyecto-doc", $name);
+        $this->updateFile($proyecto_id, $date1, $name, "investigacion2", "Trabajos de investigación para obtener el grado de bachiller.", 65);
+      }
+
+      if ($request->hasFile('file10')) {
+        $name = $request->input('proyecto_id') . "/" . $date_format . "-" . Str::random(8) . "." . $request->file('file10')->getClientOriginalExtension();
+        $this->uploadFile($request->file('file10'), "proyecto-doc", $name);
+        $this->updateFile($proyecto_id, $date1, $name, "investigacion3", "Trabajos de investigación para obtener el grado de bachiller.", 65);
+      }
+
+      if ($request->hasFile('file11')) {
+        $name = $request->input('proyecto_id') . "/" . $date_format . "-" . Str::random(8) . "." . $request->file('file11')->getClientOriginalExtension();
+        $this->uploadFile($request->file('file11'), "proyecto-doc", $name);
+        $this->updateFile($proyecto_id, $date1, $name, "investigacion4", "Trabajos de investigación para obtener el grado de bachiller.", 65);
+      }
+
+      if ($request->hasFile('file12')) {
+        $name = $request->input('proyecto_id') . "/" . $date_format . "-" . Str::random(8) . "." . $request->file('file12')->getClientOriginalExtension();
+        $this->uploadFile($request->file('file12'), "proyecto-doc", $name);
+        $this->updateFile($proyecto_id, $date1, $name, "registro", "Formación de una red científica o el registro y/o inscripción al menos de una solicitud", 65);
+      }
+    } else if ($request->input('tipo_proyecto') == "PMULTI") {
+      if ($request->hasFile('file1')) {
+        $name = $request->input('proyecto_id') . "/" . $date_format . "-" . Str::random(8) . "." . $request->file('file1')->getClientOriginalExtension();
+        $this->uploadFile($request->file('file1'), "proyecto-doc", $name);
+        $this->updateFile($proyecto_id, $date1, $name, "informe-PMULTI-INFORME", "Archivos de informe", 22);
+      }
+
+      if ($request->hasFile('file2')) {
+        $name = $request->input('proyecto_id') . "/" . $date_format . "-" . Str::random(8) . "." . $request->file('file2')->getClientOriginalExtension();
+        $this->uploadFile($request->file('file2'), "proyecto-doc", $name);
+        $this->updateFile($proyecto_id, $date1, $name, "articulo1", "Artículos publicados o aceptados en revistas indizadas a SCOPUS O WoS,o un libro,o dos capítulos de libro publicados en editoriales reconocido prestigio, de acuerdo con las normas internas de la universidad.", 65);
+      }
+
+      if ($request->hasFile('file3')) {
+        $name = $request->input('proyecto_id') . "/" . $date_format . "-" . Str::random(8) . "." . $request->file('file3')->getClientOriginalExtension();
+        $this->uploadFile($request->file('file3'), "proyecto-doc", $name);
+        $this->updateFile($proyecto_id, $date1, $name, "articulo2", "Artículos publicados o aceptados en revistas indizadas a SCOPUS O WoS,o un libro,o dos capítulos de libro publicados en editoriales reconocido prestigio, de acuerdo con las normas internas de la universidad.", 65);
+      }
+
+      if ($request->hasFile('file4')) {
+        $name = $request->input('proyecto_id') . "/" . $date_format . "-" . Str::random(8) . "." . $request->file('file4')->getClientOriginalExtension();
+        $this->uploadFile($request->file('file4'), "proyecto-doc", $name);
+        $this->updateFile($proyecto_id, $date1, $name, "articulo3", "Artículos publicados o aceptados en revistas indizadas a SCOPUS O WoS,o un libro,o dos capítulos de libro publicados en editoriales reconocido prestigio, de acuerdo con las normas internas de la universidad.", 65);
+      }
+
+      if ($request->hasFile('file5')) {
+        $name = $request->input('proyecto_id') . "/" . $date_format . "-" . Str::random(8) . "." . $request->file('file5')->getClientOriginalExtension();
+        $this->uploadFile($request->file('file5'), "proyecto-doc", $name);
+        $this->updateFile($proyecto_id, $date1, $name, "capituloLibro1", "Capítulos de libros publicados en editoriales de reconocido prestigio, de acuerdo con las normas internas de la universidad", 65);
+      }
+
+      if ($request->hasFile('file6')) {
+        $name = $request->input('proyecto_id') . "/" . $date_format . "-" . Str::random(8) . "." . $request->file('file6')->getClientOriginalExtension();
+        $this->uploadFile($request->file('file6'), "proyecto-doc", $name);
+        $this->updateFile($proyecto_id, $date1, $name, "capituloLibro2", "Capítulos de libros publicados en editoriales de reconocido prestigio, de acuerdo con las normas internas de la universidad", 65);
+      }
+
+      if ($request->hasFile('file7')) {
+        $name = $request->input('proyecto_id') . "/" . $date_format . "-" . Str::random(8) . "." . $request->file('file7')->getClientOriginalExtension();
+        $this->uploadFile($request->file('file7'), "proyecto-doc", $name);
+        $this->updateFile($proyecto_id, $date1, $name, "tesis1", "Tesis sustentadas Pregrado", 65);
+      }
+
+      if ($request->hasFile('file8')) {
+        $name = $request->input('proyecto_id') . "/" . $date_format . "-" . Str::random(8) . "." . $request->file('file8')->getClientOriginalExtension();
+        $this->uploadFile($request->file('file8'), "proyecto-doc", $name);
+        $this->updateFile($proyecto_id, $date1, $name, "tesis4", "Tesis sustentadas Posgrado", 65);
+      }
+
+      if ($request->hasFile('file9')) {
+        $name = $request->input('proyecto_id') . "/" . $date_format . "-" . Str::random(8) . "." . $request->file('file9')->getClientOriginalExtension();
+        $this->uploadFile($request->file('file9'), "proyecto-doc", $name);
+        $this->updateFile($proyecto_id, $date1, $name, "registro", "Formación de una red científica o el registro y/o inscripción al menos de una solicitud", 65);
+      }
+
+      if ($request->hasFile('file10')) {
+        $name = $request->input('proyecto_id') . "/" . $date_format . "-" . Str::random(8) . "." . $request->file('file10')->getClientOriginalExtension();
+        $this->uploadFile($request->file('file10'), "proyecto-doc", $name);
+        $this->updateFile($proyecto_id, $date1, $name, "viabilidad", "Actividades", 65);
+      }
+    } else if ($request->input('tipo_proyecto') == "PRO-CTIE") {
+      if ($request->hasFile('file1')) {
+        $name = $request->input('proyecto_id') . "/" . $date_format . "-" . Str::random(8) . "." . $request->file('file1')->getClientOriginalExtension();
+        $this->uploadFile($request->file('file1'), "proyecto-doc", $name);
+        $this->updateFile($proyecto_id, $date1, $name, "informe-PRO-CTIE-INFORME", "Archivos de informe");
+      }
+    } else if ($request->input('tipo_proyecto') == "PRO-CTIE") {
+      if ($request->hasFile('file1')) {
+        $name = $request->input('proyecto_id') . "/" . $date_format . "-" . Str::random(8) . "." . $request->file('file1')->getClientOriginalExtension();
+        $this->uploadFile($request->file('file1'), "proyecto-doc", $name);
+        $this->updateFile($proyecto_id, $date1, $name, "informe-PRO-CTIE-INFORME", "Archivos de informe");
+      }
+    } else if ($request->input('tipo_proyecto') == "PSINFINV") {
+      if ($request->hasFile('file1')) {
+        $name = $request->input('proyecto_id') . "/" . $date_format . "-" . Str::random(8) . "." . $request->file('file1')->getClientOriginalExtension();
+        $this->uploadFile($request->file('file1'), "proyecto-doc", $name);
+        $this->updateFile($proyecto_id, $date1, $name, "informe-PSINFINV-INFORME", "Archivos de informe", 22);
+      }
+    } else if ($request->input('tipo_proyecto') == "PSINFIPU") {
+      if ($request->hasFile('file1')) {
+        $name = $request->input('proyecto_id') . "/" . $date_format . "-" . Str::random(8) . "." . $request->file('file1')->getClientOriginalExtension();
+        $this->uploadFile($request->file('file1'), "proyecto-doc", $name);
+        $this->updateFile($proyecto_id, $date1, $name, "informe-PSINFIPU-RESULTADOS", "Archivos de informe", 22);
+      }
+    }
+
+
     return [
       'message' => 'success',
       'detail' => 'Informe actualizado exitosamente',
     ];
   }
 
+  public function updateFile($proyecto_id, $date, $name, $categoria) {
+    DB::table('Proyecto_doc')
+      ->where('proyecto_id', '=', $proyecto_id)
+      ->where('categoria', '=', $categoria)
+      ->where('nombre', '=', 'Anexos proyecto ECI')
+      ->update([
+        'estado' => 0
+      ]);
+
+    DB::table('Proyecto_doc')
+      ->insert([
+        'proyecto_id' => $proyecto_id,
+        'categoria' => $categoria,
+        'tipo' => 21,
+        'nombre' => 'Anexos proyecto ECI',
+        'comentario' => $date,
+        'archivo' => $name,
+        'estado' => 1
+      ]);
+  }
+
   public function loadActividad(Request $request) {
     if ($request->hasFile('file')) {
-      $proyecto = DB::table("Informe_tecnico")
+
+      $proyecto = DB::table('Informe_tecnico')
         ->select([
           'proyecto_id'
         ])
-        ->where('id', '=', $request->input('informe_id'))
+        ->where('id', '=', $request->input('id'))
         ->first();
+
+      $proyecto_id = $proyecto->proyecto_id;
 
       $date = Carbon::now();
       $date1 = Carbon::now();
 
       $name = $date1->format('Ymd-His');
-      $nameFile = $proyecto->proyecto_id . "/" . $name . "." . $request->file('file')->getClientOriginalExtension();
+      $nameFile = $proyecto_id . "/" . $name . "." . $request->file('file')->getClientOriginalExtension();
       $this->uploadFile($request->file('file'), "proyecto-doc", $nameFile);
 
       DB::table('Proyecto_doc')
         ->updateOrInsert([
-          'proyecto_id' => $proyecto->proyecto_id,
+          'proyecto_id' => $proyecto_id,
           'nombre' => 'Actividades',
           'categoria' => 'actividad' . $request->input('indice'),
         ], [

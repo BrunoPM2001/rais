@@ -58,22 +58,44 @@ class InformePinvposController extends S3Controller {
   public function sendData(Request $request) {
     $date = Carbon::now();
 
-    DB::table('Informe_tecnico')
-      ->updateOrInsert([
-        'proyecto_id' => $request->input('proyecto_id')
-      ], [
-        'informe_tipo_id' => 43,
-        'objetivos_taller' => $request->input('objetivos_taller'),
-        'fecha_evento' => $request->input('fecha_evento'),
-        'propuestas_taller' => $request->input('propuestas_taller'),
-        'conclusion_taller' => $request->input('conclusion_taller'),
-        'recomendacion_taller' => $request->input('recomendacion_taller'),
-        'asistencia_taller' => $request->input('asistencia_taller'),
-        'estado' => 0,
-        'fecha_informe_tecnico' => $date,
-        'created_at' => $date,
-        'updated_at' => $date,
-      ]);
+    $count = DB::table('Informe_tecnico')
+      ->where('proyecto_id', '=', $request->input('proyecto_id'))
+      ->count();
+
+    if ($count == 0) {
+      DB::table('Informe_tecnico')
+        ->updateOrInsert([
+          'proyecto_id' => $request->input('proyecto_id')
+        ], [
+          'informe_tipo_id' => 43,
+          'objetivos_taller' => $request->input('objetivos_taller'),
+          'fecha_evento' => $request->input('fecha_evento'),
+          'propuestas_taller' => $request->input('propuestas_taller'),
+          'conclusion_taller' => $request->input('conclusion_taller'),
+          'recomendacion_taller' => $request->input('recomendacion_taller'),
+          'asistencia_taller' => $request->input('asistencia_taller'),
+          'estado' => 0,
+          'fecha_informe_tecnico' => $date,
+          'created_at' => $date,
+          'updated_at' => $date,
+        ]);
+    } else {
+      DB::table('Informe_tecnico')
+        ->updateOrInsert([
+          'proyecto_id' => $request->input('proyecto_id')
+        ], [
+          'informe_tipo_id' => 43,
+          'objetivos_taller' => $request->input('objetivos_taller'),
+          'fecha_evento' => $request->input('fecha_evento'),
+          'propuestas_taller' => $request->input('propuestas_taller'),
+          'conclusion_taller' => $request->input('conclusion_taller'),
+          'recomendacion_taller' => $request->input('recomendacion_taller'),
+          'asistencia_taller' => $request->input('asistencia_taller'),
+          'estado' => 0,
+          'fecha_informe_tecnico' => $date,
+          'updated_at' => $date,
+        ]);
+    }
 
     $proyecto_id = $request->input('proyecto_id');
     $date1 = Carbon::now();

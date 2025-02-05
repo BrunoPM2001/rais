@@ -87,27 +87,54 @@ class InformeProCtieController extends S3Controller {
   public function sendData(Request $request) {
     $date = Carbon::now();
 
-    DB::table('Informe_tecnico')
-      ->updateOrInsert([
-        'proyecto_id' => $request->input('proyecto_id')
-      ], [
-        'informe_tipo_id' => 50,
-        'resumen_ejecutivo' => $request->input('resumen_ejecutivo'),
-        'palabras_clave' => $request->input('palabras_clave'),
-        'infinal1' => $request->input('infinal1'),
-        'infinal2' => $request->input('infinal2'),
-        'infinal3' => $request->input('infinal3'),
-        'infinal4' => $request->input('infinal4'),
-        'infinal5' => $request->input('infinal5'),
-        'infinal6' => $request->input('infinal6'),
-        'infinal7' => $request->input('infinal7'),
-        'infinal9' => $request->input('infinal9'),
-        'infinal10' => $request->input('infinal10'),
-        'estado' => 0,
-        'fecha_informe_tecnico' => $date,
-        'created_at' => $date,
-        'updated_at' => $date,
-      ]);
+    $count = DB::table('Informe_tecnico')
+      ->where('proyecto_id', '=', $request->input('proyecto_id'))
+      ->count();
+
+    if ($count == 0) {
+      DB::table('Informe_tecnico')
+        ->updateOrInsert([
+          'proyecto_id' => $request->input('proyecto_id')
+        ], [
+          'informe_tipo_id' => 50,
+          'resumen_ejecutivo' => $request->input('resumen_ejecutivo'),
+          'palabras_clave' => $request->input('palabras_clave'),
+          'infinal1' => $request->input('infinal1'),
+          'infinal2' => $request->input('infinal2'),
+          'infinal3' => $request->input('infinal3'),
+          'infinal4' => $request->input('infinal4'),
+          'infinal5' => $request->input('infinal5'),
+          'infinal6' => $request->input('infinal6'),
+          'infinal7' => $request->input('infinal7'),
+          'infinal9' => $request->input('infinal9'),
+          'infinal10' => $request->input('infinal10'),
+          'estado' => 0,
+          'fecha_informe_tecnico' => $date,
+          'created_at' => $date,
+          'updated_at' => $date,
+        ]);
+    } else {
+      DB::table('Informe_tecnico')
+        ->updateOrInsert([
+          'proyecto_id' => $request->input('proyecto_id')
+        ], [
+          'informe_tipo_id' => 50,
+          'resumen_ejecutivo' => $request->input('resumen_ejecutivo'),
+          'palabras_clave' => $request->input('palabras_clave'),
+          'infinal1' => $request->input('infinal1'),
+          'infinal2' => $request->input('infinal2'),
+          'infinal3' => $request->input('infinal3'),
+          'infinal4' => $request->input('infinal4'),
+          'infinal5' => $request->input('infinal5'),
+          'infinal6' => $request->input('infinal6'),
+          'infinal7' => $request->input('infinal7'),
+          'infinal9' => $request->input('infinal9'),
+          'infinal10' => $request->input('infinal10'),
+          'estado' => 0,
+          'fecha_informe_tecnico' => $date,
+          'updated_at' => $date,
+        ]);
+    }
 
     $proyecto_id = $request->input('proyecto_id');
     $date1 = Carbon::now();

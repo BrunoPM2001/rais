@@ -101,27 +101,54 @@ class InformePmultiController extends S3Controller {
   public function sendData(Request $request) {
     $date = Carbon::now();
 
-    DB::table('Informe_tecnico')
-      ->updateOrInsert([
-        'proyecto_id' => $request->input('proyecto_id')
-      ], [
-        'informe_tipo_id' => 47,
-        'resumen_ejecutivo' => $request->input('resumen_ejecutivo'),
-        'palabras_clave' => $request->input('palabras_clave'),
-        'infinal1' => $request->input('infinal1'),
-        'infinal2' => $request->input('infinal2'),
-        'infinal3' => $request->input('infinal3'),
-        'infinal4' => $request->input('infinal4'),
-        'infinal5' => $request->input('infinal5'),
-        'infinal6' => $request->input('infinal6'),
-        'infinal7' => $request->input('infinal7'),
-        'infinal9' => $request->input('infinal9'),
-        'infinal10' => $request->input('infinal10'),
-        'estado' => 0,
-        'fecha_informe_tecnico' => $date,
-        'created_at' => $date,
-        'updated_at' => $date,
-      ]);
+    $count = DB::table('Informe_tecnico')
+      ->where('proyecto_id', '=', $request->input('proyecto_id'))
+      ->count();
+
+    if ($count == 0) {
+      DB::table('Informe_tecnico')
+        ->updateOrInsert([
+          'proyecto_id' => $request->input('proyecto_id')
+        ], [
+          'informe_tipo_id' => 47,
+          'resumen_ejecutivo' => $request->input('resumen_ejecutivo'),
+          'palabras_clave' => $request->input('palabras_clave'),
+          'infinal1' => $request->input('infinal1'),
+          'infinal2' => $request->input('infinal2'),
+          'infinal3' => $request->input('infinal3'),
+          'infinal4' => $request->input('infinal4'),
+          'infinal5' => $request->input('infinal5'),
+          'infinal6' => $request->input('infinal6'),
+          'infinal7' => $request->input('infinal7'),
+          'infinal9' => $request->input('infinal9'),
+          'infinal10' => $request->input('infinal10'),
+          'estado' => 0,
+          'fecha_informe_tecnico' => $date,
+          'created_at' => $date,
+          'updated_at' => $date,
+        ]);
+    } else {
+      DB::table('Informe_tecnico')
+        ->updateOrInsert([
+          'proyecto_id' => $request->input('proyecto_id')
+        ], [
+          'informe_tipo_id' => 47,
+          'resumen_ejecutivo' => $request->input('resumen_ejecutivo'),
+          'palabras_clave' => $request->input('palabras_clave'),
+          'infinal1' => $request->input('infinal1'),
+          'infinal2' => $request->input('infinal2'),
+          'infinal3' => $request->input('infinal3'),
+          'infinal4' => $request->input('infinal4'),
+          'infinal5' => $request->input('infinal5'),
+          'infinal6' => $request->input('infinal6'),
+          'infinal7' => $request->input('infinal7'),
+          'infinal9' => $request->input('infinal9'),
+          'infinal10' => $request->input('infinal10'),
+          'estado' => 0,
+          'fecha_informe_tecnico' => $date,
+          'updated_at' => $date,
+        ]);
+    }
 
     $proyecto_id = $request->input('proyecto_id');
     $date1 = Carbon::now();
@@ -179,6 +206,12 @@ class InformePmultiController extends S3Controller {
       $name = $request->input('proyecto_id') . "/" . $date_format . "-" . Str::random(8) . "." . $request->file('file9')->getClientOriginalExtension();
       $this->uploadFile($request->file('file9'), "proyecto-doc", $name);
       $this->updateFile($proyecto_id, $date_format, $name, "registro", "Formación de una red científica o el registro y/o inscripción al menos de una solicitud", 65);
+    }
+
+    if ($request->hasFile('file10')) {
+      $name = $request->input('proyecto_id') . "/" . $date_format . "-" . Str::random(8) . "." . $request->file('file10')->getClientOriginalExtension();
+      $this->uploadFile($request->file('file10'), "proyecto-doc", $name);
+      $this->updateFile($proyecto_id, $date_format, $name, "viabilidad", "Actividades", 65);
     }
 
     return ['message' => 'success', 'detail' => 'Informe guardado correctamente'];

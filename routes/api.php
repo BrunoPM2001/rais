@@ -222,7 +222,10 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
     //  Informe técnico
     Route::prefix('informesTecnicos')->group(function () {
       Route::get('proyectosListado', [InformesTecnicosController::class, 'proyectosListado']);
-      Route::get('informes/{proyecto_id}', [InformesTecnicosController::class, 'informes']);
+      Route::get('informes', [InformesTecnicosController::class, 'informes']);
+      Route::delete('eliminarInforme', [InformesTecnicosController::class, 'eliminarInforme']);
+      Route::post('loadActividad', [InformesTecnicosController::class, 'loadActividad']);
+
       Route::get('getDataInforme', [InformesTecnicosController::class, 'getDataInforme']);
       Route::post('updateInforme', [InformesTecnicosController::class, 'updateInforme']);
       Route::post('loadActividad', [InformesTecnicosController::class, 'loadActividad']);
