@@ -145,6 +145,12 @@ class InformeProCtieController extends S3Controller {
       $this->updateFile($proyecto_id, $date1, $name, "informe-PRO-CTIE-INFORME", "Archivos de informe");
     }
 
+    if ($request->hasFile('file2')) {
+      $name = $request->input('proyecto_id') . "/" . $date1->format('Ymd-His') . "-" . Str::random(8) . "." . $request->file('file2')->getClientOriginalExtension();
+      $this->uploadFile($request->file('file2'), "proyecto-doc", $name);
+      $this->updateFile($proyecto_id, $date1, $name, "viabilidad", "Actividades", 65);
+    }
+
     return ['message' => 'success', 'detail' => 'Informe guardado correctamente'];
   }
 

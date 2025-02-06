@@ -214,10 +214,18 @@ class ProyectoFEXController extends S3Controller {
         return response()->json(['error' => 'Unauthorized'], 401);
       }
 
+      $responsable = DB::table('Usuario_investigador')
+        ->select([
+          'facultad_id'
+        ])
+        ->where('id', '=', $investigador_id)
+        ->first();
+
       DB::table('Proyecto')
         ->where('id', '=', $id)
         ->update([
           'linea_investigacion_id' => $request->input('linea_investigacion_id')["value"] ?? null,
+          'facultad_id' => $responsable->facultad_id,
           'ocde_id' => $request->input('ocde_3')["value"] ?? null,
           'titulo' => $request->input('titulo'),
           'periodo' => $request->input('periodo'),
@@ -235,9 +243,17 @@ class ProyectoFEXController extends S3Controller {
           'updated_at' => $date,
         ]);
     } else {
+      $responsable = DB::table('Usuario_investigador')
+        ->select([
+          'facultad_id'
+        ])
+        ->where('id', '=', $investigador_id)
+        ->first();
+
       $id = DB::table('Proyecto')
         ->insertGetId([
           'linea_investigacion_id' => $request->input('linea_investigacion_id')["value"] ?? null,
+          'facultad_id' => $responsable->facultad_id,
           'ocde_id' => $request->input('ocde_3')["value"] ?? null,
           'titulo' => $request->input('titulo'),
           'periodo' => $request->input('periodo'),

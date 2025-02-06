@@ -26,26 +26,22 @@ class ProyectosFEXController extends S3Controller {
       )
       ->where('codigo', '=', 'moneda_tipo');
 
-    $participacion_ummsm = DB::table('Proyecto_descripcion')
-      ->select(
-        'proyecto_id',
-        'detalle'
-      )
-      ->where('codigo', '=', 'participacion_ummsm');
-
-    $fuente_financiadora = DB::table('Proyecto_descripcion')
-      ->select(
-        'proyecto_id',
-        'detalle'
-      )
-      ->where('codigo', '=', 'fuente_financiadora');
-
     $proyectos = DB::table('Proyecto AS a')
       ->leftJoin('Facultad AS b', 'b.id', '=', 'a.facultad_id')
       ->leftJoinSub($responsable, 'res', 'res.proyecto_id', '=', 'a.id')
       ->leftJoinSub($moneda, 'moneda', 'moneda.proyecto_id', '=', 'a.id')
-      ->leftJoinSub($participacion_ummsm, 'p_unmsm', 'p_unmsm.proyecto_id', '=', 'a.id')
-      ->leftJoinSub($fuente_financiadora, 'fuente', 'fuente.proyecto_id', '=', 'a.id')
+      ->leftJoin('Proyecto_descripcion AS e', function (JoinClause $join) {
+        $join->on('e.proyecto_id', '=', 'a.id')
+          ->where('e.codigo', '=', 'participacion_unmsm');
+      })
+      ->leftJoin('Proyecto_descripcion AS f', function (JoinClause $join) {
+        $join->on('f.proyecto_id', '=', 'a.id')
+          ->where('f.codigo', '=', 'fuente_financiadora');
+      })
+      ->leftJoin('Proyecto_descripcion AS g', function (JoinClause $join) {
+        $join->on('g.proyecto_id', '=', 'a.id')
+          ->where('g.codigo', '=', 'otra_fuente');
+      })
       ->select(
         'a.id',
         'a.codigo_proyecto',
@@ -57,8 +53,11 @@ class ProyectosFEXController extends S3Controller {
         'a.aporte_unmsm',
         'a.financiamiento_fuente_externa',
         'a.monto_asignado',
-        'p_unmsm.detalle AS participacion_unmsm',
-        'fuente.detalle AS fuente_fin',
+        'e.detalle AS participacion_unmsm',
+        DB::raw("CASE
+          WHEN f.detalle = 'OTROS' THEN g.detalle
+          ELSE f.detalle
+        END AS fuente_fin"),
         'a.periodo',
         DB::raw('DATE(a.created_at) AS registrado'),
         DB::raw('DATE(a.updated_at) AS actualizado'),
@@ -185,7 +184,7 @@ class ProyectosFEXController extends S3Controller {
     $integrantes = DB::table('Proyecto_integrante AS a')
       ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
       ->join('Proyecto_integrante_tipo AS c', 'c.id', '=', 'a.proyecto_integrante_tipo_id')
-      ->join('Facultad AS d', 'd.id', '=', 'b.facultad_id')
+      ->leftJoin('Facultad AS d', 'd.id', '=', 'b.facultad_id')
       ->select([
         'a.id',
         'c.nombre AS tipo_integrante',
@@ -669,6 +668,7 @@ class ProyectosFEXController extends S3Controller {
       ->select([
         'a.codigo_proyecto',
         'a.titulo',
+        'a.periodo',
         'b.nombre AS linea_investigacion',
         'c.linea AS linea_ocde',
         'a.aporte_unmsm',

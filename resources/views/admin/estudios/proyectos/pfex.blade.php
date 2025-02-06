@@ -1,6 +1,6 @@
 @php
   use Carbon\Carbon;
-   
+
   $currentFacultad = '';
   $counter = 0;
   $totalSum = [];
@@ -135,13 +135,13 @@
   <div class="foot-1">RAIS - Registro de Actividades de Investigación de San Marcos</div>
   <p class="titulo">
     <strong>
-      PROYECTO FEX
+      PROYECTO FEX {{ $proyecto->periodo }}
     </strong>
   </p>
 
   <p class="subtitulo">
     <strong>
-      Estado: {{$proyecto->estado}} {{ Carbon::parse($proyecto->updated_at)->format('d/m/Y') }}
+      Estado: {{ $proyecto->estado }} {{ Carbon::parse($proyecto->updated_at)->format('d/m/Y') }}
     </strong>
   </p>
 
@@ -189,7 +189,13 @@
         <tr>
           <td style="width: 24%;" valign="top"><strong>Fuente financiadora</strong></td>
           <td style="width: 1%;" valign="top">:</td>
-          <td style="width: 75%;" valign="top">{{ $extras["fuente_financiadora"] }}</td>
+          <td style="width: 75%;" valign="top">
+            @if ($extras['fuente_financiadora'] == 'OTROS')
+              {{ $extras['otra_fuente'] }}
+            @else
+              {{ $extras['fuente_financiadora'] }}
+            @endif
+          </td>
         </tr>
         <tr>
           <td style="width: 24%;" valign="top"><strong>País</strong></td>
@@ -199,12 +205,12 @@
         <tr>
           <td style="width: 24%;" valign="top"><strong>Web fuente financiadora</strong></td>
           <td style="width: 1%;" valign="top">:</td>
-          <td style="width: 75%;" valign="top">{{ $extras["web_fuente"] }}</td>
+          <td style="width: 75%;" valign="top">{{ $extras['web_fuente'] }}</td>
         </tr>
         <tr>
           <td style="width: 24%;" valign="top"><strong>La UNMSM participa como</strong></td>
           <td style="width: 1%;" valign="top">:</td>
-          <td style="width: 75%;" valign="top">{{ $extras["participacion_unmsm"] }}</td>
+          <td style="width: 75%;" valign="top">{{ $extras['participacion_unmsm'] }}</td>
         </tr>
         <tr>
           <td style="width: 24%;" valign="top"><strong>Resolución rectoral</strong></td>
@@ -231,17 +237,18 @@
           <td style="width: 1%;" valign="top">:</td>
           <td style="width: 75%;" valign="top">
             @if (isset($extras['duracion_dia']))
-              {{ $extras["duracion_dia"] }}
+              {{ $extras['duracion_dia'] }}
             @endif
-             día(s) - 
+            día(s) -
             @if (isset($extras['duracion_mes']))
-              {{ $extras["duracion_mes"] }}
+              {{ $extras['duracion_mes'] }}
             @endif
-             mes(es) - 
+            mes(es) -
             @if (isset($extras['duracion_mes']))
-              {{ $extras["duracion_anio"] }}
+              {{ $extras['duracion_anio'] }}
             @endif
-             año(s)</td>
+            año(s)
+          </td>
         </tr>
       </tbody>
     </table>

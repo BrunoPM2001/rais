@@ -208,12 +208,6 @@ class InformePmultiController extends S3Controller {
       $this->updateFile($proyecto_id, $date_format, $name, "registro", "Formación de una red científica o el registro y/o inscripción al menos de una solicitud", 65);
     }
 
-    if ($request->hasFile('file10')) {
-      $name = $request->input('proyecto_id') . "/" . $date_format . "-" . Str::random(8) . "." . $request->file('file10')->getClientOriginalExtension();
-      $this->uploadFile($request->file('file10'), "proyecto-doc", $name);
-      $this->updateFile($proyecto_id, $date_format, $name, "viabilidad", "Actividades", 65);
-    }
-
     return ['message' => 'success', 'detail' => 'Informe guardado correctamente'];
   }
 

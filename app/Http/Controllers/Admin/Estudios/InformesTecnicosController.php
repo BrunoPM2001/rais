@@ -566,17 +566,16 @@ class InformesTecnicosController extends S3Controller {
         $this->uploadFile($request->file('file9'), "proyecto-doc", $name);
         $this->updateFile($proyecto_id, $date1, $name, "registro", "Formación de una red científica o el registro y/o inscripción al menos de una solicitud", 65);
       }
-
-      if ($request->hasFile('file10')) {
-        $name = $request->input('proyecto_id') . "/" . $date_format . "-" . Str::random(8) . "." . $request->file('file10')->getClientOriginalExtension();
-        $this->uploadFile($request->file('file10'), "proyecto-doc", $name);
-        $this->updateFile($proyecto_id, $date1, $name, "viabilidad", "Actividades", 65);
-      }
     } else if ($request->input('tipo_proyecto') == "PRO-CTIE") {
       if ($request->hasFile('file1')) {
         $name = $request->input('proyecto_id') . "/" . $date_format . "-" . Str::random(8) . "." . $request->file('file1')->getClientOriginalExtension();
         $this->uploadFile($request->file('file1'), "proyecto-doc", $name);
         $this->updateFile($proyecto_id, $date1, $name, "informe-PRO-CTIE-INFORME", "Archivos de informe");
+      }
+      if ($request->hasFile('file2')) {
+        $name = $request->input('proyecto_id') . "/" . $date_format . "-" . Str::random(8) . "." . $request->file('file2')->getClientOriginalExtension();
+        $this->uploadFile($request->file('file2'), "proyecto-doc", $name);
+        $this->updateFile($proyecto_id, $date1, $name, "viabilidad", "Actividades", 65);
       }
     } else if ($request->input('tipo_proyecto') == "PRO-CTIE") {
       if ($request->hasFile('file1')) {
