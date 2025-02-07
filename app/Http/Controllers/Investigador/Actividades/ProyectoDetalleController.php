@@ -40,6 +40,7 @@ class ProyectoDetalleController extends Controller {
             'e.nombre AS linea_investigacion',
             'a.fecha_inscripcion',
             'a.resolucion_rectoral',
+            'a.observaciones_admin',
             'f.grupo_nombre'
           ])
           ->where('a.id', '=', $request->query('proyecto_id'))

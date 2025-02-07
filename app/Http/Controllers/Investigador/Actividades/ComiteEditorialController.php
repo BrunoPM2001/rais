@@ -21,6 +21,7 @@ class ComiteEditorialController extends Controller {
           WHEN -1 THEN 'Eliminado'
           WHEN 0 THEN 'No aprobado'
           WHEN 1 THEN 'Aprobado'
+          WHEN 2 THEN 'Observado'
           WHEN 3 THEN 'En evaluacion'
           WHEN 5 THEN 'Enviado'
           WHEN 6 THEN 'En proceso'

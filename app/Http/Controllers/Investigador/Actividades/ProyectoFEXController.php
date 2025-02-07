@@ -23,6 +23,7 @@ class ProyectoFEXController extends S3Controller {
           WHEN -1 THEN 'Eliminado'
           WHEN 0 THEN 'No aprobado'
           WHEN 1 THEN 'Aprobado'
+          WHEN 2 THEN 'Observado'
           WHEN 3 THEN 'En evaluacion'
           WHEN 5 THEN 'Enviado'
           WHEN 6 THEN 'En proceso'
@@ -52,6 +53,7 @@ class ProyectoFEXController extends S3Controller {
           WHEN -1 THEN 'Eliminado'
           WHEN 0 THEN 'No aprobado'
           WHEN 1 THEN 'Aprobado'
+          WHEN 2 THEN 'Observado'
           WHEN 3 THEN 'En evaluacion'
           WHEN 5 THEN 'Enviado'
           WHEN 6 THEN 'En proceso'
@@ -114,7 +116,9 @@ class ProyectoFEXController extends S3Controller {
         'aporte_no_unmsm',
         'financiamiento_fuente_externa',
         'entidad_asociada',
-        'resolucion_rectoral'
+        'resolucion_rectoral',
+        'estado',
+        'observaciones_admin',
       ])
       ->where('id', '=', $request->query('id'))
       ->first();
@@ -145,6 +149,8 @@ class ProyectoFEXController extends S3Controller {
         DB::raw("COALESCE(fecha_inicio, '') AS fecha_inicio"),
         DB::raw("COALESCE(fecha_fin, '') AS fecha_fin"),
         DB::raw("COALESCE(palabras_clave, '') AS palabras_clave"),
+        'estado',
+        'observaciones_admin',
       ])
       ->where('id', '=', $request->query('id'))
       ->first();
@@ -168,6 +174,14 @@ class ProyectoFEXController extends S3Controller {
   }
 
   public function datosPaso3(Request $request) {
+    $proyecto = DB::table('Proyecto')
+      ->select([
+        'estado',
+        'observaciones_admin'
+      ])
+      ->where('id', '=', $request->query('id'))
+      ->first();
+
     $documentos = DB::table('Proyecto_fex_doc AS a')
       ->select([
         'id',
@@ -180,11 +194,22 @@ class ProyectoFEXController extends S3Controller {
       ->where('proyecto_id', '=', $request->query('id'))
       ->get();
 
-    return $documentos;
+    return [
+      'proyecto' => $proyecto,
+      'documentos' => $documentos
+    ];
   }
 
   public function datosPaso4(Request $request) {
-    $miembros = DB::table('Proyecto_integrante AS a')
+    $proyecto = DB::table('Proyecto')
+      ->select([
+        'estado',
+        'observaciones_admin'
+      ])
+      ->where('id', '=', $request->query('id'))
+      ->first();
+
+    $integrantes = DB::table('Proyecto_integrante AS a')
       ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
       ->leftJoin('Facultad AS c', 'c.id', '=', 'b.facultad_id')
       ->join('Proyecto_integrante_tipo AS d', 'd.id', '=', 'a.proyecto_integrante_tipo_id')
@@ -199,7 +224,22 @@ class ProyectoFEXController extends S3Controller {
       ->where('a.proyecto_id', '=', $request->query('id'))
       ->get();
 
-    return $miembros;
+    return [
+      'proyecto' => $proyecto,
+      'integrantes' => $integrantes
+    ];
+  }
+
+  public function datosPaso5(Request $request) {
+    $proyecto = DB::table('Proyecto')
+      ->select([
+        'estado',
+        'observaciones_admin',
+      ])
+      ->where('id', '=', $request->query('id'))
+      ->first();
+
+    return $proyecto;
   }
 
   public function registrarPaso1(Request $request) {

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Facultad\Listado;
 
 use App\Exports\Facultad\DeudasExport;
+use App\Exports\Facultad\PublicacionesExport;
 use App\Exports\Facultad\DocenteInvestigadorExport;
 use App\Exports\Facultad\GrupoIntegrantesExport;
 use App\Exports\Facultad\InvestigadoresExport;
@@ -94,6 +95,79 @@ class FacultadListadoController extends Controller {
       'publicaciones' => $publicaciones,
       'proyectos' => $totalProyectos,
       'proyectos_historicos' => $totalProyectosHistoricos
+    ];
+  }
+
+  public function searchInvestigadorFacultad(Request $request) {
+    $facultadId = $this->facultadId($request);
+
+    $docentes = DB::table('Usuario_investigador AS a')
+      ->leftJoin('Publicacion_autor AS b', 'b.investigador_id', '=', 'a.id')
+      ->select(
+        DB::raw("
+                    CONCAT(
+                        TRIM(a.codigo), ' | ', 
+                        a.doc_numero, ' | ', 
+                        a.apellido1, ' ', a.apellido2, ', ', a.nombres, ' | ', 
+                        COALESCE(a.tipo, CONCAT(a.tipo_investigador, ' - ', a.tipo_investigador_estado))
+                    ) AS value
+                "),
+        'a.id AS investigador_id',
+        'a.id',
+        'a.codigo',
+        'a.doc_numero',
+        'a.apellido1',
+        'a.apellido2',
+        'a.nombres',
+        'a.tipo',
+        'a.tipo_investigador',
+        'a.tipo_investigador_estado',
+        DB::raw("COUNT(b.id) AS publicaciones")
+      )
+      ->where('a.facultad_id', $facultadId)
+      ->having('value', 'LIKE', '%' . $request->query('query') . '%')
+      ->groupBy('a.id')
+      ->limit(10)
+      ->get();
+
+    return $docentes;
+  }
+
+  public function datosPublicaciones(Request $request) {
+
+    $facultadId = $this->facultadId($request);
+
+    $periodo = DB::table('Publicacion AS p')
+      ->join('Publicacion_autor AS pa', 'pa.publicacion_id', '=', 'p.id')
+      ->join('Usuario_investigador AS i', 'i.id', '=', 'pa.investigador_id')
+      ->selectRaw('YEAR(p.fecha_publicacion) AS periodo')
+      ->where('i.facultad_id', $facultadId)
+      ->distinct() // Evita años repetidos
+      ->orderBy('periodo', 'desc')
+      ->get();
+
+    $tipoPublicacion = DB::table('Publicacion AS p')
+      ->join('Publicacion_categoria AS pcat', 'pcat.id', '=', 'p.categoria_id')
+      ->join('Publicacion_autor AS pa', 'pa.publicacion_id', '=', 'p.id')
+      ->join('Usuario_investigador AS i', 'i.id', '=', 'pa.investigador_id')
+      ->select('pcat.tipo')
+      ->distinct() // Evita tipos de publicación repetidos
+      ->get();
+
+    $estado = DB::table('Publicacion AS p')
+      ->join('Publicacion_autor AS pa', 'pa.publicacion_id', '=', 'p.id')
+      ->join('Usuario_investigador AS i', 'i.id', '=', 'pa.investigador_id')
+      ->select('p.estado')
+      ->where('i.facultad_id', $facultadId)
+      ->distinct() // Evita estados repetidos
+      ->get();
+
+
+
+    return [
+      'periodo' => $periodo,
+      'tipoPublicacion' => $tipoPublicacion,
+      'estado' => $estado
     ];
   }
 
@@ -876,5 +950,12 @@ class FacultadListadoController extends Controller {
     $export = new DeudasExport($facultadId);
 
     return Excel::download($export, 'grupos.xlsx');
+  }
+
+  public function excelPublicaciones(Request $request) {
+    $facultadId = $this->facultadId($request);
+    $export = new PublicacionesExport($facultadId);
+
+    return Excel::download($export, 'publicaciones.xlsx');
   }
 }

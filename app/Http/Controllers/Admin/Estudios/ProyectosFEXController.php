@@ -61,7 +61,20 @@ class ProyectosFEXController extends S3Controller {
         'a.periodo',
         DB::raw('DATE(a.created_at) AS registrado'),
         DB::raw('DATE(a.updated_at) AS actualizado'),
-        'a.estado'
+        DB::raw("CASE(a.estado)
+          WHEN -1 THEN 'Eliminado'
+          WHEN 0 THEN 'No aprobado'
+          WHEN 1 THEN 'Aprobado'
+          WHEN 2 THEN 'Observado'
+          WHEN 3 THEN 'En evaluacion'
+          WHEN 5 THEN 'Enviado'
+          WHEN 6 THEN 'En proceso'
+          WHEN 7 THEN 'Anulado'
+          WHEN 8 THEN 'Sustentado'
+          WHEN 9 THEN 'En ejecución'
+          WHEN 10 THEN 'Ejecutado'
+          WHEN 11 THEN 'Concluído'
+        ELSE 'Sin estado' END AS estado"),
       )
       ->where('a.tipo_proyecto', '=', 'PFEX')
       ->groupBy('a.id')
@@ -105,6 +118,7 @@ class ProyectosFEXController extends S3Controller {
     $proyecto = DB::table('Proyecto')
       ->select([
         'titulo',
+        'periodo',
         'linea_investigacion_id',
         'ocde_id',
         'aporte_unmsm',
@@ -210,6 +224,7 @@ class ProyectosFEXController extends S3Controller {
           'linea_investigacion_id' => $request->input('linea_investigacion_id')["value"] ?? null,
           'ocde_id' => $request->input('ocde_3')["value"] ?? null,
           'titulo' => $request->input('titulo'),
+          'periodo' => $request->input('periodo'),
           'resolucion_rectoral' => $request->input('resolucion_rectoral'),
           'aporte_unmsm' => $request->input('aporte_unmsm'),
           'aporte_no_unmsm' => $request->input('aporte_no_unmsm'),
@@ -229,6 +244,7 @@ class ProyectosFEXController extends S3Controller {
           'linea_investigacion_id' => $request->input('linea_investigacion_id')["value"] ?? null,
           'ocde_id' => $request->input('ocde_3')["value"] ?? null,
           'titulo' => $request->input('titulo'),
+          'periodo' => $request->input('periodo'),
           'fecha_inscripcion' => $date,
           'tipo_proyecto' => 'PFEX',
           'periodo' => $date->format("Y"),
@@ -561,6 +577,72 @@ class ProyectosFEXController extends S3Controller {
     return ['message' => 'success', 'detail' => 'Integrante añadido exitosamente'];
   }
 
+  public function getEditDocente(Request $request) {
+    $docente = DB::table('Proyecto_integrante AS a')
+      ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
+      ->select([
+        'a.investigador_id',
+        'a.proyecto_integrante_tipo_id',
+        'b.codigo',
+        'b.apellido1',
+        'b.apellido2',
+        'b.nombres',
+        'b.doc_numero',
+        'b.cti_vitae',
+        'b.especialidad',
+        'b.titulo_profesional',
+        'b.grado',
+        'b.instituto_id',
+        'b.codigo_orcid',
+        'b.email3',
+        'b.telefono_casa',
+        'b.telefono_trabajo',
+        'b.telefono_movil',
+      ])
+      ->where('a.id', '=', $request->query('id'))
+      ->first();
+
+    $institutos = DB::table('Instituto')
+      ->select([
+        'id AS value',
+        'instituto AS label'
+      ])
+      ->where('estado', '=', 1)
+      ->get();
+
+    return ['docente' => $docente, 'institutos' => $institutos];
+  }
+
+  public function editarDocente(Request $request) {
+    $investigador_id = $request->input('investigador_id');
+
+    DB::table('Usuario_investigador')
+      ->where('id', '=', $investigador_id)
+      ->update([
+        'codigo' => $request->input('codigo'),
+        'cti_vitae' => $request->input('cti_vitae'),
+        'especialidad' => $request->input('especialidad'),
+        'titulo_profesional' => $request->input('titulo_profesional'),
+        'grado' => $request->input('grado')["value"],
+        'instituto_id' => $request->input('instituto')["value"],
+        'codigo_orcid' => $request->input('codigo_orcid'),
+        'email3' => $request->input('email3'),
+        'telefono_casa' => $request->input('telefono_casa'),
+        'telefono_trabajo' => $request->input('telefono_trabajo'),
+        'telefono_movil' => $request->input('telefono_movil'),
+      ]);
+
+
+    DB::table('Proyecto_integrante')
+      ->where('id', '=', $request->input('id'))
+      ->update([
+        'proyecto_integrante_tipo_id' => $request->input('condicion')["value"],
+        'updated_at' => Carbon::now(),
+      ]);
+
+    return ['message' => 'info', 'detail' => 'Información editada exitosamente'];
+  }
+
   public function agregarEstudiante(Request $request) {
     $investigador_id = $request->input('investigador_id');
 
@@ -601,6 +683,197 @@ class ProyectosFEXController extends S3Controller {
       ]);
 
     return ['message' => 'success', 'detail' => 'Integrante añadido exitosamente'];
+  }
+
+  public function getEditEstudiante(Request $request) {
+    $estudiante = DB::table('Proyecto_integrante AS a')
+      ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
+      ->select([
+        'a.investigador_id',
+        'b.codigo',
+        'b.apellido1',
+        'b.apellido2',
+        'b.nombres',
+        'b.doc_numero',
+        'b.email3',
+        'b.telefono_casa',
+        'b.telefono_trabajo',
+        'b.telefono_movil',
+      ])
+      ->where('a.id', '=', $request->query('id'))
+      ->first();
+
+    return $estudiante;
+  }
+
+  public function editarEstudiante(Request $request) {
+    $investigador_id = $request->input('investigador_id');
+    DB::table('Usuario_investigador')
+      ->where('id', '=', $investigador_id)
+      ->update([
+        'doc_numero' => $request->input('doc_numero'),
+        'codigo' => $request->input('codigo'),
+        'email3' => $request->input('email3'),
+        'telefono_casa' => $request->input('telefono_casa'),
+        'telefono_trabajo' => $request->input('telefono_trabajo'),
+        'telefono_movil' => $request->input('telefono_movil'),
+      ]);
+
+    DB::table('Proyecto_integrante')
+      ->where('id', '=', $request->input('id'))
+      ->update([
+        'updated_at' => Carbon::now(),
+      ]);
+
+    return ['message' => 'info', 'detail' => 'Información editada exitosamente'];
+  }
+
+  public function searchExterno(Request $request) {
+    $investigadores = DB::table('Usuario_investigador AS a')
+      ->select(
+        DB::raw("CONCAT(doc_numero, ' | ', apellido1, ' ', apellido2, ', ', nombres) AS value"),
+        'id AS investigador_id',
+        'doc_numero',
+        'apellido1',
+        'apellido2',
+        'nombres'
+      )
+      ->where('tipo', '=', 'EXTERNO')
+      ->having('value', 'LIKE', '%' . $request->query('query') . '%')
+      ->limit(10)
+      ->get();
+
+    return $investigadores;
+  }
+
+  public function agregarExterno(Request $request) {
+
+    if ($request->input('tipo') == "Nuevo") {
+
+      $investigador_id = DB::table('Usuario_investigador')
+        ->insertGetId([
+          'codigo_orcid' => $request->input('codigo_orcid'),
+          'apellido1' => $request->input('apellido1'),
+          'apellido2' => $request->input('apellido2'),
+          'nombres' => $request->input('nombres'),
+          'sexo' => $request->input('sexo'),
+          'institucion' => $request->input('institucion'),
+          'tipo' => 'Externo',
+          'pais' => $request->input('pais'),
+          'direccion1' => $request->input('direccion1'),
+          'doc_tipo' => $request->input('doc_tipo'),
+          'doc_numero' => $request->input('doc_numero'),
+          'telefono_movil' => $request->input('telefono_movil'),
+          'titulo_profesional' => $request->input('titulo_profesional'),
+          'grado' => $request->input('grado'),
+          'especialidad' => $request->input('especialidad'),
+          'researcher_id' => $request->input('researcher_id'),
+          'scopus_id' => $request->input('scopus_id'),
+          'link' => $request->input('link'),
+          'posicion_unmsm' => $request->input('posicion_unmsm'),
+          'biografia' => $request->input('biografia'),
+          'created_at' => Carbon::now(),
+          'updated_at' => Carbon::now(),
+        ]);
+
+      DB::table('Proyecto_integrante')
+        ->insert([
+          'proyecto_id' => $request->input('id'),
+          'investigador_id' => $investigador_id,
+          'proyecto_integrante_tipo_id' => 90,
+          'created_at' => Carbon::now(),
+          'updated_at' => Carbon::now(),
+        ]);
+    } else {
+
+      $cuenta = DB::table('Proyecto_integrante')
+        ->where('proyecto_id', '=', $request->input('id'))
+        ->where('investigador_id', '=', $request->input('investigador_id'))
+        ->count();
+
+      if ($cuenta > 0) {
+        return ['message' => 'error', 'detail' => 'Esta persona ya figura como integrante del proyecto'];
+      }
+
+      DB::table('Proyecto_integrante')
+        ->insert([
+          'proyecto_id' => $request->input('id'),
+          'investigador_id' => $request->input('investigador_id'),
+          'proyecto_integrante_tipo_id' => 90,
+          'created_at' => Carbon::now(),
+          'updated_at' => Carbon::now(),
+        ]);
+    }
+
+    return ['message' => 'success', 'detail' => 'Integrante añadido correctamente'];
+  }
+
+  public function getEditExterno(Request $request) {
+    $externo = DB::table('Proyecto_integrante AS a')
+      ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
+      ->select([
+        'a.investigador_id',
+        'b.codigo_orcid',
+        'b.apellido1',
+        'b.apellido2',
+        'b.nombres',
+        'b.sexo',
+        'b.institucion',
+        'b.tipo',
+        'b.pais',
+        'b.direccion1',
+        'b.doc_tipo',
+        'b.doc_numero',
+        'b.telefono_movil',
+        'b.titulo_profesional',
+        'b.grado',
+        'b.especialidad',
+        'b.researcher_id',
+        'b.scopus_id',
+        'b.link',
+        'b.posicion_unmsm',
+        'b.biografia',
+      ])
+      ->where('a.id', '=', $request->query('id'))
+      ->first();
+
+    return $externo;
+  }
+
+  public function editarExterno(Request $request) {
+    DB::table('Usuario_investigador')
+      ->where('id', '=', $request->input('investigador_id'))
+      ->update([
+        'codigo_orcid' => $request->input('codigo_orcid'),
+        'apellido1' => $request->input('apellido1'),
+        'apellido2' => $request->input('apellido2'),
+        'nombres' => $request->input('nombres'),
+        'sexo' => $request->input('sexo'),
+        'institucion' => $request->input('institucion'),
+        'tipo' => 'Externo',
+        'pais' => $request->input('pais'),
+        'direccion1' => $request->input('direccion1'),
+        'doc_tipo' => $request->input('doc_tipo'),
+        'doc_numero' => $request->input('doc_numero'),
+        'telefono_movil' => $request->input('telefono_movil'),
+        'titulo_profesional' => $request->input('titulo_profesional'),
+        'grado' => $request->input('grado'),
+        'especialidad' => $request->input('especialidad'),
+        'researcher_id' => $request->input('researcher_id'),
+        'scopus_id' => $request->input('scopus_id'),
+        'link' => $request->input('link'),
+        'posicion_unmsm' => $request->input('posicion_unmsm'),
+        'biografia' => $request->input('biografia'),
+        'updated_at' => Carbon::now(),
+      ]);
+
+    DB::table('Proyecto_integrante')
+      ->where('id', '=', $request->input('id'))
+      ->update([
+        'updated_at' => Carbon::now(),
+      ]);
+
+    return ['message' => 'success', 'detail' => 'Información editada correctamente'];
   }
 
   public function eliminarMiembro(Request $request) {

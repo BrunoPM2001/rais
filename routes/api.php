@@ -205,7 +205,18 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
       Route::get('searchEstudiante', [ProyectosFEXController::class, 'searchEstudiante']);
       Route::post('agregarDocente', [ProyectosFEXController::class, 'agregarDocente']);
       Route::post('agregarEstudiante', [ProyectosFEXController::class, 'agregarEstudiante']);
+      Route::get('searchExterno', [ProyectosFEXController::class, 'searchExterno']);
+      Route::post('agregarExterno', [ProyectosFEXController::class, 'agregarExterno']);
       Route::delete('eliminarMiembro', [ProyectosFEXController::class, 'eliminarMiembro']);
+
+      Route::get('getEditDocente', [ProyectosFEXController::class, 'getEditDocente']);
+      Route::put('editarDocente', [ProyectosFEXController::class, 'editarDocente']);
+
+      Route::get('getEditEstudiante', [ProyectosFEXController::class, 'getEditEstudiante']);
+      Route::put('editarEstudiante', [ProyectosFEXController::class, 'editarEstudiante']);
+
+      Route::get('getEditExterno', [ProyectosFEXController::class, 'getEditExterno']);
+      Route::put('editarExterno', [ProyectosFEXController::class, 'editarExterno']);
 
       Route::get('datosPaso1', [ProyectosFEXController::class, 'datosPaso1']);
       Route::get('datosPaso2', [ProyectosFEXController::class, 'datosPaso2']);
@@ -556,6 +567,7 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
       Route::get('datosPaso2', [ProyectoFEXController::class, 'datosPaso2']);
       Route::get('datosPaso3', [ProyectoFEXController::class, 'datosPaso3']);
       Route::get('datosPaso4', [ProyectoFEXController::class, 'datosPaso4']);
+      Route::get('datosPaso5', [ProyectoFEXController::class, 'datosPaso5']);
     });
     //  Proyectos multidisciplinario
     Route::prefix('multi')->group(function () {
@@ -1146,5 +1158,6 @@ Route::prefix('facultad')->middleware('checkRole:Usuario_facultad')->group(funct
   Route::prefix('reportes')->group(function () {
     Route::get('excelGrupos', [FacultadListadoController::class, 'excelGrupos']);
     Route::get('excelDeudas', [FacultadListadoController::class, 'excelDeudas']);
+    Route::get('excelPublicaciones', [FacultadListadoController::class, 'excelPublicaciones']);
   });
 });
