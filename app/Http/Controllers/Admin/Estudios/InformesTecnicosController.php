@@ -59,6 +59,7 @@ class InformesTecnicosController extends S3Controller {
           END AS estado")
         )
         ->where('a.estado', '=', 1)
+        ->where('a.tipo_proyecto', '!=', 'PFEX')
         ->groupBy('a.id')
         ->get();
 

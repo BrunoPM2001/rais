@@ -292,7 +292,7 @@
         </tr>
       </thead>
       <tbody>
-        @if (sizeof($documentos) > 0)
+        @if (sizeof($integrantes) > 0)
           @foreach ($integrantes as $int)
             <tr>
               <td>{{ $int->tipo }}</td>

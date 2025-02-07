@@ -837,7 +837,12 @@ class ProyectosFEXController extends S3Controller {
       ->where('a.id', '=', $request->query('id'))
       ->first();
 
-    return $externo;
+    $paises = DB::table('Pais')
+      ->select([
+        'name AS value'
+      ])->get();
+
+    return ['externo' => $externo, 'paises' => $paises];
   }
 
   public function editarExterno(Request $request) {
@@ -848,12 +853,11 @@ class ProyectosFEXController extends S3Controller {
         'apellido1' => $request->input('apellido1'),
         'apellido2' => $request->input('apellido2'),
         'nombres' => $request->input('nombres'),
-        'sexo' => $request->input('sexo'),
+        'sexo' => $request->input('sexo')["value"],
         'institucion' => $request->input('institucion'),
-        'tipo' => 'Externo',
-        'pais' => $request->input('pais'),
+        'pais' => $request->input('pais')["value"],
         'direccion1' => $request->input('direccion1'),
-        'doc_tipo' => $request->input('doc_tipo'),
+        'doc_tipo' => $request->input('doc_tipo')["value"],
         'doc_numero' => $request->input('doc_numero'),
         'telefono_movil' => $request->input('telefono_movil'),
         'titulo_profesional' => $request->input('titulo_profesional'),

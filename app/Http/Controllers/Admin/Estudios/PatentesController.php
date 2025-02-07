@@ -28,7 +28,7 @@ class PatentesController extends S3Controller {
         'a.fecha_presentacion',
         'a.oficina_presentacion',
         'a.enlace',
-        DB::raw("CONCAT('/', b.bucket, '/', b.key) AS url"),
+        DB::raw("CONCAT('/minio/', b.bucket, '/', b.key) AS url"),
         'a.comentario',
         'a.observaciones_usuario'
       ])

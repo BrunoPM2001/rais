@@ -224,7 +224,7 @@ class PublicacionesUtilsController extends S3Controller {
       ->where('id', '=', $request->attributes->get('token_decoded')->investigador_id)
       ->first();
 
-    Mail::to('dgitt.vrip@unmsm.edu.pe')->send(new SolicitarSerAutor($publicacion, $investigador));
+    Mail::to('dei.vrip@unmsm.edu.pe')->cc('dgitt.vrip@unmsm.edu.pe')->send(new SolicitarSerAutor($publicacion, $investigador));
 
     return ['message' => 'info', 'detail' => 'Solicitud enviada'];
   }

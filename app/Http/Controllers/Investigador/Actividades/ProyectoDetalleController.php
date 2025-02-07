@@ -35,7 +35,10 @@ class ProyectoDetalleController extends Controller {
             'a.titulo',
             'a.periodo',
             'b.detalle AS tipo_investigacion',
-            DB::raw("SUM(c.monto) AS monto"),
+            DB::raw("CASE
+              WHEN a.tipo_proyecto = 'PFEX' THEN a.aporte_unmsm + a.entidad_asociada + a.aporte_no_unmsm + a.financiamiento_fuente_externa
+              ELSE SUM(c.monto)
+            END AS monto"),
             'd.nombre AS facultad',
             'e.nombre AS linea_investigacion',
             'a.fecha_inscripcion',
