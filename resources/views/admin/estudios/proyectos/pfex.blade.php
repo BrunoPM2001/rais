@@ -172,19 +172,34 @@
           <td style="width: 75%;" valign="top">{{ $proyecto->linea_ocde }}</td>
         </tr>
         <tr>
-          <td style="width: 24%;" valign="top"><strong>Monto total del presupuesto</strong></td>
+          <td style="width: 24%;" valign="top"><strong>Moneda</strong></td>
           <td style="width: 1%;" valign="top">:</td>
-          <td style="width: 75%;" valign="top">{{ $proyecto->aporte_unmsm + $proyecto->aporte_no_unmsm }}</td>
+          <td style="width: 75%;" valign="top">{{ $extras['moneda_tipo'] }}</td>
         </tr>
         <tr>
-          <td style="width: 24%;" valign="top"><strong>Aporte UNMSM</strong></td>
+          <td style="width: 24%;" valign="top"><strong>Monto total del presupuesto</strong></td>
+          <td style="width: 1%;" valign="top">:</td>
+          <td style="width: 75%;" valign="top">{{ $proyecto->monto }}</td>
+        </tr>
+        <tr>
+          <td style="width: 24%;" valign="top"><strong>Aporte monetario UNMSM</strong></td>
           <td style="width: 1%;" valign="top">:</td>
           <td style="width: 75%;" valign="top">{{ $proyecto->aporte_unmsm }}</td>
         </tr>
         <tr>
-          <td style="width: 24%;" valign="top"><strong>Aporte no UNMSM</strong></td>
+          <td style="width: 24%;" valign="top"><strong>Aporte no monetario UNMSM</strong></td>
           <td style="width: 1%;" valign="top">:</td>
           <td style="width: 75%;" valign="top">{{ $proyecto->aporte_no_unmsm }}</td>
+        </tr>
+        <tr>
+          <td style="width: 24%;" valign="top"><strong>Aporte fuente financiadora</strong></td>
+          <td style="width: 1%;" valign="top">:</td>
+          <td style="width: 75%;" valign="top">{{ $proyecto->financiamiento_fuente_externa }}</td>
+        </tr>
+        <tr>
+          <td style="width: 24%;" valign="top"><strong>Aporte entidad asociado y/o colaboradora</strong></td>
+          <td style="width: 1%;" valign="top">:</td>
+          <td style="width: 75%;" valign="top">{{ $proyecto->entidad_asociada }}</td>
         </tr>
         <tr>
           <td style="width: 24%;" valign="top"><strong>Fuente financiadora</strong></td>
