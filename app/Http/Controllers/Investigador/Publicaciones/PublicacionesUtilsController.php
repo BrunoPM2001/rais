@@ -123,6 +123,7 @@ class PublicacionesUtilsController extends S3Controller {
         'id',
         'titulo AS value',
       ])
+      ->where('estado', '=', 1)
       ->having('titulo', 'LIKE', '%' . $request->query('query') . '%')
       ->limit(10)
       ->get();
@@ -136,6 +137,7 @@ class PublicacionesUtilsController extends S3Controller {
         'id',
         'doi AS value',
       ])
+      ->where('estado', '=', 1)
       ->having('doi', 'LIKE', '%' . $request->query('query') . '%')
       ->limit(10)
       ->get();
