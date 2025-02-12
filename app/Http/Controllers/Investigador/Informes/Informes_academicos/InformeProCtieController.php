@@ -92,6 +92,23 @@ class InformeProCtieController extends S3Controller {
       ->count();
 
     if ($count == 0) {
+      $investigador = DB::table('Usuario_investigador')
+        ->select([
+          DB::raw("CONCAT(apellido1, ' ', apellido2) AS apellidos"),
+          'nombres'
+        ])
+        ->where('id', '=', $request->attributes->get('token_decoded')->investigador_id)
+        ->first();
+
+      $audit[] = [
+        'fecha' => Carbon::now()->format('Y-m-d H:i:s'),
+        'nombres' => $investigador->nombres,
+        'apellidos' => $investigador->apellidos,
+        'accion' => 'Creación de informe'
+      ];
+
+      $audit = json_encode($audit, JSON_UNESCAPED_UNICODE);
+
       DB::table('Informe_tecnico')
         ->updateOrInsert([
           'proyecto_id' => $request->input('proyecto_id')
@@ -110,10 +127,37 @@ class InformeProCtieController extends S3Controller {
           'infinal10' => $request->input('infinal10'),
           'estado' => 0,
           'fecha_informe_tecnico' => $date,
+          'audit' => $audit,
           'created_at' => $date,
           'updated_at' => $date,
         ]);
     } else {
+      $inf = DB::table('Informe_tecnico')
+        ->select([
+          'audit'
+        ])
+        ->where('proyecto_id', '=', $request->input('proyecto_id'))
+        ->first();
+
+      $investigador = DB::table('Usuario_investigador')
+        ->select([
+          DB::raw("CONCAT(apellido1, ' ', apellido2) AS apellidos"),
+          'nombres'
+        ])
+        ->where('id', '=', $request->attributes->get('token_decoded')->investigador_id)
+        ->first();
+
+      $audit = json_decode($inf->audit ?? "[]");
+
+      $audit[] = [
+        'fecha' => Carbon::now()->format('Y-m-d H:i:s'),
+        'nombres' => $investigador->nombres,
+        'apellidos' => $investigador->apellidos,
+        'accion' => 'Actualización de información'
+      ];
+
+      $audit = json_encode($audit, JSON_UNESCAPED_UNICODE);
+
       DB::table('Informe_tecnico')
         ->updateOrInsert([
           'proyecto_id' => $request->input('proyecto_id')
@@ -132,6 +176,7 @@ class InformeProCtieController extends S3Controller {
           'infinal10' => $request->input('infinal10'),
           'estado' => 0,
           'fecha_informe_tecnico' => $date,
+          'audit' => $audit,
           'updated_at' => $date,
         ]);
     }
@@ -180,11 +225,38 @@ class InformeProCtieController extends S3Controller {
       return ['message' => 'error', 'detail' => 'Necesita cargar al menos el primer anexo'];
     }
 
+    $inf = DB::table('Informe_tecnico')
+      ->select([
+        'audit'
+      ])
+      ->where('proyecto_id', '=', $request->input('proyecto_id'))
+      ->first();
+
+    $investigador = DB::table('Usuario_investigador')
+      ->select([
+        DB::raw("CONCAT(apellido1, ' ', apellido2) AS apellidos"),
+        'nombres'
+      ])
+      ->where('id', '=', $request->attributes->get('token_decoded')->investigador_id)
+      ->first();
+
+    $audit = json_decode($inf->audit ?? "[]");
+
+    $audit[] = [
+      'fecha' => Carbon::now()->format('Y-m-d H:i:s'),
+      'nombres' => $investigador->nombres,
+      'apellidos' => $investigador->apellidos,
+      'accion' => 'Presentación del informe'
+    ];
+
+    $audit = json_encode($audit, JSON_UNESCAPED_UNICODE);
+
     $count = DB::table('Informe_tecnico')
       ->where('proyecto_id', '=', $request->input('proyecto_id'))
       ->where('estado', '=', 0)
       ->update([
         'estado' => 2,
+        'audit' => $audit,
         'fecha_envio' => Carbon::now(),
         'updated_at' => Carbon::now(),
       ]);
@@ -223,6 +295,7 @@ class InformeProCtieController extends S3Controller {
         'b.id AS proyecto_id',
         'b.codigo_proyecto',
         'b.tipo_proyecto',
+        DB::raw("COALESCE(a.fecha_registro_csi, a.fecha_envio, a.updated_at) AS fecha_estado"),
         'a.*',
       ])
       ->where('a.id', '=', $request->query('informe_tecnico_id'))

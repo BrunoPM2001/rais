@@ -187,62 +187,6 @@ class CriteriosUtilsController extends Controller {
       ]);
   }
 
-  // public function totalpuntajeIntegrantes(Request $request)
-  // {
-  //   $proyectoId = $request->query('proyecto_id');
-  //   $fechaInicial = date("Y") - 7;
-  //   $fechaFinal = date("Y") - 1;
-  //   $totalPuntajeUltimos = 0;
-
-  //   // Capturar los IDs de los integrantes
-  //   $integrantes = DB::table('Proyecto_integrante as t1')
-  //     ->join('Proyecto_integrante_tipo as t2', 't1.proyecto_integrante_tipo_id', '=', 't2.id')
-  //     ->where('t1.proyecto_id', $proyectoId)
-  //     ->whereIn('t1.proyecto_integrante_tipo_id', [57, 58])
-  //     ->get();
-
-  //   // Iterar sobre los IDs de los integrantes y calcular el puntaje total
-  //   foreach ($integrantes as $integrante) {
-  //     // Suma del puntaje de la tabla publicacion_autor
-  //     $publicacionPuntaje = DB::table('Publicacion_autor as t1')
-  //       ->select(DB::raw('SUM(t1.puntaje) as total'))
-  //       ->join('Publicacion as t2', 't1.publicacion_id', '=', 't2.id')
-  //       ->where('t1.investigador_id', $integrante->investigador_id)
-  //       ->where('t2.validado', 1)
-  //       ->whereBetween(DB::raw('YEAR(t2.fecha_publicacion)'), [$fechaInicial, $fechaFinal])
-  //       ->first();
-
-  //     // Suma del puntaje de la tabla patente_autor
-  //     $patentePuntaje = DB::table('Patente_autor')
-  //       ->select(DB::raw('SUM(puntaje) as total'))
-  //       ->where('investigador_id', $integrante->investigador_id)
-  //       ->whereBetween(DB::raw('YEAR(created_at)'), [$fechaInicial, $fechaFinal])
-  //       ->first();
-
-  //     // Asegurar que los valores no sean nulos
-  //     $publicacionPuntaje = $publicacionPuntaje->total ?? 0;
-  //     $patentePuntaje = $patentePuntaje->total ?? 0;
-
-  //     // Suma total de ambos puntajes para el investigador actual
-  //     $totalPuntajeUltimos += (float)$publicacionPuntaje + (float)$patentePuntaje;
-  //   }
-
-  //   $puntajeCat = $totalPuntajeUltimos / count($integrantes);
-
-  //   $total = $puntajeIntegrantes * 0.1;
-  //   $total = $total >= 10 ? 10 : $total;
-
-  //   //  Actualizar puntaje
-  //   DB::table('Evaluacion_proyecto')
-  //     ->updateOrInsert([
-  //       'proyecto_id' => $request->query('proyecto_id'),
-  //       'evaluador_id' => $request->attributes->get('token_decoded')->evaluador_id,
-  //       'evaluacion_opcion_id' => 1153
-  //     ], [
-  //       'puntaje' => $total
-  //     ]);
-  // }
-
   public function totalpuntajeIntegrantesRenacyt(Request $request) {
     $proyectoId = $request->query('proyecto_id');
     $fechaInicial = date("Y") - 7;
@@ -453,6 +397,7 @@ class CriteriosUtilsController extends Controller {
     $proyectoId = $request->query('proyecto_id');
     $puntajeDocente = 0;
     $integrantes = DB::table('Proyecto_integrante as t1')
+      ->select('t1.investigador_id', 't3.doc_numero')
       ->leftJoin('Proyecto_integrante_tipo as t2', 't1.proyecto_integrante_tipo_id', '=', 't2.id')
       ->leftJoin('Usuario_investigador as t3', 't1.investigador_id', '=', 't3.id')
       ->where('t1.proyecto_id', $proyectoId)
@@ -463,10 +408,17 @@ class CriteriosUtilsController extends Controller {
       $docente = DB::table('Repo_rrhh')
         ->where('ser_doc_id_act', $integrante->doc_numero)
         ->where('ser_doc_id_act', '!=', '')
-        ->where('ser_fech_in_unmsm', '>=', '2023-01-01')
-        ->first();
+        ->where(DB::raw('YEAR(ser_fech_in_unmsm)'), '>=', 2024)
+        ->count();
 
-      if ($docente) {
+      $grupo = DB::table('Grupo_integrante')
+        ->select('grupo_id')
+        ->where('investigador_id', $integrante->investigador_id)
+        ->where(DB::raw('YEAR(fecha_inclusion)'), '>=', 2024)
+        ->whereNot('condicion', 'like', 'EX %')
+        ->count();
+
+      if (($docente + $grupo) == 2) {
         $puntajeDocente += 1;
       } else {
         $puntajeDocente += 0;

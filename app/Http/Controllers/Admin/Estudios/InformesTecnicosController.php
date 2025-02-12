@@ -681,7 +681,8 @@ class InformesTecnicosController extends S3Controller {
     $audit[] = [
       'fecha' => Carbon::now()->format('Y-m-d H:i:s'),
       'nombres' => $request->attributes->get('token_decoded')->nombre,
-      'apellidos' => $request->attributes->get('token_decoded')->apellidos
+      'apellidos' => $request->attributes->get('token_decoded')->apellidos,
+      'accion' => 'Actualización de técnico'
     ];
 
     $audit = json_encode($audit, JSON_UNESCAPED_UNICODE);

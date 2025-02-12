@@ -106,6 +106,23 @@ class InformePinterdisController extends S3Controller {
       ->count();
 
     if ($count == 0) {
+      $investigador = DB::table('Usuario_investigador')
+        ->select([
+          DB::raw("CONCAT(apellido1, ' ', apellido2) AS apellidos"),
+          'nombres'
+        ])
+        ->where('id', '=', $request->attributes->get('token_decoded')->investigador_id)
+        ->first();
+
+      $audit[] = [
+        'fecha' => Carbon::now()->format('Y-m-d H:i:s'),
+        'nombres' => $investigador->nombres,
+        'apellidos' => $investigador->apellidos,
+        'accion' => 'Creación de informe'
+      ];
+
+      $audit = json_encode($audit, JSON_UNESCAPED_UNICODE);
+
       DB::table('Informe_tecnico')
         ->updateOrInsert([
           'proyecto_id' => $request->input('proyecto_id')
@@ -124,10 +141,37 @@ class InformePinterdisController extends S3Controller {
           'infinal10' => $request->input('infinal10'),
           'estado' => 0,
           'fecha_informe_tecnico' => $date,
+          'audit' => $audit,
           'created_at' => $date,
           'updated_at' => $date,
         ]);
     } else {
+      $inf = DB::table('Informe_tecnico')
+        ->select([
+          'audit'
+        ])
+        ->where('proyecto_id', '=', $request->input('proyecto_id'))
+        ->first();
+
+      $investigador = DB::table('Usuario_investigador')
+        ->select([
+          DB::raw("CONCAT(apellido1, ' ', apellido2) AS apellidos"),
+          'nombres'
+        ])
+        ->where('id', '=', $request->attributes->get('token_decoded')->investigador_id)
+        ->first();
+
+      $audit = json_decode($inf->audit ?? "[]");
+
+      $audit[] = [
+        'fecha' => Carbon::now()->format('Y-m-d H:i:s'),
+        'nombres' => $investigador->nombres,
+        'apellidos' => $investigador->apellidos,
+        'accion' => 'Actualización de información'
+      ];
+
+      $audit = json_encode($audit, JSON_UNESCAPED_UNICODE);
+
       DB::table('Informe_tecnico')
         ->updateOrInsert([
           'proyecto_id' => $request->input('proyecto_id')
@@ -145,6 +189,7 @@ class InformePinterdisController extends S3Controller {
           'infinal9' => $request->input('infinal9'),
           'infinal10' => $request->input('infinal10'),
           'estado' => 0,
+          'audit' => $audit,
           'fecha_informe_tecnico' => $date,
           'updated_at' => $date,
         ]);
@@ -244,22 +289,38 @@ class InformePinterdisController extends S3Controller {
       return ['message' => 'error', 'detail' => 'Necesita completar los campos de: Resumen, proceso de instalación, funcionamiento, gestión de uso, aplicación práctica e impacto, e impacto de uso.'];
     }
 
-    // $count2 = DB::table('Proyecto_doc')
-    //   ->where('proyecto_id', '=', $request->input('proyecto_id'))
-    //   ->where('categoria', '=', 'informe-PCONFIGI-INFORME')
-    //   ->where('nombre', '=', 'Archivos de informe')
-    //   ->where('estado', '=', 1)
-    //   ->count();
+    $inf = DB::table('Informe_tecnico')
+      ->select([
+        'audit'
+      ])
+      ->where('proyecto_id', '=', $request->input('proyecto_id'))
+      ->first();
 
-    // if ($count2 == 0) {
-    //   return ['message' => 'error', 'detail' => 'Necesita cargar al menos el primer anexo'];
-    // }
+    $investigador = DB::table('Usuario_investigador')
+      ->select([
+        DB::raw("CONCAT(apellido1, ' ', apellido2) AS apellidos"),
+        'nombres'
+      ])
+      ->where('id', '=', $request->attributes->get('token_decoded')->investigador_id)
+      ->first();
+
+    $audit = json_decode($inf->audit ?? "[]");
+
+    $audit[] = [
+      'fecha' => Carbon::now()->format('Y-m-d H:i:s'),
+      'nombres' => $investigador->nombres,
+      'apellidos' => $investigador->apellidos,
+      'accion' => 'Presentación del informe'
+    ];
+
+    $audit = json_encode($audit, JSON_UNESCAPED_UNICODE);
 
     $count = DB::table('Informe_tecnico')
       ->where('proyecto_id', '=', $request->input('proyecto_id'))
       ->where('estado', '=', 0)
       ->update([
         'estado' => 2,
+        'audit' => $audit,
         'fecha_envio' => Carbon::now(),
         'updated_at' => Carbon::now(),
       ]);

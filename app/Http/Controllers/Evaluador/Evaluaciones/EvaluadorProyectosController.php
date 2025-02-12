@@ -467,6 +467,7 @@ class EvaluadorProyectosController extends S3Controller {
       ->orderBy('ptipo.id', 'asc') // Aquí se agrega el ordenamiento
       ->get();
 
+    /**  Metodologia*/
     $documentos = DB::table('File as f')
       ->select([
         'f.recurso',
@@ -474,13 +475,14 @@ class EvaluadorProyectosController extends S3Controller {
       ])
       ->where('f.tabla_id', '=', $request->query('proyecto_id'))
       ->where('f.bucket', '=', 'proyecto-doc')
-      ->whereIn('f.recurso', ['METODOLOGIA_TRABAJO', 'PROPIEDAD_INTELECTUAL'])
-      ->where('f.estado', '=', 20)
+      ->whereIn('f.recurso', ['METODOLOGIA_TRABAJO'])
+      // ->where('f.estado', '=', 20)
       ->get()
       ->mapWithKeys(function ($item) {
         return [$item->recurso => $item->url, 'recurso' => $item->recurso];
       });
 
+    /**Colaboracion Externa */
     $proyectoDoc = DB::table('Proyecto_doc as pdoc')
       ->select([
         'pdoc.comentario',
@@ -539,7 +541,6 @@ class EvaluadorProyectosController extends S3Controller {
 
       $integrante->deudas = $deudas;
     }
-
 
     return [
       'proyecto' => $proyecto,
