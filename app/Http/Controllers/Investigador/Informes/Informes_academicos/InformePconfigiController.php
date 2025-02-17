@@ -208,21 +208,23 @@ class InformePconfigiController extends S3Controller {
       ->whereNotNull('infinal3')
       ->whereNotNull('infinal4')
       ->whereNotNull('infinal5')
+      ->whereNotNull('infinal9')
+      ->whereNotNull('infinal10')
       ->count();
 
     if ($count1 == 0) {
       return ['message' => 'error', 'detail' => 'Necesita completar los campos de: Resumen, proceso de instalación, funcionamiento, gestión de uso, aplicación práctica e impacto, e impacto de uso.'];
     }
 
-    $count2 = DB::table('Proyecto_doc')
+    $count3 = DB::table('Proyecto_doc')
       ->where('proyecto_id', '=', $request->input('proyecto_id'))
-      ->where('categoria', '=', 'informe-PCONFIGI-INFORME')
-      ->where('nombre', '=', 'Archivos de informe')
+      ->where('categoria', '=', 'viabilidad')
+      ->where('nombre', '=', 'Actividades')
       ->where('estado', '=', 1)
       ->count();
 
-    if ($count2 == 0) {
-      return ['message' => 'error', 'detail' => 'Necesita cargar al menos el primer anexo'];
+    if ($count3 == 0) {
+      return ['message' => 'error', 'detail' => 'Necesita cargar el reporte de viabilidad'];
     }
 
     $inf = DB::table('Informe_tecnico')

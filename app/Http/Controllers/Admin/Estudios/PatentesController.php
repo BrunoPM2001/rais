@@ -310,4 +310,32 @@ class PatentesController extends S3Controller {
     ]);
     return $pdf->stream();
   }
+
+  public function recalcularPuntaje(Request $request) {
+    $pub = DB::table('Patente')
+      ->select([
+        'tipo',
+      ])
+      ->where('id', '=', $request->input('id'))
+      ->first();
+
+    DB::table('Patente_autor')
+      ->where('patente_id', '=', $request->input('id'))
+      ->update([
+        'puntaje' => 0
+      ]);
+
+
+    DB::table('Patente_autor AS a')
+      ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
+      ->where('a.patente_id', '=', $request->input('id'))
+      ->where('b.tipo', '=', 'DOCENTE PERMANENTE')
+      ->where('a.condicion', '=', 'Inventor')
+      ->update([
+        'a.puntaje' => $pub->tipo == "Modelo de utilidad" ? 2 : 5,
+      ]);
+
+
+    return ['message' => 'info', 'detail' => 'Puntajes actualizados para esta propiedad intelectual'];
+  }
 }

@@ -56,7 +56,7 @@ class SessionController extends Controller {
           'id' => $table->id,
           'tabla' => $table->tabla,
           'investigador_id' => $table->tabla_id,
-          'nombre' => $usuario->nombres,
+          'nombres' => $usuario->nombres,
           'apellidos' => $usuario->apellidos,
           'exp' => time() + 14400
         ], env('JWT_SECRET'), 'HS256');

@@ -99,7 +99,8 @@ class MonitoreoController extends Controller {
             WHEN 5 THEN 'Enviado'
             WHEN 6 THEN 'En proceso'
           ELSE 'Por presentar' END AS estado_meta"),
-        'f.descripcion'
+        'f.descripcion',
+        'f.observacion'
       ])
       ->where('a.id', '=', $request->query('id'))
       ->first();
@@ -150,6 +151,35 @@ class MonitoreoController extends Controller {
       'metas' => $metas,
       'publicaciones' => $publicaciones
     ];
+  }
+
+  public function guardar(Request $request) {
+    if ($request->input('estado') == 2) {
+      DB::table('Monitoreo_proyecto')
+        ->where('proyecto_id', '=', $request->input('proyecto_id'))
+        ->update([
+          'estado' => $request->input('estado'),
+          'observacion' => $request->input('observacion'),
+          'updated_at' => Carbon::now()
+        ]);
+    } else if ($request->input('estado') == 1) {
+      DB::table('Monitoreo_proyecto')
+        ->where('proyecto_id', '=', $request->input('proyecto_id'))
+        ->update([
+          'estado' => $request->input('estado'),
+          'fecha_aprobacion' => Carbon::now(),
+          'updated_at' => Carbon::now()
+        ]);
+    } else {
+      DB::table('Monitoreo_proyecto')
+        ->where('proyecto_id', '=', $request->input('proyecto_id'))
+        ->update([
+          'estado' => $request->input('estado'),
+          'updated_at' => Carbon::now()
+        ]);
+    }
+
+    return ['message' => 'info', 'detail' => 'Actulizado correctamente'];
   }
 
   public function publicacionesDisponibles(Request $request) {

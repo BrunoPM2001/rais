@@ -101,7 +101,8 @@ class MonitoreoController extends S3Controller {
             WHEN 5 THEN 'Enviado'
             WHEN 6 THEN 'En proceso'
           ELSE 'Por presentar' END AS estado_meta"),
-        'f.descripcion'
+        'f.descripcion',
+        'f.observacion'
       ])
       ->where('a.id', '=', $request->query('id'))
       ->first();

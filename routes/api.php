@@ -243,12 +243,18 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
       Route::get('verAuditoria', [InformesTecnicosController::class, 'verAuditoria']);
 
       Route::get('reporte', [UtilInformeAdminController::class, 'reporte']);
+
+      Route::get('getDataPresentarInforme', [InformesTecnicosController::class, 'getDataPresentarInforme']);
+      Route::post('presentarInformeAntiguo', [InformesTecnicosController::class, 'presentarInformeAntiguo']);
     });
 
     //  Monitoreo
     Route::prefix('monitoreo')->group(function () {
       Route::get('listadoProyectos', [MonitoreoController::class, 'listadoProyectos']);
       Route::get('detalles', [MonitoreoController::class, 'detalles']);
+
+      Route::put('guardar', [MonitoreoController::class, 'guardar']);
+
       Route::get('publicacionesDisponibles', [MonitoreoController::class, 'publicacionesDisponibles']);
       Route::post('agregarPublicacion', [MonitoreoController::class, 'agregarPublicacion']);
       Route::delete('eliminarPublicacion', [MonitoreoController::class, 'eliminarPublicacion']);
@@ -324,6 +330,8 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
       Route::post('agregarAutor', [PatentesController::class, 'agregarAutor']);
       Route::put('editarAutor', [PatentesController::class, 'editarAutor']);
       Route::delete('eliminarAutor', [PatentesController::class, 'eliminarAutor']);
+
+      Route::put('recalcularPuntaje', [PatentesController::class, 'recalcularPuntaje']);
     });
 
     Route::prefix('sincronizarPub')->group(function () {
@@ -333,8 +341,14 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
     //  Revistas
     Route::prefix('revistas')->group(function () {
       Route::get('listado', [RevistasController::class, 'listado']);
+      Route::post('addRevista', [RevistasController::class, 'addRevista']);
+      Route::put('updateRevista', [RevistasController::class, 'updateRevista']);
+
       Route::get('listadoDBindex', [RevistasController::class, 'listadoDBindex']);
+      Route::put('updateDBindex', [RevistasController::class, 'updateDBindex']);
+
       Route::get('listadoDBwos', [RevistasController::class, 'listadoDBwos']);
+      Route::put('updateDBwos', [RevistasController::class, 'updateDBwos']);
     });
 
     //  Laboratorio

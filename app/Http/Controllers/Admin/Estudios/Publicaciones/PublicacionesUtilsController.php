@@ -14,6 +14,8 @@ class PublicacionesUtilsController extends S3Controller {
     $pub = DB::table('Publicacion AS a')
       ->join('Publicacion_categoria AS b', 'b.id', '=', 'a.categoria_id')
       ->select([
+        'b.tipo',
+        'b.categoria',
         'b.puntaje'
       ])
       ->where('a.id', '=', $request->input('id'))
@@ -25,13 +27,51 @@ class PublicacionesUtilsController extends S3Controller {
         'puntaje' => 0
       ]);
 
-    DB::table('Publicacion_autor AS a')
-      ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
-      ->where('a.publicacion_id', '=', $request->input('id'))
-      ->where('b.tipo', '=', 'DOCENTE PERMANENTE')
-      ->update([
-        'a.puntaje' => $pub->puntaje ?? 0,
-      ]);
+    if ($pub->tipo == 'Tesis' || $pub->tipo == 'Tesis asesoria') {
+      $partes = explode(' - ', $pub->categoria);
+      //  Asesor
+      $p1 = DB::table('Publicacion_categoria')
+        ->select([
+          'puntaje'
+        ])
+        ->where('tipo', '=', 'Tesis asesoria')
+        ->where('categoria', 'LIKE', '%' . $partes[1])
+        ->first();
+
+      DB::table('Publicacion_autor AS a')
+        ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
+        ->where('a.publicacion_id', '=', $request->input('id'))
+        ->where('a.categoria', '=', 'Asesor')
+        ->where('b.tipo', '=', 'DOCENTE PERMANENTE')
+        ->update([
+          'a.puntaje' => $p1->puntaje ?? 0,
+        ]);
+      //  Tesista
+      $p2 = DB::table('Publicacion_categoria')
+        ->select([
+          'puntaje'
+        ])
+        ->where('tipo', '=', 'Tesis')
+        ->where('categoria', 'LIKE', '%' . $partes[1])
+        ->first();
+
+      DB::table('Publicacion_autor AS a')
+        ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
+        ->where('a.publicacion_id', '=', $request->input('id'))
+        ->where('a.categoria', '=', 'Tesista')
+        ->where('b.tipo', '=', 'DOCENTE PERMANENTE')
+        ->update([
+          'a.puntaje' => $p2->puntaje ?? 0,
+        ]);
+    } else {
+      DB::table('Publicacion_autor AS a')
+        ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
+        ->where('a.publicacion_id', '=', $request->input('id'))
+        ->where('b.tipo', '=', 'DOCENTE PERMANENTE')
+        ->update([
+          'a.puntaje' => $pub->puntaje ?? 0,
+        ]);
+    }
 
     return ['message' => 'info', 'detail' => 'Puntajes actualizados para esta publicación'];
   }
@@ -310,35 +350,53 @@ class PublicacionesUtilsController extends S3Controller {
             ]);
         }
 
-        DB::table('Publicacion_autor')->insert([
-          'publicacion_id' => $request->input('id'),
-          'investigador_id' => $id_investigador,
-          'tipo' => "interno",
-          'autor' => $request->input('autor'),
-          'categoria' => $request->input('categoria'),
-          'filiacion' => $request->input('filiacion'),
-          'filiacion_unica' => $request->input('filiacion_unica'),
-          'presentado' => 0,
-          'estado' => 0,
-          'created_at' => Carbon::now(),
-          'updated_at' => Carbon::now()
-        ]);
+        $count = DB::table('Publicacion_autor')
+          ->where('publicacion_id', '=', $request->input('id'))
+          ->where('investigador_id', '=', $id_investigador)
+          ->count();
+
+        if ($count > 0) {
+          return ['message' => 'warning', 'detail' => 'Este autor ya figura en la publicación'];
+        } else {
+          DB::table('Publicacion_autor')->insert([
+            'publicacion_id' => $request->input('id'),
+            'investigador_id' => $id_investigador,
+            'tipo' => "interno",
+            'autor' => $request->input('autor'),
+            'categoria' => $request->input('categoria'),
+            'filiacion' => $request->input('filiacion'),
+            'filiacion_unica' => $request->input('filiacion_unica'),
+            'presentado' => 0,
+            'estado' => 0,
+            'created_at' => Carbon::now(),
+            'updated_at' => Carbon::now()
+          ]);
+        }
         break;
       case "interno":
 
-        DB::table('Publicacion_autor')->insert([
-          'publicacion_id' => $request->input('id'),
-          'investigador_id' => $request->input('investigador_id'),
-          'tipo' => "interno",
-          'autor' => $request->input('autor'),
-          'categoria' => $request->input('categoria'),
-          'filiacion' => $request->input('filiacion'),
-          'filiacion_unica' => $request->input('filiacion_unica'),
-          'presentado' => 0,
-          'estado' => 0,
-          'created_at' => Carbon::now(),
-          'updated_at' => Carbon::now()
-        ]);
+        $count = DB::table('Publicacion_autor')
+          ->where('publicacion_id', '=', $request->input('id'))
+          ->where('investigador_id', '=', $request->input('investigador_id'))
+          ->count();
+
+        if ($count > 0) {
+          return ['message' => 'warning', 'detail' => 'Este autor ya figura en la publicación'];
+        } else {
+          DB::table('Publicacion_autor')->insert([
+            'publicacion_id' => $request->input('id'),
+            'investigador_id' => $request->input('investigador_id'),
+            'tipo' => "interno",
+            'autor' => $request->input('autor'),
+            'categoria' => $request->input('categoria'),
+            'filiacion' => $request->input('filiacion'),
+            'filiacion_unica' => $request->input('filiacion_unica'),
+            'presentado' => 0,
+            'estado' => 0,
+            'created_at' => Carbon::now(),
+            'updated_at' => Carbon::now()
+          ]);
+        }
         break;
       default:
         break;

@@ -15,7 +15,6 @@ use Illuminate\Support\Str;
 class DocenteInvestigadorController extends S3Controller {
 
   public function listado() {
-
     $evalSubQuery = DB::table('Eval_declaracion_jurada AS a')
       ->join('File AS b', function (JoinClause $join) {
         $join->on('b.tabla_id', '=', 'a.id')
@@ -49,7 +48,8 @@ class DocenteInvestigadorController extends S3Controller {
         'a.doc_numero',
         'b.telefono_movil',
         'b.email3',
-        'a.created_at'
+        'a.created_at',
+        'a.updated_at',
       ])
       ->where('a.tipo_eval', '=', 'Solicitud')
       ->whereIn('a.estado', ['Enviado', 'En trámite', 'No aprobado', 'Observado'])

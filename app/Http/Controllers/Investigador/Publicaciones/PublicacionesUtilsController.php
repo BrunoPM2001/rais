@@ -301,12 +301,15 @@ class PublicacionesUtilsController extends S3Controller {
   }
 
   public function agregarProyecto(Request $request) {
-    $count = DB::table('Publicacion')
+    $pub = DB::table('Publicacion')
+      ->select([
+        'audit'
+      ])
       ->where('id', '=', $request->input('publicacion_id'))
       ->whereIn('estado', [2, 6])
-      ->count();
+      ->first();
 
-    if ($count == 0) {
+    if (!$pub) {
       return ['message' => 'error', 'detail' => 'Esta publicación ya ha sido enviada, no se pueden hacer más cambios'];
     }
 
@@ -344,10 +347,23 @@ class PublicacionesUtilsController extends S3Controller {
         ]);
     }
 
+    //  Audit
+    $audit = json_decode($pub->audit ?? "[]");
+
+    $audit[] = [
+      'fecha' => Carbon::now()->format('Y-m-d H:i:s'),
+      'nombres' => $request->attributes->get('token_decoded')->nombres,
+      'apellidos' => $request->attributes->get('token_decoded')->apellidos,
+      'accion' => 'Proyecto agregado'
+    ];
+
+    $audit = json_encode($audit, JSON_UNESCAPED_UNICODE);
+
     DB::table('Publicacion')
       ->where('id', '=', $request->input('publicacion_id'))
       ->update([
-        'step' => 2
+        'step' => 2,
+        'audit' => $audit
       ]);
 
     return ['message' => 'success', 'detail' => 'Proyecto agregado exitosamente'];
@@ -474,33 +490,36 @@ class PublicacionesUtilsController extends S3Controller {
   }
 
   public function agregarAutor(Request $request) {
-
-    $count = DB::table('Publicacion')
+    $pub = DB::table('Publicacion')
+      ->select([
+        'audit'
+      ])
       ->where('id', '=', $request->input('publicacion_id'))
       ->whereIn('estado', [2, 6])
-      ->count();
+      ->first();
 
-    if ($count == 0) {
+    if (!$pub) {
       return ['message' => 'error', 'detail' => 'Esta publicación ya ha sido enviada, no se pueden hacer más cambios'];
     }
 
     switch ($request->input('tipo')) {
       case "externo":
-        DB::table('Publicacion_autor')->insert([
-          'publicacion_id' => $request->input('publicacion_id'),
-          'tipo' => $request->input('tipo'),
-          'nombres' => $request->input('nombres'),
-          'apellido1' => $request->input('apellido1'),
-          'apellido2' => $request->input('apellido2'),
-          'autor' => $request->input('autor'),
-          'categoria' => $request->input('categoria'),
-          'filiacion' => $request->input('filiacion'),
-          'filiacion_unica' => $request->input('filiacion_unica'),
-          'presentado' => 0,
-          'estado' => 0,
-          'created_at' => Carbon::now(),
-          'updated_at' => Carbon::now()
-        ]);
+        DB::table('Publicacion_autor')
+          ->insert([
+            'publicacion_id' => $request->input('publicacion_id'),
+            'tipo' => $request->input('tipo'),
+            'nombres' => $request->input('nombres'),
+            'apellido1' => $request->input('apellido1'),
+            'apellido2' => $request->input('apellido2'),
+            'autor' => $request->input('autor'),
+            'categoria' => $request->input('categoria'),
+            'filiacion' => $request->input('filiacion'),
+            'filiacion_unica' => $request->input('filiacion_unica'),
+            'presentado' => 0,
+            'estado' => 0,
+            'created_at' => Carbon::now(),
+            'updated_at' => Carbon::now()
+          ]);
         break;
       case "estudiante":
         $id_investigador = $request->input('investigador_id');
@@ -589,11 +608,23 @@ class PublicacionesUtilsController extends S3Controller {
         break;
     }
 
+    $audit = json_decode($pub->audit ?? "[]");
+
+    $audit[] = [
+      'fecha' => Carbon::now()->format('Y-m-d H:i:s'),
+      'nombres' => $request->attributes->get('token_decoded')->nombres,
+      'apellidos' => $request->attributes->get('token_decoded')->apellidos,
+      'accion' => 'Autor añadido'
+    ];
+
+    $audit = json_encode($audit, JSON_UNESCAPED_UNICODE);
+
     DB::table('Publicacion')
       ->where('id', '=', $request->input('publicacion_id'))
       ->whereIn('estado', [2, 6])
       ->update([
-        'step' => 3
+        'step' => 3,
+        'audit' => $audit
       ]);
 
     return ['message' => 'success', 'detail' => 'Autor agregado exitosamente'];
@@ -662,18 +693,10 @@ class PublicacionesUtilsController extends S3Controller {
 
       $audit = json_decode($pub->audit ?? "[]");
 
-      $investigador = DB::table('Usuario_investigador')
-        ->select([
-          DB::raw("CONCAT(apellido1, ' ', apellido2) AS apellidos"),
-          'nombres'
-        ])
-        ->where('id', '=', $request->attributes->get('token_decoded')->investigador_id)
-        ->first();
-
       $audit[] = [
         'fecha' => Carbon::now()->format('Y-m-d H:i:s'),
-        'nombres' => $investigador->nombres,
-        'apellidos' => $investigador->apellidos,
+        'nombres' => $request->attributes->get('token_decoded')->nombres,
+        'apellidos' => $request->attributes->get('token_decoded')->apellidos,
         'accion' => 'Envío de publicación (estado anterior: ' . $pub->estado . ')'
       ];
 

@@ -529,6 +529,16 @@ class CdiController extends S3Controller {
    *  Solicitud del CDI con la data actual
    */
   public function solicitarCDI(Request $request) {
+    //  Validar que no hay solicitud en curso
+    $val1 = DB::table('Eval_docente_investigador')
+      ->where('investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+      ->whereIn('estado', ['Enviado', 'Pendiente'])
+      ->count();
+
+    if ($val1 > 0) {
+      return ['message' => 'warning', 'detail' => 'Ya tiene una solicitud en curso'];
+    }
+
     $currentYear = (int)date("Y");
     $lastTwoYears = [$currentYear - 2, $currentYear - 1];
 
