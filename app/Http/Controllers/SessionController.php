@@ -16,12 +16,12 @@ class SessionController extends Controller {
     if (Auth::attempt(['username' => $user, 'password' => $pass]) || Auth::attempt(['email' => $user, 'password' => $pass])) {
       //  Datos básicos
       $table = DB::table('Usuario')
-        ->select(
+        ->select([
           'id',
           'tabla',
           'tabla_id',
           'estado'
-        )
+        ])
         ->where('username', '=', $user)
         ->orWhere('email', '=', $user)
         ->first();
@@ -41,7 +41,7 @@ class SessionController extends Controller {
           'tabla' => $table->tabla,
           'nombre' => $usuario->nombres,
           'apellidos' => $usuario->apellidos,
-          'exp' => time() + 7200
+          'exp' => time() + 14400
         ], env('JWT_SECRET'), 'HS256');
       } else if ($table->tabla == "Usuario_investigador") {
         //  Nombres
@@ -56,7 +56,9 @@ class SessionController extends Controller {
           'id' => $table->id,
           'tabla' => $table->tabla,
           'investigador_id' => $table->tabla_id,
-          'exp' => time() + 7200
+          'nombre' => $usuario->nombres,
+          'apellidos' => $usuario->apellidos,
+          'exp' => time() + 14400
         ], env('JWT_SECRET'), 'HS256');
       } else if ($table->tabla == "Usuario_evaluador") {
         //  Nombres
