@@ -39,6 +39,7 @@ class PublicacionesController extends S3Controller {
           'evento_nombre',
           'titulo',
           'fecha_publicacion',
+          DB::raw("YEAR(fecha_publicacion) AS periodo"),
           'created_at',
           'updated_at',
           DB::raw("CASE(estado)
@@ -101,6 +102,7 @@ class PublicacionesController extends S3Controller {
           'b.evento_nombre',
           'b.titulo',
           'b.fecha_publicacion',
+          DB::raw("YEAR(b.fecha_publicacion) AS periodo"),
           'b.created_at',
           'b.updated_at',
           DB::raw("CASE(b.estado)
