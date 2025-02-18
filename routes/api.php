@@ -628,6 +628,7 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
     Route::get('reportePresupuesto', [ProyectoDetalleController::class, 'reportePresupuesto']);
     Route::get('reporteConFin', [ProyectoDetalleController::class, 'reporteConFin']);
     Route::get('reporteSinFin', [ProyectoDetalleController::class, 'reporteSinFin']);
+    Route::get('reporteFex', [ProyectoDetalleController::class, 'reporteFex']);
   });
 
   //  Publicaciones

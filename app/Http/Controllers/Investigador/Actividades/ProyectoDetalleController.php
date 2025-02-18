@@ -342,4 +342,92 @@ class ProyectoDetalleController extends Controller {
     $pdf = Pdf::loadView('investigador.actividades.reporte_no_monetario', ['proyecto' => $proyecto, 'detalles' => $detalles, 'calendario' => $calendario, 'integrantes' => $integrantes, 'responsable' => $responsable]);
     return $pdf->stream();
   }
+
+  public function reporteFex(Request $request) {
+    $proyecto = DB::table('Proyecto AS a')
+      ->leftJoin('Linea_investigacion AS b', 'b.id', '=', 'a.linea_investigacion_id')
+      ->leftJoin('Ocde AS c', 'c.id', '=', 'a.ocde_id')
+      ->leftJoin('Proyecto_descripcion AS d', function (JoinClause $join) {
+        $join->on('d.proyecto_id', '=', 'a.id')
+          ->where('d.codigo', '=', 'pais');
+      })
+      ->leftJoin('Pais AS e', 'e.code', '=', 'd.detalle')
+      ->select([
+        'a.codigo_proyecto',
+        'a.titulo',
+        'a.periodo',
+        'b.nombre AS linea_investigacion',
+        'c.linea AS linea_ocde',
+        DB::raw("FORMAT(a.aporte_unmsm + a.entidad_asociada + a.aporte_no_unmsm + a.financiamiento_fuente_externa, 2, 'en_US') AS monto"),
+        DB::raw("FORMAT(a.aporte_unmsm, 2, 'en_US') AS aporte_unmsm"),
+        DB::raw("FORMAT(a.aporte_no_unmsm, 2, 'en_US') AS aporte_no_unmsm"),
+        DB::raw("FORMAT(a.financiamiento_fuente_externa, 2, 'en_US') AS financiamiento_fuente_externa"),
+        DB::raw("FORMAT(a.entidad_asociada, 2, 'en_US') AS entidad_asociada"),
+        'e.name AS pais',
+        'a.resolucion_rectoral',
+        'a.palabras_clave',
+        'a.fecha_inicio',
+        'a.fecha_fin',
+        DB::raw("CASE(a.estado)
+            WHEN -1 THEN 'Eliminado'
+            WHEN 0 THEN 'No aprobado'
+            WHEN 1 THEN 'Aprobado'
+            WHEN 3 THEN 'En evaluacion'
+            WHEN 5 THEN 'Enviado'
+            WHEN 6 THEN 'En proceso'
+            WHEN 7 THEN 'Anulado'
+            WHEN 8 THEN 'Sustentado'
+            WHEN 9 THEN 'En ejecución'
+            WHEN 10 THEN 'Ejecutado'
+            WHEN 11 THEN 'Concluído'
+          ELSE 'Sin estado' END AS estado"),
+        'a.updated_at'
+      ])
+      ->where('a.id', '=', $request->query('id'))
+      ->first();
+
+    $extras = DB::table('Proyecto_descripcion')
+      ->select([
+        'codigo',
+        'detalle'
+      ])
+      ->where('proyecto_id', '=', $request->query('id'))
+      ->get()
+      ->mapWithKeys(function ($item) {
+        return [$item->codigo => $item->detalle];
+      });
+
+    $documentos = DB::table('Proyecto_fex_doc AS a')
+      ->select([
+        'doc_tipo',
+        'nombre',
+        'comentario',
+      ])
+      ->where('proyecto_id', '=', $request->query('id'))
+      ->get();
+
+    $integrantes = DB::table('Proyecto_integrante AS a')
+      ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
+      ->join('Proyecto_integrante_tipo AS c', 'c.id', '=', 'a.proyecto_integrante_tipo_id')
+      ->join('Facultad AS d', 'd.id', '=', 'b.facultad_id')
+      ->select([
+        'c.nombre AS tipo',
+        DB::raw("CONCAT(b.apellido1, ' ', b.apellido2, ', ', b.nombres) AS nombre"),
+        'b.doc_numero',
+        DB::raw("CASE(b.tipo)
+          WHEN 'Externo' THEN 'No'
+        ELSE 'Sí' END AS representa")
+      ])
+      ->where('a.proyecto_id', '=', $request->query('id'))
+      ->get();
+
+    $pdf = Pdf::loadView('admin.estudios.proyectos.pfex', [
+      'proyecto' => $proyecto,
+      'extras' => $extras,
+      'documentos' => $documentos,
+      'integrantes' => $integrantes,
+    ]);
+
+    return $pdf->stream();
+  }
 }

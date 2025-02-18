@@ -580,6 +580,8 @@ class ProyectosFEXController extends S3Controller {
   public function getEditDocente(Request $request) {
     $docente = DB::table('Proyecto_integrante AS a')
       ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
+      ->leftJoin('Facultad AS c', 'c.id', '=', 'b.facultad_id')
+      ->leftJoin('Dependencia AS d', 'd.id', '=', 'b.dependencia_id')
       ->select([
         'a.investigador_id',
         'a.proyecto_integrante_tipo_id',
@@ -598,6 +600,8 @@ class ProyectosFEXController extends S3Controller {
         'b.telefono_casa',
         'b.telefono_trabajo',
         'b.telefono_movil',
+        'c.nombre AS facultad',
+        'd.dependencia'
       ])
       ->where('a.id', '=', $request->query('id'))
       ->first();
@@ -769,6 +773,8 @@ class ProyectosFEXController extends S3Controller {
           'especialidad' => $request->input('especialidad'),
           'researcher_id' => $request->input('researcher_id'),
           'scopus_id' => $request->input('scopus_id'),
+          'cti_vitae' => $request->input('cti_vitae'),
+          'google_scholar' => $request->input('google_scholar'),
           'link' => $request->input('link'),
           'posicion_unmsm' => $request->input('posicion_unmsm'),
           'biografia' => $request->input('biografia'),
@@ -948,11 +954,11 @@ class ProyectosFEXController extends S3Controller {
         'a.periodo',
         'b.nombre AS linea_investigacion',
         'c.linea AS linea_ocde',
-        DB::raw("a.aporte_unmsm + a.entidad_asociada + a.aporte_no_unmsm + a.financiamiento_fuente_externa AS monto"),
-        'a.aporte_unmsm',
-        'a.aporte_no_unmsm',
-        'a.financiamiento_fuente_externa',
-        'a.entidad_asociada',
+        DB::raw("FORMAT(a.aporte_unmsm + a.entidad_asociada + a.aporte_no_unmsm + a.financiamiento_fuente_externa, 2, 'en_US') AS monto"),
+        DB::raw("FORMAT(a.aporte_unmsm, 2, 'en_US') AS aporte_unmsm"),
+        DB::raw("FORMAT(a.aporte_no_unmsm, 2, 'en_US') AS aporte_no_unmsm"),
+        DB::raw("FORMAT(a.financiamiento_fuente_externa, 2, 'en_US') AS financiamiento_fuente_externa"),
+        DB::raw("FORMAT(a.entidad_asociada, 2, 'en_US') AS entidad_asociada"),
         'e.name AS pais',
         'a.resolucion_rectoral',
         'a.palabras_clave',
