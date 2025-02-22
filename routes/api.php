@@ -123,6 +123,17 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
       Route::post('createCriterio', [ConvocatoriasController::class, 'createCriterio']);
       Route::put('editCriterio', [ConvocatoriasController::class, 'editCriterio']);
       Route::put('aprobarCriterios', [ConvocatoriasController::class, 'aprobarCriterios']);
+
+      //  Partidas
+      Route::get('listadoGruposPartidas', [ConvocatoriasController::class, 'listadoGruposPartidas']);
+      Route::post('addGrupo', [ConvocatoriasController::class, 'addGrupo']);
+
+      Route::get('dataGrupoPartidas', [ConvocatoriasController::class, 'dataGrupoPartidas']);
+      Route::get('dataCreatePartida', [ConvocatoriasController::class, 'dataCreatePartida']);
+
+      Route::post('addPartida', [ConvocatoriasController::class, 'addPartida']);
+      Route::delete('deletePartida', [ConvocatoriasController::class, 'deletePartida']);
+      Route::put('saveGrupo', [ConvocatoriasController::class, 'saveGrupo']);
     });
 
     //  Grupos
@@ -939,6 +950,7 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
       Route::post('agregarPartida', [PmultiController::class, 'agregarPartida']);
       Route::delete('eliminarPartida', [PmultiController::class, 'eliminarPartida']);
       Route::put('actualizarPartida', [PmultiController::class, 'actualizarPartida']);
+      Route::get('validarPresupuesto', [PmultiController::class, 'validarPresupuesto']);
 
       Route::get('verificar7', [PmultiController::class, 'verificar7']);
       Route::post('agregarDoc', [PmultiController::class, 'agregarDoc']);

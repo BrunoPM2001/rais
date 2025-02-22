@@ -543,6 +543,15 @@ class PmultiController extends S3Controller {
       ->leftJoin('Repo_sum AS c', 'c.codigo_alumno', '=', 'b.codigo')
       ->leftJoin('Grupo AS e', 'e.id', '=', 'a.grupo_id')
       ->leftJoin('Facultad AS f', 'f.id', '=', 'b.facultad_id')
+      ->leftJoin('Proyecto_integrante AS g', 'g.investigador_id', '=', 'b.id')
+      ->leftJoin('Proyecto_integrante_tipo AS h', function (JoinClause $join) {
+        $join->on('h.id', '=', 'g.proyecto_integrante_tipo_id')
+          ->where('h.nombre', '=', 'Tesista');
+      })
+      ->leftJoin('Proyecto AS i', function (JoinClause $join) {
+        $join->on('i.id', '=', 'g.proyecto_id')
+          ->where('i.estado', '=', 1);
+      })
       ->select(
         DB::raw("CONCAT(b.doc_numero, ' | ', b.apellido1, ' ', b.apellido2, ', ', b.nombres) AS value"),
         'b.tipo',
@@ -556,7 +565,8 @@ class PmultiController extends S3Controller {
           WHEN c.programa LIKE 'Maest%' THEN 'Maestría'
           WHEN c.programa LIKE 'Doct%' THEN 'Doctorado'
           ELSE 'Licenciatura o Segunda Especialidad'
-        END AS tipo_programa")
+        END AS tipo_programa"),
+        DB::raw("COUNT(i.id) AS cantidad_tesista")
       )
       ->having('value', 'LIKE', '%' . $request->query('query') . '%')
       ->where('a.condicion', '=', 'Adherente')
@@ -569,7 +579,9 @@ class PmultiController extends S3Controller {
         $item->tags = [
           $item->tipo,
           $item->facultad,
+          "Participaciones como tesista: " . $item->cantidad_tesista
         ];
+        $item->disabled = $item->cantidad_tesista > 0;
         return $item;
       });
 
@@ -1090,6 +1102,38 @@ class PmultiController extends S3Controller {
       ]);
 
     return ['message' => 'info', 'detail' => 'Partida actualizada correctamente'];
+  }
+
+  public function validarPresupuesto(Request $request) {
+    $alerta = [];
+
+    $partidas = DB::table('Proyecto_presupuesto AS a')
+      ->join('Partida_proyecto AS b', function (JoinClause $join) {
+        $join->on('b.partida_id', '=', 'a.partida_id')
+          ->where('b.tipo_proyecto', '=', 'PMULTI');
+      })
+      ->leftJoin('Partida_proyecto_grupo AS c', 'c.partida_proyecto_id', '=', 'b.id')
+      ->leftJoin('Partida_grupo AS d', 'd.id', '=', 'c.partida_grupo_id')
+      ->select([
+        'd.nombre',
+        'd.monto_max',
+        DB::raw("SUM(a.monto) AS total")
+      ])
+      ->where('a.proyecto_id', '=', $request->query('id'))
+      ->groupBy('d.id')
+      ->get();
+
+    foreach ($partidas as $item) {
+      if ($item->monto_max < $item->total) {
+        $alerta[] = $item->nombre . ": " . $item->monto_max;
+      }
+    };
+
+    if (sizeof($alerta) == 0) {
+      return ['message' => 'info', 'detail' => 'Su proyecto respeta los límites de la directiva'];
+    } else {
+      return ['message' => 'warning', 'detail' => 'El presupuesto presenta excesos en la(s) siguiente(s) categoría(s). ' . implode(',', $alerta) . '; para mayor detalle revisar la directiva correspondiente.'];
+    }
   }
 
   public function verificar7(Request $request) {

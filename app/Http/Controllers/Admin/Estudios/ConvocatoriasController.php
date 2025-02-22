@@ -344,4 +344,91 @@ class ConvocatoriasController extends Controller {
 
     return ['message' => 'info', 'detail' => 'Criterios aprobados'];
   }
+
+  //  Lista de partidas en conjunto
+  public function listadoGruposPartidas() {
+    $grupos = DB::table('Partida_grupo AS a')
+      ->leftJoin('Partida_proyecto_grupo AS b', 'b.partida_grupo_id', '=', 'a.id')
+      ->select([
+        'a.id',
+        'a.tipo_proyecto',
+        'a.nombre',
+        'a.monto_max',
+        DB::raw("COUNT(b.id) AS partidas")
+      ])
+      ->groupBy('a.id')
+      ->get();
+
+    return $grupos;
+  }
+
+  public function dataGrupoPartidas(Request $request) {
+    $partidas = DB::table('Partida_proyecto_grupo AS a')
+      ->join('Partida_grupo AS b', 'b.id', '=', 'a.partida_grupo_id')
+      ->join('Partida_proyecto AS c', 'c.id', '=', 'a.partida_proyecto_id')
+      ->join('Partida AS d', 'd.id', '=', 'c.partida_id')
+      ->select([
+        'a.id',
+        'd.tipo',
+        'd.partida',
+      ])
+      ->where('b.id', '=', $request->query('id'))
+      ->get();
+
+    return $partidas;
+  }
+
+  public function addGrupo(Request $request) {
+    DB::table('Partida_grupo')
+      ->insert([
+        'tipo_proyecto' => $request->input('tipo_proyecto'),
+        'nombre' => $request->input('nombre'),
+        'monto_max' => $request->input('monto_max'),
+      ]);
+
+    return ['message' => 'success', 'detail' => 'Grupo creado correctamente'];
+  }
+
+  public function dataCreatePartida(Request $request) {
+    $partidas = DB::table('Partida_proyecto AS a')
+      ->join('Partida AS b', 'b.id', '=', 'a.partida_id')
+      ->select([
+        'a.id AS value',
+        DB::raw("CONCAT(b.codigo, ' - ', b.partida) AS label"),
+        'b.tipo',
+      ])
+      ->where('a.tipo_proyecto', '=', $request->query('tipo_proyecto'))
+      ->get();
+
+    return $partidas;
+  }
+
+  public function addPartida(Request $request) {
+    DB::table('Partida_proyecto_grupo')
+      ->insert([
+        'partida_grupo_id' => $request->input('id'),
+        'partida_proyecto_id' => $request->input('partida_id'),
+      ]);
+
+    return ['message' => 'success', 'detail' => 'Partida agregada'];
+  }
+
+  public function deletePartida(Request $request) {
+    DB::table('Partida_proyecto_grupo')
+      ->where('id', '=', $request->query('id'))
+      ->delete();
+
+    return ['message' => 'info', 'detail' => 'Partida eliminada'];
+  }
+
+  public function saveGrupo(Request $request) {
+    DB::table('Partida_grupo')
+      ->where('id', '=', $request->input('id'))
+      ->update([
+        'nombre' => $request->input('nombre'),
+        'monto_max' => $request->input('monto_max'),
+      ]);
+
+    return ['message' => 'info', 'detail' => 'Datos actualizados'];
+  }
 }
