@@ -235,7 +235,7 @@ class CdiController extends S3Controller {
     $d4 = json_decode($solicitud->d4, true);
     $filiacion = 0;
     foreach ($d4 as $item) {
-      if ($item["filiacion"] == "1") {
+      if ($item["filiacion"] != "1" || $item["filiacion_unica"] != "1") {
         $filiacion++;
       }
     }
@@ -267,7 +267,7 @@ class CdiController extends S3Controller {
         'lista' => $d3Complete
       ],
       'd4' => [
-        'cumple' => $filiacion > 0 ? true : false,
+        'cumple' => $filiacion == 0 && sizeof($d4) > 0,
         'lista' => $d4,
       ],
       'd5' => [

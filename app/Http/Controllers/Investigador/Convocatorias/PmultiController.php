@@ -502,11 +502,6 @@ class PmultiController extends S3Controller {
 
     $listado = Db::table('Grupo_integrante AS a')
       ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
-      ->leftJoin('Eval_docente_investigador AS c', function (JoinClause $join) {
-        $join->on('c.investigador_id', '=', 'b.id')
-          ->where('c.estado', '=', 'Vigente');
-      })
-      ->leftJoin('view_deudores AS d', 'd.investigador_id', '=', 'b.id')
       ->leftJoin('Grupo AS e', 'e.id', '=', 'a.grupo_id')
       ->leftJoin('Facultad AS f', 'f.id', '=', 'b.facultad_id')
       ->select(
@@ -516,9 +511,6 @@ class PmultiController extends S3Controller {
         'a.id AS grupo_integrante_id',
         'e.grupo_nombre_corto AS labelTag',
         'f.nombre AS facultad',
-        DB::raw("COUNT(d.deuda_id) AS deudas"),
-        'b.renacyt',
-        'c.id AS cdi',
       )
       ->having('value', 'LIKE', '%' . $request->query('query') . '%')
       ->where('a.condicion', '=', 'Titular')
@@ -528,11 +520,7 @@ class PmultiController extends S3Controller {
       ->map(function ($item) {
         $item->tags = [
           $item->facultad,
-          'Deudas: ' . $item->deudas,
-          $item->renacyt || $item->renacyt != "" ? 'Tiene renacyt' : 'No tiene renacyt',
-          $item->cdi ? 'Tiene CDI' : 'No tiene CDI',
         ];
-        $item->disabled = $item->deudas == 0 && $item->renacyt && $item->renacyt != "" && $item->cdi ? false : true;
         return $item;
       });
 
@@ -552,6 +540,7 @@ class PmultiController extends S3Controller {
 
     $listado = DB::table('Grupo_integrante AS a')
       ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
+      ->leftJoin('Repo_sum AS c', 'c.codigo_alumno', '=', 'b.codigo')
       ->leftJoin('Grupo AS e', 'e.id', '=', 'a.grupo_id')
       ->leftJoin('Facultad AS f', 'f.id', '=', 'b.facultad_id')
       ->select(
@@ -562,6 +551,12 @@ class PmultiController extends S3Controller {
         'a.id AS grupo_integrante_id',
         'e.grupo_nombre_corto AS labelTag',
         'f.nombre AS facultad',
+        DB::raw("CASE
+          WHEN c.programa LIKE 'E.P.%' THEN 'Licenciatura o Segunda Especialidad'
+          WHEN c.programa LIKE 'Maest%' THEN 'Maestría'
+          WHEN c.programa LIKE 'Doct%' THEN 'Doctorado'
+          ELSE 'Licenciatura o Segunda Especialidad'
+        END AS tipo_programa")
       )
       ->having('value', 'LIKE', '%' . $request->query('query') . '%')
       ->where('a.condicion', '=', 'Adherente')
@@ -623,6 +618,24 @@ class PmultiController extends S3Controller {
     return $listado;
   }
 
+  public function listadoGestor(Request $request) {
+    $investigadores = DB::table('Usuario_investigador AS a')
+      ->select(
+        DB::raw("CONCAT(doc_numero, ' | ', apellido1, ' ', apellido2, ', ', nombres) AS value"),
+        'id AS investigador_id',
+        'doc_numero',
+        'apellido1',
+        'apellido2',
+        'nombres'
+      )
+      ->where('tipo', '=', 'EXTERNO')
+      ->having('value', 'LIKE', '%' . $request->query('query') . '%')
+      ->limit(10)
+      ->get();
+
+    return $investigadores;
+  }
+
   public function agregarIntegrante(Request $request) {
     $count = DB::table('Proyecto_integrante')
       ->where('proyecto_id', '=', $request->input('id'))
@@ -665,6 +678,57 @@ class PmultiController extends S3Controller {
     } else {
       return ['message' => 'error', 'detail' => 'No puede añadir al mismo integrante 2 veces'];
     }
+  }
+
+  public function agregarGestor(Request $request) {
+    if ($request->input('tipo') == "Nuevo") {
+
+      $investigador_id = DB::table('Usuario_investigador')
+        ->insertGetId([
+          'apellido1' => $request->input('apellido1'),
+          'apellido2' => $request->input('apellido2'),
+          'nombres' => $request->input('nombres'),
+          'sexo' => $request->input('sexo'),
+          'institucion' => $request->input('institucion'),
+          'tipo' => 'Externo',
+          'pais' => $request->input('pais'),
+          'email1' => $request->input('email1'),
+          'doc_tipo' => $request->input('doc_tipo'),
+          'doc_numero' => $request->input('doc_numero'),
+          'created_at' => Carbon::now(),
+          'updated_at' => Carbon::now(),
+        ]);
+
+      DB::table('Proyecto_integrante')
+        ->insert([
+          'proyecto_id' => $request->input('proyecto_id'),
+          'investigador_id' => $investigador_id,
+          'proyecto_integrante_tipo_id' => 94,
+          'created_at' => Carbon::now(),
+          'updated_at' => Carbon::now(),
+        ]);
+    } else {
+
+      $cuenta = DB::table('Proyecto_integrante')
+        ->where('proyecto_id', '=', $request->input('proyecto_id'))
+        ->where('investigador_id', '=', $request->input('investigador_id'))
+        ->count();
+
+      if ($cuenta > 0) {
+        return ['message' => 'error', 'detail' => 'Esta persona ya figura como integrante del proyecto'];
+      }
+
+      DB::table('Proyecto_integrante')
+        ->insert([
+          'proyecto_id' => $request->input('proyecto_id'),
+          'investigador_id' => $request->input('investigador_id'),
+          'proyecto_integrante_tipo_id' => 94,
+          'created_at' => Carbon::now(),
+          'updated_at' => Carbon::now(),
+        ]);
+    }
+
+    return ['message' => 'success', 'detail' => 'Integrante añadido correctamente'];
   }
 
   public function eliminarIntegrante(Request $request) {
@@ -1011,6 +1075,21 @@ class PmultiController extends S3Controller {
       ->delete();
 
     return ['message' => 'info', 'detail' => 'Partida eliminada correctamente'];
+  }
+
+  public function actualizarPartida(Request $request) {
+    $date = Carbon::now();
+
+    DB::table('Proyecto_presupuesto')
+      ->where('id', '=', $request->input('id'))
+      ->update([
+        'partida_id' => $request->input('partida')["value"],
+        'monto' => $request->input('monto'),
+        'justificacion' => $request->input('justificacion'),
+        'updated_at' => $date,
+      ]);
+
+    return ['message' => 'info', 'detail' => 'Partida actualizada correctamente'];
   }
 
   public function verificar7(Request $request) {

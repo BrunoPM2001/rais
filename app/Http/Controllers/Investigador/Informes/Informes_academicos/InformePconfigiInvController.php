@@ -207,17 +207,6 @@ class InformePconfigiInvController extends S3Controller {
       return ['message' => 'error', 'detail' => 'Necesita completar los campos de: Resumen, proceso de instalación, funcionamiento, gestión de uso, aplicación práctica e impacto, e impacto de uso.'];
     }
 
-    $count2 = DB::table('Proyecto_doc')
-      ->where('proyecto_id', '=', $request->input('proyecto_id'))
-      ->where('categoria', '=', 'informe-PCONFIGI-INV-INFORME')
-      ->where('nombre', '=', 'Archivos de informe')
-      ->where('estado', '=', 1)
-      ->count();
-
-    if ($count2 == 0) {
-      return ['message' => 'error', 'detail' => 'Necesita cargar al menos el primer anexo'];
-    }
-
     $inf = DB::table('Informe_tecnico')
       ->select([
         'audit'

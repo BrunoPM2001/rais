@@ -217,7 +217,7 @@ class DocenteInvestigadorController extends S3Controller {
 
     $filiacion = 0;
     foreach ($d4 as $item) {
-      if ($item->filiacion == "Sí") {
+      if ($item->filiacion == "No" || $item->filiacion_unica == "No") {
         $filiacion++;
       }
     }
@@ -283,7 +283,7 @@ class DocenteInvestigadorController extends S3Controller {
         'lista' => $d3Complete
       ],
       'd4' => [
-        'cumple' => $filiacion,
+        'cumple' => $filiacion == 0 && sizeof($d4) > 0,
         'lista' => $d4
       ],
       'd5' => [
@@ -571,7 +571,7 @@ class DocenteInvestigadorController extends S3Controller {
     $d4 = json_decode($detalles->d4, true);
     $filiacion = 0;
     foreach ($d4 as $item) {
-      if ($item["filiacion"] == 1) {
+      if ($item["filiacion"] != 1 || $item["filiacion"] != 1) {
         $filiacion++;
       }
     }
@@ -606,7 +606,7 @@ class DocenteInvestigadorController extends S3Controller {
         'cumple' => $allYearsFound,
       ],
       'd4' => [
-        'cumple' => $filiacion,
+        'cumple' => $filiacion == 0 && sizeof($d4) > 0,
       ],
       'd5' => [
         'cumple' => $d5 == null || sizeof($d5) == 0 ? true : false,

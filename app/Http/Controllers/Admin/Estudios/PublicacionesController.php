@@ -122,7 +122,31 @@ class PublicacionesController extends S3Controller {
         ->groupBy('b.id')
         ->get();
 
-      return $publicaciones;
+      $patentes = DB::table('Patente AS a')
+        ->join('Patente_autor AS b', 'b.patente_id', '=', 'a.id')
+        ->select([
+          DB::raw("CONCAT('0', a.id) AS id"),
+          'a.nro_registro AS codigo_registro',
+          DB::raw("'Propiedad intelectual' AS tipo"),
+          'a.tipo AS tipo_patente',
+          'a.titulo',
+          'a.created_at',
+          'a.updated_at',
+          DB::raw("CASE(a.estado)
+            WHEN -1 THEN 'Eliminado'
+            WHEN 1 THEN 'Registrado'
+            WHEN 2 THEN 'Observado'
+            WHEN 5 THEN 'Enviado'
+            WHEN 6 THEN 'En proceso'
+            WHEN 7 THEN 'Anulado'
+            WHEN 8 THEN 'No registrado'
+            WHEN 9 THEN 'Duplicado'
+          ELSE 'Sin estado' END AS estado"),
+        ])
+        ->where('b.investigador_id', '=', $request->query('investigador_id'))
+        ->get();
+
+      return $publicaciones->merge($patentes);
     }
   }
 

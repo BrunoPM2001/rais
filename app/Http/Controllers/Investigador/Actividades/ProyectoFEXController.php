@@ -560,6 +560,7 @@ class ProyectoFEXController extends S3Controller {
         'proyecto_id' => $request->input('proyecto_id'),
         'investigador_id' => $request->input('investigador_id'),
         'proyecto_integrante_tipo_id' => $request->input('condicion'),
+        'responsabilidad' => $request->input('responsabilidad'),
         'created_at' => Carbon::now(),
         'updated_at' => Carbon::now(),
       ]);
@@ -709,6 +710,8 @@ class ProyectoFEXController extends S3Controller {
           'especialidad' => $request->input('especialidad'),
           'researcher_id' => $request->input('researcher_id'),
           'scopus_id' => $request->input('scopus_id'),
+          'cti_vitae' => $request->input('cti_vitae'),
+          'google_scholar' => $request->input('google_scholar'),
           'link' => $request->input('link'),
           'posicion_unmsm' => $request->input('posicion_unmsm'),
           'biografia' => $request->input('biografia'),
@@ -720,7 +723,8 @@ class ProyectoFEXController extends S3Controller {
         ->insert([
           'proyecto_id' => $request->input('proyecto_id'),
           'investigador_id' => $investigador_id,
-          'proyecto_integrante_tipo_id' => 90,
+          'proyecto_integrante_tipo_id' => $request->input('condicion'),
+          'responsabilidad' => $request->input('responsabilidad'),
           'created_at' => Carbon::now(),
           'updated_at' => Carbon::now(),
         ]);
@@ -739,7 +743,8 @@ class ProyectoFEXController extends S3Controller {
         ->insert([
           'proyecto_id' => $request->input('proyecto_id'),
           'investigador_id' => $request->input('investigador_id'),
-          'proyecto_integrante_tipo_id' => 90,
+          'proyecto_integrante_tipo_id' => $request->input('condicion'),
+          'responsabilidad' => $request->input('responsabilidad'),
           'created_at' => Carbon::now(),
           'updated_at' => Carbon::now(),
         ]);

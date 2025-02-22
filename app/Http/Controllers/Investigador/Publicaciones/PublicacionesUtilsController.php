@@ -763,7 +763,7 @@ class PublicacionesUtilsController extends S3Controller {
           $util = new LibrosController();
           return $util->reporte($request);
           break;
-        case "capitulo":
+        case "capitulo_libro":
           $util = new CapitulosLibrosController();
           return $util->reporte($request);
           break;
@@ -771,7 +771,7 @@ class PublicacionesUtilsController extends S3Controller {
           $util = new TesisPropiasController();
           return $util->reporte($request);
           break;
-        case "tesis-asesoria":
+        case "tesis_asesoria":
           $util = new TesisAsesoriaController();
           return $util->reporte($request);
           break;

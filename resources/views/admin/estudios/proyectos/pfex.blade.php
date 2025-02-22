@@ -116,6 +116,19 @@
       font-size: 14px;
       text-align: center;
     }
+    .obs {
+      background-color: #ff9a9a;
+      border-radius: 2px;
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 30px;
+      padding: 2px 4px;
+    }
+
+    .obs>tbody td {
+      font-size: 11px;
+      padding: 5px 3px 6px 3px;
+    }
   </style>
 </head>
 
@@ -144,6 +157,18 @@
       Estado: {{ $proyecto->estado }} {{ Carbon::parse($proyecto->updated_at)->format('d/m/Y') }}
     </strong>
   </p>
+
+  @if ($proyecto->estado == "Observado")
+    <table class="obs">
+      <tbody>
+        <tr>
+          <td style="width: 12%;" valign="top"><strong>Observaciones</strong></td>
+          <td style="width: 1%;" valign="top">:</td>
+          <td style="width: 87%;" valign="top">{{ $proyecto->observaciones_admin }}</td>
+        </tr>
+      </tbody>
+    </table>
+  @endif
 
   <div class="cuerpo">
 

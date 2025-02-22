@@ -29,14 +29,27 @@ class ProyectoDetalleController extends Controller {
           ->leftJoin('Grupo AS f', 'f.id', '=', 'a.grupo_id')
           ->select([
             'a.id',
-            'a.estado',
+            DB::raw("CASE(a.estado)
+              WHEN -1 THEN 'Eliminado'
+              WHEN 0 THEN 'No aprobado'
+              WHEN 1 THEN 'Aprobado'
+              WHEN 2 THEN 'Observado'
+              WHEN 3 THEN 'En evaluacion'
+              WHEN 5 THEN 'Enviado'
+              WHEN 6 THEN 'En proceso'
+              WHEN 7 THEN 'Anulado'
+              WHEN 8 THEN 'Sustentado'
+              WHEN 9 THEN 'En ejecución'
+              WHEN 10 THEN 'Ejecutado'
+              WHEN 11 THEN 'Concluído'
+            ELSE 'Sin estado' END AS estado"),
             'a.tipo_proyecto',
             'a.codigo_proyecto',
             'a.titulo',
             'a.periodo',
             'b.detalle AS tipo_investigacion',
             DB::raw("CASE
-              WHEN a.tipo_proyecto = 'PFEX' THEN a.aporte_unmsm + a.entidad_asociada + a.aporte_no_unmsm + a.financiamiento_fuente_externa
+              WHEN a.tipo_proyecto = 'PFEX' THEN FORMAT(a.aporte_unmsm + a.entidad_asociada + a.aporte_no_unmsm + a.financiamiento_fuente_externa, 2, 'en_US')
               ELSE SUM(c.monto)
             END AS monto"),
             'd.nombre AS facultad',
@@ -372,6 +385,7 @@ class ProyectoDetalleController extends Controller {
             WHEN -1 THEN 'Eliminado'
             WHEN 0 THEN 'No aprobado'
             WHEN 1 THEN 'Aprobado'
+            WHEN 2 THEN 'Observado'
             WHEN 3 THEN 'En evaluacion'
             WHEN 5 THEN 'Enviado'
             WHEN 6 THEN 'En proceso'
@@ -381,6 +395,7 @@ class ProyectoDetalleController extends Controller {
             WHEN 10 THEN 'Ejecutado'
             WHEN 11 THEN 'Concluído'
           ELSE 'Sin estado' END AS estado"),
+        'a.observaciones_admin',
         'a.updated_at'
       ])
       ->where('a.id', '=', $request->query('id'))

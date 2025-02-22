@@ -922,8 +922,9 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
       Route::get('listadoCorresponsables', [PmultiController::class, 'listadoCorresponsables']);
       Route::get('listadoDocentes', [PmultiController::class, 'listadoDocentes']);
       Route::get('listadoTesistas', [PmultiController::class, 'listadoTesistas']);
-      Route::get('listadoExterno', [PmultiController::class, 'listadoExterno']);
+      Route::get('listadoGestor', [PmultiController::class, 'listadoGestor']);
       Route::post('agregarIntegrante', [PmultiController::class, 'agregarIntegrante']);
+      Route::post('agregarGestor', [PmultiController::class, 'agregarGestor']);
       Route::delete('eliminarIntegrante', [PmultiController::class, 'eliminarIntegrante']);
 
       Route::get('verificar4', [PmultiController::class, 'verificar4']);
@@ -937,6 +938,7 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
       Route::get('verificar6', [PmultiController::class, 'verificar6']);
       Route::post('agregarPartida', [PmultiController::class, 'agregarPartida']);
       Route::delete('eliminarPartida', [PmultiController::class, 'eliminarPartida']);
+      Route::put('actualizarPartida', [PmultiController::class, 'actualizarPartida']);
 
       Route::get('verificar7', [PmultiController::class, 'verificar7']);
       Route::post('agregarDoc', [PmultiController::class, 'agregarDoc']);

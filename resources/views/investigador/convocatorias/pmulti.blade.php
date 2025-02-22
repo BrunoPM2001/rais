@@ -210,11 +210,11 @@
       <thead>
         <tr>
           <th>N°</th>
-          <th>Comenario</th>
+          <th>Comentario</th>
         </tr>
       </thead>
       <tbody>
-        @if ($docs)
+        @if (sizeof($docs) > 0)
           @foreach ($docs as $item)
             <tr>
               <td>{{ $loop->iteration }}</td>
@@ -332,7 +332,7 @@
         </tr>
       </thead>
       <tbody>
-        @if ($actividades)
+        @if (sizeof($actividades) > 0)
           @foreach ($actividades as $act)
             <tr>
               <td align="center">{{ $loop->iteration }}</td>
@@ -363,7 +363,7 @@
         </tr>
       </thead>
       <tbody>
-        @if ($presupuesto)
+        @if (sizeof($presupuesto) > 0)
           @foreach ($presupuesto as $item)
             <tr>
               <td align="center">{{ $loop->iteration }}</td>

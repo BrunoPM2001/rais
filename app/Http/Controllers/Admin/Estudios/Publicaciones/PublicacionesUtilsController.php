@@ -14,12 +14,31 @@ class PublicacionesUtilsController extends S3Controller {
     $pub = DB::table('Publicacion AS a')
       ->join('Publicacion_categoria AS b', 'b.id', '=', 'a.categoria_id')
       ->select([
+        'a.audit',
         'b.tipo',
         'b.categoria',
         'b.puntaje'
       ])
       ->where('a.id', '=', $request->input('id'))
       ->first();
+
+    //  Audit
+    $audit = json_decode($pub->audit ?? "[]");
+
+    $audit[] = [
+      'fecha' => Carbon::now()->format('Y-m-d H:i:s'),
+      'nombres' => $request->attributes->get('token_decoded')->nombre,
+      'apellidos' => $request->attributes->get('token_decoded')->apellidos,
+      'accion' => 'Recálculo de puntajes'
+    ];
+
+    $audit = json_encode($audit, JSON_UNESCAPED_UNICODE);
+
+    DB::table('Publicacion')
+      ->where('id', '=', $request->input('id'))
+      ->update([
+        'audit' => $audit
+      ]);
 
     DB::table('Publicacion_autor')
       ->where('publicacion_id', '=', $request->input('id'))
@@ -86,6 +105,32 @@ class PublicacionesUtilsController extends S3Controller {
         ]);
       $index++;
     }
+
+    //  Audit
+    $pub = DB::table('Publicacion')
+      ->select([
+        'audit',
+      ])
+      ->where('id', '=', $request->input('publicacion_id'))
+      ->first();
+
+    $audit = json_decode($pub->audit ?? "[]");
+
+    $audit[] = [
+      'fecha' => Carbon::now()->format('Y-m-d H:i:s'),
+      'nombres' => $request->attributes->get('token_decoded')->nombre,
+      'apellidos' => $request->attributes->get('token_decoded')->apellidos,
+      'accion' => 'Reordenar autores'
+    ];
+
+    $audit = json_encode($audit, JSON_UNESCAPED_UNICODE);
+
+    DB::table('Publicacion')
+      ->where('id', '=', $request->input('publicacion_id'))
+      ->update([
+        'audit' => $audit
+      ]);
+
     return ['message' => 'info', 'detail' => 'Autores reordenados'];
   }
 
@@ -189,11 +234,30 @@ class PublicacionesUtilsController extends S3Controller {
         'updated_at' => Carbon::now()
       ]);
 
+    //  Audit
+    $pub = DB::table('Publicacion')
+      ->select([
+        'audit',
+      ])
+      ->where('id', '=', $request->input('id'))
+      ->first();
+
+    $audit = json_decode($pub->audit ?? "[]");
+
+    $audit[] = [
+      'fecha' => Carbon::now()->format('Y-m-d H:i:s'),
+      'nombres' => $request->attributes->get('token_decoded')->nombre,
+      'apellidos' => $request->attributes->get('token_decoded')->apellidos,
+      'accion' => 'Proyecto agregado'
+    ];
+
+    $audit = json_encode($audit, JSON_UNESCAPED_UNICODE);
 
     DB::table('Publicacion')
       ->where('id', '=', $request->input('id'))
       ->update([
-        'step' => 2
+        'step' => 2,
+        'audit' => $audit
       ]);
 
     return ['message' => 'success', 'detail' => 'Proyecto agregado exitosamente'];

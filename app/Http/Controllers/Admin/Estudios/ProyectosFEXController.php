@@ -49,10 +49,10 @@ class ProyectosFEXController extends S3Controller {
         'res.responsable',
         'b.nombre AS facultad',
         'moneda.detalle AS moneda',
-        'a.aporte_no_unmsm',
-        'a.aporte_unmsm',
-        'a.financiamiento_fuente_externa',
-        'a.monto_asignado',
+        DB::raw("FORMAT(a.aporte_no_unmsm, 2, 'en_US') AS aporte_no_unmsm"),
+        DB::raw("FORMAT(a.aporte_unmsm, 2, 'en_US') AS aporte_unmsm"),
+        DB::raw("FORMAT(a.financiamiento_fuente_externa, 2, 'en_US') AS financiamiento_fuente_externa"),
+        DB::raw("FORMAT(a.monto_asignado, 2, 'en_US') AS monto_asignado"),
         'e.detalle AS participacion_unmsm',
         DB::raw("CASE
           WHEN f.detalle = 'OTROS' THEN g.detalle
@@ -641,6 +641,7 @@ class ProyectosFEXController extends S3Controller {
       ->where('id', '=', $request->input('id'))
       ->update([
         'proyecto_integrante_tipo_id' => $request->input('condicion')["value"],
+        'responsabilidad' => $request->input('responsabilidad'),
         'updated_at' => Carbon::now(),
       ]);
 
@@ -786,7 +787,8 @@ class ProyectosFEXController extends S3Controller {
         ->insert([
           'proyecto_id' => $request->input('id'),
           'investigador_id' => $investigador_id,
-          'proyecto_integrante_tipo_id' => 90,
+          'proyecto_integrante_tipo_id' => $request->input('condicion'),
+          'responsabilidad' => $request->input('responsabilidad'),
           'created_at' => Carbon::now(),
           'updated_at' => Carbon::now(),
         ]);
@@ -805,7 +807,8 @@ class ProyectosFEXController extends S3Controller {
         ->insert([
           'proyecto_id' => $request->input('id'),
           'investigador_id' => $request->input('investigador_id'),
-          'proyecto_integrante_tipo_id' => 90,
+          'proyecto_integrante_tipo_id' => $request->input('condicion'),
+          'responsabilidad' => $request->input('responsabilidad'),
           'created_at' => Carbon::now(),
           'updated_at' => Carbon::now(),
         ]);
@@ -819,6 +822,8 @@ class ProyectosFEXController extends S3Controller {
       ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
       ->select([
         'a.investigador_id',
+        'a.proyecto_integrante_tipo_id AS condicion',
+        'a.responsabilidad',
         'b.codigo_orcid',
         'b.apellido1',
         'b.apellido2',
@@ -880,6 +885,8 @@ class ProyectosFEXController extends S3Controller {
     DB::table('Proyecto_integrante')
       ->where('id', '=', $request->input('id'))
       ->update([
+        'proyecto_integrante_tipo_id' => $request->input('condicion')["value"],
+        'responsabilidad' => $request->input('responsabilidad'),
         'updated_at' => Carbon::now(),
       ]);
 
@@ -934,6 +941,7 @@ class ProyectosFEXController extends S3Controller {
         'resolucion_fecha' => $request->input('resolucion_fecha'),
         'comentario' => $request->input('comentario'),
         'observaciones_admin' => $request->input('observaciones_admin'),
+        'updated_at' => Carbon::now()
       ]);
 
     return ['message' => 'info', 'detail' => 'Información del proyecto actualizada'];
