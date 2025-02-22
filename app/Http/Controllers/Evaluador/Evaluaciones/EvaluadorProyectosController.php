@@ -23,6 +23,7 @@ class EvaluadorProyectosController extends S3Controller {
       })
       ->leftJoin('Evaluacion_proyecto AS f', function (JoinClause $join) {
         $join->on('f.proyecto_id', '=', 'c.id')
+          ->on('f.evaluador_id', '=', 'b.id')
           ->whereNotNull('f.evaluacion_opcion_id');
       })
       ->join('Convocatoria AS g', function (JoinClause $join) use ($date) {
