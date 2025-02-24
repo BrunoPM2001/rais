@@ -58,7 +58,7 @@ class InformesTecnicosController extends S3Controller {
             ELSE 'No tiene informe'
           END AS estado")
         )
-        ->where('a.estado', '=', 1)
+        ->whereIn('a.estado', [1, 8])
         ->where('a.tipo_proyecto', '!=', 'PFEX')
         ->groupBy('a.id')
         ->get();
@@ -239,6 +239,7 @@ class InformesTecnicosController extends S3Controller {
       case "PSINFIPU":
       case "PTPBACHILLER":
       case "PTPDOCTO":
+      case "PTPGRADO":
         $proyecto = DB::table('Proyecto AS a')
           ->leftJoin('Facultad AS b', 'b.id', '=', 'a.facultad_id')
           ->leftJoin('Grupo AS c', 'c.id', '=', 'a.grupo_id')

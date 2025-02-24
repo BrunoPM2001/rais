@@ -34,7 +34,7 @@ class AsignacionEvaluadorController extends Controller {
         'e.fecha_final',
         DB::raw("GROUP_CONCAT(CONCAT(f.nombres, ' ', f.apellidos) SEPARATOR ', ') AS evaluadores")
       ])
-      ->where('a.estado', '=', 5)
+      ->whereIn('a.estado', [3, 5])
       ->groupBy('a.id')
       ->get();
 
@@ -81,44 +81,64 @@ class AsignacionEvaluadorController extends Controller {
   public function updateEvaluadores(Request $request) {
 
     $elementosA = $request->input('evaluadores');
-
-    $elementosB = DB::table('Proyecto_evaluacion')
-      ->select(['evaluador_id AS id'])
-      ->where('proyecto_id', '=', $request->input('proyecto_id'))
-      ->get()
-      ->toArray();
+    $elementosC = $request->input('proyectos');
 
     $a_ids = array_column($elementosA, 'id');
-    $b_ids = array_column($elementosB, 'id');
+    $c_ids = array_column($elementosC, 'id');
 
-    //  Validar que se hayan escogido diferentes evaluadores
-    if (count($a_ids) !== count(array_unique($a_ids))) {
-      return ['message' => 'error', 'detail' => 'Los evaluadores escogidos deben ser diferentes'];
-    }
+    foreach ($c_ids as $proyecto_id) {
+      $elementosB = DB::table('Proyecto_evaluacion')
+        ->select(['evaluador_id AS id'])
+        ->where('proyecto_id', '=', $proyecto_id)
+        ->get()
+        ->toArray();
 
-    // Encontrar los IDs en $a que no están en $b
-    $ids_in_a_not_in_b = array_diff($a_ids, $b_ids);
+      $b_ids = array_column($elementosB, 'id');
 
-    // Encontrar los IDs en $b que no están en $a
-    $ids_in_b_not_in_a = array_diff($b_ids, $a_ids);
+      //  Validar que se hayan escogido diferentes evaluadores
+      if (count($a_ids) !== count(array_unique($a_ids))) {
+        return ['message' => 'error', 'detail' => 'Los evaluadores escogidos deben ser diferentes'];
+      }
 
-    if (!empty($ids_in_a_not_in_b)) {
-      foreach ($ids_in_a_not_in_b as $id) {
-        DB::table('Proyecto_evaluacion')
-          ->insert([
-            'evaluador_id' => $id,
-            'proyecto_id' => $request->input('proyecto_id')
-          ]);
+      // Encontrar los IDs en $a que no están en $b
+      $ids_in_a_not_in_b = array_diff($a_ids, $b_ids);
+
+      // Encontrar los IDs en $b que no están en $a
+      $ids_in_b_not_in_a = array_diff($b_ids, $a_ids);
+
+
+      if (!empty($ids_in_b_not_in_a)) {
+        foreach ($ids_in_b_not_in_a as $id) {
+          DB::table('Proyecto_evaluacion')
+            ->where('evaluador_id', '=', $id)
+            ->where('proyecto_id', '=', $proyecto_id)
+            ->delete();
+        }
+      }
+
+      if (!empty($ids_in_a_not_in_b)) {
+        foreach ($ids_in_a_not_in_b as $id) {
+          DB::table('Proyecto_evaluacion')
+            ->insert([
+              'evaluador_id' => $id,
+              'proyecto_id' => $proyecto_id
+            ]);
+        }
       }
     }
 
-    if (!empty($ids_in_b_not_in_a)) {
-      foreach ($ids_in_b_not_in_a as $id) {
-        DB::table('Proyecto_evaluacion')
-          ->where('evaluador_id', '=', $id)
-          ->where('proyecto_id', '=', $request->input('proyecto_id'))
-          ->delete();
-      }
+    if (sizeof($a_ids) == 0) {
+      DB::table('Proyecto')
+        ->whereIn('id', $c_ids)
+        ->update([
+          'estado' => 5
+        ]);
+    } else {
+      DB::table('Proyecto')
+        ->whereIn('id', $c_ids)
+        ->update([
+          'estado' => 3
+        ]);
     }
 
     return ['message' => 'success', 'detail' => 'Evaluadores actualizados'];

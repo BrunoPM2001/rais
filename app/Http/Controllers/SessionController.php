@@ -39,6 +39,7 @@ class SessionController extends Controller {
         $jwt = JWT::encode([
           'id' => $table->tabla_id,
           'tabla' => $table->tabla,
+          'username' => $user,
           'nombre' => $usuario->nombres,
           'apellidos' => $usuario->apellidos,
           'exp' => time() + 14400
