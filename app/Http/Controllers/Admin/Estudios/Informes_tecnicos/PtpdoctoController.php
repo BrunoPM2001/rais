@@ -8,7 +8,7 @@ use Illuminate\Database\Query\JoinClause;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
-class PtpgradoController extends Controller {
+class PtpdoctoController extends Controller {
   public function reporte(Request $request) {
     $detalles = DB::table('Informe_tecnico AS a')
       ->join('Proyecto AS b', 'b.id', '=', 'a.proyecto_id')
@@ -68,8 +68,8 @@ class PtpgradoController extends Controller {
         return [$item->categoria => $item->url];
       });
 
-    if ($request->query('tipo_informe') == "Informe académico de avance") {
-      $pdf = Pdf::loadView('admin.estudios.informes_tecnicos.ptpgrado1', [
+    if ($request->query('tipo_informe') != "Informe académico final") {
+      $pdf = Pdf::loadView('admin.estudios.informes_tecnicos.ptpdocto1', [
         'proyecto' => $proyecto,
         'miembros' => $miembros,
         'archivos' => $archivos,
@@ -77,7 +77,7 @@ class PtpgradoController extends Controller {
         'informe' => $request->query('tipo_informe')
       ]);
     } else {
-      $pdf = Pdf::loadView('admin.estudios.informes_tecnicos.ptpgrado2', [
+      $pdf = Pdf::loadView('admin.estudios.informes_tecnicos.ptpdocto2', [
         'proyecto' => $proyecto,
         'miembros' => $miembros,
         'archivos' => $archivos,

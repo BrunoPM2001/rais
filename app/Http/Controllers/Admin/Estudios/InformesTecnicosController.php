@@ -234,12 +234,14 @@ class InformesTecnicosController extends S3Controller {
         break;
       case "PCONFIGI":
       case "PRO-CTIE":
+      case "PICV":
       case "PCONFIGI-INV":
       case "PSINFINV":
       case "PSINFIPU":
       case "PTPBACHILLER":
       case "PTPDOCTO":
       case "PTPGRADO":
+      case "PTPMAEST":
         $proyecto = DB::table('Proyecto AS a')
           ->leftJoin('Facultad AS b', 'b.id', '=', 'a.facultad_id')
           ->leftJoin('Grupo AS c', 'c.id', '=', 'a.grupo_id')
@@ -596,6 +598,18 @@ class InformesTecnicosController extends S3Controller {
         $name = $request->input('proyecto_id') . "/" . $date_format . "-" . Str::random(8) . "." . $request->file('file1')->getClientOriginalExtension();
         $this->uploadFile($request->file('file1'), "proyecto-doc", $name);
         $this->updateFile($proyecto_id, $date1, $name, "informe-PSINFIPU-RESULTADOS", "Archivos de informe", 22);
+      }
+    } else if ($request->input('tipo_proyecto') == "PTPBACHILLER") {
+      if ($request->hasFile('file1')) {
+        $name = $request->input('proyecto_id') . "/" . $date_format . "-" . Str::random(8) . "." . $request->file('file1')->getClientOriginalExtension();
+        $this->uploadFile($request->file('file1'), "proyecto-doc", $name);
+        $this->updateFile($proyecto_id, $date1, $name, "informe-PTPBACHILLER-INFORME", "Archivos de informe", 22);
+      }
+    } else if ($request->input('tipo_proyecto') == "PICV") {
+      if ($request->hasFile('file1')) {
+        $name = $request->input('proyecto_id') . "/" . $date_format . "-" . Str::random(8) . ".pdf";
+        $this->uploadFile($request->file('file1'), "proyecto-doc", $name);
+        $this->updateFile($proyecto_id, $date1, $name, "informe-PICV-INFORME", "Archivos de informe final");
       }
     }
 

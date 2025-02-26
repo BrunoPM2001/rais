@@ -57,7 +57,7 @@ class InformePtpbachillerController extends S3Controller {
         'observaciones',
         'estado'
       ])
-      ->where('proyecto_id', '=', $request->get('proyecto_id'))
+      ->where('id', '=', $request->get('id'))
       ->first();
 
     $archivos = DB::table('Proyecto_doc')
@@ -76,24 +76,44 @@ class InformePtpbachillerController extends S3Controller {
   }
 
   public function sendData(Request $request) {
+    $id = $request->input('id');
     $date = Carbon::now();
-
-    DB::table('Informe_tecnico')
-      ->updateOrInsert([
-        'proyecto_id' => $request->input('proyecto_id')
-      ], [
-        'informe_tipo_id' => 46,
-        'estado_trabajo' => $request->input('estado_trabajo'),
-        'infinal9' => $request->input('infinal9'),
-        'infinal10' => $request->input('infinal10'),
-        'estado' => 0,
-        'fecha_informe_tecnico' => $date,
-        'created_at' => $date,
-        'updated_at' => $date,
-      ]);
-
     $proyecto_id = $request->input('proyecto_id');
     $date1 = Carbon::now();
+
+    $existe = DB::table('Informe_tecnico')
+      ->where('proyecto_id', $request->input('proyecto_id'))
+      ->where('informe_tipo_id', 46)
+      ->where('id', '=', $request->input('id'))
+      ->first();
+
+    if ($existe) {
+      DB::table('Informe_tecnico')
+        ->where('proyecto_id', $request->input('proyecto_id'))
+        ->where('informe_tipo_id', 46)
+        ->where('id', '=', $request->input('id'))
+        ->update([
+          'estado_trabajo' => $request->input('estado_trabajo'),
+          'infinal9' => $request->input('infinal9'),
+          'infinal10' => $request->input('infinal10'),
+          'estado' => 0,
+          'fecha_informe_tecnico' => $date,
+          'updated_at' => $date,
+        ]);
+    } else {
+      $id = DB::table('Informe_tecnico')
+        ->insertGetId([
+          'proyecto_id' => $request->input('proyecto_id'),
+          'informe_tipo_id' => 46,
+          'estado_trabajo' => $request->input('estado_trabajo'),
+          'infinal9' => $request->input('infinal9'),
+          'infinal10' => $request->input('infinal10'),
+          'estado' => 0,
+          'fecha_informe_tecnico' => $date,
+          'created_at' => $date,
+          'updated_at' => $date,
+        ]);
+    }
 
     if ($request->hasFile('file1')) {
       $name = $request->input('proyecto_id') . "/" . $date1->format('Ymd-His') . "-" . Str::random(8) . "." . $request->file('file1')->getClientOriginalExtension();
@@ -101,18 +121,19 @@ class InformePtpbachillerController extends S3Controller {
       $this->updateFile($proyecto_id, $date1, $name, "informe-PTPBACHILLER-INFORME", "Archivos de informe", 22);
     }
 
-    return ['message' => 'success', 'detail' => 'Informe guardado correctamente'];
+    return ['message' => 'success', 'detail' => 'Informe guardado correctamente', 'id' => $id];
   }
 
   public function presentar(Request $request) {
     $count1 = DB::table('Informe_tecnico')
-      ->where('proyecto_id', '=', $request->input('proyecto_id'))
+      ->where('id', '=', $request->input('id'))
       ->whereNotNull('estado_trabajo')
+      ->whereNotNull('infinal9')
       ->whereNotNull('infinal10')
       ->count();
 
     if ($count1 == 0) {
-      return ['message' => 'error', 'detail' => 'Necesita completar los campos de: Resumen, proceso de instalación, funcionamiento, gestión de uso, aplicación práctica e impacto, e impacto de uso.'];
+      return ['message' => 'error', 'detail' => 'Necesita completar todos los campos.'];
     }
 
     $count2 = DB::table('Proyecto_doc')
@@ -123,11 +144,11 @@ class InformePtpbachillerController extends S3Controller {
       ->count();
 
     if ($count2 == 0) {
-      return ['message' => 'error', 'detail' => 'Necesita cargar al menos el primer anexo'];
+      return ['message' => 'error', 'detail' => 'Necesita cargar el archivo de medios probatorios'];
     }
 
     $count = DB::table('Informe_tecnico')
-      ->where('proyecto_id', '=', $request->input('proyecto_id'))
+      ->where('id', '=', $request->input('id'))
       ->where('estado', '=', 0)
       ->update([
         'estado' => 2,

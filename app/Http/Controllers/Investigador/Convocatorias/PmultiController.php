@@ -566,7 +566,7 @@ class PmultiController extends S3Controller {
           WHEN c.programa LIKE 'Doct%' THEN 'Doctorado'
           ELSE 'Licenciatura o Segunda Especialidad'
         END AS tipo_programa"),
-        DB::raw("COUNT(i.id) AS cantidad_tesista")
+        DB::raw("COUNT(h.id) AS cantidad_tesista")
       )
       ->having('value', 'LIKE', '%' . $request->query('query') . '%')
       ->where('a.condicion', '=', 'Adherente')
@@ -744,6 +744,10 @@ class PmultiController extends S3Controller {
   }
 
   public function eliminarIntegrante(Request $request) {
+    DB::table('Proyecto_actividad')
+      ->where('proyecto_integrante_id', '=', $request->query('id'))
+      ->delete();
+
     DB::table('Proyecto_integrante')
       ->where('id', '=', $request->query('id'))
       ->delete();
@@ -1124,7 +1128,7 @@ class PmultiController extends S3Controller {
       ->get();
 
     foreach ($partidas as $item) {
-      if ($item->monto_max < $item->total) {
+      if ($item->monto_max < $item->total && $item->nombre != null) {
         $alerta[] = $item->nombre . ": " . $item->monto_max;
       }
     };
@@ -1132,7 +1136,7 @@ class PmultiController extends S3Controller {
     if (sizeof($alerta) == 0) {
       return ['message' => 'info', 'detail' => 'Su proyecto respeta los límites de la directiva'];
     } else {
-      return ['message' => 'warning', 'detail' => 'El presupuesto presenta excesos en la(s) siguiente(s) categoría(s). ' . implode(',', $alerta) . '; para mayor detalle revisar la directiva correspondiente.'];
+      return ['message' => 'warning', 'detail' => 'El presupuesto presenta excesos en la(s) siguiente(s) categoría(s). ' . implode(',', $alerta) . '; para mayor detalle revisar la directiva correspondiente.', $alerta];
     }
   }
 

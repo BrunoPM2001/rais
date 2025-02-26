@@ -35,12 +35,12 @@ class ProyectosEvaluadosController extends Controller {
       })
       ->leftJoin('Evaluacion_proyecto AS f', function (JoinClause $join) {
         $join->on('f.proyecto_id', '=', 'c.id')
+          ->on('f.evaluador_id', '=', 'b.id')
           ->whereNotNull('f.evaluacion_opcion_id');
       })
-      ->join('Usuario_evaluador AS g', 'g.id', '=', 'a.evaluador_id')
       ->select([
         'a.id',
-        DB::raw("CONCAT(g.apellidos, ' ', g.nombres) AS evaluador"),
+        DB::raw("CONCAT(b.apellidos, ' ', b.nombres) AS evaluador"),
         'c.tipo_proyecto',
         'c.titulo',
         'd.nombre AS facultad',

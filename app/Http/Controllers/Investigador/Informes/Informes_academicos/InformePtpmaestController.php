@@ -9,7 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
-class InformePtpdoctoController extends S3Controller {
+class InformePtpmaestController extends S3Controller {
   public function getData(Request $request) {
     $proyecto = DB::table('Proyecto AS a')
       ->leftJoin('Grupo AS b', 'b.id', '=', 'a.grupo_id')
@@ -60,7 +60,7 @@ class InformePtpdoctoController extends S3Controller {
         'observaciones',
         'a.estado',
       ])
-      ->where('a.id', '=', $request->get('id'))
+      ->where('a.proyecto_id', '=', $request->get('id'))
       ->where('b.informe', '=', $request->get('informe'))
       ->first();
 
@@ -88,16 +88,17 @@ class InformePtpdoctoController extends S3Controller {
     if ($request->input('informe') == "Informe académico de avance") {
       $existe = DB::table('Informe_tecnico')
         ->where('proyecto_id', $request->input('proyecto_id'))
-        ->where('informe_tipo_id', 32)
+        ->where('informe_tipo_id', 39)
         ->where('id', '=', $request->input('id'))
         ->first();
 
       if ($existe) {
         DB::table('Informe_tecnico')
           ->where('proyecto_id', $request->input('proyecto_id'))
-          ->where('informe_tipo_id', 32)
+          ->where('informe_tipo_id', 39)
           ->where('id', '=', $request->input('id'))
           ->update([
+            'estado_trabajo' => $request->input('estado_trabajo'),
             'infinal1' => $request->input('infinal1'),
             'infinal2' => $request->input('infinal2'),
             'infinal3' => $request->input('infinal3'),
@@ -107,10 +108,11 @@ class InformePtpdoctoController extends S3Controller {
             'updated_at' => $date,
           ]);
       } else {
-        $id =  DB::table('Informe_tecnico')
+        $id = DB::table('Informe_tecnico')
           ->insertGetId([
             'proyecto_id' => $request->input('proyecto_id'),
-            'informe_tipo_id' => 32,
+            'informe_tipo_id' => 39,
+            'estado_trabajo' => $request->input('estado_trabajo'),
             'infinal1' => $request->input('infinal1'),
             'infinal2' => $request->input('infinal2'),
             'infinal3' => $request->input('infinal3'),
@@ -125,63 +127,22 @@ class InformePtpdoctoController extends S3Controller {
       if ($request->hasFile('file1')) {
         $name = $request->input('proyecto_id') . "/" . $date1->format('Ymd-His') . "-" . Str::random(8) . "." . $request->file('file1')->getClientOriginalExtension();
         $this->uploadFile($request->file('file1'), "proyecto-doc", $name);
-        $this->updateFile($proyecto_id, $date1, $name, "informe-PTPDOCTO-INFORME-AVANCE", "Archivos de informe", 22);
-      }
-    } else if ($request->input('informe') == "Segundo informe académico de avance") {
-      $existe = DB::table('Informe_tecnico')
-        ->where('proyecto_id', $request->input('proyecto_id'))
-        ->where('informe_tipo_id', 33)
-        ->where('id', '=', $request->input('id'))
-        ->first();
-
-      if ($existe) {
-        DB::table('Informe_tecnico')
-          ->where('proyecto_id', $request->input('proyecto_id'))
-          ->where('informe_tipo_id', 33)
-          ->where('id', '=', $request->input('id'))
-          ->update([
-            'infinal1' => $request->input('infinal1'),
-            'infinal2' => $request->input('infinal2'),
-            'infinal3' => $request->input('infinal3'),
-            'infinal7' => $request->input('infinal7'),
-            'estado' => 0,
-            'fecha_informe_tecnico' => $date,
-            'updated_at' => $date,
-          ]);
-      } else {
-        $id =  DB::table('Informe_tecnico')
-          ->insertGetId([
-            'proyecto_id' => $request->input('proyecto_id'),
-            'informe_tipo_id' => 33,
-            'infinal1' => $request->input('infinal1'),
-            'infinal2' => $request->input('infinal2'),
-            'infinal3' => $request->input('infinal3'),
-            'infinal7' => $request->input('infinal7'),
-            'estado' => 0,
-            'fecha_informe_tecnico' => $date,
-            'created_at' => $date,
-            'updated_at' => $date,
-          ]);
-      }
-
-      if ($request->hasFile('file1')) {
-        $name = $request->input('proyecto_id') . "/" . $date1->format('Ymd-His') . "-" . Str::random(8) . "." . $request->file('file1')->getClientOriginalExtension();
-        $this->uploadFile($request->file('file1'), "proyecto-doc", $name);
-        $this->updateFile($proyecto_id, $date1, $name, "informe-PTPDOCTO-SEGUNDO-INFORME-AVANCE", "Archivos de informe", 22);
+        $this->updateFile($proyecto_id, $date1, $name, "informe-PTPMAEST-INFORME-AVANCE", "Archivos de informe", 22);
       }
     } else {
       $existe = DB::table('Informe_tecnico')
         ->where('proyecto_id', $request->input('proyecto_id'))
-        ->where('informe_tipo_id', 34)
+        ->where('informe_tipo_id', 40)
         ->where('id', '=', $request->input('id'))
         ->first();
 
       if ($existe) {
         DB::table('Informe_tecnico')
           ->where('proyecto_id', $request->input('proyecto_id'))
-          ->where('informe_tipo_id', 34)
+          ->where('informe_tipo_id', 40)
           ->where('id', '=', $request->input('id'))
           ->update([
+            'estado_trabajo' => $request->input('estado_trabajo'),
             'infinal1' => $request->input('infinal1'),
             'infinal2' => $request->input('infinal2'),
             'estado' => 0,
@@ -189,10 +150,11 @@ class InformePtpdoctoController extends S3Controller {
             'updated_at' => $date,
           ]);
       } else {
-        $id =  DB::table('Informe_tecnico')
+        $id = DB::table('Informe_tecnico')
           ->insertGetId([
             'proyecto_id' => $request->input('proyecto_id'),
-            'informe_tipo_id' => 34,
+            'informe_tipo_id' => 40,
+            'estado_trabajo' => $request->input('estado_trabajo'),
             'infinal1' => $request->input('infinal1'),
             'infinal2' => $request->input('infinal2'),
             'estado' => 0,
@@ -205,13 +167,13 @@ class InformePtpdoctoController extends S3Controller {
       if ($request->hasFile('file1')) {
         $name = $request->input('proyecto_id') . "/" . $date1->format('Ymd-His') . "-" . Str::random(8) . "." . $request->file('file1')->getClientOriginalExtension();
         $this->uploadFile($request->file('file1'), "proyecto-doc", $name);
-        $this->updateFile($proyecto_id, $date1, $name, "informe-PTPDOCTO-INFORME-FINAL-tesis", "Archivos de informe", 22);
+        $this->updateFile($proyecto_id, $date1, $name, "informe-PTPMAEST-INFORME-FINAL-tesis", "Archivos de informe", 22);
       }
 
       if ($request->hasFile('file2')) {
-        $name = $request->input('proyecto_id') . "/" . $date1->format('Ymd-His') . "-" . Str::random(8) . "." . $request->file('file2')->getClientOriginalExtension();
-        $this->uploadFile($request->file('file2'), "proyecto-doc", $name);
-        $this->updateFile($proyecto_id, $date1, $name, "informe-PTPDOCTO-INFORME-FINAL-acta", "Archivos de informe", 22);
+        $name = $request->input('proyecto_id') . "/" . $date1->format('Ymd-His') . "-" . Str::random(8) . "." . $request->file('file1')->getClientOriginalExtension();
+        $this->uploadFile($request->file('file1'), "proyecto-doc", $name);
+        $this->updateFile($proyecto_id, $date1, $name, "informe-PTPMAEST-INFORME-FINAL-acta", "Archivos de informe", 22);
       }
     }
 
@@ -221,7 +183,7 @@ class InformePtpdoctoController extends S3Controller {
   public function presentar(Request $request) {
     if ($request->input('informe') == "Informe académico de avance") {
       $count1 = DB::table('Informe_tecnico')
-        ->where('proyecto_id', '=', $request->input('proyecto_id'))
+        ->where('id', '=', $request->input('id'))
         ->whereNotNull('infinal1')
         ->whereNotNull('infinal2')
         ->whereNotNull('infinal3')
@@ -234,40 +196,17 @@ class InformePtpdoctoController extends S3Controller {
 
       $count2 = DB::table('Proyecto_doc')
         ->where('proyecto_id', '=', $request->input('proyecto_id'))
-        ->where('categoria', '=', 'informe-PTPDOCTO-INFORME-AVANCE')
+        ->where('categoria', '=', 'informe-PTPMAEST-INFORME-AVANCE')
         ->where('nombre', '=', 'Archivos de informe')
         ->where('estado', '=', 1)
         ->count();
 
       if ($count2 == 0) {
-        return ['message' => 'error', 'detail' => 'Necesita cargar el archivo de medios probatorios'];
-      }
-    } else if ($request->input('informe') == "Segundo informe académico de avance") {
-      $count1 = DB::table('Informe_tecnico')
-        ->where('proyecto_id', '=', $request->input('proyecto_id'))
-        ->whereNotNull('infinal1')
-        ->whereNotNull('infinal2')
-        ->whereNotNull('infinal3')
-        ->whereNotNull('infinal7')
-        ->count();
-
-      if ($count1 == 0) {
-        return ['message' => 'error', 'detail' => 'Necesita completar todos los campos'];
-      }
-
-      $count2 = DB::table('Proyecto_doc')
-        ->where('proyecto_id', '=', $request->input('proyecto_id'))
-        ->where('categoria', '=', 'informe-PTPDOCTO-SEGUNDO-INFORME-AVANCE')
-        ->where('nombre', '=', 'Archivos de informe')
-        ->where('estado', '=', 1)
-        ->count();
-
-      if ($count2 == 0) {
-        return ['message' => 'error', 'detail' => 'Necesita cargar el archivo de medios probatorios'];
+        return ['message' => 'error', 'detail' => 'Necesita cargar al archivo de medios probatorios'];
       }
     } else {
       $count1 = DB::table('Informe_tecnico')
-        ->where('proyecto_id', '=', $request->input('proyecto_id'))
+        ->where('id', '=', $request->input('id'))
         ->whereNotNull('infinal1')
         ->whereNotNull('infinal2')
         ->count();
@@ -278,24 +217,24 @@ class InformePtpdoctoController extends S3Controller {
 
       $count2 = DB::table('Proyecto_doc')
         ->where('proyecto_id', '=', $request->input('proyecto_id'))
-        ->where('categoria', '=', 'informe-PTPDOCTO-INFORME-FINAL-tesis')
+        ->where('categoria', '=', 'informe-PTPMAEST-INFORME-FINAL-tesis')
         ->where('nombre', '=', 'Archivos de informe')
         ->where('estado', '=', 1)
         ->count();
 
       if ($count2 == 0) {
-        return ['message' => 'error', 'detail' => 'Necesita cargar el archivo de tesis'];
+        return ['message' => 'error', 'detail' => 'Necesita cargar la tesis'];
       }
 
       $count3 = DB::table('Proyecto_doc')
         ->where('proyecto_id', '=', $request->input('proyecto_id'))
-        ->where('categoria', '=', 'informe-PTPDOCTO-INFORME-FINAL-acta')
+        ->where('categoria', '=', 'informe-PTPMAEST-INFORME-FINAL-acta')
         ->where('nombre', '=', 'Archivos de informe')
         ->where('estado', '=', 1)
         ->count();
 
       if ($count3 == 0) {
-        return ['message' => 'error', 'detail' => 'Necesita cargar el acta'];
+        return ['message' => 'error', 'detail' => 'Necesita cargar el acta de tesis'];
       }
     }
 

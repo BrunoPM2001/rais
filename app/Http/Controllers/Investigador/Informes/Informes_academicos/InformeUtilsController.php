@@ -41,8 +41,17 @@ class InformeUtilsController extends S3Controller {
       case "PTPDOCTO":
         $util = new InformePtpdoctoController();
         return $util->getData($request);
+      case "PTPMAEST":
+        $util = new InformePtpmaestController();
+        return $util->getData($request);
+      case "PTPGRADO":
+        $util = new InformePtpgradoController();
+        return $util->getData($request);
       case "PRO-CTIE":
         $util = new InformeProCtieController();
+        return $util->getData($request);
+      case "PICV":
+        $util = new InformePicvController();
         return $util->getData($request);
     }
   }
@@ -79,8 +88,17 @@ class InformeUtilsController extends S3Controller {
       case "PTPDOCTO":
         $util = new InformePtpdoctoController();
         return $util->sendData($request);
+      case "PTPMAEST":
+        $util = new InformePtpmaestController();
+        return $util->sendData($request);
+      case "PTPGRADO":
+        $util = new InformePtpgradoController();
+        return $util->sendData($request);
       case "PRO-CTIE":
         $util = new InformeProCtieController();
+        return $util->sendData($request);
+      case "PICV":
+        $util = new InformePicvController();
         return $util->sendData($request);
     }
   }
@@ -117,8 +135,17 @@ class InformeUtilsController extends S3Controller {
       case "PTPDOCTO":
         $util = new InformePtpdoctoController();
         return $util->presentar($request);
+      case "PTPMAEST":
+        $util = new InformePtpmaestController();
+        return $util->presentar($request);
+      case "PTPGRADO":
+        $util = new InformePtpgradoController();
+        return $util->presentar($request);
       case "PRO-CTIE":
         $util = new InformeProCtieController();
+        return $util->presentar($request);
+      case "PICV":
+        $util = new InformePicvController();
         return $util->presentar($request);
     }
   }

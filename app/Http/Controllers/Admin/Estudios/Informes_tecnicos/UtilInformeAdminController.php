@@ -32,6 +32,22 @@ class UtilInformeAdminController extends Controller {
         $util = new EciController();
         return $util->reporte($request);
         break;
+      case "PTPGRADO":
+        $util = new PtpgradoController();
+        return $util->reporte($request);
+        break;
+      case "PTPBACHILLER":
+        $util = new PtpbachillerController();
+        return $util->reporte($request);
+        break;
+      case "PTPMAEST":
+        $util = new PtpmaestController();
+        return $util->reporte($request);
+        break;
+      case "PTPDOCTO":
+        $util = new PtpdoctoController();
+        return $util->reporte($request);
+        break;
     }
   }
 }
