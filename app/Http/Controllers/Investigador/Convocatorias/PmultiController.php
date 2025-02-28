@@ -530,9 +530,7 @@ class PmultiController extends S3Controller {
   public function listadoTesistas(Request $request) {
 
     $grupos = DB::table('Proyecto_integrante AS a')
-      ->select([
-        'a.grupo_id'
-      ])
+      ->select(['a.grupo_id'])
       ->where('a.proyecto_id', '=', $request->query('id'))
       ->whereIn('a.proyecto_integrante_tipo_id', [56, 57, 58])
       ->pluck('a.grupo_id')
@@ -548,9 +546,10 @@ class PmultiController extends S3Controller {
         $join->on('h.id', '=', 'g.proyecto_integrante_tipo_id')
           ->where('h.nombre', '=', 'Tesista');
       })
-      ->leftJoin('Proyecto AS i', function (JoinClause $join) {
-        $join->on('i.id', '=', 'g.proyecto_id')
-          ->where('i.estado', '=', 1);
+      ->leftJoin('Proyecto AS i', 'i.id', '=', 'g.proyecto_id') // Se mantiene el join sin condiciones adicionales
+      ->where(function ($query) {
+        $query->where('i.estado', 1)
+          ->orWhereNull('i.id'); // Permitir registros sin proyecto
       })
       ->select(
         DB::raw("CONCAT(b.doc_numero, ' | ', b.apellido1, ' ', b.apellido2, ', ', b.nombres) AS value"),
@@ -561,11 +560,11 @@ class PmultiController extends S3Controller {
         'e.grupo_nombre_corto AS labelTag',
         'f.nombre AS facultad',
         DB::raw("CASE
-          WHEN c.programa LIKE 'E.P.%' THEN 'Licenciatura o Segunda Especialidad'
-          WHEN c.programa LIKE 'Maest%' THEN 'Maestría'
-          WHEN c.programa LIKE 'Doct%' THEN 'Doctorado'
-          ELSE 'Licenciatura o Segunda Especialidad'
-        END AS tipo_programa"),
+              WHEN c.programa LIKE 'E.P.%' THEN 'Licenciatura o Segunda Especialidad'
+              WHEN c.programa LIKE 'Maest%' THEN 'Maestría'
+              WHEN c.programa LIKE 'Doct%' THEN 'Doctorado'
+              ELSE 'Licenciatura o Segunda Especialidad'
+          END AS tipo_programa"),
         DB::raw("COUNT(h.id) AS cantidad_tesista")
       )
       ->having('value', 'LIKE', '%' . $request->query('query') . '%')

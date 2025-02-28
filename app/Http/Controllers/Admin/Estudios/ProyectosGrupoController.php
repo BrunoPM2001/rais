@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin\Estudios;
 
+use App\Http\Controllers\Admin\Estudios\Proyectos\PtpbachillerController;
 use App\Http\Controllers\Admin\Estudios\Proyectos\EciController;
 use App\Http\Controllers\Admin\Estudios\Proyectos\PconfigiController;
 use App\Http\Controllers\Admin\Estudios\Proyectos\PinvposController;
@@ -157,6 +158,25 @@ class ProyectosGrupoController extends S3Controller {
           'miembros' => $miembros,
           'documentos' => $documentos,
           'actividades' => $actividades,
+        ];
+
+      case "PTPBACHILLER":
+        $ctrl = new PtpbachillerController();
+
+        $detalle = $ctrl->detalle($request);
+        $descripcion = $ctrl->descripcion($request);
+        $miembros = $ctrl->miembros($request);
+        $actividades = $ctrl->actividades($request);
+        $presupuesto = $this->presupuesto($request);
+        $responsable = $ctrl->responsable($request);
+
+        return [
+          'detalle' => $detalle,
+          'descripcion' => $descripcion,
+          'miembros' => $miembros,
+          'actividades' => $actividades,
+          'presupuesto' => $presupuesto,
+          'responsable' => $responsable,
         ];
 
       default:
@@ -326,6 +346,7 @@ class ProyectosGrupoController extends S3Controller {
     $presupuesto = DB::table('Proyecto_presupuesto AS a')
       ->join('Partida AS b', 'b.id', '=', 'a.partida_id')
       ->select(
+        'b.codigo',
         'b.tipo',
         'b.partida',
         'a.justificacion',
