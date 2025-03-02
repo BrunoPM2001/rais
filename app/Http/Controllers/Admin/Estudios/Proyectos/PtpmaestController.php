@@ -8,25 +8,14 @@ use Illuminate\Database\Query\JoinClause;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
-class PtpbachillerController extends Controller {
+class PtpmaestController extends Controller {
   public function detalle(Request $request) {
     $detalle = DB::table('Proyecto AS a')
       ->leftJoin('Facultad AS b', 'b.id', '=', 'a.facultad_id')
       ->leftJoin('Linea_investigacion AS c', 'c.id', '=', 'a.linea_investigacion_id')
-      ->leftJoin('Proyecto_descripcion AS d', function (JoinClause $join) {
-        $join->on('d.proyecto_id', '=', 'a.id')
-          ->where('d.codigo', '=', 'objetivo_ods');
-      })
-      ->join('Ods AS e', 'e.id', '=', 'd.detalle')
-      ->join('Ocde AS f', 'f.id', '=', 'a.ocde_id')
-      ->leftJoin('File AS g', function (JoinClause $join) {
-        $join->on('g.tabla_id', '=', 'a.id')
-          ->where('g.tabla', '=', 'Proyecto')
-          ->where('g.recurso', '=', 'RESOLUCION_DECANAL')
-          ->where('g.estado', '=', 20);
-      })
-      ->leftJoin('Facultad_programa AS h', 'h.id', '=', 'a.programa_id')
-      ->leftJoin('Geco_proyecto AS i', 'i.proyecto_id', '=', 'a.id')
+      ->leftJoin('Facultad_programa AS d', 'd.id', '=', 'a.programa_id')
+      ->leftJoin('Geco_proyecto AS e', 'e.proyecto_id', '=', 'a.id')
+      ->leftJoin('Grupo AS f', 'f.id', '=', 'a.grupo_id')
       ->select(
         'a.tipo_proyecto',
         'a.estado',
@@ -35,17 +24,15 @@ class PtpbachillerController extends Controller {
         'a.resolucion_rectoral',
         DB::raw("IFNULL(a.resolucion_fecha, '') AS resolucion_fecha"),
         'b.nombre AS facultad',
-        'h.programa',
         'c.nombre AS linea',
-        'e.descripcion AS ods',
-        'f.linea AS ocde',
         'a.localizacion',
+        'f.grupo_nombre',
+        'd.programa',
         'a.comentario',
         'a.observaciones_admin',
-        DB::raw("CONCAT('/minio/proyecto-doc/', g.key) AS url1"),
         'a.dj_aceptada',
-        DB::raw("CONCAT('/minio/declaracion-jurada/dj_PTPBACHILLER_', a.id, '.pdf') AS url2"),
-        'i.id AS geco_proyecto_id'
+        DB::raw("CONCAT('/minio/declaracion-jurada/dj_PTPMAEST_', a.id, '.pdf') AS url2"),
+        'e.id AS geco_proyecto_id'
       )
       ->where('a.id', '=', $request->query('proyecto_id'))
       ->first();
@@ -53,30 +40,31 @@ class PtpbachillerController extends Controller {
     return $detalle;
   }
 
+  public function documentos(Request $request) {
+    $documentos = DB::table('Proyecto_doc')
+      ->select([
+        'id',
+        'nombre',
+        'comentario',
+        DB::raw("CONCAT('/minio/proyecto-doc/', archivo) AS url")
+      ])
+      ->where('proyecto_id', '=', $request->query('proyecto_id'))
+      ->get();
+
+    return $documentos;
+  }
+
   public function miembros(Request $request) {
     $integrantes = DB::table('Proyecto_integrante AS a')
       ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
       ->join('Proyecto_integrante_tipo AS c', 'c.id', '=', 'a.proyecto_integrante_tipo_id')
       ->leftJoin('Facultad AS d', 'd.id', '=', 'b.facultad_id')
-      ->leftJoin('Proyecto_doc AS e', function (JoinClause $join) {
-        $join->on('e.proyecto_id', '=', 'a.proyecto_id')
-          ->where('e.categoria', '=', 'carta')
-          ->where('e.nombre', '=', 'Carta de compromiso del asesor')
-          ->where('e.estado', '=', 1);
-      })
-      ->leftJoin('File AS f', function (JoinClause $join) {
-        $join->on('f.tabla_id', '=', 'a.id')
-          ->where('f.tabla', '=', 'Proyecto_integrante')
-          ->where('f.recurso', '=', 'CARTA_COMPROMISO')
-          ->where('f.estado', '=', 20);
-      })
       ->select([
         'a.id',
         'c.nombre AS tipo_integrante',
         DB::raw("CONCAT(b.apellido1, ' ', b.apellido2, ', ', b.nombres) AS nombre"),
         'b.tipo',
         'd.nombre AS facultad',
-        DB::raw("COALESCE(CONCAT('/minio/', f.bucket, '/', f.key),CONCAT('/minio/proyecto-doc/', e.archivo)) AS url")
       ])
       ->where('a.proyecto_id', '=', $request->query('proyecto_id'))
       ->get();
@@ -94,10 +82,12 @@ class PtpbachillerController extends Controller {
       ->whereIn('codigo', [
         'resumen_ejecutivo',
         'planteamiento_problema',
+        'hipotesis',
         'justificacion',
-        'estado_arte',
-        'objetivos',
+        'antecedentes',
         'metodologia_trabajo',
+        'objetivos_generales',
+        'objetivos_especificos',
         'referencias_bibliograficas',
         'presupuesto_justificacion',
         'presupuesto_otros_fondo_fuente',
@@ -108,9 +98,7 @@ class PtpbachillerController extends Controller {
         return [$item->codigo => $item->detalle];
       });
 
-    return [
-      'descripcion' => $descripcion,
-    ];
+    return $descripcion;
   }
 
   public function actividades(Request $request) {
@@ -127,67 +115,68 @@ class PtpbachillerController extends Controller {
     return $actividades;
   }
 
-  public function responsable(Request $request) {
+  public function responsableTesista(Request $request) {
     $responsable = DB::table('Proyecto_integrante AS a')
       ->join('Proyecto_integrante_tipo AS b', function (JoinClause $join) {
         $join->on('b.id', '=', 'a.proyecto_integrante_tipo_id')
-          ->where('b.nombre', '=', 'Responsable');
+          ->where('b.nombre', '=', 'Asesor');
       })
       ->join('Usuario_investigador AS c', 'c.id', '=', 'a.investigador_id')
-      ->leftJoin('Dependencia AS d', 'd.id', '=', 'c.dependencia_id')
-      ->leftJoin('Facultad AS e', 'e.id', '=', 'c.facultad_id')
-      ->leftJoin('Grupo_integrante AS f', function (JoinClause $join) {
-        $join->on('f.investigador_id', '=', 'c.id')
-          ->whereNot('f.condicion', 'LIKE', 'Ex%');
-      })
-      ->leftJoin('Grupo AS g', 'g.id', '=', 'f.grupo_id')
-      ->leftJoin('Area AS h', 'h.id', '=', 'e.area_id')
+      ->leftJoin('Facultad AS d', 'd.id', '=', 'c.facultad_id')
       ->select([
-        'c.nombres',
-        DB::raw("CONCAT(c.apellido1, ' ', c.apellido2) AS apellidos"),
+        DB::raw("CONCAT(c.apellido1, ' ', c.apellido2, ', ', c.nombres) AS nombres"),
         'c.doc_numero',
-        'c.telefono_movil',
-        'c.telefono_trabajo',
-        'c.especialidad',
-        'c.titulo_profesional',
-        'c.grado',
         'c.tipo',
-        DB::raw("CONCAT((CASE
-          WHEN SUBSTRING_INDEX(c.docente_categoria, '-', 1) = '1' THEN 'Principal'
-          WHEN SUBSTRING_INDEX(c.docente_categoria, '-', 1) = '2' THEN 'Asociado'
-          WHEN SUBSTRING_INDEX(c.docente_categoria, '-', 1) = '3' THEN 'Auxiliar'
-          WHEN SUBSTRING_INDEX(c.docente_categoria, '-', 1) = '4' THEN 'Jefe de Práctica'
-          ELSE 'Sin categoría'
-        END), ' | ', (CASE
-          WHEN SUBSTRING_INDEX(SUBSTRING_INDEX(c.docente_categoria, '-', 2), '-', -1) = '1' THEN 'Dedicación Exclusiva'
-          WHEN SUBSTRING_INDEX(SUBSTRING_INDEX(c.docente_categoria, '-', 2), '-', -1) = '2' THEN 'Tiempo Completo'
-          WHEN SUBSTRING_INDEX(SUBSTRING_INDEX(c.docente_categoria, '-', 2), '-', -1) = '3' THEN 'Tiempo Parcial'
-          ELSE 'Sin clase'
-        END)) AS docente_categoria"),
         'c.codigo',
-        'd.dependencia',
-        'e.nombre AS facultad',
-        'c.email3',
-        'g.grupo_nombre',
-        'h.nombre AS area'
+        'c.codigo_orcid',
+        'd.nombre AS facultad',
+        DB::raw("CASE(c.regina)
+          WHEN 1 THEN 'Registrado'
+          ELSE 'No registrado'
+        END AS regina"),
+        DB::raw("CASE(c.dina)
+          WHEN 1 THEN 'Registrado'
+          ELSE 'No registrado'
+        END AS dina"),
       ])
       ->where('a.proyecto_id', '=', $request->query('proyecto_id'))
       ->first();
 
-    return $responsable;
+    $tesista = DB::table('Proyecto_integrante AS a')
+      ->join('Proyecto_integrante_tipo AS b', function (JoinClause $join) {
+        $join->on('b.id', '=', 'a.proyecto_integrante_tipo_id')
+          ->where('b.nombre', '=', 'Tesista');
+      })
+      ->join('Usuario_investigador AS c', 'c.id', '=', 'a.investigador_id')
+      ->leftJoin('Facultad AS d', 'd.id', '=', 'c.facultad_id')
+      ->select([
+        DB::raw("CONCAT(c.apellido1, ' ', c.apellido2, ', ', c.nombres) AS nombres"),
+        'c.doc_numero',
+        'c.tipo',
+        'c.codigo',
+        'd.nombre AS facultad',
+      ])
+      ->where('a.proyecto_id', '=', $request->query('proyecto_id'))
+      ->first();
+
+    return ['responsable' => $responsable, 'tesista' => $tesista];
   }
 
   public function reporte(Request $request) {
     $proyecto = DB::table('Proyecto AS a')
       ->leftJoin('Facultad AS b', 'b.id', '=', 'a.facultad_id')
       ->leftJoin('Linea_investigacion AS c', 'c.id', '=', 'a.linea_investigacion_id')
-      ->leftJoin('Proyecto_descripcion AS d', function (JoinClause $join) {
-        $join->on('d.proyecto_id', '=', 'a.id')
-          ->where('d.codigo', '=', 'objetivo_ods');
+      ->join('Ocde AS d', 'd.id', '=', 'a.ocde_id')
+      ->leftJoin('Proyecto_doc AS e', function (JoinClause $join) {
+        $join->on('e.proyecto_id', '=', 'a.id')
+          ->where('e.nombre', '=', 'Registro de Evaluación de la Tesis en la UI')
+          ->where('e.estado', '=', 1);
       })
-      ->join('Ods AS e', 'e.id', '=', 'd.detalle')
-      ->join('Ocde AS f', 'f.id', '=', 'a.ocde_id')
-      ->leftJoin('Facultad_programa AS g', 'g.id', '=', 'a.programa_id')
+      ->leftJoin('Proyecto_doc AS f', function (JoinClause $join) {
+        $join->on('f.proyecto_id', '=', 'a.id')
+          ->where('f.nombre', '=', 'Anexos de tesis')
+          ->where('f.estado', '=', 1);
+      })
       ->select(
         'a.periodo',
         DB::raw("CASE(a.estado)
@@ -206,13 +195,11 @@ class PtpbachillerController extends Controller {
         ELSE 'Sin estado' END AS estado"),
         'a.updated_at',
         'a.titulo',
-        'b.nombre AS facultad',
-        'g.programa',
-        'e.descripcion AS ods',
         'c.nombre AS linea',
-        'f.linea AS ocde',
+        'd.linea AS ocde',
         'a.localizacion',
-        'a.resolucion_decanal',
+        'e.archivo',
+        'f.archivo AS anexo',
         'a.observaciones_admin',
       )
       ->where('a.id', '=', $request->query('proyecto_id'))
@@ -221,9 +208,20 @@ class PtpbachillerController extends Controller {
     $responsable = DB::table('Proyecto_integrante AS a')
       ->join('Proyecto_integrante_tipo AS b', function (JoinClause $join) {
         $join->on('b.id', '=', 'a.proyecto_integrante_tipo_id')
-          ->where('b.nombre', '=', 'Responsable');
+          ->where('b.nombre', '=', 'Asesor');
       })
       ->join('Usuario_investigador AS c', 'c.id', '=', 'a.investigador_id')
+      ->leftJoin('Facultad AS d', 'd.id', '=', 'c.facultad_id')
+      ->leftJoin('Grupo_integrante AS e', function (JoinClause $join) {
+        $join->on('e.investigador_id', '=', 'c.id')
+          ->whereNot('e.condicion', 'LIKE', 'Ex%');
+      })
+      ->leftJoin('Grupo AS f', 'f.id', '=', 'e.grupo_id')
+      ->leftJoin('Proyecto_doc AS g', function (JoinClause $join) {
+        $join->on('g.proyecto_id', '=', 'a.proyecto_id')
+          ->where('g.nombre', '=', 'Carta de Compromiso del Asesor')
+          ->where('g.estado', '=', 1);
+      })
       ->select([
         DB::raw("CONCAT(c.apellido1, ' ', c.apellido2, ', ', c.nombres) AS nombres"),
         'c.doc_numero',
@@ -242,33 +240,40 @@ class PtpbachillerController extends Controller {
           ELSE 'Sin clase'
         END)) AS docente_categoria"),
         'c.codigo_orcid',
+        DB::raw("CASE(c.regina)
+          WHEN 1 THEN 'Registrado'
+          ELSE 'No registrado'
+        END AS regina"),
+        DB::raw("CASE(c.dina)
+          WHEN 1 THEN 'Registrado'
+          ELSE 'No registrado'
+        END AS dina"),
         'c.google_scholar',
-        'c.regina',
-        'c.dina',
+        'f.grupo_nombre',
+        'g.archivo'
       ])
       ->where('a.proyecto_id', '=', $request->query('proyecto_id'))
       ->first();
 
-    $estudiante = DB::table('Proyecto_integrante AS a')
+    $tesista = DB::table('Proyecto_integrante AS a')
       ->join('Proyecto_integrante_tipo AS b', function (JoinClause $join) {
         $join->on('b.id', '=', 'a.proyecto_integrante_tipo_id')
           ->where('b.nombre', '=', 'Tesista');
       })
       ->join('Usuario_investigador AS c', 'c.id', '=', 'a.investigador_id')
       ->leftJoin('Facultad AS d', 'd.id', '=', 'c.facultad_id')
-      ->leftJoin('File AS e', function (JoinClause $join) {
-        $join->on('e.tabla_id', '=', 'a.id')
-          ->where('e.tabla', '=', 'Proyecto_integrante')
-          ->where('e.recurso', '=', 'CARTA_COMPROMISO')
-          ->where('e.estado', '=', 20);
+      ->leftJoin('Proyecto_doc AS e', function (JoinClause $join) {
+        $join->on('e.proyecto_id', '=', 'a.proyecto_id')
+          ->where('e.nombre', '=', 'Carta de Compromiso del Postulante')
+          ->where('e.estado', '=', 1);
       })
       ->select([
         DB::raw("CONCAT(c.apellido1, ' ', c.apellido2, ', ', c.nombres) AS nombres"),
-        'd.nombre AS facultad',
-        'c.tipo',
         'c.doc_numero',
-        'c.email1',
-        'e.key AS carta'
+        'c.tipo',
+        'c.codigo',
+        'd.nombre AS facultad',
+        'e.archivo'
       ])
       ->where('a.proyecto_id', '=', $request->query('proyecto_id'))
       ->first();
@@ -282,14 +287,16 @@ class PtpbachillerController extends Controller {
       ->whereIn('codigo', [
         'resumen_ejecutivo',
         'planteamiento_problema',
+        'hipotesis',
         'justificacion',
-        'estado_arte',
-        'objetivos',
+        'antecedentes',
+        'objetivos_generales',
+        'objetivos_especificos',
         'metodologia_trabajo',
         'referencias_bibliograficas',
         'presupuesto_justificacion',
-        'presupuesto_otros_fondo_monto',
         'presupuesto_otros_fondo_fuente',
+        'presupuesto_otros_fondo_monto',
       ])
       ->get()
       ->mapWithKeys(function ($item) {
@@ -309,18 +316,18 @@ class PtpbachillerController extends Controller {
       ->join('Partida AS b', 'b.id', '=', 'a.partida_id')
       ->select(
         'b.codigo',
-        'b.tipo',
         'b.partida',
+        'b.tipo',
         'a.monto',
       )
       ->where('a.proyecto_id', '=', $request->query('proyecto_id'))
       ->orderBy('a.tipo')
       ->get();
 
-    $pdf = Pdf::loadView('admin.estudios.proyectos.ptpbachiller', [
+    $pdf = Pdf::loadView('admin.estudios.proyectos.ptpmaest', [
       'proyecto' => $proyecto,
       'responsable' => $responsable,
-      'estudiante' => $estudiante,
+      'tesista' => $tesista,
       'descripcion' => $descripcion,
       'actividades' => $actividades,
       'presupuesto' => $presupuesto,

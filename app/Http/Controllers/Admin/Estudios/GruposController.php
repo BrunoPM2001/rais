@@ -673,7 +673,7 @@ class GruposController extends S3Controller {
               'sexo' => $request->input('sexo'),
               'institucion' => $request->input('institucion'),
               'pais' => $request->input('pais'),
-              'direccion1' => $request->input('direccion1'),
+              'email1' => $request->input('email1'),
               'doc_tipo' => $request->input('doc_tipo'),
               'doc_numero' => $request->input('doc_numero'),
               'tipo' => 'Externo',
@@ -1169,6 +1169,22 @@ class GruposController extends S3Controller {
 
   //  ARCHIVO EXTERNO SE GUARDA EN GRUPO
   //  TODO - implementar reporte de calificación e imprimir
+  public function calificacion(Request $request) {
+    DB::table('Grupo_integrante AS a')
+      ->leftJoin('Publicacion_autor AS b', 'b.investigador', '=', 'a.investigador_id')
+      ->leftJoin('Publicacion AS c', 'c.id', '=', 'b.publicacion_id')
+      ->rightJoin('Publicacion_categoria AS d', 'd.id', '=', 'c.categoria_id')
+      ->select([
+        'd.titulo',
+        'd.categoria',
+        DB::raw("COUNT(c.id) AS cuenta"),
+        'c.puntaje'
+      ])
+      ->where('a.condicion', '=', 'Titular')
+      ->groupBy('d.id')
+      ->get();
+  }
+
   public function reporte(Request $request) {
     $grupo = DB::table('Grupo')
       ->select([

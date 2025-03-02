@@ -54,10 +54,15 @@ class OrcidController extends Controller {
           'apellido1' => explode(' ', $data["person"]["name"]["family-name"]["value"])[0],
           'apellido2' => explode(' ', $data["person"]["name"]["family-name"]["value"])[1] ?? "",
           'pais' => $data["person"]["addresses"]["address"][0]["country"]["value"] ?? "",
+          'email' => $data["person"]["emails"]["email"][0]["email"] ?? "",
+          'institucion' => $data["activities-summary"]["employments"]["affiliation-group"][0]["summaries"][0]["employment-summary"]["organization"]["name"] ?? "",
           'titulo_profesional' => end($data["activities-summary"]["educations"]["affiliation-group"])["summaries"][0]["education-summary"]["role-title"] ?? ""
         ];
 
-        return $info;
+        return [
+          'message' => 'success',
+          'detail' =>  $info
+        ];
       } else {
         return [
           'message' => 'error',
