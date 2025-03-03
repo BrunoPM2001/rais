@@ -115,16 +115,26 @@ class EvaluadorProyectosController extends S3Controller {
 
   public function updateItem(Request $request) {
     if ($request->input('id_edit') == null) {
-      DB::table('Evaluacion_proyecto')
-        ->insert([
-          'evaluacion_opcion_id' => $request->input('id'),
-          'proyecto_id' => $request->input('proyecto_id'),
-          'evaluador_id' => $request->attributes->get('token_decoded')->evaluador_id,
-          'puntaje' => $request->input('puntaje'),
-          'comentario' => $request->input('comentario'),
-          'created_at' => Carbon::now(),
-          'updated_at' => Carbon::now()
-        ]);
+      $req1 = DB::table('Evaluacion_proyecto')
+        ->where('proyecto_id', '=', $request->input('proyecto_id'))
+        ->where('evaluador_id', '=', $request->attributes->get('token_decoded')->evaluador_id)
+        ->where('evaluacion_opcion_id', '=', $request->input('id'))
+        ->count();
+
+      if ($req1 == 0) {
+        DB::table('Evaluacion_proyecto')
+          ->insert([
+            'evaluacion_opcion_id' => $request->input('id'),
+            'proyecto_id' => $request->input('proyecto_id'),
+            'evaluador_id' => $request->attributes->get('token_decoded')->evaluador_id,
+            'puntaje' => $request->input('puntaje'),
+            'comentario' => $request->input('comentario'),
+            'created_at' => Carbon::now(),
+            'updated_at' => Carbon::now()
+          ]);
+      } else {
+        return ['message' => 'warning', 'detail' => 'Ya hay un criterio de este tipo'];
+      }
     } else {
       DB::table('Evaluacion_proyecto')
         ->where('id', '=', $request->input('id_edit'))
