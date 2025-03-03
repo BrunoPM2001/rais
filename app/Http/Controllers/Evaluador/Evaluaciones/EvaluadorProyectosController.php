@@ -190,6 +190,12 @@ class EvaluadorProyectosController extends S3Controller {
       }
     }
 
+    DB::table('Proyecto')
+      ->where('id', '=', $request->input('proyecto_id'))
+      ->update([
+        'estado' => 3
+      ]);
+
     return ['message' => 'success', 'detail' => 'Datos actualizados con éxito'];
   }
 

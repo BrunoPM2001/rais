@@ -315,6 +315,7 @@ class PatentesController extends S3Controller {
     $pub = DB::table('Patente')
       ->select([
         'tipo',
+        'estado'
       ])
       ->where('id', '=', $request->input('id'))
       ->first();
@@ -325,16 +326,16 @@ class PatentesController extends S3Controller {
         'puntaje' => 0
       ]);
 
-
-    DB::table('Patente_autor AS a')
-      ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
-      ->where('a.patente_id', '=', $request->input('id'))
-      ->where('b.tipo', '=', 'DOCENTE PERMANENTE')
-      ->where('a.condicion', '=', 'Inventor')
-      ->update([
-        'a.puntaje' => $pub->tipo == "Modelo de utilidad" ? 2 : 5,
-      ]);
-
+    if ($pub->estado == 1) {
+      DB::table('Patente_autor AS a')
+        ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
+        ->where('a.patente_id', '=', $request->input('id'))
+        ->where('b.tipo', '=', 'DOCENTE PERMANENTE')
+        ->where('a.condicion', '=', 'Inventor')
+        ->update([
+          'a.puntaje' => $pub->tipo == "Modelo de utilidad" ? 2 : 5,
+        ]);
+    }
 
     return ['message' => 'info', 'detail' => 'Puntajes actualizados para esta propiedad intelectual'];
   }

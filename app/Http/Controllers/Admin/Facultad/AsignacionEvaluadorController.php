@@ -133,12 +133,6 @@ class AsignacionEvaluadorController extends Controller {
         ->update([
           'estado' => 5
         ]);
-    } else {
-      DB::table('Proyecto')
-        ->whereIn('id', $c_ids)
-        ->update([
-          'estado' => 3
-        ]);
     }
 
     return ['message' => 'success', 'detail' => 'Evaluadores actualizados'];
