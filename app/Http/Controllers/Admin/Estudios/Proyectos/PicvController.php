@@ -59,15 +59,26 @@ class PicvController extends Controller {
   }
 
   public function miembros(Request $request) {
-
     $integrantes = DB::table('Proyecto_integrante AS a')
       ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
       ->join('Proyecto_integrante_tipo AS c', 'c.id', '=', 'a.proyecto_integrante_tipo_id')
+      ->leftJoin('Proyecto_doc AS d', function (JoinClause $join) {
+        $join->on('d.proyecto_id', '=', 'a.proyecto_id')
+          ->where('d.nombre', '=', 'Carta de compromiso del asesor')
+          ->where('d.estado', '=', 1);
+      })
+      ->leftJoin('File AS e', function (JoinClause $join) {
+        $join->on('e.tabla_id', '=', 'a.id')
+          ->where('e.tabla', '=', 'Proyecto_integrante')
+          ->where('e.recurso', '=', 'CARTA_COMPROMISO')
+          ->where('e.estado', '=', 1);
+      })
       ->select([
         'a.id',
         'c.nombre AS tipo_integrante',
         DB::raw("CONCAT(b.apellido1, ' ', b.apellido2, ', ', b.nombres) AS nombre"),
         'b.tipo',
+        DB::raw("COALESCE(CONCAT('/minio/', e.bucket, '/', e.key), CONCAT('/minio/proyecto-doc/', d.archivo)) AS url")
       ])
       ->where('a.proyecto_id', '=', $request->query('proyecto_id'))
       ->get();
