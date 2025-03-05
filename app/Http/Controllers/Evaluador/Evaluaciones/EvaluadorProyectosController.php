@@ -110,7 +110,7 @@ class EvaluadorProyectosController extends S3Controller {
       ->where('evaluador_id', '=', $request->attributes->get('token_decoded')->evaluador_id)
       ->first();
 
-    return ['criterios' => $criterios, 'comentario' => $comentario, 'cerrado' => $estado > 0 ? true : false, 'total' => $total];
+    return ['criterios' => $criterios, 'comentario' => $comentario, 'cerrado' => $estado > 0 ? true : false, 'total' => number_format($total, 2)];
   }
 
   public function updateItem(Request $request) {

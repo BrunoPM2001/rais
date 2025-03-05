@@ -459,13 +459,12 @@ class PmultiController extends S3Controller {
 
   public function listadoCorresponsables(Request $request) {
 
-    $listado = Db::table('Grupo_integrante AS a')
+    $listado = DB::table('Grupo_integrante AS a')
       ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
       ->leftJoin('Eval_docente_investigador AS c', function (JoinClause $join) {
         $join->on('c.investigador_id', '=', 'b.id')
           ->where('c.estado', '=', 'Vigente');
       })
-      ->leftJoin('view_deudores AS d', 'd.investigador_id', '=', 'b.id')
       ->leftJoin('Grupo AS e', 'e.id', '=', 'a.grupo_id')
       ->leftJoin('Facultad AS f', 'f.id', '=', 'b.facultad_id')
       ->select(
@@ -475,7 +474,6 @@ class PmultiController extends S3Controller {
         'a.id AS grupo_integrante_id',
         'e.grupo_nombre_corto AS labelTag',
         'f.nombre AS facultad',
-        DB::raw("COUNT(d.deuda_id) AS deudas"),
         'b.renacyt',
         'c.id AS cdi',
       )
@@ -487,11 +485,10 @@ class PmultiController extends S3Controller {
       ->map(function ($item) {
         $item->tags = [
           $item->facultad,
-          'Deudas: ' . $item->deudas,
           $item->renacyt || $item->renacyt != "" ? 'Tiene renacyt' : 'No tiene renacyt',
           $item->cdi ? 'Tiene CDI' : 'No tiene CDI',
         ];
-        $item->disabled = $item->deudas == 0 && $item->renacyt && $item->renacyt != "" && $item->cdi ? false : true;
+        $item->disabled = $item->renacyt && $item->renacyt != "" && $item->cdi ? false : true;
         return $item;
       });
 
@@ -654,6 +651,16 @@ class PmultiController extends S3Controller {
       ->count();
 
     if ($count == 0) {
+      if ($request->input('proyecto_integrante_tipo_id') == 57) {
+        $deudas = DB::table('view_deudores')
+          ->where('investigador_id', '=', $request->input('investigador_id'))
+          ->count();
+
+        if ($deudas > 0) {
+          return ['message' => 'warning', 'detail' => 'El investigador seleccionado tiene ' . $deudas . ' deudas'];
+        }
+      }
+
       $integrante_id = DB::table('Proyecto_integrante')
         ->insertGetId([
           'proyecto_id' => $request->input('id'),

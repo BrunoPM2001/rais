@@ -772,6 +772,7 @@ class PublicacionesUtilsController extends S3Controller {
           return $util->reporte($request);
           break;
         case "tesis_asesoria":
+        case "tesis-asesoria":
           $util = new TesisAsesoriaController();
           return $util->reporte($request);
           break;

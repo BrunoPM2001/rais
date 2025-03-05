@@ -9,7 +9,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <title>Reporte</title>
-  <style>
+<style>
     * {
       font-family: Helvetica;
     }
@@ -151,7 +151,12 @@
 
   <p class="titulo">
     <strong>
-      PROYECTO DE INVESTIGACIÓN PARA GRUPOS {{ $proyecto->periodo }}
+      @if($proyecto->tipo_proyecto == "PMULTI")
+        PROGRAMA DE PROYECTOS DE INVESTIGACIÓN MULTIDISCIPLINARIOS PARA GRUPOS DE INVESTIGACIÓN (PMULTIS)
+      @else
+        PROYECTO DE INVESTIGACIÓN PARA GRUPOS 
+      @endif
+      {{ $proyecto->periodo }}
     </strong>
   </p>
 
@@ -164,227 +169,237 @@
 
   <div class="cuerpo">
 
-    <h5>I. Información del grupo de investigación:</h5>
+  <h5>I. Información del grupo de investigación:</h5>
 
-    <table class="tableData">
+  <table class="tableData">
       <tbody>
-        <tr>
-          <td style="width: 24%;"><strong>Grupo de investigación</strong></td>
-          <td style="width: 1%;">:</td>
-          <td style="width: 75%;">{{ $proyecto->grupo_nombre }}</td>
-        </tr>
-        <tr>
-          <td style="width: 24%;"><strong>Facultad</strong></td>
-          <td style="width: 1%;">:</td>
-          <td style="width: 75%;">{{ $proyecto->facultad }}</td>
-        </tr>
-        <tr>
-          <td style="width: 24%;"><strong>Área académica</strong></td>
-          <td style="width: 1%;">:</td>
-          <td style="width: 75%;">{{ $proyecto->area }}</td>
-        </tr>
-        <tr>
-          <td style="width: 24%;"><strong>Tipo de investigación</strong></td>
-          <td style="width: 1%;">:</td>
-          <td style="width: 75%;">
-            @switch($detalles["tipo_investigacion"] ?? "")
-              @case('basica')
-                Básica (aumento del conocimiento existente sobre el tema)
-              @break
+          <tr>
+              <td style="width: 24%;"><strong>Grupo de investigación</strong></td>
+              <td style="width: 1%;">:</td>
+              <td style="width: 75%;">{{ $proyecto->grupo_nombre }}</td>
+          </tr>
+          <tr>
+              <td style="width: 24%;"><strong>Facultad</strong></td>
+              <td style="width: 1%;">:</td>
+              <td style="width: 75%;">{{ $proyecto->facultad }}</td>
+          </tr>
+          <tr>
+              <td style="width: 24%;"><strong>Área académica</strong></td>
+              <td style="width: 1%;">:</td>
+              <td style="width: 75%;">{{ $proyecto->area }}</td>
+          </tr>
+          <tr>
+              <td style="width: 24%;"><strong>Tipo de investigación</strong></td>
+              <td style="width: 1%;">:</td>
+              <td style="width: 75%;">
+                  @switch($detalles["tipo_investigacion"] ?? "")
+                      @case('basica')
+                          Básica (aumento del conocimiento existente sobre el tema)
+                      @break
 
-              @case('aplicada')
-                Aplicada (utilización del conocimiento existente para mejorar algo)
-              @break
+                      @case('aplicada')
+                          Aplicada (utilización del conocimiento existente para mejorar algo)
+                      @break
 
-              @case('exploratoria')
-                Exploratoria (examinar un problema poco estudiado o no analizado antes)
-              @break
+                      @case('exploratoria')
+                          Exploratoria (examinar un problema poco estudiado o no analizado antes)
+                      @break
 
-              @case('experimental')
-                Experimental (explicar el contenido del problema o fenómeno que se investiga)
-              @break
+                      @case('experimental')
+                          Experimental (explicar el contenido del problema o fenómeno que se investiga)
+                      @break
 
-              @case('teorica')
-                Teórica (estudios filosóficos, jurídicos, culturales)
-              @break
+                      @case('teorica')
+                          Teórica (estudios filosóficos, jurídicos, culturales)
+                      @break
 
-              @case('otro')
-                Otros
-              @break
+                      @case('otro')
+                          Otros
+                      @break
 
-              @default
-              @break
-            @endswitch
-          </td>
-        </tr>
-        <tr>
-          <td style="width: 24%;" valign="top"><strong>Línea OCDE</strong></td>
-          <td style="width: 1%;" valign="top">:</td>
-          <td style="width: 75%;" valign="top">{{ $proyecto->ocde }}</td>
-        </tr>
+                      @default
+                      @break
+                  @endswitch
+              </td>
+          </tr>
+          <tr>
+              <td style="width: 24%;" valign="top"><strong>Línea OCDE</strong></td>
+              <td style="width: 1%;" valign="top">:</td>
+              <td style="width: 75%;" valign="top">{{ $proyecto->ocde }}</td>
+          </tr>
       </tbody>
-    </table>
+  </table>
 
-    <h5>II. Información del proyecto:</h5>
+  <h5>II. Información del proyecto:</h5>
 
-    <table class="tableData">
+  <table class="tableData">
       <tbody>
-        <tr>
-          <td style="width: 24%;"><strong>Código de proyecto</strong></td>
-          <td style="width: 1%;">:</td>
-          <td style="width: 75%;">{{ $proyecto->codigo_proyecto }}</td>
-        </tr>
-        <tr>
-          <td style="width: 24%;" valign="top"><strong>Título</strong></td>
-          <td style="width: 1%;" valign="top">:</td>
-          <td style="width: 75%;" valign="top">{{ $proyecto->titulo }}</td>
-        </tr>
-        <tr>
-          <td style="width: 24%;"><strong>Línea de investigación</strong></td>
-          <td style="width: 1%;">:</td>
-          <td style="width: 75%;">{{ $proyecto->linea }}</td>
-        </tr>
-        <tr>
-          <td style="width: 24%;" valign="top"><strong>Objetivo de Desarrollo Sostenible (ODS)</strong></td>
-          <td style="width: 1%;" valign="top">:</td>
-          <td style="width: 75%;" valign="top">{{ $detalles['objetivo_ods'] ?? '' }}</td>
-        </tr>
-        <tr>
-          <td style="width: 24%;"><strong>Localización</strong></td>
-          <td style="width: 1%;">:</td>
-          <td style="width: 75%;">{{ $proyecto->localizacion }}</td>
-        </tr>
+          <tr>
+              <td style="width: 24%;"><strong>Código de proyecto</strong></td>
+              <td style="width: 1%;">:</td>
+              <td style="width: 75%;">{{ $proyecto->codigo_proyecto }}</td>
+          </tr>
+          <tr>
+              <td style="width: 24%;" valign="top"><strong>Título</strong></td>
+              <td style="width: 1%;" valign="top">:</td>
+              <td style="width: 75%;" valign="top">{{ $proyecto->titulo }}</td>
+          </tr>
+          <tr>
+              <td style="width: 24%;"><strong>Línea de investigación</strong></td>
+              <td style="width: 1%;">:</td>
+              <td style="width: 75%;">{{ $proyecto->linea }}</td>
+          </tr>
+          <tr>
+              <td style="width: 24%;" valign="top"><strong>Objetivo de Desarrollo Sostenible (ODS)</strong></td>
+              <td style="width: 1%;" valign="top">:</td>
+              <td style="width: 75%;" valign="top">{{ $detalles['objetivo_ods'] ?? '' }}</td>
+          </tr>
+          <tr>
+              <td style="width: 24%;"><strong>Localización</strong></td>
+              <td style="width: 1%;">:</td>
+              <td style="width: 75%;">{{ $proyecto->localizacion }}</td>
+          </tr>
       </tbody>
-    </table>
+  </table>
 
-    <h5>III. Resumen ejecutivo:</h5>
+  <h5>III. Resumen ejecutivo:</h5>
 
-    <div class="desc">
+  <div class="desc">
       {!! $detalles['resumen_ejecutivo'] !!}
-    </div>
+  </div>
 
-    <h5>IV. Palabras clave:</h5>
+  <h5>IV. Palabras clave:</h5>
 
-    <div class="desc">
+  <div class="desc">
       {{ $proyecto->palabras_clave }}
-    </div>
+  </div>
 
-    <h5>V. Antecedentes:</h5>
+  <h5>V. Antecedentes:</h5>
 
-    <div class="desc">
-      {!! $detalles['antecedentes'] !!}
-    </div>
+  <div class="desc">
+      {{-- {!! $detalles['antecedentes'] !!} --}}
+      @if (!empty($datos['antecedentes']))
+          {{ $datos['antecedentes'] }}
+      @endif
+  </div>
 
-    <h5>VI. Justificación:</h5>
 
-    <div class="desc">
+  <h5>VI. Justificación:</h5>
+
+  <div class="desc">
       {!! $detalles['justificacion'] !!}
-    </div>
+  </div>
 
-    <h5>VII. Contribución e impacto:</h5>
+  <h5>VII. Contribución e impacto:</h5>
 
-    <div class="desc">
+  <div class="desc">
       {!! $detalles['contribucion_impacto'] !!}
-    </div>
+  </div>
 
-    <h5>VIII. Hipótesis:</h5>
+  <h5>VIII. Hipótesis:</h5>
 
-    <div class="desc">
-      {!! $detalles['hipotesis'] !!}
-    </div>
+  <div class="desc">
+      {{-- {!! $detalles['hipotesis'] !!} --}}
+      @if (!empty($datos['hipotesis']))
+      {{ $datos['hipotesis'] }}
+  @endif
+  </div>
 
-    <h5>IX. Objetivos:</h5>
+  <h5>IX. Objetivos:</h5>
 
-    <div class="desc">
+  <div class="desc">
       {!! $detalles['objetivos'] !!}
-    </div>
+  </div>
 
-    <h5>X. Metodología de trabajo:</h5>
+  <h5>X. Metodología de trabajo:</h5>
 
-    <div class="desc">
+  <div class="desc">
       {!! $detalles['metodologia_trabajo'] !!}
-    </div>
+  </div>
 
-    <h5>XI. Referencias bibliográficas:</h5>
+  <h5>XI. Referencias bibliográficas:</h5>
 
-    <div class="desc">
+  <div class="desc">
       {!! $detalles['referencias_bibliograficas'] !!}
-    </div>
+  </div>
 
-    <h5>XII. Calendario:</h5>
+  <h5>XII. Calendario:</h5>
 
-    <table class="table">
+  <table class="table">
       <thead>
-        <tr>
-          <th style="width: 5%;">N°</th>
-          <th style="width: 65%;">Actividad</th>
-          <th style="width: 15%;">Fecha inicial</th>
-          <th style="width: 15%;">Fecha final</th>
-        </tr>
+          <tr>
+              <th style="width: 5%;">N°</th>
+              <th style="width: 65%;">Actividad</th>
+              <th style="width: 15%;">Fecha inicial</th>
+              <th style="width: 15%;">Fecha final</th>
+          </tr>
       </thead>
       <tbody>
-        @if (sizeof($calendario) == 0)
-          <tr>
-            <td colspan="4" align="center">
-              No hay actividades registradas
-            </td>
-          </tr>
-        @endif
-        @foreach ($calendario as $item)
-          <tr>
-            <td style="text-align: center">{{ $loop->iteration }}</td>
-            <td>{{ $item->actividad }}</td>
-            <td>{{ $item->fecha_inicio }}</td>
-            <td>{{ $item->fecha_fin }}</td>
-          </tr>
-        @endforeach
+          @if (sizeof($calendario) == 0)
+              <tr>
+                  <td colspan="4" align="center">
+                      No hay actividades registradas
+                  </td>
+              </tr>
+          @endif
+          @foreach ($calendario as $item)
+              <tr>
+                  <td style="text-align: center">{{ $loop->iteration }}</td>
+                  <td>{{ $item->actividad }}</td>
+                  <td>{{ $item->fecha_inicio }}</td>
+                  <td>{{ $item->fecha_fin }}</td>
+              </tr>
+          @endforeach
       </tbody>
-    </table>
+  </table>
 
-    <h5>XIII. Integrantes:</h5>
+  <h5>XIII. Integrantes:</h5>
 
-    <table class="table">
+  <table class="table">
       <thead>
-        <tr>
-          <th style="width: 10%;">Condición</th>
-          <th style="width: 25%;">Apellidos y nombres</th>
-          <th style="width: 20%;">Tipo</th>
-          <th style="width: 20%;">Tipo de tesis</th>
-          <th style="width: 25%;">Título de la tesis</th>
-        </tr>
+          <tr>
+              <th style="width: 10%;">Condición</th>
+              <th style="width: 25%;">Apellidos y nombres</th>
+              <th style="width: 20%;">Tipo</th>
+              <th style="width: 20%;">Tipo de tesis</th>
+              <th style="width: 25%;">Título de la tesis</th>
+          </tr>
       </thead>
       <tbody>
-        @foreach ($integrantes as $item)
-          <tr>
-            <td>{{ $item->condicion }}</td>
-            <td>{{ $item->nombres }}</td>
-            <td>{{ $item->tipo }}</td>
-            <td>{{ $item->tipo_tesis }}</td>
-            <td>{{ $item->titulo_tesis }}</td>
-          </tr>
-        @endforeach
+          @foreach ($integrantes as $item)
+              <tr>
+                  <td>{{ $item->condicion }}</td>
+                  <td>{{ $item->nombres }}</td>
+                  <td>{{ $item->tipo }}</td>
+                  <td>{{ $item->tipo_tesis }}</td>
+                  <td>{{ $item->titulo_tesis }}</td>
+              </tr>
+          @endforeach
       </tbody>
-    </table>
+  </table>
 
-    <h5>XIV. Condiciones:</h5>
+  <h5>XIV. Condiciones:</h5>
 
-    <div class="desc">
-      Los docentes y/o estudiantes deben indicar, en cada publicación o forma de divulgación (tesis, artículos, libros,
+  <div class="desc">
+      Los docentes y/o estudiantes deben indicar, en cada publicación o forma de divulgación (tesis, artículos,
+      libros,
       resúmenes de trabajos presentados en congresos, páginas de
       internet y cualquier otra publicación) que resulten del apoyo de la UNMSM, el siguiente párrafo:
       <br>
       <br>
       <i>
-        Para los artículos escritos en español:
+          Para los artículos escritos en español:
       </i><br>
-      Esta investigación fue financiada por la Universidad Nacional Mayor de San Marcos – RR N° aabb-cc con código de
+      Esta investigación fue financiada por la Universidad Nacional Mayor de San Marcos – RR N° aabb-cc con código
+      de
       proyecto dfgh.
       <br>
       <br>
       <i>
-        Para los artículos escritos en algún idioma extranjero, indicar el apoyo de la UNMSM en inglés:
+          Para los artículos escritos en algún idioma extranjero, indicar el apoyo de la UNMSM en inglés:
       </i><br>
-      This research was supported by the Universidad Nacional Mayor de San Marcos – RR N° aabb-cc and project number
+      This research was supported by the Universidad Nacional Mayor de San Marcos – RR N° aabb-cc and project
+      number
       dfgh.
     </div>
   </div>
