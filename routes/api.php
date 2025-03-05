@@ -51,6 +51,7 @@ use App\Http\Controllers\Investigador\Actividades\ProyectoSinFinanciamientoContr
 use App\Http\Controllers\Investigador\Actividades\PublicacionLibrosUniController;
 use App\Http\Controllers\Investigador\Actividades\TalleresController;
 use App\Http\Controllers\Investigador\Constancias\ReporteController as ConstanciasReporteController;
+use App\Http\Controllers\Investigador\Convocatorias\EciController;
 use App\Http\Controllers\Investigador\Convocatorias\PconfigiController;
 use App\Http\Controllers\Investigador\Convocatorias\PicvController;
 use App\Http\Controllers\Investigador\Convocatorias\PinvposController;
@@ -1028,6 +1029,39 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
       //  Extras
       Route::get('getOcde', [PicvController::class, 'getOcde']);
       Route::get('getOds', [PicvController::class, 'getOds']);
+    });
+
+    Route::prefix('eci')->group(function () {
+      Route::get('listado', [EciController::class, 'listado']);
+      Route::delete('eliminarPropuesta', [EciController::class, 'eliminarPropuesta']);
+
+      Route::get('verificar', [EciController::class, 'verificar']);
+
+      Route::get('verificar1', [EciController::class, 'verificar1']);
+      Route::post('registrar1', [EciController::class, 'registrar1']);
+
+      Route::get('verificar2', [EciController::class, 'verificar2']);
+      Route::post('registrar2', [EciController::class, 'registrar2']);
+
+      Route::get('verificar3', [EciController::class, 'verificar3']);
+      Route::post('registrar3', [EciController::class, 'registrar3']);
+      Route::post('agregarDoc', [EciController::class, 'agregarDoc']);
+      Route::delete('eliminarDoc', [EciController::class, 'eliminarDoc']);
+
+      Route::get('verificar4', [EciController::class, 'verificar4']);
+      Route::post('agregarPartida', [EciController::class, 'agregarPartida']);
+      Route::delete('eliminarPartida', [EciController::class, 'eliminarPartida']);
+      Route::put('actualizarPartida', [EciController::class, 'actualizarPartida']);
+
+      Route::get('verificar5', [EciController::class, 'verificar5']);
+      Route::post('registrar5', [EciController::class, 'registrar5']);
+
+      Route::get('verificar6', [EciController::class, 'verificar6']);
+      Route::post('registrar6', [EciController::class, 'registrar6']);
+
+      Route::get('verificar7', [EciController::class, 'verificar7']);
+      Route::get('reporte', [EciController::class, 'reporte']);
+      Route::post('enviar', [EciController::class, 'enviar']);
     });
 
     Route::get('verificar', [ProCTIController::class, 'verificar']);
