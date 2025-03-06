@@ -53,6 +53,7 @@ use App\Http\Controllers\Investigador\Actividades\TalleresController;
 use App\Http\Controllers\Investigador\Constancias\ReporteController as ConstanciasReporteController;
 use App\Http\Controllers\Investigador\Convocatorias\EciController;
 use App\Http\Controllers\Investigador\Convocatorias\PconfigiController;
+use App\Http\Controllers\Investigador\Convocatorias\PconfigiInvController;
 use App\Http\Controllers\Investigador\Convocatorias\PicvController;
 use App\Http\Controllers\Investigador\Convocatorias\PinvposController;
 use App\Http\Controllers\Investigador\Convocatorias\PmultiController;
@@ -1062,6 +1063,46 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
       Route::get('verificar7', [EciController::class, 'verificar7']);
       Route::get('reporte', [EciController::class, 'reporte']);
       Route::post('enviar', [EciController::class, 'enviar']);
+    });
+
+    Route::prefix('pconfigi_inv')->group(function () {
+      Route::get('listado', [PconfigiInvController::class, 'listado']);
+      Route::delete('eliminarPropuesta', [PconfigiInvController::class, 'eliminarPropuesta']);
+
+      Route::get('verificar', [PconfigiInvController::class, 'verificar']);
+
+      Route::get('verificar1', [PconfigiInvController::class, 'verificar1']);
+      Route::post('registrar1', [PconfigiInvController::class, 'registrar1']);
+
+      Route::get('verificar2', [PconfigiInvController::class, 'verificar2']);
+      Route::post('registrar2', [PconfigiInvController::class, 'registrar2']);
+
+      Route::get('verificar3', [PconfigiInvController::class, 'verificar3']);
+      Route::post('registrar3', [PconfigiInvController::class, 'registrar3']);
+
+      Route::get('verificar4', [PconfigiInvController::class, 'verificar4']);
+      Route::post('addActividad', [PconfigiInvController::class, 'addActividad']);
+      Route::delete('eliminarActividad', [PconfigiInvController::class, 'eliminarActividad']);
+      Route::put('editActividad', [PconfigiInvController::class, 'editActividad']);
+
+      Route::get('verificar5', [PconfigiInvController::class, 'verificar5']);
+      Route::post('agregarPartida', [PconfigiInvController::class, 'agregarPartida']);
+      Route::delete('eliminarPartida', [PconfigiInvController::class, 'eliminarPartida']);
+      Route::put('actualizarPartida', [PconfigiInvController::class, 'actualizarPartida']);
+      Route::get('validarPresupuesto', [PconfigiInvController::class, 'validarPresupuesto']);
+
+      Route::get('verificar6', [PconfigiInvController::class, 'verificar6']);
+      Route::get('listadoCorresponsables', [PconfigiInvController::class, 'listadoCorresponsables']);
+      Route::get('listadoDocentes', [PconfigiInvController::class, 'listadoDocentes']);
+      Route::get('listadoTesistas', [PconfigiInvController::class, 'listadoTesistas']);
+      Route::get('listadoExterno', [PconfigiInvController::class, 'listadoExterno']);
+      Route::get('listadoColaborador', [PconfigiInvController::class, 'listadoColaborador']);
+      Route::post('agregarIntegrante', [PconfigiInvController::class, 'agregarIntegrante']);
+      Route::delete('eliminarIntegrante', [PconfigiInvController::class, 'eliminarIntegrante']);
+
+      Route::get('verificar7', [PconfigiInvController::class, 'verificar7']);
+      Route::get('reporte', [PconfigiInvController::class, 'reporte']);
+      Route::post('enviar', [PconfigiInvController::class, 'enviar']);
     });
 
     Route::get('verificar', [ProCTIController::class, 'verificar']);

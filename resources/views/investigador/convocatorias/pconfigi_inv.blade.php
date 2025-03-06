@@ -128,7 +128,7 @@
   <div class="foot-1">RAIS - Registro de Actividades de Investigación de San Marcos</div>
   <p class="titulo">
     <strong>
-      PROYECTO DE INVESTIGACIÓN MULTIDISCIPLINARIO PARA GRUPOS
+      PROYECTO DE INNOVACIÓN PARA GRUPOS {{ $proyecto->periodo }}
     </strong>
   </p>
 
@@ -154,9 +154,9 @@
           <td style="width: 75%;" valign="top">{{ $proyecto->area }}</td>
         </tr>
         <tr>
-          <td style="width: 24%;" valign="top"><strong>Área temática de la investigación</strong></td>
+          <td style="width: 24%;" valign="top"><strong>Tipo de investigación</strong></td>
           <td style="width: 1%;" valign="top">:</td>
-          <td style="width: 75%;" valign="top">{{ $proyecto->area_tematica }}</td>
+          <td style="width: 75%;" valign="top">{{ $proyecto->tipo_investigacion }}</td>
         </tr>
         <tr>
           <td style="width: 24%;" valign="top"><strong>Línea OCDE </strong></td>
@@ -171,6 +171,11 @@
     <table class="tableData">
       <tbody>
         <tr>
+          <td style="width: 24%;" valign="top"><strong>Código</strong></td>
+          <td style="width: 1%;" valign="top">:</td>
+          <td style="width: 75%;" valign="top">{{ $proyecto->codigo_proyecto }}</td>
+        </tr>
+        <tr>
           <td style="width: 24%;" valign="top"><strong>Título</strong></td>
           <td style="width: 1%;" valign="top">:</td>
           <td style="width: 75%;" valign="top">{{ $proyecto->titulo }}</td>
@@ -181,21 +186,6 @@
           <td style="width: 75%;" valign="top">{{ $proyecto->linea }}</td>
         </tr>
         <tr>
-          <td style="width: 24%;" valign="top"><strong>Área temática de la investigación</strong></td>
-          <td style="width: 1%;" valign="top">:</td>
-          <td style="width: 75%;" valign="top">{{ $proyecto->area_tematica }}</td>
-        </tr>
-        <tr>
-          <td style="width: 24%;" valign="top"><strong>Objetivo ODS</strong></td>
-          <td style="width: 1%;" valign="top">:</td>
-          <td style="width: 75%;" valign="top">{{ $proyecto->ods }}</td>
-        </tr>
-        <tr>
-          <td style="width: 24%;" valign="top"><strong>Área de conocimiento OCDE</strong></td>
-          <td style="width: 1%;" valign="top">:</td>
-          <td style="width: 75%;" valign="top">{{ $proyecto->ocde }}</td>
-        </tr>
-        <tr>
           <td style="width: 24%;" valign="top"><strong>Localización</strong></td>
           <td style="width: 1%;" valign="top">:</td>
           <td style="width: 75%;" valign="top">{{ $proyecto->localizacion }}</td>
@@ -204,59 +194,7 @@
       </tbody>
     </table>
 
-    <h5>III. Documentos de compromiso del Cooperante Internacional:</h5>
-
-    <table class="table">
-      <thead>
-        <tr>
-          <th>N°</th>
-          <th>Comentario</th>
-        </tr>
-      </thead>
-      <tbody>
-        @if (sizeof($docs) > 0)
-          @foreach ($docs as $item)
-            <tr>
-              <td>{{ $loop->iteration }}</td>
-              <td>{{ $item->comentario }}</td>
-            </tr>
-          @endforeach
-        @else
-          <tr>
-            <td colspan="2">No hay registros</td>
-          </tr>
-        @endif
-      </tbody>
-    </table>
-
-    <h5>IV. Integrantes:</h5>
-
-    <table class="table">
-      <thead>
-        <tr>
-          <th>Apellidos y Nombres </th>
-          <th>Tipo</th>
-          <th>Condición</th>
-          <th>Facultad</th>
-          <th>Grupo</th>
-          <th>Carta de compromiso</th>
-        </tr>
-      </thead>
-      <tbody>
-        @foreach ($integrantes as $int)
-          <tr>
-            <td>{{ $int->nombre }}</td>
-            <td>{{ $int->tipo }}</td>
-            <td>{{ $int->tipo_integrante }}</td>
-            <td>{{ $int->facultad }}</td>
-            <td>{{ $int->grupo_nombre }}</td>
-            <td>{{ $int->compromiso }}</td>
-          </tr>
-        @endforeach
-      </tbody>
-    </table>
-
-    <h5>V. Descripción del Proyecto:</h5>
+    <h5>III. Descripción del Proyecto:</h5>
 
     <h6>Resumen ejecutivo</h6>
     <div class="desc">
@@ -270,17 +208,17 @@
       {{ $proyecto->palabras_clave }}
     </div>
 
-    <h6>Estado del arte</h6>
+    <h6>Tipo de propiedad intelectual a generar</h6>
     <div class="desc">
-      @if (isset($detalles['estado_arte']))
-        {!! $detalles['estado_arte'] !!}
+      @if (isset($detalles['pintelectual']))
+        {!! $detalles['pintelectual'] !!}
       @endif
     </div>
 
-    <h6>Planteamiento del problema</h6>
+    <h6>Antecedentes</h6>
     <div class="desc">
-      @if (isset($detalles['planteamiento_problema']))
-        {!! $detalles['planteamiento_problema'] !!}
+      @if (isset($detalles['antecedentes']))
+        {!! $detalles['antecedentes'] !!}
       @endif
     </div>
 
@@ -295,6 +233,13 @@
     <div class="desc">
       @if (isset($detalles['contribucion_impacto']))
         {!! $detalles['contribucion_impacto'] !!}
+      @endif
+    </div>
+
+    <h6>Hipótesis</h6>
+    <div class="desc">
+      @if (isset($detalles['hipotesis']))
+        {!! $detalles['hipotesis'] !!}
       @endif
     </div>
 
@@ -319,14 +264,12 @@
       @endif
     </div>
 
-    <h5>VI. Calendario de actividades:</h5>
+    <h5>IV. Calendario de actividades:</h5>
     <table class="table">
       <thead>
         <tr>
           <th>Nro.</th>
           <th>Actividad</th>
-          <th>Justificación</th>
-          <th>Responsable</th>
           <th>Fecha inicial</th>
           <th>Fecha final</th>
         </tr>
@@ -337,28 +280,25 @@
             <tr>
               <td align="center">{{ $loop->iteration }}</td>
               <td>{{ $act->actividad }}</td>
-              <td>{{ $act->justificacion }}</td>
-              <td>{{ $act->responsable }}</td>
               <td>{{ $act->fecha_inicio }}</td>
               <td>{{ $act->fecha_fin }}</td>
             </tr>
           @endforeach
         @else
           <tr>
-            <td colspan="6">No hay registros</td>
+            <td colspan="4">No hay registros</td>
           </tr>
         @endif
       </tbody>
     </table>
 
-    <h5>VII. Presupuesto:</h5>
+    <h5>V. Presupuesto:</h5>
     <table class="table">
       <thead>
         <tr>
           <th>Nro.</th>
           <th>Partida</th>
           <th>Tipo</th>
-          <th>Justificación</th>
           <th>Monto</th>
         </tr>
       </thead>
@@ -368,18 +308,42 @@
             <tr>
               <td align="center">{{ $loop->iteration }}</td>
               <td>{{ $item->partida }}</td>
-              <td>{{ $item->justificacion }}</td>
               <td>{{ $item->tipo }}</td>
               <td>{{ $item->monto }}</td>
             </tr>
           @endforeach
         @else
           <tr>
-            <td colspan="5">No hay registros</td>
+            <td colspan="4">No hay registros</td>
           </tr>
         @endif
       </tbody>
     </table>
+
+    <h5>VI. Integrantes:</h5>
+
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Apellidos y Nombres </th>
+          <th>Tipo</th>
+          <th>Condición</th>
+          <th>Tipo de tesis</th>
+          <th>Título de tesis</th>
+        </tr>
+      </thead>
+      <tbody>
+        @foreach ($integrantes as $int)
+          <tr>
+            <td>{{ $int->tipo_integrante }}</td>
+            <td>{{ $int->tipo }}</td>
+            <td>{{ $int->nombre }}</td>
+            <td>{{ $int->tipo_tesis }}</td>
+            <td>{{ $int->titulo_tesis }}</td>
+          </tr>
+        @endforeach
+      </tbody>
+    </table>    
 
   </div>
 

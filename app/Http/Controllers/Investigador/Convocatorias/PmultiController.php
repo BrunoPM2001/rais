@@ -157,14 +157,24 @@ class PmultiController extends S3Controller {
       ->where('a.id', '=', $request->attributes->get('token_decoded')->investigador_id)
       ->first();
 
-    $lineas = DB::table('Grupo_linea AS a')
-      ->join('Linea_investigacion AS b', 'b.id', '=', 'a.linea_investigacion_id')
+    $lineas =  DB::table('Linea_investigacion AS a')
+      ->join('Grupo_linea AS b', 'b.linea_investigacion_id', '=', 'a.id')
       ->select([
-        'b.id AS value',
-        'b.nombre AS label'
+        'a.id AS value',
+        'a.nombre AS label'
       ])
-      ->where('a.grupo_id', '=', $datos->grupo_id)
-      ->whereNull('a.concytec_codigo')
+      ->where('b.grupo_id', '=', $datos->grupo_id)
+      ->where('a.estado', '=', 1)
+      ->get();
+
+    $ods = DB::table('Grupo_linea as gl')
+      ->join('Linea_investigacion as li', 'gl.linea_investigacion_id', '=', 'li.id')
+      ->join('Linea_investigacion_ods as lo', 'lo.linea_investigacion_id', '=', 'li.id')
+      ->join('Ods as odsx', 'odsx.id', '=', 'lo.ods_id')
+      ->where('gl.grupo_id', '=', $datos->grupo_id)
+      ->where('li.estado', 1)
+      ->groupBy('odsx.id')
+      ->select('odsx.id as value', 'descripcion as label')
       ->get();
 
     $ocde = DB::table('Ocde')
@@ -175,12 +185,6 @@ class PmultiController extends S3Controller {
       ])
       ->get();
 
-    $ods = DB::table('Ods')
-      ->select([
-        'id AS value',
-        'descripcion AS label'
-      ])
-      ->get();
 
     if ($request->query('id')) {
       $proyecto = DB::table('Proyecto AS a')
