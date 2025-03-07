@@ -824,7 +824,7 @@ class PmultiController extends S3Controller {
     return [
       'estado' => true,
       'descripcion' => $descripcion,
-      'palabras_clave' => $palabras_clave->palabras_clave,
+      'palabras_clave' => $palabras_clave->palabras_clave ?? "",
       'archivos' => [
         'estado_arte' => $archivo1?->url,
         'metodologia' => $archivo2?->url,
