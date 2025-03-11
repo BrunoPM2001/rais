@@ -2,12 +2,16 @@
 
 namespace App\Http\Controllers\Admin\Estudios;
 
+use App\Exports\Admin\InformeTecnicoExport;
 use App\Http\Controllers\S3Controller;
 use Carbon\Carbon;
 use Illuminate\Database\Query\JoinClause;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Maatwebsite\Excel\Facades\Excel;
+
+
 
 class InformesTecnicosController extends S3Controller {
   public function proyectosListado(Request $request) {
@@ -58,7 +62,7 @@ class InformesTecnicosController extends S3Controller {
             ELSE 'No tiene informe'
           END AS estado")
         )
-        ->whereIn('a.estado', [1, 8])
+        ->where('a.estado', '=', 1)
         ->where('a.tipo_proyecto', '!=', 'PFEX')
         ->groupBy('a.id')
         ->get();
@@ -240,8 +244,6 @@ class InformesTecnicosController extends S3Controller {
       case "PSINFIPU":
       case "PTPBACHILLER":
       case "PTPDOCTO":
-      case "PTPGRADO":
-      case "PTPMAEST":
         $proyecto = DB::table('Proyecto AS a')
           ->leftJoin('Facultad AS b', 'b.id', '=', 'a.facultad_id')
           ->leftJoin('Grupo AS c', 'c.id', '=', 'a.grupo_id')
@@ -722,75 +724,12 @@ class InformesTecnicosController extends S3Controller {
     return $audit;
   }
 
-  public function getDataPresentarInforme(Request $request) {
-    $proyecto = DB::table('Proyecto_H AS a')
-      ->leftJoin('Facultad AS b', 'b.id', '=', 'a.facultad_id')
-      ->leftJoin('Instituto AS c', 'c.id', '=', 'a.instituto_id')
-      ->leftJoin('Linea_investigacion AS d', 'd.id', '=', 'a.linea_id')
-      ->leftJoin('Proyecto_integrante_H AS e', function (JoinClause $join) {
-        $join->on('e.proyecto_id', '=', 'a.id')
-          ->whereIn('e.condicion', ['Responsable']);
-      })
-      ->leftJoin('Usuario_investigador AS f', 'f.id', '=', 'e.investigador_id')
-      ->select([
-        'a.id',
-        'a.titulo',
-        'a.tipo AS tipo_proyecto',
-        'a.codigo AS codigo_proyecto',
-        'a.periodo',
-        'a.resolucion AS resolucion_rectoral',
-        'b.nombre AS facultad',
-        'c.instituto',
-        'd.nombre AS linea',
-        'a.tipo_investigacion',
-        DB::raw("CONCAT(f.apellido1, ' ', f.apellido2, ', ', f.nombres) AS responsable")
-      ])
-      ->where('a.id', '=', $request->query('proyecto_id'))
-      ->first();
+  public function excel(Request $request) {
 
-    return ['proyecto' => $proyecto];
-  }
+    $filters = $request->all();
 
-  public function presentarInformeAntiguo(Request $request) {
-    $informe = DB::table('Informe_tipo')
-      ->select([
-        'id'
-      ])
-      ->where('tipo', '=', $request->input('tipo_proyecto'))
-      ->where('informe', '=', $request->input('tipo_informe'))
-      ->first();
+    $export = new InformeTecnicoExport($filters);
 
-    $id = DB::table('Informe_tecnico_H')
-      ->insertGetId([
-        'proyecto_id' => $request->input('proyecto_id'),
-        'tipo' => $informe->id,
-        'tipo_informe' => $request->input('tipo_informe'),
-        'status' => $request->input('estado'),
-        'fecha_presentacion' => $request->input('fecha_presentacion'),
-        'registro_nro_vri' => $request->input('registro_nro_vrip'),
-        'registro_fecha_csi' => $request->input('fecha_registro_csi'),
-        'created_at' => Carbon::now(),
-        'updated_at' => Carbon::now(),
-      ]);
-
-    $date1 = Carbon::now();
-    $date_format =  $date1->format('Ymd-His');
-
-    $name = $request->input('proyecto_id') . "/" . $date_format . "-" . Str::random(8) . "." . $request->file('file1')->getClientOriginalExtension();
-    $this->uploadFile($request->file('file1'), "informe-tecnico-antiguo", $name);
-
-    DB::table('File')
-      ->insert([
-        'tabla_id' => $id,
-        'tabla' => 'Informe_tecnico_H',
-        'bucket' => 'informe-tecnico-antiguo',
-        'key' => $name,
-        'recurso' => 'ANEXO',
-        'estado' => 20,
-        'created_at' => Carbon::now(),
-        'updated_at' => Carbon::now(),
-      ]);
-
-    return ['message' => 'success', 'detail' => 'Datos guardados correctamente'];
+    return Excel::download($export, 'informe_tencnico.xlsx');
   }
 }

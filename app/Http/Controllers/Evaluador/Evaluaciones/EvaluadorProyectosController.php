@@ -23,7 +23,6 @@ class EvaluadorProyectosController extends S3Controller {
       })
       ->leftJoin('Evaluacion_proyecto AS f', function (JoinClause $join) {
         $join->on('f.proyecto_id', '=', 'c.id')
-          ->on('f.evaluador_id', '=', 'b.id')
           ->whereNotNull('f.evaluacion_opcion_id');
       })
       ->join('Convocatoria AS g', function (JoinClause $join) use ($date) {
@@ -110,31 +109,21 @@ class EvaluadorProyectosController extends S3Controller {
       ->where('evaluador_id', '=', $request->attributes->get('token_decoded')->evaluador_id)
       ->first();
 
-    return ['criterios' => $criterios, 'comentario' => $comentario, 'cerrado' => $estado > 0 ? true : false, 'total' => number_format($total, 2)];
+    return ['criterios' => $criterios, 'comentario' => $comentario, 'cerrado' => $estado > 0 ? true : false, 'total' => $total];
   }
 
   public function updateItem(Request $request) {
     if ($request->input('id_edit') == null) {
-      $req1 = DB::table('Evaluacion_proyecto')
-        ->where('proyecto_id', '=', $request->input('proyecto_id'))
-        ->where('evaluador_id', '=', $request->attributes->get('token_decoded')->evaluador_id)
-        ->where('evaluacion_opcion_id', '=', $request->input('id'))
-        ->count();
-
-      if ($req1 == 0) {
-        DB::table('Evaluacion_proyecto')
-          ->insert([
-            'evaluacion_opcion_id' => $request->input('id'),
-            'proyecto_id' => $request->input('proyecto_id'),
-            'evaluador_id' => $request->attributes->get('token_decoded')->evaluador_id,
-            'puntaje' => $request->input('puntaje'),
-            'comentario' => $request->input('comentario'),
-            'created_at' => Carbon::now(),
-            'updated_at' => Carbon::now()
-          ]);
-      } else {
-        return ['message' => 'warning', 'detail' => 'Ya hay un criterio de este tipo'];
-      }
+      DB::table('Evaluacion_proyecto')
+        ->insert([
+          'evaluacion_opcion_id' => $request->input('id'),
+          'proyecto_id' => $request->input('proyecto_id'),
+          'evaluador_id' => $request->attributes->get('token_decoded')->evaluador_id,
+          'puntaje' => $request->input('puntaje'),
+          'comentario' => $request->input('comentario'),
+          'created_at' => Carbon::now(),
+          'updated_at' => Carbon::now()
+        ]);
     } else {
       DB::table('Evaluacion_proyecto')
         ->where('id', '=', $request->input('id_edit'))
@@ -199,12 +188,6 @@ class EvaluadorProyectosController extends S3Controller {
         $suma = $suma + $item->puntaje;
       }
     }
-
-    DB::table('Proyecto')
-      ->where('id', '=', $request->input('proyecto_id'))
-      ->update([
-        'estado' => 3
-      ]);
 
     return ['message' => 'success', 'detail' => 'Datos actualizados con éxito'];
   }
@@ -359,11 +342,14 @@ class EvaluadorProyectosController extends S3Controller {
     $utils = new CriteriosUtilsController();
 
     switch ($proyecto->tipo_proyecto) {
+
       case "PMULTI":
-        $utils->fetchPuntajeFormacionRrhh($request);
+
+        $utils->puntajeTesistas($request);
         $utils->AddExperienciaResponsable($request);
+        $utils->AddExperienciaMiembros($request);
         $utils->addgiTotal($request);
-        $utils->totalpuntajeIntegrantes($request);
+
         break;
 
       case "PSINFINV":

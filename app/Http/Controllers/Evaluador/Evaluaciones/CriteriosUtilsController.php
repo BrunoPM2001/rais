@@ -7,33 +7,86 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class CriteriosUtilsController extends Controller {
-  public function fetchPuntajeFormacionRrhh(Request $request) {
-    $rrhhTesistas = DB::table('Proyecto_integrante as t1')
+
+  // public function fetchPuntajeFormacionRrhh(Request $request)
+  // {
+  //   $rrhhTesistas = DB::table('Proyecto_integrante as t1')
+  //     ->select('t1.proyecto_id')
+  //     ->selectSub(function ($query) {
+  //       $query->from('Proyecto_integrante as pi')
+  //         ->selectRaw('COUNT(*)')
+  //         ->whereColumn('pi.proyecto_id', 't1.proyecto_id')
+  //         ->where('pi.tipo_tesis', 'like', 'bachillerato');
+  //     }, 'cantidad_tesis_bachillerato')
+  //     ->selectSub(function ($query) {
+  //       $query->from('Proyecto_integrante as pi')
+  //         ->selectRaw('COUNT(*)')
+  //         ->whereColumn('pi.proyecto_id', 't1.proyecto_id')
+  //         ->where('pi.tipo_tesis', 'like', 'licenciatura%');
+  //     }, 'cantidad_tesis_licenciatura')
+  //     ->selectSub(function ($query) {
+  //       $query->from('Proyecto_integrante as pi')
+  //         ->selectRaw('COUNT(*)')
+  //         ->whereColumn('pi.proyecto_id', 't1.proyecto_id')
+  //         ->where('pi.tipo_tesis', 'like', 'maestria');
+  //     }, 'cantidad_tesis_maestria')
+  //     ->selectSub(function ($query) {
+  //       $query->from('Proyecto_integrante as pi')
+  //         ->selectRaw('COUNT(*)')
+  //         ->whereColumn('pi.proyecto_id', 't1.proyecto_id')
+  //         ->where('pi.tipo_tesis', 'like', 'doctorado');
+  //     }, 'cantidad_tesis_doctorado')
+  //     ->leftJoin('Proyecto_integrante_tipo as t2', 't1.proyecto_integrante_tipo_id', '=', 't2.id')
+  //     ->where('t1.proyecto_id', $request->query('proyecto_id'))
+  //     ->whereNotNull('t1.tipo_tesis')
+  //     ->where('t2.nombre', 'Tesista')
+  //     ->groupBy('t1.proyecto_id')
+  //     ->first();
+
+
+  //   $cantidadTipoTesis = $rrhhTesistas ? $rrhhTesistas : null;
+  //   $puntaje = 0;
+  //   $puntaje += ($cantidadTipoTesis ? $cantidadTipoTesis->cantidad_tesis_licenciatura : 0) * 1.0;
+  //   $puntaje += ($cantidadTipoTesis ? $cantidadTipoTesis->cantidad_tesis_maestria : 0) * 3.0;
+  //   $puntaje += ($cantidadTipoTesis ? $cantidadTipoTesis->cantidad_tesis_doctorado : 0) * 5.0;
+
+  //   //  Actualizar puntaje
+  //   DB::table('Evaluacion_proyecto')
+  //     ->updateOrInsert([
+  //       'proyecto_id' => $request->query('proyecto_id'),
+  //       'evaluador_id' => $request->attributes->get('token_decoded')->evaluador_id,
+  //       'evaluacion_opcion_id' => 1148
+  //     ], [
+  //       'puntaje' => $puntaje
+  //     ]);
+  // }
+  public function puntajeTesistas(Request $request) {
+
+    $proyecto = DB::table('Proyecto as p')
+      ->select('p.tipo_proyecto', 'p.periodo')
+      ->where('p.id', $request->query('proyecto_id'))
+      ->first();
+
+    $tipoProyecto = $proyecto->tipo_proyecto;
+    $periodo = $proyecto->periodo;
+
+    $evaluacionProyecto = DB::table('Evaluacion_opcion as eopcion')
+      ->select('eopcion.id', 'eopcion.puntaje_max')
+      ->where('eopcion.tipo', '=', $tipoProyecto)
+      ->where('eopcion.periodo', '=', $periodo)
+      ->where('eopcion.otipo', '=', 'tesista')
+      ->first();
+
+    $evaluacionId = $evaluacionProyecto->id;
+    $puntaje_max = $evaluacionProyecto->puntaje_max;
+
+
+    $tesistas = DB::table('Proyecto_integrante as t1')
       ->select('t1.proyecto_id')
-      ->selectSub(function ($query) {
-        $query->from('Proyecto_integrante as pi')
-          ->selectRaw('COUNT(*)')
-          ->whereColumn('pi.proyecto_id', 't1.proyecto_id')
-          ->where('pi.tipo_tesis', 'like', 'bachillerato');
-      }, 'cantidad_tesis_bachillerato')
-      ->selectSub(function ($query) {
-        $query->from('Proyecto_integrante as pi')
-          ->selectRaw('COUNT(*)')
-          ->whereColumn('pi.proyecto_id', 't1.proyecto_id')
-          ->where('pi.tipo_tesis', 'like', 'licenciatura%');
-      }, 'cantidad_tesis_licenciatura')
-      ->selectSub(function ($query) {
-        $query->from('Proyecto_integrante as pi')
-          ->selectRaw('COUNT(*)')
-          ->whereColumn('pi.proyecto_id', 't1.proyecto_id')
-          ->where('pi.tipo_tesis', 'like', 'maestria');
-      }, 'cantidad_tesis_maestria')
-      ->selectSub(function ($query) {
-        $query->from('Proyecto_integrante as pi')
-          ->selectRaw('COUNT(*)')
-          ->whereColumn('pi.proyecto_id', 't1.proyecto_id')
-          ->where('pi.tipo_tesis', 'like', 'doctorado');
-      }, 'cantidad_tesis_doctorado')
+      ->selectRaw("SUM(CASE WHEN t1.tipo_tesis LIKE 'bachillerato' THEN 1 ELSE 0 END) as cantidad_tesis_bachillerato")
+      ->selectRaw("SUM(CASE WHEN t1.tipo_tesis LIKE 'licenciatura%' THEN 1 ELSE 0 END) as cantidad_tesis_licenciatura")
+      ->selectRaw("SUM(CASE WHEN t1.tipo_tesis LIKE 'maestria' THEN 1 ELSE 0 END) as cantidad_tesis_maestria")
+      ->selectRaw("SUM(CASE WHEN t1.tipo_tesis LIKE 'doctorado' THEN 1 ELSE 0 END) as cantidad_tesis_doctorado")
       ->leftJoin('Proyecto_integrante_tipo as t2', 't1.proyecto_integrante_tipo_id', '=', 't2.id')
       ->where('t1.proyecto_id', $request->query('proyecto_id'))
       ->whereNotNull('t1.tipo_tesis')
@@ -41,54 +94,67 @@ class CriteriosUtilsController extends Controller {
       ->groupBy('t1.proyecto_id')
       ->first();
 
-
-    $cantidadTipoTesis = $rrhhTesistas ? $rrhhTesistas : null;
+    $cantidadTipoTesis = $tesistas ? $tesistas : null;
     $puntaje = 0;
     $puntaje += ($cantidadTipoTesis ? $cantidadTipoTesis->cantidad_tesis_licenciatura : 0) * 1.0;
     $puntaje += ($cantidadTipoTesis ? $cantidadTipoTesis->cantidad_tesis_maestria : 0) * 3.0;
     $puntaje += ($cantidadTipoTesis ? $cantidadTipoTesis->cantidad_tesis_doctorado : 0) * 5.0;
 
+    if ($puntaje > $puntaje_max) {
+      $puntaje = $puntaje_max;
+    }
     //  Actualizar puntaje
     DB::table('Evaluacion_proyecto')
       ->updateOrInsert([
         'proyecto_id' => $request->query('proyecto_id'),
         'evaluador_id' => $request->attributes->get('token_decoded')->evaluador_id,
-        'evaluacion_opcion_id' => 1148
+        'evaluacion_opcion_id' => $evaluacionId
       ], [
         'puntaje' => $puntaje
       ]);
   }
 
-  public function AddExperienciaResponsable(Request $request) {
-    $anioInicio = 2017;
-    $anioFin = 2024;
 
-    $experienciaResponsable = DB::table('Proyecto_integrante as t1')
-      ->select(
-        DB::raw("SUM(IFNULL((
-            SELECT SUM(_t1.puntaje)
-            FROM Publicacion_autor AS _t1
-            JOIN Publicacion AS _t2 ON _t1.publicacion_id = _t2.id
-            WHERE 
-                YEAR(_t2.fecha_publicacion) BETWEEN $anioInicio AND $anioFin
-                AND _t1.investigador_id = t1.investigador_id
-            GROUP BY _t1.investigador_id
-        ), 0)) AS total_puntaje"),
-        DB::raw("COUNT(*) AS total_dp")
-      )
-      ->join('Grupo_integrante as t2', 't2.id', '=', 't1.grupo_integrante_id')
-      ->where('t2.tipo', 'DOCENTE PERMANENTE')
-      ->where('t1.proyecto_id', $request->query('proyecto_id'))
-      ->where('t1.condicion', 'Responsable')
+  public function AddExperienciaResponsable(Request $request) {
+    $proyecto = DB::table('Proyecto as p')
+      ->select('p.tipo_proyecto', 'p.periodo')
+      ->where('p.id', $request->query('proyecto_id'))
       ->first();
+
+    $tipoProyecto = $proyecto->tipo_proyecto;
+    $periodo = $proyecto->periodo;
+
+
+    $evaluacionProyecto = DB::table('Evaluacion_opcion as eopcion')
+      ->select('eopcion.id', 'eopcion.puntaje_max')
+      ->where('eopcion.tipo', '=', $tipoProyecto)
+      ->where('eopcion.periodo', '=', $periodo)
+      ->where('eopcion.otipo', '=', 'responsable')
+      ->first();
+
+    $evaluacionId = $evaluacionProyecto->id;
+    $puntaje_max = $evaluacionProyecto->puntaje_max;
+
+    $proyecto = DB::table('Proyecto as p')
+      ->select('pint.investigador_id')
+      ->join('Proyecto_integrante as pint', 'pint.proyecto_id', '=', 'p.id')
+      ->where('p.id', '=', $request->query('proyecto_id'))
+      ->where('pint.condicion', '=', 'Responsable')
+      ->first();
+
+    $experienciaResponsable = DB::table('view_puntaje_7u')
+      ->select('puntaje as total_puntaje')
+      ->where('investigador_id', '=', $proyecto->investigador_id)
+      ->first();
+
 
     $total = 0;
 
     if ($experienciaResponsable) {
       if ($experienciaResponsable->total_puntaje > 0) {
-        $total = ($experienciaResponsable->total_puntaje * 0.1 / $experienciaResponsable->total_dp);
-        if ($total >= 4) {
-          $total = 4;
+        $total = ($experienciaResponsable->total_puntaje * 0.1);
+        if ($total >= $puntaje_max) {
+          $total = $puntaje_max;
         }
       } else {
         $total = $experienciaResponsable->total_puntaje;
@@ -101,9 +167,72 @@ class CriteriosUtilsController extends Controller {
       ->updateOrInsert([
         'proyecto_id' => $request->query('proyecto_id'),
         'evaluador_id' => $request->attributes->get('token_decoded')->evaluador_id,
-        'evaluacion_opcion_id' => 1152
+        'evaluacion_opcion_id' => $evaluacionId
       ], [
         'puntaje' => $total
+      ]);
+  }
+
+
+  public function AddExperienciaMiembros(Request $request) {
+
+    $proyectoId = $request->query('proyecto_id');
+    $puntajeIntegrantes = 0;
+    $total = 0;
+    $integrantesSum = [];
+
+
+    $proyecto = DB::table('Proyecto as p')
+      ->select('p.tipo_proyecto', 'p.periodo')
+      ->where('p.id', $request->query('proyecto_id'))
+      ->first();
+
+    $tipoProyecto = $proyecto->tipo_proyecto;
+    $periodo = $proyecto->periodo;
+
+    $evaluacionProyecto = DB::table('Evaluacion_opcion as eopcion')
+      ->select('eopcion.id', 'eopcion.puntaje_max')
+      ->where('eopcion.tipo', '=', $tipoProyecto)
+      ->where('eopcion.periodo', '=', $periodo)
+      ->where('eopcion.otipo', '=', 'miembros')
+      ->first();
+
+    $evaluacionId = $evaluacionProyecto->id;
+    $puntaje_max = $evaluacionProyecto->puntaje_max;
+
+
+    // Capturar los IDs de los integrantes
+    $integrantes = DB::table('Proyecto_integrante as t1')
+      ->select('t1.investigador_id')
+      ->leftJoin('Proyecto_integrante_tipo as t2', 't1.proyecto_integrante_tipo_id', '=', 't2.id')
+      ->leftJoin('Usuario_investigador as t3', 't1.investigador_id', '=', 't3.id')
+      ->where('t1.proyecto_id', $proyectoId)
+      ->whereIn('t2.nombre', ['Co responsable', 'Miembro docente', 'Autor Corresponsal', 'Co-Autor'])
+      ->get();
+
+
+    foreach ($integrantes as $integrante) {
+      if (!in_array($integrante->investigador_id, $integrantesSum)) {
+        $integrantesSum[] = $integrante->investigador_id;
+      }
+    }
+
+
+    $totalPuntaje = DB::table('view_puntaje_7u')
+      ->whereIn('investigador_id', $integrantesSum)
+      ->sum('puntaje'); // Suma todos los valores de la columna 'puntaje'
+
+    $puntajeIntegrantes = ($totalPuntaje * 0.1) / count($integrantes);
+
+    $total = $puntajeIntegrantes >= $puntaje_max ? $puntaje_max : $puntajeIntegrantes;
+
+    DB::table('Evaluacion_proyecto')
+      ->updateOrInsert([
+        'proyecto_id' => $request->query('proyecto_id'),
+        'evaluador_id' => $request->attributes->get('token_decoded')->evaluador_id,
+        'evaluacion_opcion_id' => $evaluacionId
+      ], [
+        'puntaje' => $total,
       ]);
   }
 
@@ -111,6 +240,24 @@ class CriteriosUtilsController extends Controller {
     $grupos = [];
     $puntajes = [];
     $puntajeGlobal = 0;
+
+    $proyecto = DB::table('Proyecto as p')
+      ->select('p.tipo_proyecto', 'p.periodo')
+      ->where('p.id', $request->query('proyecto_id'))
+      ->first();
+
+    $tipoProyecto = $proyecto->tipo_proyecto;
+    $periodo = $proyecto->periodo;
+
+    $evaluacionProyecto = DB::table('Evaluacion_opcion as eopcion')
+      ->select('eopcion.id', 'eopcion.puntaje_max')
+      ->where('eopcion.tipo', '=', $tipoProyecto)
+      ->where('eopcion.periodo', '=', $periodo)
+      ->where('eopcion.otipo', '=', 'catgi')
+      ->first();
+
+    $evaluacionId = $evaluacionProyecto->id;
+    $puntaje_max = $evaluacionProyecto->puntaje_max;
 
 
     $ProyectoIntegrantes = DB::table('Proyecto_integrante as t1')
@@ -139,27 +286,31 @@ class CriteriosUtilsController extends Controller {
         ->where('id', $grupo)
         ->first();
 
-      switch ($grupoCat->grupo_categoria) {
-        case 'A':
-          $puntajegcat = 6;
-          break;
-        case 'B':
-          $puntajegcat = 4;
-          break;
-        case 'C':
-          $puntajegcat = 2;
-          break;
-        case 'D':
-          $puntajegcat = 1;
-          break;
-        default:
-          $puntajegcat = 0;
-          break;
+      if (!$grupoCat) {
+        // Manejar el caso en que no se encuentra el grupo, por ejemplo, asignando un valor por defecto
+        $puntajegcat = 0;
+      } else {
+        switch ($grupoCat->grupo_categoria) {
+          case 'A':
+            $puntajegcat = 6;
+            break;
+          case 'B':
+            $puntajegcat = 4;
+            break;
+          case 'C':
+            $puntajegcat = 2;
+            break;
+          case 'D':
+            $puntajegcat = 1;
+            break;
+          default:
+            $puntajegcat = 0;
+            break;
+        }
       }
 
       $puntajes[] = $puntajegcat;
     }
-
     $i = 0;
     $puntajeTotal = 0;
 
@@ -170,7 +321,7 @@ class CriteriosUtilsController extends Controller {
 
     $puntajeGlobal = $puntajeTotal / $i;
 
-    $topeMaximo = 6;
+    $topeMaximo = $puntaje_max;
 
     if ($puntajeGlobal > $topeMaximo) {
       $puntajeGlobal = $topeMaximo;
@@ -181,11 +332,14 @@ class CriteriosUtilsController extends Controller {
       ->updateOrInsert([
         'proyecto_id' => $request->query('proyecto_id'),
         'evaluador_id' => $request->attributes->get('token_decoded')->evaluador_id,
-        'evaluacion_opcion_id' => 1154
+        'evaluacion_opcion_id' => $evaluacionId
       ], [
         'puntaje' => $puntajeGlobal
       ]);
   }
+
+
+
 
   public function totalpuntajeIntegrantesRenacyt(Request $request) {
     $proyectoId = $request->query('proyecto_id');

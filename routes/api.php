@@ -200,6 +200,7 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
 
       Route::get('exportToWord', [ProyectosGrupoController::class, 'exportToWord']);
       Route::get('reporte', [ProyectosGrupoController::class, 'reporte']);
+      Route::get('excel', [ProyectosGrupoController::class, 'excel']);
     });
 
     //  Proyectos FEX
@@ -256,6 +257,7 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
       Route::get('verAuditoria', [InformesTecnicosController::class, 'verAuditoria']);
 
       Route::get('reporte', [UtilInformeAdminController::class, 'reporte']);
+      Route::get('excel', [InformesTecnicosController::class, 'excel']);
 
       Route::get('getDataPresentarInforme', [InformesTecnicosController::class, 'getDataPresentarInforme']);
       Route::post('presentarInformeAntiguo', [InformesTecnicosController::class, 'presentarInformeAntiguo']);
@@ -278,6 +280,8 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
       Route::post('agregarMeta', [MonitoreoController::class, 'agregarMeta']);
       Route::put('editarMeta', [MonitoreoController::class, 'editarMeta']);
       Route::delete('eliminarMeta', [MonitoreoController::class, 'eliminarMeta']);
+
+      Route::get('excel', [MonitoreoController::class, 'excel']);
     });
 
     //  Deudas proyecto

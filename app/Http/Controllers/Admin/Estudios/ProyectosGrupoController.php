@@ -2,8 +2,7 @@
 
 namespace App\Http\Controllers\Admin\Estudios;
 
-use App\Http\Controllers\Admin\Estudios\Proyectos\PtpdoctoController;
-use App\Http\Controllers\Admin\Estudios\Proyectos\PtpbachillerController;
+use App\Exports\Admin\ProyectosGrupoExport;
 use App\Http\Controllers\Admin\Estudios\Proyectos\EciController;
 use App\Http\Controllers\Admin\Estudios\Proyectos\PconfigiController;
 use App\Http\Controllers\Admin\Estudios\Proyectos\PinvposController;
@@ -11,14 +10,13 @@ use App\Http\Controllers\Admin\Estudios\Proyectos\PsinfinvController;
 use App\Http\Controllers\Admin\Estudios\Proyectos\PsinfipuController;
 use App\Http\Controllers\Admin\Estudios\Proyectos\PicvController;
 use App\Http\Controllers\Admin\Estudios\Proyectos\PmultiController;
-use App\Http\Controllers\Admin\Estudios\Proyectos\PtpgradoController;
-use App\Http\Controllers\Admin\Estudios\Proyectos\PtpmaestController;
 use App\Http\Controllers\S3Controller;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use PhpOffice\PhpWord\IOFactory;
 use PhpOffice\PhpWord\PhpWord;
+use Maatwebsite\Excel\Facades\Excel;
 
 class ProyectosGrupoController extends S3Controller {
 
@@ -47,7 +45,7 @@ class ProyectosGrupoController extends S3Controller {
             WHEN 0 THEN 'No aprobado'
             WHEN 1 THEN 'Aprobado'
             WHEN 2 THEN 'Observado'
-            WHEN 3 THEN 'En evaluación'
+            WHEN 3 THEN 'En evaluacion'
             WHEN 5 THEN 'Enviado'
             WHEN 6 THEN 'En proceso'
             WHEN 7 THEN 'Anulado'
@@ -161,78 +159,6 @@ class ProyectosGrupoController extends S3Controller {
           'miembros' => $miembros,
           'documentos' => $documentos,
           'actividades' => $actividades,
-        ];
-
-      case "PTPBACHILLER":
-        $ctrl = new PtpbachillerController();
-
-        $detalle = $ctrl->detalle($request);
-        $descripcion = $ctrl->descripcion($request);
-        $miembros = $ctrl->miembros($request);
-        $actividades = $ctrl->actividades($request);
-        $presupuesto = $this->presupuesto($request);
-        $responsable = $ctrl->responsable($request);
-
-        return [
-          'detalle' => $detalle,
-          'descripcion' => $descripcion,
-          'miembros' => $miembros,
-          'actividades' => $actividades,
-          'presupuesto' => $presupuesto,
-          'responsable' => $responsable,
-        ];
-
-      case "PTPDOCTO":
-        $ctrl = new PtpdoctoController();
-
-        $detalle = $ctrl->detalle($request);
-        $documentos = $ctrl->documentos($request);
-        $miembros = $ctrl->miembros($request);
-        $descripcion = $ctrl->descripcion($request);
-        $actividades = $ctrl->actividades($request);
-        $responsableTesista = $ctrl->responsableTesista($request);
-        $presupuesto = $this->presupuesto($request);
-
-        return [
-          'detalle' => $detalle,
-          'documentos' => $documentos,
-          'miembros' => $miembros,
-          'descripcion' => $descripcion,
-          'actividades' => $actividades,
-          'responsableTesista' => $responsableTesista,
-          'presupuesto' => $presupuesto,
-        ];
-
-      case "PTPMAEST":
-        $ctrl = new PtpmaestController();
-
-        $detalle = $ctrl->detalle($request);
-        $documentos = $ctrl->documentos($request);
-        $miembros = $ctrl->miembros($request);
-        $descripcion = $ctrl->descripcion($request);
-        $actividades = $ctrl->actividades($request);
-        $responsableTesista = $ctrl->responsableTesista($request);
-        $presupuesto = $this->presupuesto($request);
-
-      case "PTPGRADO":
-        $ctrl = new PtpgradoController();
-
-        $detalle = $ctrl->detalle($request);
-        $documentos = $ctrl->documentos($request);
-        $miembros = $ctrl->miembros($request);
-        $descripcion = $ctrl->descripcion($request);
-        $actividades = $ctrl->actividades($request);
-        $responsableTesista = $ctrl->responsableTesista($request);
-        $presupuesto = $this->presupuesto($request);
-
-        return [
-          'detalle' => $detalle,
-          'documentos' => $documentos,
-          'miembros' => $miembros,
-          'descripcion' => $descripcion,
-          'actividades' => $actividades,
-          'responsableTesista' => $responsableTesista,
-          'presupuesto' => $presupuesto,
         ];
 
       default:
@@ -402,7 +328,6 @@ class ProyectosGrupoController extends S3Controller {
     $presupuesto = DB::table('Proyecto_presupuesto AS a')
       ->join('Partida AS b', 'b.id', '=', 'a.partida_id')
       ->select(
-        'b.codigo',
         'b.tipo',
         'b.partida',
         'a.justificacion',
@@ -565,19 +490,16 @@ class ProyectosGrupoController extends S3Controller {
       case "PICV":
         $ctrl = new PicvController();
         return $ctrl->reporte($request);
-      case "PTPBACHILLER":
-        $ctrl = new PtpbachillerController();
-        return $ctrl->reporte($request);
-      case "PTPDOCTO":
-        $ctrl = new PtpdoctoController();
-        return $ctrl->reporte($request);
-      case "PTPMAEST":
-        $ctrl = new PtpmaestController();
-        return $ctrl->reporte($request);
-      case "PTPGRADO":
-        $ctrl = new PtpgradoController();
-        return $ctrl->reporte($request);
       default:
     }
+  }
+
+  public function excel(Request $request) {
+
+    $filters = $request->all();
+
+    $export = new ProyectosGrupoExport($filters);
+
+    return Excel::download($export, 'proyectos.xlsx');
   }
 }
