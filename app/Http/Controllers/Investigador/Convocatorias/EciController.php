@@ -157,6 +157,7 @@ class EciController extends S3Controller {
         END AS tesista")
       ])
       ->where('a.grupo_id', '=', $grupo->grupo_id)
+      ->whereNot('a.condicion', 'LIKE', 'Ex%')
       ->groupBy('b.id')
       ->get();
 
