@@ -98,7 +98,7 @@ class Informe_economicoController extends S3Controller {
 
       $comprobantes_aprobados = DB::table('Geco_documento')
         ->where('geco_proyecto_id', '=', $request->query('id'))
-        ->where('estado', '=', 1)
+        ->whereIn('estado', [1, 6])
         ->count();
 
       $transferencias_aprobadas = DB::table('Geco_operacion')
@@ -144,6 +144,7 @@ class Informe_economicoController extends S3Controller {
             WHEN a.estado = 3 THEN "Observado"
             WHEN a.estado = 4 THEN "Enviado"
             WHEN a.estado = 5 THEN "Anulado"
+            WHEN a.estado = 6 THEN "Aprobado V.B"
             ELSE "Desconocido"
           END AS estado'),
           'a.observacion'
@@ -361,6 +362,7 @@ class Informe_economicoController extends S3Controller {
             'ruc',
             'fecha',
             'razon_social',
+            'descripcion_compra'
           ])
           ->where('id', '=', $request->query('id'))
           ->first();
@@ -373,7 +375,8 @@ class Informe_economicoController extends S3Controller {
             'ruc',
             'fecha',
             'retencion',
-            'razon_social'
+            'razon_social',
+            'descripcion_compra'
           ])
           ->where('id', '=', $request->query('id'))
           ->first();
@@ -623,6 +626,7 @@ class Informe_economicoController extends S3Controller {
             'numero_doc' => $request->input('numero_doc'),
             'prestador' => $request->input('prestador'),
             'investigador_id' => $request->input('investigador_id'),
+            'descripcion_compra' => $request->input('descripcion_compra'),
             'ruc' => $request->input('ruc'),
             'concepto' => $request->input('concepto'),
             'fecha' => $request->input('fecha'),
@@ -660,6 +664,7 @@ class Informe_economicoController extends S3Controller {
             'numero_doc' => $request->input('numero_doc'),
             'prestador' => $request->input('prestador'),
             'investigador_id' => $request->input('investigador_id'),
+            'descripcion_compra' => $request->input('descripcion_compra'),
             'ruc' => $request->input('ruc'),
             'concepto' => $request->input('concepto'),
             'fecha' => $request->input('fecha'),
@@ -751,7 +756,7 @@ class Informe_economicoController extends S3Controller {
       ])
       ->where('a.geco_proyecto_id', '=', $id)
       ->where('c.geco_proyecto_id', '=', $id)
-      ->where('a.estado', '=', 1)
+      ->whereIn('a.estado', [1, 6])
       ->groupBy('b.partida_id')
       ->get();
 

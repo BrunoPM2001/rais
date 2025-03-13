@@ -118,7 +118,7 @@ class GestionComprobantesController extends S3Controller {
 
     $comprobantes_aprobados = DB::table('Geco_documento')
       ->where('geco_proyecto_id', '=', $request->query('geco_id'))
-      ->where('estado', '=', 1)
+      ->whereIn('estado', [1, 6])
       ->count();
 
     $transferencias_aprobadas = DB::table('Geco_operacion')
@@ -258,7 +258,7 @@ class GestionComprobantesController extends S3Controller {
       ])
       ->where('a.geco_proyecto_id', '=', $request->query('id'))
       ->where('c.tipo', '=', 'Bienes')
-      ->where('a.estado', '=', 1)
+      ->whereIn('a.estado', [1, 6])
       ->get();
 
     $servicios = DB::table('Geco_documento AS a')
@@ -274,7 +274,7 @@ class GestionComprobantesController extends S3Controller {
       ])
       ->where('a.geco_proyecto_id', '=', $request->query('id'))
       ->where('c.tipo', '=', 'Servicios')
-      ->where('a.estado', '=', 1)
+      ->where('a.estado', [1, 6])
       ->get();
 
     $pdf = Pdf::loadView(
@@ -295,6 +295,7 @@ class GestionComprobantesController extends S3Controller {
         'created_at',
         'updated_at',
         'estado',
+        'descripcion_compra',
         'razon_social',
         'ruc',
         'observacion'
@@ -472,7 +473,7 @@ class GestionComprobantesController extends S3Controller {
         'b.partida_id',
       ])
       ->where('geco_proyecto_id', '=', $geco_proyecto_id)
-      ->where('estado', '=', 1)
+      ->whereIn('estado', [1, 6])
       ->groupBy('b.partida_id')
       ->get();
 

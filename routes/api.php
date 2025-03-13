@@ -466,14 +466,14 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
   //  Constancias
   Route::prefix('constancias')->group(function () {
     Route::get('checkTiposConstancia/{investigador_id}', [ReporteController::class, 'checkTiposConstancia']);
-    Route::get('getConstanciaPuntajePublicaciones/{investigador_id}', [ReporteController::class, 'getConstanciaPuntajePublicaciones']);
-    Route::get('getConstanciaPublicacionesCientificas/{investigador_id}', [ReporteController::class, 'getConstanciaPublicacionesCientificas']);
-    Route::get('getConstanciaGrupoInvestigacion/{investigador_id}', [ReporteController::class, 'getConstanciaGrupoInvestigacion']);
-    Route::get('getConstanciaEstudiosInvestigacion/{investigador_id}', [ReporteController::class, 'getConstanciaEstudiosInvestigacion']);
-    Route::get('getConstanciaEquipamientoCientifico/{investigador_id}', [ReporteController::class, 'getConstanciaEquipamientoCientifico']);
-    Route::get('getConstanciaNoDeuda/{investigador_id}', [ReporteController::class, 'getConstanciaNoDeuda']);
-    Route::get('getConstanciaTesisAsesoria/{investigador_id}', [ReporteController::class, 'getConstanciaTesisAsesoria']);
-    Route::get('getConstanciaCapituloLibro/{investigador_id}', [ReporteController::class, 'getConstanciaCapituloLibro']);
+    Route::get('getConstanciaPuntajePublicaciones', [ReporteController::class, 'getConstanciaPuntajePublicaciones']);
+    Route::get('getConstanciaPublicacionesCientificas', [ReporteController::class, 'getConstanciaPublicacionesCientificas']);
+    Route::get('getConstanciaGrupoInvestigacion', [ReporteController::class, 'getConstanciaGrupoInvestigacion']);
+    Route::get('getConstanciaEstudiosInvestigacion', [ReporteController::class, 'getConstanciaEstudiosInvestigacion']);
+    Route::get('getConstanciaEquipamientoCientifico', [ReporteController::class, 'getConstanciaEquipamientoCientifico']);
+    Route::get('getConstanciaNoDeuda', [ReporteController::class, 'getConstanciaNoDeuda']);
+    Route::get('getConstanciaTesisAsesoria', [ReporteController::class, 'getConstanciaTesisAsesoria']);
+    Route::get('getConstanciaCapituloLibro', [ReporteController::class, 'getConstanciaCapituloLibro']);
   });
 
   //  Facultad

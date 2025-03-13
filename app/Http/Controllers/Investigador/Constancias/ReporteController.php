@@ -77,7 +77,11 @@ class ReporteController extends S3Controller {
       ->get();
 
 
-    $pdf = Pdf::loadView('admin.constancias.tesisAsesoriaPDF', ['docente' => $docente[0], 'tesis' => $tesis]);
+    $pdf = Pdf::loadView('admin.constancias.tesisAsesoriaPDF', [
+      'docente' => $docente[0],
+      'tesis' => $tesis,
+      'username' => false
+    ]);
     return $pdf->stream();
   }
 
@@ -168,6 +172,7 @@ class ReporteController extends S3Controller {
       'otras_actividades' => $otras_actividades,
       'externos' => $externos,
       'otros' => $otros,
+      'username' => false
     ]);
 
     // Retornar el PDF generado (puedes usar `stream` o `download`)
@@ -197,7 +202,11 @@ class ReporteController extends S3Controller {
       ->orderBy('a.periodo', 'DESC')
       ->get();
 
-    $pdf = Pdf::loadView('admin.constancias.equipamientoPDF', ['docente' => $docente[0], 'equipamiento' => $equipamiento]);
+    $pdf = Pdf::loadView('admin.constancias.equipamientoPDF', [
+      'docente' => $docente[0],
+      'equipamiento' => $equipamiento,
+      'username' => false
+    ]);
     return $pdf->stream();
   }
 
@@ -214,7 +223,11 @@ class ReporteController extends S3Controller {
     $deuda = count($deudores);
 
 
-    $pdf = Pdf::loadView('admin.constancias.noDeudaPDF', ['docente' => $docente[0], 'deuda' => $deuda]);
+    $pdf = Pdf::loadView('admin.constancias.noDeudaPDF', [
+      'docente' => $docente[0],
+      'deuda' => $deuda,
+      'username' => false
+    ]);
     return $pdf->stream();
   }
 
@@ -257,17 +270,12 @@ class ReporteController extends S3Controller {
       ->get()
       ->toArray();
 
-
-
-
-    $pdf = Pdf::loadView(
-      'admin.constancias.puntajePublicacionesPDF',
-      [
-        'docente' => $docente[0],
-        'publicaciones' => $publicaciones,
-        'patentes' => $patentes
-      ]
-    );
+    $pdf = Pdf::loadView('admin.constancias.puntajePublicacionesPDF', [
+      'docente' => $docente[0],
+      'publicaciones' => $publicaciones,
+      'patentes' => $patentes,
+      'username' => false
+    ]);
     return $pdf->stream();
   }
 
@@ -314,11 +322,12 @@ class ReporteController extends S3Controller {
 
     $pdf = Pdf::loadView('admin.constancias.capituloLibroPDF', [
       'docente' => $docente[0],
-      'publicaciones' => $publicaciones
+      'publicaciones' => $publicaciones,
+      'username' => false
     ]);
     return $pdf->stream();
   }
-  //  TODO - Verificar que las observaciones sean de esa columna
+
   public function getConstanciaPublicacionesCientificas(Request $request) {
     $docente = $this->getDatosDocente($request);
 
@@ -345,10 +354,10 @@ class ReporteController extends S3Controller {
       )
       ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
       ->where('b.validado', '=', 1)
-      ->orderBy('c.tipo') // Ordenar por tipo de publicación
-      ->orderBy('c.categoria') // Luego por categoría
-      ->orderByDesc('año') // Después por año, de forma descendente
-      ->orderBy('b.titulo') // Finalmente, por título de publicación
+      ->orderBy('c.tipo')
+      ->orderBy('c.categoria')
+      ->orderByDesc('año')
+      ->orderBy('b.titulo')
       ->get();
 
     $patentes = DB::table('Patente AS a')
@@ -364,29 +373,19 @@ class ReporteController extends S3Controller {
       )
       ->where('b.es_presentador', '=', 1)
       ->where('b.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
-      ->orderBy('a.tipo') // Ordenar por tipo de publicación
-      ->orderByDesc('c.updated_at') // Después por año, de forma descendente
-      ->orderBy('a.titulo') // Finalmente, por título de publicación
+      ->orderBy('a.tipo')
+      ->orderByDesc('c.updated_at')
+      ->orderBy('a.titulo')
       ->get();
 
-    $date = Carbon::now();
-    $nameFile = $date->format('YmdHis') . Str::random(8) . '.pdf';
-
-    $qrUrl = 'http://localhost:9000/repo/' . $nameFile;
-    $qrCode = base64_encode(QrCode::format('png')->size(300)->generate($qrUrl));
-
-    $pdf = Pdf::loadView('admin.constancias.publicacionesCientificas', [
+    $pdf = Pdf::loadView('admin.constancias.publicacionesCientificasPDF', [
       'docente' => $docente[0],
       'publicaciones' => $publicaciones,
       'patentes' => $patentes,
-      'file' => $nameFile,
-      'qrCode' => $qrCode
+      'username' => false
     ]);
 
-    $file = $pdf->output();
-
-    $this->loadFile($file, 'repo', $nameFile);
-    return $nameFile;
+    return $pdf->stream();
   }
 
   public function getConstanciaGrupoInvestigacion(Request $request) {
@@ -415,21 +414,11 @@ class ReporteController extends S3Controller {
       ->get()
       ->toArray();
 
-    $date = Carbon::now();
-    $nameFile = $date->format('YmdHis') . Str::random(8) . '.pdf';
-
-    $qrUrl = 'http://localhost:9000/repo/' . $nameFile;
-    $qrCode = base64_encode(QrCode::format('png')->size(300)->generate($qrUrl));
-
-    $pdf = Pdf::loadView('investigador.constancias.grupoInvestigacion', [
+    $pdf = Pdf::loadView('admin.constancias.grupoInvestigacionPDF', [
       'grupo' => $grupo,
-      'file' => $nameFile,
-      'qrCode' => $qrCode
+      'username' => false
     ]);
 
-    $file = $pdf->output();
-
-    $this->loadFile($file, 'repo', $nameFile);
-    return $nameFile;
+    return $pdf->stream();
   }
 }

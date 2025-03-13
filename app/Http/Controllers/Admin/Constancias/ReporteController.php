@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin\Constancias;
 
 use App\Http\Controllers\Controller;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class ReporteController extends Controller {
@@ -34,9 +35,9 @@ class ReporteController extends Controller {
 
   public function getDatosDocente($investigador_id) {
     $docente = DB::table('Usuario_investigador AS a')
-      ->leftJoin('Facultad AS b', 'b.id', '=', 'a.facultad_id') // LEFT JOIN con Facultad
-      ->leftJoin('Repo_rrhh AS rrhh', 'rrhh.ser_doc_id_act', '=', 'a.doc_numero') // LEFT JOIN con Repo_rrhh
-      ->leftJoin('Docente_categoria AS c', 'rrhh.ser_cat_act', '=', 'c.categoria_id') // LEFT JOIN con Docente_categoria
+      ->leftJoin('Facultad AS b', 'b.id', '=', 'a.facultad_id')
+      ->leftJoin('Repo_rrhh AS rrhh', 'rrhh.ser_doc_id_act', '=', 'a.doc_numero')
+      ->leftJoin('Docente_categoria AS c', 'rrhh.ser_cat_act', '=', 'c.categoria_id')
       ->select(
         'a.id',
         'a.codigo',
@@ -59,24 +60,29 @@ class ReporteController extends Controller {
   }
 
 
-  public function getConstanciaTesisAsesoria($investigador_id) {
-    $docente = $this->getDatosDocente($investigador_id);
+  public function getConstanciaTesisAsesoria(Request $request) {
+    $docente = $this->getDatosDocente($request->query('investigador_id'));
 
     $tesis = DB::table('view_proyecto_reporte AS a')
       ->select(
         '*',
 
       )
-      ->where('a.investigador_id', '=', $investigador_id)
+      ->where('a.investigador_id', '=', $request->query('investigador_id'))
       ->whereIn('a.tipo_proyecto', ['PTPBACHILLER', 'PTPMAEST', 'PTPDOCTO', 'PTPGRADO', 'Tesis'])
       ->orderBy('a.periodo', 'DESC')
       ->get();
 
 
-    $pdf = Pdf::loadView('admin.constancias.tesisAsesoriaPDF', ['docente' => $docente[0], 'tesis' => $tesis]);
+    $pdf = Pdf::loadView('admin.constancias.tesisAsesoriaPDF', [
+      'docente' => $docente[0],
+      'tesis' => $tesis,
+      'username' => $request->attributes->get('token_decoded')->username
+    ]);
     return $pdf->stream();
   }
-  public function getConstanciaEstudiosInvestigacion($investigador_id) {
+
+  public function getConstanciaEstudiosInvestigacion(Request $request) {
 
     // Inicializar arrays independientes para cada grupo
     $con_incentivo = [];
@@ -91,11 +97,11 @@ class ReporteController extends Controller {
     $pmulti = [];
     $otros = [];
 
-    $docente = $this->getDatosDocente($investigador_id);
+    $docente = $this->getDatosDocente($request->query('investigador_id'));
 
     $proyectos = DB::table('view_proyecto_reporte as vreport')
       ->select('*')
-      ->where('vreport.investigador_id', '=', $investigador_id)
+      ->where('vreport.investigador_id', '=', $request->query('investigador_id'))
       ->orderBy('periodo', 'DESC')
       ->get();
 
@@ -163,14 +169,15 @@ class ReporteController extends Controller {
       'otras_actividades' => $otras_actividades,
       'externos' => $externos,
       'otros' => $otros,
+      'username' => $request->attributes->get('token_decoded')->username
     ]);
 
     // Retornar el PDF generado (puedes usar `stream` o `download`)
     return $pdf->stream();
   }
 
-  public function getConstanciaEquipamientoCientifico($investigador_id) {
-    $docente = $this->getDatosDocente($investigador_id);
+  public function getConstanciaEquipamientoCientifico(Request $request) {
+    $docente = $this->getDatosDocente($request->query('investigador_id'));
 
     $equipamiento = DB::table('view_proyecto_reporte AS a')
       ->select(
@@ -188,35 +195,43 @@ class ReporteController extends Controller {
       )
       ->join('view_proyecto_presupuesto AS p', 'p.proyecto_id', '=', 'a.proyecto_id')
       ->where('a.tipo_proyecto', '=', 'ECI')
-      ->where('a.investigador_id', '=', $investigador_id)
+      ->where('a.investigador_id', '=', $request->query('investigador_id'))
       ->orderBy('a.periodo', 'DESC')
       ->get();
 
-    $pdf = Pdf::loadView('admin.constancias.equipamientoPDF', ['docente' => $docente[0], 'equipamiento' => $equipamiento]);
+    $pdf = Pdf::loadView('admin.constancias.equipamientoPDF', [
+      'docente' => $docente[0],
+      'equipamiento' => $equipamiento,
+      'username' => $request->attributes->get('token_decoded')->username
+    ]);
     return $pdf->stream();
   }
 
-  public function getConstanciaNoDeuda($investigador_id) {
-    $docente = $this->getDatosDocente($investigador_id);
+  public function getConstanciaNoDeuda(Request $request) {
+    $docente = $this->getDatosDocente($request->query('investigador_id'));
 
     $deudores = DB::table('view_deudores')
       ->select(
         '*',
       )
-      ->where('investigador_id', '=', $investigador_id)
+      ->where('investigador_id', '=', $request->query('investigador_id'))
       ->get();
 
     $deuda = count($deudores);
 
 
-    $pdf = Pdf::loadView('admin.constancias.noDeudaPDF', ['docente' => $docente[0], 'deuda' => $deuda]);
+    $pdf = Pdf::loadView('admin.constancias.noDeudaPDF', [
+      'docente' => $docente[0],
+      'deuda' => $deuda,
+      'username' => $request->attributes->get('token_decoded')->username
+    ]);
     return $pdf->stream();
   }
 
   //  TODO - Ver por qué la suma de puntos no coincide
-  public function getConstanciaPuntajePublicaciones($investigador_id) {
+  public function getConstanciaPuntajePublicaciones(Request $request) {
 
-    $docente = $this->getDatosDocente($investigador_id);
+    $docente = $this->getDatosDocente($request->query('investigador_id'));
 
     $publicaciones = DB::table('Publicacion_autor AS a')
       ->join('Publicacion AS b', 'b.id', '=', 'a.publicacion_id')
@@ -227,7 +242,7 @@ class ReporteController extends Controller {
         DB::raw('COUNT(*) AS cantidad'),
         DB::raw('(a.puntaje * COUNT(*)) AS puntaje')
       )
-      ->where('a.investigador_id', '=', $investigador_id)
+      ->where('a.investigador_id', '=', $request->query('investigador_id'))
       ->where('b.validado', '=', 1)
       ->groupBy('b.categoria_id')
       ->groupBy('c.titulo')
@@ -246,29 +261,24 @@ class ReporteController extends Controller {
         DB::raw('SUM(b.puntaje) AS puntaje') // Sumar los puntajes agrupados
       )
       ->where('b.es_presentador', 1)
-      ->where('b.investigador_id', $investigador_id)
+      ->where('b.investigador_id', $request->query('investigador_id'))
       ->groupBy('a.tipo') // Agrupación solo por tipo
       ->orderBy('a.tipo') // Ordenar por tipo
       ->get()
       ->toArray();
 
-
-
-
-    $pdf = Pdf::loadView(
-      'admin.constancias.puntajePublicacionesPDF',
-      [
-        'docente' => $docente[0],
-        'publicaciones' => $publicaciones,
-        'patentes' => $patentes
-      ]
-    );
+    $pdf = Pdf::loadView('admin.constancias.puntajePublicacionesPDF', [
+      'docente' => $docente[0],
+      'publicaciones' => $publicaciones,
+      'patentes' => $patentes,
+      'username' => $request->attributes->get('token_decoded')->username
+    ]);
     return $pdf->stream();
   }
 
-  public function getConstanciaCapituloLibro($investigador_id) {
+  public function getConstanciaCapituloLibro(Request $request) {
 
-    $docente = $this->getDatosDocente($investigador_id);
+    $docente = $this->getDatosDocente($request->query('investigador_id'));
 
     $publicaciones = DB::table('Publicacion as a')
       ->selectRaw("
@@ -300,7 +310,7 @@ class ReporteController extends Controller {
       ->join('Publicacion_proyecto as f', 'f.publicacion_id', '=', 'a.id')
       ->leftJoin('Publicacion_categoria as e', 'a.categoria_id', '=', 'e.id')
       ->where('a.estado', 1)
-      ->where('b.investigador_id', $investigador_id)
+      ->where('b.investigador_id', $request->query('investigador_id'))
       ->whereIn('a.tipo_publicacion', ['libro', 'capitulo'])
       ->orderByRaw('6 DESC, 3 DESC, 4') // Ordena por las posiciones en SELECT
       ->get();
@@ -309,13 +319,14 @@ class ReporteController extends Controller {
 
     $pdf = Pdf::loadView('admin.constancias.capituloLibroPDF', [
       'docente' => $docente[0],
-      'publicaciones' => $publicaciones
+      'publicaciones' => $publicaciones,
+      'username' => $request->attributes->get('token_decoded')->username
     ]);
     return $pdf->stream();
   }
   //  TODO - Verificar que las observaciones sean de esa columna
-  public function getConstanciaPublicacionesCientificas($investigador_id) {
-    $docente = $this->getDatosDocente($investigador_id);
+  public function getConstanciaPublicacionesCientificas(Request $request) {
+    $docente = $this->getDatosDocente($request->query('investigador_id'));
 
     $publicaciones = DB::table('Publicacion_autor AS a')
       ->join('Publicacion AS b', 'b.id', '=', 'a.publicacion_id')
@@ -338,7 +349,7 @@ class ReporteController extends Controller {
         'b.observaciones_usuario',
         'e.nombre AS facultad'
       )
-      ->where('a.investigador_id', '=', $investigador_id)
+      ->where('a.investigador_id', '=', $request->query('investigador_id'))
       ->where('b.validado', '=', 1)
       ->orderBy('c.tipo') // Ordenar por tipo de publicación
       ->orderBy('c.categoria') // Luego por categoría
@@ -358,27 +369,25 @@ class ReporteController extends Controller {
         DB::raw('YEAR(c.updated_at) año'), // Captura solo el año
       )
       ->where('b.es_presentador', '=', 1)
-      ->where('b.investigador_id', '=', $investigador_id)
+      ->where('b.investigador_id', '=', $request->query('investigador_id'))
       ->orderBy('a.tipo') // Ordenar por tipo de publicación
       ->orderByDesc('c.updated_at') // Después por año, de forma descendente
       ->orderBy('a.titulo') // Finalmente, por título de publicación
       ->get();
 
 
-    $pdf = Pdf::loadView(
-      'admin.constancias.publicacionesCientificasPDF',
-      [
-        'docente' => $docente[0],
-        'publicaciones' => $publicaciones,
-        'patentes' => $patentes
-      ]
-    );
+    $pdf = Pdf::loadView('admin.constancias.publicacionesCientificasPDF', [
+      'docente' => $docente[0],
+      'publicaciones' => $publicaciones,
+      'patentes' => $patentes,
+      'username' => $request->attributes->get('token_decoded')->username
+    ]);
 
     return $pdf->stream();
   }
 
 
-  public function getConstanciaGrupoInvestigacion($investigador_id) {
+  public function getConstanciaGrupoInvestigacion(Request $request) {
     $grupo = DB::table('Usuario_investigador AS a')
       ->join('Grupo_integrante AS b', 'b.investigador_id', '=', 'a.id')
       ->join('Grupo AS c', 'c.id', '=', 'b.grupo_id')
@@ -398,13 +407,16 @@ class ReporteController extends Controller {
         'c.resolucion_rectoral',
         'c.resolucion_creacion_fecha'
       )
-      ->where('a.id', '=', $investigador_id)
+      ->where('a.id', '=', $request->query('investigador_id'))
       ->where('c.estado', '=', 4)
       ->where('b.condicion', 'not like', 'Ex %') // Excluir los que comienzan con "Ex "
       ->get()
       ->toArray();
 
-    $pdf = Pdf::loadView('admin.constancias.grupoInvestigacionPDF', ['grupo' => $grupo]);
+    $pdf = Pdf::loadView('admin.constancias.grupoInvestigacionPDF', [
+      'grupo' => $grupo,
+      'username' => $request->attributes->get('token_decoded')->username
+    ]);
     return $pdf->stream();
   }
 }
