@@ -93,6 +93,23 @@ class SessionController extends Controller {
           'nombre' => $usuario->nombres,
           'exp' => time() + 8200
         ], env('JWT_SECRET'), 'HS256');
+      } else if ($table->tabla == "Usuario_secretaria") {
+
+        $usuario = DB::table('Usuario_secretaria')
+          ->select([
+            DB::raw("CONCAT(apellido1, ' ', apellido2) AS apellidos"),
+            "nombres",
+          ])
+          ->where('id', '=', $table->tabla_id)
+          ->first();
+
+        $jwt = JWT::encode([
+          'id' => $table->tabla_id,
+          'tabla' => $table->tabla,
+          'nombre' => $usuario->nombres,
+          'apellidos' => $usuario->apellidos,
+          'exp' => time() + 8200
+        ], env('JWT_SECRET'), 'HS256');
       }
 
       return [

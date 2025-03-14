@@ -3,38 +3,16 @@
 namespace App\Http\Controllers\Investigador\Constancias;
 
 use App\Http\Controllers\S3Controller;
+use App\Mail\Investigador\Constancias\ConstanciaParaFirma;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class ReporteController extends S3Controller {
-
-  public function checkTiposConstancia(Request $request) {
-
-    $estudio = $this->getConstanciaEstudiosInvestigacion($request);
-    $tesis = $this->getConstanciaTesisAsesoria($request);
-    $equipamiento = $this->getConstanciaEquipamientoCientifico($request);
-    $deuda = $this->getConstanciaNoDeuda($request);
-    $puntaje = $this->getConstanciaPuntajePublicaciones($request);
-    $capitulo = $this->getConstanciaCapituloLibro($request);
-    $publicaciones = $this->getConstanciaPublicacionesCientificas($request);
-    $grupo = $this->getConstanciaGrupoInvestigacion($request);
-
-
-    return [
-      'estudio' => $estudio,
-      'tesis' => $tesis,
-      'equipamiento' => $equipamiento,
-      'deuda' => $deuda,
-      'puntaje' => $puntaje,
-      'capitulo' => $capitulo,
-      'publicaciones' => $publicaciones,
-      'grupo' => $grupo
-    ];
-  }
 
   public function getDatosDocente(Request $request) {
     $docente = DB::table('Usuario_investigador AS a')
@@ -62,8 +40,7 @@ class ReporteController extends S3Controller {
     return $docente;
   }
 
-
-  public function getConstanciaTesisAsesoria(Request $request) {
+  public function getConstanciaTesisAsesoria(Request $request, $solicitud = false) {
     $docente = $this->getDatosDocente($request);
 
     $tesis = DB::table('view_proyecto_reporte AS a')
@@ -76,16 +53,35 @@ class ReporteController extends S3Controller {
       ->orderBy('a.periodo', 'DESC')
       ->get();
 
+    if (!$solicitud) {
+      $pdf = Pdf::loadView('admin.constancias.tesisAsesoriaPDF', [
+        'docente' => $docente[0],
+        'tesis' => $tesis,
+        'username' => false
+      ]);
 
-    $pdf = Pdf::loadView('admin.constancias.tesisAsesoriaPDF', [
-      'docente' => $docente[0],
-      'tesis' => $tesis,
-      'username' => false
-    ]);
-    return $pdf->stream();
+      return $pdf->stream();
+    } else {
+      $date = Carbon::now();
+      $nameFile = 'tesisAsesoria_' . $request->attributes->get('token_decoded')->investigador_id . '_' . $date->format('YmdHis') . '_' . Str::random(8) . '.pdf';
+      $nameFileN = 'tesisAsesoria_' . $request->attributes->get('token_decoded')->investigador_id . '_' . $date->format('YmdHis') . '_' . Str::random(8) . '_original.pdf';
+
+      $qrUrl =  env('URL_CONSTANCIAS') . "constancias/" . $nameFile;
+      $qrCode = base64_encode(QrCode::format('png')->size(300)->generate($qrUrl));
+
+      $pdf = Pdf::loadView('investigador.constancias.tesisAsesoriaPDF', [
+        'docente' => $docente[0],
+        'tesis' => $tesis,
+        'username' => false,
+        'file' => $nameFile,
+        'qrCode' => $qrCode
+      ]);
+
+      return ['file' => $pdf->output(), 'name' => $nameFile, 'original_file' => $nameFileN];
+    }
   }
 
-  public function getConstanciaEstudiosInvestigacion(Request $request) {
+  public function getConstanciaEstudiosInvestigacion(Request $request, $solicitud = false) {
 
     // Inicializar arrays independientes para cada grupo
     $con_incentivo = [];
@@ -156,30 +152,61 @@ class ReporteController extends S3Controller {
     $externos = count($pfex) + count($sin_con);
 
 
-    $pdf = Pdf::loadView('admin.constancias.estudiosInvestigacionPDF', [
-      'docente' => $docente[0], // Pasar el docente
-      'con_incentivo' => $con_incentivo, // Pasar cada array por separado
-      'financiamiento_gi' => $financiamiento_gi,
-      'pmulti' => $pmulti,
-      'no_monetarios_gi' => $no_monetarios_gi,
-      'sin_incentivo' => $sin_incentivo,
-      'eventos' => $eventos,
-      'publicaciones' => $proyecto_publicacion,
-      'talleres' => $taller,
-      'fondos_externos' => $pfex,
-      'sin_asignacion_con_incentivo' => $sin_con,
-      'fondos_concursables' => $fondos_concursables,
-      'otras_actividades' => $otras_actividades,
-      'externos' => $externos,
-      'otros' => $otros,
-      'username' => false
-    ]);
+    if (!$solicitud) {
 
-    // Retornar el PDF generado (puedes usar `stream` o `download`)
-    return $pdf->stream();
+      $pdf = Pdf::loadView('admin.constancias.estudiosInvestigacionPDF', [
+        'docente' => $docente[0], // Pasar el docente
+        'con_incentivo' => $con_incentivo, // Pasar cada array por separado
+        'financiamiento_gi' => $financiamiento_gi,
+        'pmulti' => $pmulti,
+        'no_monetarios_gi' => $no_monetarios_gi,
+        'sin_incentivo' => $sin_incentivo,
+        'eventos' => $eventos,
+        'publicaciones' => $proyecto_publicacion,
+        'talleres' => $taller,
+        'fondos_externos' => $pfex,
+        'sin_asignacion_con_incentivo' => $sin_con,
+        'fondos_concursables' => $fondos_concursables,
+        'otras_actividades' => $otras_actividades,
+        'externos' => $externos,
+        'otros' => $otros,
+        'username' => false
+      ]);
+      return $pdf->stream();
+    } else {
+      $date = Carbon::now();
+      $nameFile = 'estudios_' . $request->attributes->get('token_decoded')->investigador_id . '_' . $date->format('YmdHis') . '_' . Str::random(8) . '.pdf';
+      $nameFileN = 'estudios_' . $request->attributes->get('token_decoded')->investigador_id . '_' . $date->format('YmdHis') . '_' . Str::random(8) . '_original.pdf';
+
+      $qrUrl =  env('URL_CONSTANCIAS') . "constancias/" . $nameFile;
+      $qrCode = base64_encode(QrCode::format('png')->size(300)->generate($qrUrl));
+
+      $pdf = Pdf::loadView('investigador.constancias.estudiosInvestigacionPDF', [
+        'docente' => $docente[0], // Pasar el docente
+        'con_incentivo' => $con_incentivo, // Pasar cada array por separado
+        'financiamiento_gi' => $financiamiento_gi,
+        'pmulti' => $pmulti,
+        'no_monetarios_gi' => $no_monetarios_gi,
+        'sin_incentivo' => $sin_incentivo,
+        'eventos' => $eventos,
+        'publicaciones' => $proyecto_publicacion,
+        'talleres' => $taller,
+        'fondos_externos' => $pfex,
+        'sin_asignacion_con_incentivo' => $sin_con,
+        'fondos_concursables' => $fondos_concursables,
+        'otras_actividades' => $otras_actividades,
+        'externos' => $externos,
+        'otros' => $otros,
+        'username' => false,
+        'file' => $nameFile,
+        'qrCode' => $qrCode
+      ]);
+
+      return ['file' => $pdf->output(), 'name' => $nameFile, 'original_file' => $nameFileN];
+    }
   }
 
-  public function getConstanciaEquipamientoCientifico(Request $request) {
+  public function getConstanciaEquipamientoCientifico(Request $request, $solicitud = false) {
     $docente = $this->getDatosDocente($request);
 
     $equipamiento = DB::table('view_proyecto_reporte AS a')
@@ -202,15 +229,34 @@ class ReporteController extends S3Controller {
       ->orderBy('a.periodo', 'DESC')
       ->get();
 
-    $pdf = Pdf::loadView('admin.constancias.equipamientoPDF', [
-      'docente' => $docente[0],
-      'equipamiento' => $equipamiento,
-      'username' => false
-    ]);
-    return $pdf->stream();
+    if (!$solicitud) {
+      $pdf = Pdf::loadView('admin.constancias.equipamientoPDF', [
+        'docente' => $docente[0],
+        'equipamiento' => $equipamiento,
+        'username' => false
+      ]);
+      return $pdf->stream();
+    } else {
+      $date = Carbon::now();
+      $nameFile = 'eci_' . $request->attributes->get('token_decoded')->investigador_id . '_' . $date->format('YmdHis') . '_' . Str::random(8) . '.pdf';
+      $nameFileN = 'eci_' . $request->attributes->get('token_decoded')->investigador_id . '_' . $date->format('YmdHis') . '_' . Str::random(8) . '_original.pdf';
+
+      $qrUrl =  env('URL_CONSTANCIAS') . "constancias/" . $nameFile;
+      $qrCode = base64_encode(QrCode::format('png')->size(300)->generate($qrUrl));
+
+      $pdf = Pdf::loadView('investigador.constancias.equipamientoPDF', [
+        'docente' => $docente[0],
+        'equipamiento' => $equipamiento,
+        'username' => false,
+        'file' => $nameFile,
+        'qrCode' => $qrCode
+      ]);
+
+      return ['file' => $pdf->output(), 'name' => $nameFile, 'original_file' => $nameFileN];
+    }
   }
 
-  public function getConstanciaNoDeuda(Request $request) {
+  public function getConstanciaNoDeuda(Request $request, $solicitud = false) {
     $docente = $this->getDatosDocente($request);
 
     $deudores = DB::table('view_deudores')
@@ -222,17 +268,35 @@ class ReporteController extends S3Controller {
 
     $deuda = count($deudores);
 
+    if (!$solicitud) {
+      $pdf = Pdf::loadView('admin.constancias.noDeudaPDF', [
+        'docente' => $docente[0],
+        'deuda' => $deuda,
+        'username' => false
+      ]);
+      return $pdf->stream();
+    } else {
+      $date = Carbon::now();
+      $nameFile = 'nodeuda_' . $request->attributes->get('token_decoded')->investigador_id . '_' . $date->format('YmdHis') . '_' . Str::random(8) . '.pdf';
+      $nameFileN = 'nodeuda_' . $request->attributes->get('token_decoded')->investigador_id . '_' . $date->format('YmdHis') . '_' . Str::random(8) . '_original.pdf';
 
-    $pdf = Pdf::loadView('admin.constancias.noDeudaPDF', [
-      'docente' => $docente[0],
-      'deuda' => $deuda,
-      'username' => false
-    ]);
-    return $pdf->stream();
+      $qrUrl =  env('URL_CONSTANCIAS') . "constancias/" . $nameFile;
+      $qrCode = base64_encode(QrCode::format('png')->size(300)->generate($qrUrl));
+
+      $pdf = Pdf::loadView('investigador.constancias.noDeudaPDF', [
+        'docente' => $docente[0],
+        'deuda' => $deuda,
+        'username' => false,
+        'file' => $nameFile,
+        'qrCode' => $qrCode
+      ]);
+
+      return ['file' => $pdf->output(), 'name' => $nameFile, 'original_file' => $nameFileN];
+    }
   }
 
   //  TODO - Ver por qué la suma de puntos no coincide
-  public function getConstanciaPuntajePublicaciones(Request $request) {
+  public function getConstanciaPuntajePublicaciones(Request $request, $solicitud = false) {
 
     $docente = $this->getDatosDocente($request);
 
@@ -270,16 +334,36 @@ class ReporteController extends S3Controller {
       ->get()
       ->toArray();
 
-    $pdf = Pdf::loadView('admin.constancias.puntajePublicacionesPDF', [
-      'docente' => $docente[0],
-      'publicaciones' => $publicaciones,
-      'patentes' => $patentes,
-      'username' => false
-    ]);
-    return $pdf->stream();
+    if (!$solicitud) {
+      $pdf = Pdf::loadView('admin.constancias.puntajePublicacionesPDF', [
+        'docente' => $docente[0],
+        'publicaciones' => $publicaciones,
+        'patentes' => $patentes,
+        'username' => false
+      ]);
+      return $pdf->stream();
+    } else {
+      $date = Carbon::now();
+      $nameFile = 'puntaje_' . $request->attributes->get('token_decoded')->investigador_id . '_' . $date->format('YmdHis') . '_' . Str::random(8) . '.pdf';
+      $nameFileN = 'puntaje_' . $request->attributes->get('token_decoded')->investigador_id . '_' . $date->format('YmdHis') . '_' . Str::random(8) . '_original.pdf';
+
+      $qrUrl =  env('URL_CONSTANCIAS') . "constancias/" . $nameFile;
+      $qrCode = base64_encode(QrCode::format('png')->size(300)->generate($qrUrl));
+
+      $pdf = Pdf::loadView('investigador.constancias.puntajePublicacionesPDF', [
+        'docente' => $docente[0],
+        'publicaciones' => $publicaciones,
+        'patentes' => $patentes,
+        'username' => false,
+        'file' => $nameFile,
+        'qrCode' => $qrCode
+      ]);
+
+      return ['file' => $pdf->output(), 'name' => $nameFile, 'original_file' => $nameFileN];
+    }
   }
 
-  public function getConstanciaCapituloLibro(Request $request) {
+  public function getConstanciaCapituloLibro(Request $request, $solicitud = false) {
 
     $docente = $this->getDatosDocente($request);
 
@@ -319,16 +403,34 @@ class ReporteController extends S3Controller {
       ->get();
 
 
+    if (!$solicitud) {
+      $pdf = Pdf::loadView('admin.constancias.capituloLibroPDF', [
+        'docente' => $docente[0],
+        'publicaciones' => $publicaciones,
+        'username' => false
+      ]);
+      return $pdf->stream();
+    } else {
+      $date = Carbon::now();
+      $nameFile = 'capitulos_' . $request->attributes->get('token_decoded')->investigador_id . '_' . $date->format('YmdHis') . '_' . Str::random(8) . '.pdf';
+      $nameFileN = 'capitulos_' . $request->attributes->get('token_decoded')->investigador_id . '_' . $date->format('YmdHis') . '_' . Str::random(8) . '_original.pdf';
 
-    $pdf = Pdf::loadView('admin.constancias.capituloLibroPDF', [
-      'docente' => $docente[0],
-      'publicaciones' => $publicaciones,
-      'username' => false
-    ]);
-    return $pdf->stream();
+      $qrUrl =  env('URL_CONSTANCIAS') . "constancias/" . $nameFile;
+      $qrCode = base64_encode(QrCode::format('png')->size(300)->generate($qrUrl));
+
+      $pdf = Pdf::loadView('investigador.constancias.capituloLibroPDF', [
+        'docente' => $docente[0],
+        'publicaciones' => $publicaciones,
+        'username' => false,
+        'file' => $nameFile,
+        'qrCode' => $qrCode
+      ]);
+
+      return ['file' => $pdf->output(), 'name' => $nameFile, 'original_file' => $nameFileN];
+    }
   }
 
-  public function getConstanciaPublicacionesCientificas(Request $request) {
+  public function getConstanciaPublicacionesCientificas(Request $request, $solicitud = false) {
     $docente = $this->getDatosDocente($request);
 
     $publicaciones = DB::table('Publicacion_autor AS a')
@@ -378,17 +480,37 @@ class ReporteController extends S3Controller {
       ->orderBy('a.titulo')
       ->get();
 
-    $pdf = Pdf::loadView('admin.constancias.publicacionesCientificasPDF', [
-      'docente' => $docente[0],
-      'publicaciones' => $publicaciones,
-      'patentes' => $patentes,
-      'username' => false
-    ]);
+    if (!$solicitud) {
+      $pdf = Pdf::loadView('admin.constancias.publicacionesCientificasPDF', [
+        'docente' => $docente[0],
+        'publicaciones' => $publicaciones,
+        'patentes' => $patentes,
+        'username' => false
+      ]);
 
-    return $pdf->stream();
+      return $pdf->stream();
+    } else {
+      $date = Carbon::now();
+      $nameFile = 'publicaciones_' . $request->attributes->get('token_decoded')->investigador_id . '_' . $date->format('YmdHis') . '_' . Str::random(8) . '.pdf';
+      $nameFileN = 'publicaciones_' . $request->attributes->get('token_decoded')->investigador_id . '_' . $date->format('YmdHis') . '_' . Str::random(8) . '_original.pdf';
+
+      $qrUrl =  env('URL_CONSTANCIAS') . "constancias/" . $nameFile;
+      $qrCode = base64_encode(QrCode::format('png')->size(300)->generate($qrUrl));
+
+      $pdf = Pdf::loadView('investigador.constancias.publicacionesCientificasPDF', [
+        'docente' => $docente[0],
+        'publicaciones' => $publicaciones,
+        'patentes' => $patentes,
+        'username' => false,
+        'file' => $nameFile,
+        'qrCode' => $qrCode
+      ]);
+
+      return ['file' => $pdf->output(), 'name' => $nameFile, 'original_file' => $nameFileN];
+    }
   }
 
-  public function getConstanciaGrupoInvestigacion(Request $request) {
+  public function getConstanciaGrupoInvestigacion(Request $request, $solicitud = false) {
     $grupo = DB::table('Usuario_investigador AS a')
       ->join('Grupo_integrante AS b', 'b.investigador_id', '=', 'a.id')
       ->join('Grupo AS c', 'c.id', '=', 'b.grupo_id')
@@ -414,11 +536,86 @@ class ReporteController extends S3Controller {
       ->get()
       ->toArray();
 
-    $pdf = Pdf::loadView('admin.constancias.grupoInvestigacionPDF', [
-      'grupo' => $grupo,
-      'username' => false
-    ]);
+    if (!$solicitud) {
+      $pdf = Pdf::loadView('admin.constancias.grupoInvestigacionPDF', [
+        'grupo' => $grupo,
+        'username' => false
+      ]);
 
-    return $pdf->stream();
+      return $pdf->stream();
+    } else {
+      $date = Carbon::now();
+      $nameFile = 'grupo_' . $request->attributes->get('token_decoded')->investigador_id . '_' . $date->format('YmdHis') . '_' . Str::random(8) . '.pdf';
+      $nameFileN = 'grupo_' . $request->attributes->get('token_decoded')->investigador_id . '_' . $date->format('YmdHis') . '_' . Str::random(8) . '_original.pdf';
+
+      $qrUrl =  env('URL_CONSTANCIAS') . "constancias/" . $nameFile;
+      $qrCode = base64_encode(QrCode::format('png')->size(300)->generate($qrUrl));
+
+      $pdf = Pdf::loadView('investigador.constancias.grupoInvestigacionPDF', [
+        'grupo' => $grupo,
+        'username' => false,
+        'file' => $nameFile,
+        'qrCode' => $qrCode
+      ]);
+
+      return ['file' => $pdf->output(), 'name' => $nameFile, 'original_file' => $nameFileN];
+    }
+  }
+
+  public function solicitarConstancia(Request $request) {
+    $pdf = "";
+    switch ($request->input('tipo')) {
+      case "11":
+        $pdf = $this->getConstanciaTesisAsesoria($request, true);
+        break;
+      case "1":
+        $pdf = $this->getConstanciaEstudiosInvestigacion($request, true);
+        break;
+      case "7":
+        $pdf = $this->getConstanciaEquipamientoCientifico($request, true);
+        break;
+      case "10":
+        $pdf = $this->getConstanciaNoDeuda($request, true);
+        break;
+      case "4":
+        $pdf = $this->getConstanciaPuntajePublicaciones($request, true);
+        break;
+      case "6":
+        $pdf = $this->getConstanciaCapituloLibro($request, true);
+        break;
+      case "3":
+        $pdf = $this->getConstanciaPublicacionesCientificas($request, true);
+        break;
+      case "2":
+        $pdf = $this->getConstanciaGrupoInvestigacion($request, true);
+        break;
+      default:
+        break;
+    }
+
+    $this->loadFile($pdf["file"], 'constancias', $pdf["name"]);
+    $this->loadFile($pdf["file"], 'constancias', $pdf["original_file"]);
+
+    DB::table('Constancia')
+      ->insert([
+        'investigador_id' => $request->attributes->get('token_decoded')->investigador_id,
+        'tipo' => $request->input('tipo_desc'),
+        'archivo_original' => $pdf["original_file"],
+        'archivo_firmado' => $pdf["name"],
+        'created_at' => Carbon::now(),
+        'updated_at' => Carbon::now(),
+      ]);
+
+    $investigador = DB::table('Usuario_investigador')
+      ->select([
+        DB::raw("CONCAT(apellido1, ' ', apellido2, ', ', nombres) AS nombres"),
+        'email3'
+      ])
+      ->where('id', '=', $request->attributes->get('token_decoded')->investigador_id)
+      ->first();
+
+    Mail::to('alefran2020@gmail.com')->send(new ConstanciaParaFirma($investigador->nombres, $investigador->email3, $pdf["file"]));
+
+    return ['message' => 'success', 'detail' => 'Solicitud enviada con éxito'];
   }
 }

@@ -77,6 +77,7 @@ use App\Http\Controllers\Investigador\Publicaciones\PropiedadIntelectualControll
 use App\Http\Controllers\Investigador\Publicaciones\PublicacionesUtilsController;
 use App\Http\Controllers\Investigador\Publicaciones\TesisAsesoriaController;
 use App\Http\Controllers\Investigador\Publicaciones\TesisPropiasController;
+use App\Http\Controllers\Secretaria\Constancias\ConstanciasController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\SessionController;
 
@@ -826,6 +827,8 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
     Route::get('getConstanciaNoDeuda', [ConstanciasReporteController::class, 'getConstanciaNoDeuda']);
     Route::get('getConstanciaTesisAsesoria', [ConstanciasReporteController::class, 'getConstanciaTesisAsesoria']);
     Route::get('getConstanciaCapituloLibro', [ConstanciasReporteController::class, 'getConstanciaCapituloLibro']);
+
+    Route::post('solicitarConstancia', [ConstanciasReporteController::class, 'solicitarConstancia']);
   });
 
   //  Convocatorias
@@ -1267,5 +1270,12 @@ Route::prefix('facultad')->middleware('checkRole:Usuario_facultad')->group(funct
     Route::get('excelGrupos', [FacultadListadoController::class, 'excelGrupos']);
     Route::get('excelDeudas', [FacultadListadoController::class, 'excelDeudas']);
     Route::get('excelPublicaciones', [FacultadListadoController::class, 'excelPublicaciones']);
+  });
+});
+
+Route::prefix('secretaria')->middleware('checkRole:Usuario_secretaria')->group(function () {
+  Route::prefix('constancias')->group(function () {
+    Route::get('listado', [ConstanciasController::class, 'listado']);
+    Route::post('cargarDocumento', [ConstanciasController::class, 'cargarDocumento']);
   });
 });

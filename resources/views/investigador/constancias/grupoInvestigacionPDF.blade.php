@@ -26,6 +26,7 @@
 
     .header-table td {
       vertical-align: middle;
+      /* Centra el contenido verticalmente */
     }
 
     .header-left {
@@ -89,11 +90,13 @@
     .table-texto2 {
       width: 100%;
       table-layout: fixed;
+
     }
 
     .table-texto2 td {
       text-align: left;
       font-size: 12px;
+
     }
 
     .table-texto2 td:first-child {
@@ -104,6 +107,7 @@
       width: 100%;
       text-align: center;
       margin-top: 90px;
+
     }
 
     .table-content {
@@ -136,9 +140,11 @@
     .extra-1,
     .extra-2,
     {
-      font-size: 12px;
+    font-size: 12px;
+
     }
-    .extra-firma{
+
+    .extra-firma {
       font-size: 14px;
     }
 
@@ -151,6 +157,7 @@
       font-size: 10px;
     }
   </style>
+
 </head>
 
 <body>
@@ -165,6 +172,9 @@
       </td>
       <td class="header-right">
         <span>© RAIS</span><br>
+        @if ($username)
+          <span>Usuario: {{ $username }}</span>
+        @endif
       </td>
     </tr>
   </table>
@@ -183,7 +193,7 @@
 
   <table class="table-texto2">
     <tr>
-      <td>Apellidos :</td>  
+      <td>Apellidos :</td>
       <td><strong>{{ $grupo[0]->apellido1 . ' ' . $grupo[0]->apellido2 }}</strong></td>
     </tr>
     <tr>
@@ -228,20 +238,24 @@
       @endforeach
     </tbody>
   </table>
+
   <table>
     <tr>
-      <td class="extra-1">Se expide la presente constancia a solicitud del(de la) interesado(a) para los fines que considere conveniente.</td>  
-    </tr>
-    <br>
+      <td class="extra-1">Se expide la presente constancia a solicitud del(de la) interesado(a) para los fines que
+        considere conveniente.</td>
+    </tr><br>
     <tr>
-      <td class="extra-2">Lima, {{ $fecha->isoFormat('DD') }} de {{ ucfirst($fecha->monthName) }} de {{ $fecha->year }}</td>
+      <td class="extra-2">Lima, {{ $fecha->isoFormat('DD') }} de {{ ucfirst($fecha->monthName) }}
+        de {{ $fecha->year }}</td>
     </tr>
   </table>
+
   <table class="table-footer">
     <tr class="extra-firma">
       <td>Dr. José Segundo Niño Montero <br><strong>Vicerrector</strong></td>
     </tr>
   </table>
+
   <div class="foot-1">
     <table style="width: 80%; font-size: 10px;">
       <tr>
@@ -249,7 +263,7 @@
           <hr>
           Para verificar la validez de este documento puede ingresar al siguiente enlace:
           <br>
-          http://localhost:9000/repo/{{ $file }}
+          https://rais.unmsm.edu.pe/minio/constancias/{{ $file }}
           <p style="padding-top: 5; margin: 0;">Registro de Actividades de Investigación de San Marcos - © RAIS</p>
         </td>
         <td style="width: 10%; text-align: right; vertical-align: top;">
