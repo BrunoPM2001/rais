@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\Admin\Linea_investigacionController;
 use App\Http\Controllers\Admin\Admin\Usuario_adminController;
 use App\Http\Controllers\Admin\Admin\Usuario_investigadorController;
 use App\Http\Controllers\Admin\Admin\UsuarioController;
+use App\Http\Controllers\Admin\Constancias\ListadoDeudoresController;
 use App\Http\Controllers\Admin\Constancias\ReporteController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\Economia\GestionComprobantesController;
@@ -144,6 +145,7 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
       Route::get('listadoGrupos', [GruposController::class, 'listadoGrupos']);
       Route::get('listadoSolicitudes', [GruposController::class, 'listadoSolicitudes']);
       Route::get('detalle/{grupo_id}', [GruposController::class, 'detalle']);
+      Route::post('excel', [GruposController::class, 'excel']);
 
       Route::put('updateDetalle', [GruposController::class, 'updateDetalle']);
       Route::put('aprobarSolicitud', [GruposController::class, 'aprobarSolicitud']);
@@ -201,7 +203,7 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
 
       Route::get('exportToWord', [ProyectosGrupoController::class, 'exportToWord']);
       Route::get('reporte', [ProyectosGrupoController::class, 'reporte']);
-      Route::get('excel', [ProyectosGrupoController::class, 'excel']);
+      Route::post('excel', [ProyectosGrupoController::class, 'excel']);
     });
 
     //  Proyectos FEX
@@ -302,6 +304,7 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
       Route::get('listado', [PublicacionesController::class, 'listado']);
       Route::get('reporte', [PublicacionesController::class, 'reporte']);
       Route::get('verAuditoria', [PublicacionesController::class, 'verAuditoria']);
+      Route::post('excel', [PublicacionesController::class, 'excel']);
 
       Route::get('detalle', [PublicacionesController::class, 'detalle']);
       Route::post('updateDetalle', [PublicacionesController::class, 'updateDetalle']);
@@ -413,8 +416,9 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
       Route::get('fichaEvaluacion', [DocenteInvestigadorController::class, 'fichaEvaluacion']);
       Route::get('constanciaCDI', [DocenteInvestigadorController::class, 'constanciaCDI']);
       Route::get('constanciaCDIFirmada', [DocenteInvestigadorController::class, 'constanciaCDIFirmada']);
-      // Route::post('enviarCorreo', [DocenteInvestigadorController::class, 'enviarCorreo']);
       Route::get('enviarCdiCorreo', [DocenteInvestigadorController::class, 'enviarCdiCorreo']);
+
+      Route::post('excel', [DocenteInvestigadorController::class, 'excel']);
     });
 
     //  Gestión de SUM
@@ -462,6 +466,9 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
     Route::get('docente/{investigador_id}', [DocenteController::class, 'reporte']);
     Route::get('consolidadoGeneral/{periodo}', [ConsolidadoGeneralController::class, 'reporte']);
     Route::get('presupuesto/{facultad_id}/{periodo}', [PresupuestoController::class, 'reporte']);
+
+    Route::get('listadoDeudores', [ListadoDeudoresController::class, 'listado']);
+    Route::post('listadoDeudoresExcel', [ListadoDeudoresController::class, 'listadoDeudoresExcel']);
   });
 
   //  Constancias
@@ -1267,9 +1274,7 @@ Route::prefix('facultad')->middleware('checkRole:Usuario_facultad')->group(funct
   });
 
   Route::prefix('reportes')->group(function () {
-    Route::get('excelGrupos', [FacultadListadoController::class, 'excelGrupos']);
-    Route::get('excelDeudas', [FacultadListadoController::class, 'excelDeudas']);
-    Route::get('excelPublicaciones', [FacultadListadoController::class, 'excelPublicaciones']);
+    Route::post('excel', [FacultadListadoController::class, 'excel']);
   });
 });
 

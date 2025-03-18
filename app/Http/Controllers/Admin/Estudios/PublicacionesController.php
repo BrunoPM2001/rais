@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin\Estudios;
 
+use App\Exports\Admin\FromDataExport;
 use App\Http\Controllers\Admin\Estudios\Publicaciones\ArticulosController;
 use App\Http\Controllers\Admin\Estudios\Publicaciones\CapitulosLibrosController;
 use App\Http\Controllers\Admin\Estudios\Publicaciones\EventoController;
@@ -15,6 +16,7 @@ use Illuminate\Database\Query\JoinClause;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Maatwebsite\Excel\Facades\Excel;
 
 class PublicacionesController extends S3Controller {
   public function listado(Request $request) {
@@ -715,5 +717,14 @@ class PublicacionesController extends S3Controller {
     }
 
     return $data;
+  }
+
+  public function excel(Request $request) {
+
+    $data = $request->all();
+
+    $export = new FromDataExport($data);
+
+    return Excel::download($export, 'proyectos.xlsx');
   }
 }

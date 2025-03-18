@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin\Estudios;
 
+use App\Exports\Admin\FromDataExport;
 use App\Http\Controllers\OrcidController;
 use App\Http\Controllers\S3Controller;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -10,6 +11,7 @@ use Illuminate\Database\Query\JoinClause;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Maatwebsite\Excel\Facades\Excel;
 
 class GruposController extends S3Controller {
 
@@ -1295,5 +1297,14 @@ class GruposController extends S3Controller {
     } else {
       return ['message' => 'warning', 'detail' => 'No ha cargado ningún achivo'];
     }
+  }
+
+  public function excel(Request $request) {
+
+    $data = $request->all();
+
+    $export = new FromDataExport($data);
+
+    return Excel::download($export, 'proyectos.xlsx');
   }
 }

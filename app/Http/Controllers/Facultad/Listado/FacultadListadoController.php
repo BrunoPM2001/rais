@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Facultad\Listado;
 
+use App\Exports\Admin\FromDataExport;
 use App\Exports\Facultad\DeudasExport;
 use App\Exports\Facultad\PublicacionesExport;
 use App\Exports\Facultad\DocenteInvestigadorExport;
@@ -938,24 +939,12 @@ class FacultadListadoController extends Controller {
     return $pdf->stream();
   }
 
-  public function excelGrupos(Request $request) {
-    $facultadId = $this->facultadId($request);
-    $export = new GrupoIntegrantesExport($facultadId);
+  public function excel(Request $request) {
 
-    return Excel::download($export, 'grupos.xlsx');
-  }
+    $data = $request->all();
 
-  public function excelDeudas(Request $request) {
-    $facultadId = $this->facultadId($request);
-    $export = new DeudasExport($facultadId);
+    $export = new FromDataExport($data);
 
-    return Excel::download($export, 'grupos.xlsx');
-  }
-
-  public function excelPublicaciones(Request $request) {
-    $facultadId = $this->facultadId($request);
-    $export = new PublicacionesExport($facultadId);
-
-    return Excel::download($export, 'publicaciones.xlsx');
+    return Excel::download($export, 'proyectos.xlsx');
   }
 }

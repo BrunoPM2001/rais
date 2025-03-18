@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Admin\Estudios;
 
-use App\Exports\Admin\ProyectosGrupoExport;
+use App\Exports\Admin\FromDataExport;
 use App\Http\Controllers\Admin\Estudios\Proyectos\EciController;
 use App\Http\Controllers\Admin\Estudios\Proyectos\PconfigiController;
 use App\Http\Controllers\Admin\Estudios\Proyectos\PinvposController;
@@ -496,9 +496,9 @@ class ProyectosGrupoController extends S3Controller {
 
   public function excel(Request $request) {
 
-    $filters = $request->all();
+    $data = $request->all();
 
-    $export = new ProyectosGrupoExport($filters);
+    $export = new FromDataExport($data);
 
     return Excel::download($export, 'proyectos.xlsx');
   }

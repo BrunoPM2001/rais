@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin\Estudios;
 
+use App\Exports\Admin\FromDataExport;
 use App\Http\Controllers\S3Controller;
 use App\Mail\Admin\Estudios\DocenteInvestigador\ConstanciaCdi;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -11,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
+use Maatwebsite\Excel\Facades\Excel;
 
 class DocenteInvestigadorController extends S3Controller {
 
@@ -672,5 +674,14 @@ class DocenteInvestigadorController extends S3Controller {
     Mail::to($constancia->email)->send(new ConstanciaCdi($constancia->nombres, $file));
 
     return ['message' => 'info', 'detail' => 'Correo enviado exitosamente'];
+  }
+
+  public function excel(Request $request) {
+
+    $data = $request->all();
+
+    $export = new FromDataExport($data);
+
+    return Excel::download($export, 'proyectos.xlsx');
   }
 }
