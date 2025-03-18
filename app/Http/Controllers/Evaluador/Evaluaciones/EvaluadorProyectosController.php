@@ -13,19 +13,20 @@ class EvaluadorProyectosController extends S3Controller {
   public function listado(Request $request) {
     $date = Carbon::now();
 
-    $proyectos = DB::table('Proyecto_evaluacion AS a')
-      ->leftJoin('Usuario_evaluador AS b', 'b.id', '=', 'a.evaluador_id')
-      ->leftJoin('Proyecto AS c', 'c.id', '=', 'a.proyecto_id')
-      ->leftJoin('Facultad AS d', 'd.id', '=', 'c.facultad_id')
-      ->leftJoin('Evaluacion_opcion AS e', function (JoinClause $join) {
+    $proyectos = DB::table('Proyecto_evaluacion as a')
+      ->leftJoin('Usuario_evaluador as b', 'b.id', '=', 'a.evaluador_id')
+      ->leftJoin('Proyecto as c', 'c.id', '=', 'a.proyecto_id')
+      ->leftJoin('Facultad as d', 'd.id', '=', 'c.facultad_id')
+      ->leftJoin('Evaluacion_opcion as e', function (JoinClause $join) {
         $join->on('e.tipo', '=', 'c.tipo_proyecto')
           ->on('e.periodo', '=', 'c.periodo');
       })
-      ->leftJoin('Evaluacion_proyecto AS f', function (JoinClause $join) {
+      ->leftJoin('Evaluacion_proyecto as f', function (JoinClause $join) {
         $join->on('f.proyecto_id', '=', 'c.id')
-          ->whereNotNull('f.evaluacion_opcion_id');
+          ->whereNotNull('f.evaluacion_opcion_id')
+          ->whereColumn('f.evaluador_id', '=', 'a.evaluador_id');
       })
-      ->join('Convocatoria AS g', function (JoinClause $join) use ($date) {
+      ->join('Convocatoria as g', function (JoinClause $join) use ($date) {
         $join->on('g.tipo', '=', 'c.tipo_proyecto')
           ->on('g.periodo', '=', 'c.periodo')
           ->where('g.evento', '=', 'evaluacion')
@@ -36,18 +37,12 @@ class EvaluadorProyectosController extends S3Controller {
         'c.id',
         'c.tipo_proyecto',
         'c.titulo',
-        'd.nombre AS facultad',
+        'd.nombre as facultad',
         'c.periodo',
-        DB::raw("COUNT(DISTINCT e.id) AS criterios"),
-        DB::raw("COUNT(DISTINCT f.id) AS criterios_evaluados"),
-        DB::raw("CASE
-          WHEN f.cerrado = 1 THEN 'Sí'
-          ELSE 'No'
-        END as evaluado"),
-        DB::raw("CASE
-          WHEN a.ficha is not null THEN 'Sí'
-          ELSE 'No'
-        END as ficha"),
+        DB::raw("COUNT(DISTINCT e.id) as criterios"),
+        DB::raw("COUNT(DISTINCT CASE WHEN f.evaluador_id = a.evaluador_id THEN f.id END) as criterios_evaluados"),
+        DB::raw("CASE WHEN MAX(f.cerrado) = 1 THEN 'Sí' ELSE 'No' END as evaluado"),
+        DB::raw("CASE WHEN a.ficha IS NOT NULL THEN 'Sí' ELSE 'No' END as ficha")
       ])
       ->where('a.evaluador_id', '=', $request->attributes->get('token_decoded')->evaluador_id)
       ->where('e.nivel', '=', 1)
@@ -64,11 +59,11 @@ class EvaluadorProyectosController extends S3Controller {
     $criterios = DB::table('Proyecto_evaluacion AS a')
       ->leftJoin('Usuario_evaluador AS b', 'b.id', '=', 'a.evaluador_id')
       ->leftJoin('Proyecto AS c', 'c.id', '=', 'a.proyecto_id')
-      ->leftJoin('Evaluacion_opcion AS d', function ($join) {
+      ->leftJoin('Evaluacion_opcion AS d', function (JoinClause $join) {
         $join->on('d.tipo', '=', 'c.tipo_proyecto')
           ->on('d.periodo', '=', 'c.periodo');
       })
-      ->leftJoin('Evaluacion_proyecto AS e', function ($join) {
+      ->leftJoin('Evaluacion_proyecto AS e', function (JoinClause $join) {
         $join->on('e.proyecto_id', '=', 'c.id')
           ->on('e.evaluador_id', '=', 'b.id')
           ->on('e.evaluacion_opcion_id', '=', 'd.id');
@@ -137,11 +132,11 @@ class EvaluadorProyectosController extends S3Controller {
     $criterios = DB::table('Proyecto_evaluacion AS a')
       ->leftJoin('Usuario_evaluador AS b', 'b.id', '=', 'a.evaluador_id')
       ->leftJoin('Proyecto AS c', 'c.id', '=', 'a.proyecto_id')
-      ->leftJoin('Evaluacion_opcion AS d', function ($join) {
+      ->leftJoin('Evaluacion_opcion AS d', function (JoinClause $join) {
         $join->on('d.tipo', '=', 'c.tipo_proyecto')
           ->on('d.periodo', '=', 'c.periodo');
       })
-      ->leftJoin('Evaluacion_proyecto AS e', function ($join) {
+      ->leftJoin('Evaluacion_proyecto AS e', function (JoinClause $join) {
         $join->on('e.proyecto_id', '=', 'c.id')
           ->on('e.evaluador_id', '=', 'b.id')
           ->on('e.evaluacion_opcion_id', '=', 'd.id');
@@ -200,11 +195,11 @@ class EvaluadorProyectosController extends S3Controller {
     $criterios = DB::table('Proyecto_evaluacion AS a')
       ->leftJoin('Usuario_evaluador AS b', 'b.id', '=', 'a.evaluador_id')
       ->leftJoin('Proyecto AS c', 'c.id', '=', 'a.proyecto_id')
-      ->leftJoin('Evaluacion_opcion AS d', function ($join) {
+      ->leftJoin('Evaluacion_opcion AS d', function (JoinClause $join) {
         $join->on('d.tipo', '=', 'c.tipo_proyecto')
           ->on('d.periodo', '=', 'c.periodo');
       })
-      ->leftJoin('Evaluacion_proyecto AS e', function ($join) {
+      ->leftJoin('Evaluacion_proyecto AS e', function (JoinClause $join) {
         $join->on('e.proyecto_id', '=', 'c.id')
           ->on('e.evaluador_id', '=', 'b.id')
           ->on('e.evaluacion_opcion_id', '=', 'd.id');
@@ -265,11 +260,11 @@ class EvaluadorProyectosController extends S3Controller {
     $criterios = DB::table('Proyecto_evaluacion AS a')
       ->leftJoin('Usuario_evaluador AS b', 'b.id', '=', 'a.evaluador_id')
       ->leftJoin('Proyecto AS c', 'c.id', '=', 'a.proyecto_id')
-      ->leftJoin('Evaluacion_opcion AS d', function ($join) {
+      ->leftJoin('Evaluacion_opcion AS d', function (JoinClause $join) {
         $join->on('d.tipo', '=', 'c.tipo_proyecto')
           ->on('d.periodo', '=', 'c.periodo');
       })
-      ->leftJoin('Evaluacion_proyecto AS e', function ($join) {
+      ->leftJoin('Evaluacion_proyecto AS e', function (JoinClause $join) {
         $join->on('e.proyecto_id', '=', 'c.id')
           ->on('e.evaluador_id', '=', 'b.id')
           ->on('e.evaluacion_opcion_id', '=', 'd.id');
@@ -421,8 +416,6 @@ class EvaluadorProyectosController extends S3Controller {
       ->where('proyecto_id', '=', $request->query('proyecto_id'))
       ->pluck('detalle', 'codigo')
       ->toArray();
-
-
 
     $calendario = DB::table('Proyecto_actividad')
       ->select([

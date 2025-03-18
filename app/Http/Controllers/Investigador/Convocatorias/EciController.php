@@ -252,6 +252,7 @@ class EciController extends S3Controller {
         'nombre AS label'
       ])
       ->where('a.grupo_id', '=', $proyecto->grupo_id)
+      ->where('b.estado', '=', 1)
       ->get();
 
     return [

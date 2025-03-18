@@ -19,11 +19,17 @@ use Illuminate\Support\Str;
 class PublicacionesController extends S3Controller {
   public function listado(Request $request) {
     if (!$request->query('investigador_id')) {
-      $publicaciones = DB::table('Publicacion')
+      $publicaciones = DB::table('Publicacion AS a')
+        ->leftJoin('Publicacion_autor AS b', function (JoinClause $join) {
+          $join->on('b.publicacion_id', '=', 'a.id')
+            ->where('b.presentado', '=', 1);
+        })
+        ->leftJoin('Usuario_investigador AS c', 'c.id', '=', 'b.investigador_id')
+        ->leftJoin('Facultad AS d', 'd.id', '=', 'c.facultad_id')
         ->select(
-          'id',
-          'codigo_registro',
-          DB::raw("CASE (tipo_publicacion)
+          'a.id',
+          'a.codigo_registro',
+          DB::raw("CASE (a.tipo_publicacion)
             WHEN 'articulo' THEN 'Artículo en revista'
             WHEN 'capitulo' THEN 'Capítulo de libro'
             WHEN 'libro' THEN 'Libro'
@@ -32,17 +38,19 @@ class PublicacionesController extends S3Controller {
             WHEN 'evento' THEN 'R. en evento científico'
             WHEN 'ensayo' THEN 'Ensayo'
           ELSE tipo_publicacion END AS tipo"),
-          'tipo_publicacion',
-          'isbn',
-          'issn',
-          'editorial',
-          'evento_nombre',
-          'titulo',
-          'fecha_publicacion',
-          DB::raw("YEAR(fecha_publicacion) AS periodo"),
-          'created_at',
-          'updated_at',
-          DB::raw("CASE(estado)
+          'a.tipo_publicacion',
+          'a.isbn',
+          'a.issn',
+          'a.editorial',
+          'a.evento_nombre',
+          DB::raw("CONCAT(c.apellido1, ' ', c.apellido2, ', ', c.nombres) AS presentador"),
+          'd.nombre AS facultad',
+          'a.titulo',
+          'a.fecha_publicacion',
+          DB::raw("YEAR(a.fecha_publicacion) AS periodo"),
+          'a.created_at',
+          'a.updated_at',
+          DB::raw("CASE(a.estado)
             WHEN -1 THEN 'Eliminado'
             WHEN 1 THEN 'Registrado'
             WHEN 2 THEN 'Observado'
@@ -54,19 +62,28 @@ class PublicacionesController extends S3Controller {
           ELSE 'Sin estado' END AS estado"),
           'source AS procedencia'
         )
+        ->groupBy('a.id')
         ->orderByDesc('id')
         ->get();
 
-      $patentes = DB::table('Patente')
+      $patentes = DB::table('Patente AS a')
+        ->leftJoin('Patente_autor AS b', function (JoinClause $join) {
+          $join->on('b.patente_id', '=', 'a.id')
+            ->where('b.es_presentador', '=', 1);
+        })
+        ->leftJoin('Usuario_investigador AS c', 'c.id', '=', 'b.investigador_id')
+        ->leftJoin('Facultad AS d', 'd.id', '=', 'c.facultad_id')
         ->select([
-          DB::raw("CONCAT('0', id) AS id"),
-          'nro_registro AS codigo_registro',
+          DB::raw("CONCAT('0', a.id) AS id"),
+          'a.nro_registro AS codigo_registro',
           DB::raw("'Propiedad intelectual' AS tipo"),
-          'tipo AS tipo_patente',
-          'titulo',
-          'created_at',
-          'updated_at',
-          DB::raw("CASE(estado)
+          'a.tipo AS tipo_patente',
+          DB::raw("CONCAT(c.apellido1, ' ', c.apellido2, ', ', c.nombres) AS presentador"),
+          'd.nombre AS facultad',
+          'a.titulo',
+          'a.created_at',
+          'a.updated_at',
+          DB::raw("CASE(a.estado)
             WHEN -1 THEN 'Eliminado'
             WHEN 1 THEN 'Registrado'
             WHEN 2 THEN 'Observado'
@@ -77,12 +94,19 @@ class PublicacionesController extends S3Controller {
             WHEN 9 THEN 'Duplicado'
           ELSE 'Sin estado' END AS estado"),
         ])
+        ->groupBy('a.id')
         ->get();
 
       return $publicaciones->merge($patentes);
     } else {
       $publicaciones = DB::table('Publicacion_autor AS a')
         ->join('Publicacion AS b', 'b.id', '=', 'a.publicacion_id')
+        ->leftJoin('Publicacion_autor AS c', function (JoinClause $join) {
+          $join->on('c.publicacion_id', '=', 'b.id')
+            ->where('c.presentado', '=', 1);
+        })
+        ->leftJoin('Usuario_investigador AS d', 'd.id', '=', 'c.investigador_id')
+        ->leftJoin('Facultad AS e', 'e.id', '=', 'd.facultad_id')
         ->select(
           'b.id',
           'b.codigo_registro',
@@ -100,6 +124,8 @@ class PublicacionesController extends S3Controller {
           'b.issn',
           'b.editorial',
           'b.evento_nombre',
+          DB::raw("CONCAT(d.apellido1, ' ', d.apellido2, ', ', d.nombres) AS presentador"),
+          'e.nombre AS facultad',
           'b.titulo',
           'b.fecha_publicacion',
           DB::raw("YEAR(b.fecha_publicacion) AS periodo"),
@@ -124,11 +150,19 @@ class PublicacionesController extends S3Controller {
 
       $patentes = DB::table('Patente AS a')
         ->join('Patente_autor AS b', 'b.patente_id', '=', 'a.id')
+        ->leftJoin('Patente_autor AS c', function (JoinClause $join) {
+          $join->on('c.patente_id', '=', 'b.id')
+            ->where('c.es_presentador', '=', 1);
+        })
+        ->leftJoin('Usuario_investigador AS d', 'd.id', '=', 'c.investigador_id')
+        ->leftJoin('Facultad AS e', 'e.id', '=', 'd.facultad_id')
         ->select([
           DB::raw("CONCAT('0', a.id) AS id"),
           'a.nro_registro AS codigo_registro',
           DB::raw("'Propiedad intelectual' AS tipo"),
           'a.tipo AS tipo_patente',
+          DB::raw("CONCAT(d.apellido1, ' ', d.apellido2, ', ', d.nombres) AS presentador"),
+          'e.nombre AS facultad',
           'a.titulo',
           'a.created_at',
           'a.updated_at',
