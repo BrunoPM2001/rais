@@ -25,7 +25,7 @@ class ConstanciaFirmada extends Mailable {
 
   public function envelope(): Envelope {
     return new Envelope(
-      subject: '[RAIS] Solicitud de constancia',
+      subject: '[RAIS] Respuesta a solicitud de constancia',
     );
   }
 

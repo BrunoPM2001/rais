@@ -28,25 +28,31 @@ class GruposController extends S3Controller {
     $grupos = DB::table('Grupo AS a')
       ->join('Grupo_integrante AS b', 'b.grupo_id', '=', 'a.id')
       ->join('Facultad AS d', 'd.id', '=', 'a.facultad_id')
+      ->leftJoinSub($coordinador, 'coordinador', 'coordinador.id', '=', 'a.id')
       ->select(
         'a.id',
         'a.grupo_nombre',
         'a.grupo_nombre_corto',
         'a.grupo_categoria',
-        DB::raw('COUNT(b.id) AS cantidad_integrantes'),
+        DB::raw("COUNT(CASE WHEN b.condicion NOT LIKE 'Ex %' THEN 1 END) AS cantidad_integrantes"),
+        DB::raw("COUNT(CASE WHEN b.condicion = 'Titular' THEN 1 END) AS cantidad_titulares"),
+        DB::raw("COUNT(CASE WHEN b.condicion = 'Adherente' THEN 1 END) AS cantidad_adherentes"),
         'd.nombre AS facultad',
         'coordinador.nombre AS coordinador',
         'a.resolucion_rectoral',
+        'a.resolucion_fecha',
+        'a.resolucion_creacion_fecha',
+        'a.resolucion_rectoral_creacion',
+        'a.observaciones',
         'a.created_at',
         'a.updated_at',
-        DB::raw("CASE(a.estado)
-          WHEN -2 THEN 'Disuelto'
-          WHEN 4 THEN 'Registrado'
-          WHEN 12 THEN 'Reg. observado'
-          ELSE 'Estado desconocido'
-        END AS estado")
+        DB::raw("CASE a.estado
+              WHEN -2 THEN 'Disuelto'
+              WHEN 4 THEN 'Registrado'
+              WHEN 12 THEN 'Reg. observado'
+              ELSE 'Estado desconocido'
+          END AS estado")
       )
-      ->leftJoinSub($coordinador, 'coordinador', 'coordinador.id', '=', 'a.id')
       ->where('a.tipo', '=', 'grupo')
       ->groupBy('a.id')
       ->get();

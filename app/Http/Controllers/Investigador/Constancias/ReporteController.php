@@ -614,7 +614,7 @@ class ReporteController extends S3Controller {
       ->where('id', '=', $request->attributes->get('token_decoded')->investigador_id)
       ->first();
 
-    Mail::to('alefran2020@gmail.com')->send(new ConstanciaParaFirma($investigador->nombres, $investigador->email3, $pdf["file"]));
+    Mail::to('vrip@unmsm.edu.pe')->send(new ConstanciaParaFirma($investigador->nombres, $investigador->email3, $pdf["file"]));
 
     return ['message' => 'success', 'detail' => 'Solicitud enviada con éxito'];
   }
