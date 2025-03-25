@@ -8,6 +8,8 @@ use Carbon\Carbon;
 use Illuminate\Database\Query\JoinClause;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Exports\Admin\FromDataExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class ProyectosFEXController extends S3Controller {
   public function listado() {
@@ -49,10 +51,10 @@ class ProyectosFEXController extends S3Controller {
         'res.responsable',
         'b.nombre AS facultad',
         'moneda.detalle AS moneda',
-        DB::raw("FORMAT(a.aporte_no_unmsm, 2, 'en_US') AS aporte_no_unmsm"),
-        DB::raw("FORMAT(a.aporte_unmsm, 2, 'en_US') AS aporte_unmsm"),
-        DB::raw("FORMAT(a.financiamiento_fuente_externa, 2, 'en_US') AS financiamiento_fuente_externa"),
-        DB::raw("FORMAT(a.monto_asignado, 2, 'en_US') AS monto_asignado"),
+        'a.aporte_no_unmsm',
+        'a.aporte_unmsm',
+        'a.financiamiento_fuente_externa',
+        'a.monto_asignado',
         'e.detalle AS participacion_unmsm',
         DB::raw("CASE
           WHEN f.detalle = 'OTROS' THEN g.detalle
@@ -580,8 +582,6 @@ class ProyectosFEXController extends S3Controller {
   public function getEditDocente(Request $request) {
     $docente = DB::table('Proyecto_integrante AS a')
       ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
-      ->leftJoin('Facultad AS c', 'c.id', '=', 'b.facultad_id')
-      ->leftJoin('Dependencia AS d', 'd.id', '=', 'b.dependencia_id')
       ->select([
         'a.investigador_id',
         'a.proyecto_integrante_tipo_id',
@@ -600,8 +600,6 @@ class ProyectosFEXController extends S3Controller {
         'b.telefono_casa',
         'b.telefono_trabajo',
         'b.telefono_movil',
-        'c.nombre AS facultad',
-        'd.dependencia'
       ])
       ->where('a.id', '=', $request->query('id'))
       ->first();
@@ -641,7 +639,6 @@ class ProyectosFEXController extends S3Controller {
       ->where('id', '=', $request->input('id'))
       ->update([
         'proyecto_integrante_tipo_id' => $request->input('condicion')["value"],
-        'responsabilidad' => $request->input('responsabilidad'),
         'updated_at' => Carbon::now(),
       ]);
 
@@ -774,8 +771,6 @@ class ProyectosFEXController extends S3Controller {
           'especialidad' => $request->input('especialidad'),
           'researcher_id' => $request->input('researcher_id'),
           'scopus_id' => $request->input('scopus_id'),
-          'cti_vitae' => $request->input('cti_vitae'),
-          'google_scholar' => $request->input('google_scholar'),
           'link' => $request->input('link'),
           'posicion_unmsm' => $request->input('posicion_unmsm'),
           'biografia' => $request->input('biografia'),
@@ -787,8 +782,7 @@ class ProyectosFEXController extends S3Controller {
         ->insert([
           'proyecto_id' => $request->input('id'),
           'investigador_id' => $investigador_id,
-          'proyecto_integrante_tipo_id' => $request->input('condicion'),
-          'responsabilidad' => $request->input('responsabilidad'),
+          'proyecto_integrante_tipo_id' => 90,
           'created_at' => Carbon::now(),
           'updated_at' => Carbon::now(),
         ]);
@@ -807,8 +801,7 @@ class ProyectosFEXController extends S3Controller {
         ->insert([
           'proyecto_id' => $request->input('id'),
           'investigador_id' => $request->input('investigador_id'),
-          'proyecto_integrante_tipo_id' => $request->input('condicion'),
-          'responsabilidad' => $request->input('responsabilidad'),
+          'proyecto_integrante_tipo_id' => 90,
           'created_at' => Carbon::now(),
           'updated_at' => Carbon::now(),
         ]);
@@ -822,8 +815,6 @@ class ProyectosFEXController extends S3Controller {
       ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
       ->select([
         'a.investigador_id',
-        'a.proyecto_integrante_tipo_id AS condicion',
-        'a.responsabilidad',
         'b.codigo_orcid',
         'b.apellido1',
         'b.apellido2',
@@ -885,8 +876,6 @@ class ProyectosFEXController extends S3Controller {
     DB::table('Proyecto_integrante')
       ->where('id', '=', $request->input('id'))
       ->update([
-        'proyecto_integrante_tipo_id' => $request->input('condicion')["value"],
-        'responsabilidad' => $request->input('responsabilidad'),
         'updated_at' => Carbon::now(),
       ]);
 
@@ -941,7 +930,6 @@ class ProyectosFEXController extends S3Controller {
         'resolucion_fecha' => $request->input('resolucion_fecha'),
         'comentario' => $request->input('comentario'),
         'observaciones_admin' => $request->input('observaciones_admin'),
-        'updated_at' => Carbon::now()
       ]);
 
     return ['message' => 'info', 'detail' => 'Información del proyecto actualizada'];
@@ -962,11 +950,11 @@ class ProyectosFEXController extends S3Controller {
         'a.periodo',
         'b.nombre AS linea_investigacion',
         'c.linea AS linea_ocde',
-        DB::raw("FORMAT(a.aporte_unmsm + a.entidad_asociada + a.aporte_no_unmsm + a.financiamiento_fuente_externa, 2, 'en_US') AS monto"),
-        DB::raw("FORMAT(a.aporte_unmsm, 2, 'en_US') AS aporte_unmsm"),
-        DB::raw("FORMAT(a.aporte_no_unmsm, 2, 'en_US') AS aporte_no_unmsm"),
-        DB::raw("FORMAT(a.financiamiento_fuente_externa, 2, 'en_US') AS financiamiento_fuente_externa"),
-        DB::raw("FORMAT(a.entidad_asociada, 2, 'en_US') AS entidad_asociada"),
+        DB::raw("a.aporte_unmsm + a.entidad_asociada + a.aporte_no_unmsm + a.financiamiento_fuente_externa AS monto"),
+        'a.aporte_unmsm',
+        'a.aporte_no_unmsm',
+        'a.financiamiento_fuente_externa',
+        'a.entidad_asociada',
         'e.name AS pais',
         'a.resolucion_rectoral',
         'a.palabras_clave',
@@ -1033,5 +1021,14 @@ class ProyectosFEXController extends S3Controller {
     ]);
 
     return $pdf->stream();
+  }
+
+  public function excel(Request $request) {
+
+    $data = $request->all();
+
+    $export = new FromDataExport($data);
+
+    return Excel::download($export, 'proyectos.xlsx');
   }
 }

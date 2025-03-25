@@ -245,6 +245,7 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
       Route::put('updateDetalle', [ProyectosFEXController::class, 'updateDetalle']);
       Route::get('pasos', [ProyectosFEXController::class, 'pasos']);
       Route::get('reporte', [ProyectosFEXController::class, 'reporte']);
+      Route::post('excel', [ProyectosFEXController::class, 'excel']);
     });
 
     //  Informe técnico

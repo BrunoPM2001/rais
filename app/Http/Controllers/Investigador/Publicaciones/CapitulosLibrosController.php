@@ -20,6 +20,15 @@ class CapitulosLibrosController extends Controller {
         DB::raw("IF(a.publicacion_nombre IS NULL OR a.publicacion_nombre = '',CONCAT(c.revista,' ',c.issn),CONCAT(a.publicacion_nombre,' ',a.issn)) AS revista"),
         DB::raw('COALESCE(a.issn, a.isbn) AS isbn'),
         DB::raw('YEAR(a.fecha_publicacion) AS año_publicacion'),
+        DB::raw("CASE(b.filiacion)
+            WHEN 1 THEN 'Si'
+            WHEN 0 THEN 'No'
+          ELSE 'Sin Especificar' END AS filiacion"),
+        DB::raw("CASE(b.filiacion_unica)
+          WHEN 1 THEN 'Si'
+          WHEN 0 THEN 'No'
+        ELSE 'Sin Especificar' END AS filiacion_unica"),
+
         'b.puntaje',
         'a.observaciones_usuario',
         DB::raw("CASE(a.estado)
@@ -47,10 +56,18 @@ class CapitulosLibrosController extends Controller {
   public function registrarPaso1(Request $request) {
     if ($request->input('publicacion_id') == null) {
       //  Registro de audit
+      $investigador = DB::table('Usuario_investigador')
+        ->select([
+          DB::raw("CONCAT(apellido1, ' ', apellido2) AS apellidos"),
+          'nombres'
+        ])
+        ->where('id', '=', $request->attributes->get('token_decoded')->investigador_id)
+        ->first();
+
       $audit[] = [
         'fecha' => Carbon::now()->format('Y-m-d H:i:s'),
-        'nombres' => $request->attributes->get('token_decoded')->nombres,
-        'apellidos' => $request->attributes->get('token_decoded')->apellidos,
+        'nombres' => $investigador->nombres,
+        'apellidos' => $investigador->apellidos,
         'accion' => 'Creación de registro'
       ];
 
@@ -100,25 +117,6 @@ class CapitulosLibrosController extends Controller {
       return ['message' => 'success', 'detail' => 'Datos de la publicación registrados', 'publicacion_id' => $publicacion_id];
     } else {
       $publicacion_id = $request->input('publicacion_id');
-
-      $pub = DB::table('Publicacion')
-        ->select([
-          'audit'
-        ])
-        ->where('id', '=', $publicacion_id)
-        ->first();
-
-      $audit = json_decode($pub->audit ?? "[]");
-
-      $audit[] = [
-        'fecha' => Carbon::now()->format('Y-m-d H:i:s'),
-        'nombres' => $request->attributes->get('token_decoded')->nombres,
-        'apellidos' => $request->attributes->get('token_decoded')->apellidos,
-        'accion' => 'Guardado de paso 1'
-      ];
-
-      $audit = json_encode($audit, JSON_UNESCAPED_UNICODE);
-
       $count = DB::table('Publicacion')
         ->where('id', '=', $publicacion_id)
         ->whereIn('estado', [2, 6])
@@ -140,7 +138,6 @@ class CapitulosLibrosController extends Controller {
           'validado' => 0,
           'step' => 2,
           'tipo_publicacion' => 'capitulo',
-          'audit' => $audit,
           'updated_at' => Carbon::now()
         ]);
 
