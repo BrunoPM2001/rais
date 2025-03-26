@@ -44,6 +44,11 @@ class ProyectosFEXController extends S3Controller {
         $join->on('g.proyecto_id', '=', 'a.id')
           ->where('g.codigo', '=', 'otra_fuente');
       })
+      ->leftJoin('Proyecto_descripcion AS h', function (JoinClause $join) {
+        $join->on('h.proyecto_id', '=', 'a.id')
+          ->where('h.codigo', '=', 'pais');
+      })
+      ->leftJoin('Pais AS p', 'p.code', '=', 'h.detalle')
       ->select(
         'a.id',
         'a.codigo_proyecto',
@@ -55,6 +60,12 @@ class ProyectosFEXController extends S3Controller {
         'a.aporte_unmsm',
         'a.financiamiento_fuente_externa',
         'a.monto_asignado',
+        'a.fecha_inicio',
+        'a.fecha_fin',
+        'a.resolucion_rectoral',
+        'a.resolucion_fecha',
+        'a.entidad_asociada',
+        'p.name as pais',
         'e.detalle AS participacion_unmsm',
         DB::raw("CASE
           WHEN f.detalle = 'OTROS' THEN g.detalle

@@ -14,263 +14,346 @@
   <title>Reporte</title>
   <style>
     * {
-      font-family: Helvetica;
+      font-family: Arial, sans-serif;
     }
 
-    @page {
-      margin: 165px 20px 20px 20px;
+    .header-table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      margin-bottom: 20px;
     }
 
-    .head-1 {
-      position: fixed;
-      top: -135px;
-      left: 0px;
-      height: 90px;
+    .header-table td {
+      vertical-align: middle;
+      /* Centra el contenido verticalmente */
     }
 
-    .head-1 img {
-      margin-left: 120px;
-      height: 85px;
+    .header-left {
+      width: 14%;
+      /* Espacio fijo para la izquierda */
+      text-align: left;
+      /* Alineación a la izquierda */
+      font-size: 10px;
     }
 
-    .head-2 {
-      position: fixed;
-      top: -135px;
-      right: 0;
+    .header-center {
+      width: 72%;
+      /* Espacio amplio para la imagen */
+      text-align: center;
+      /* Centra el contenido */
     }
 
-    .head-2 p {
+    .header-right {
+      width: 14%;
+      /* Espacio fijo para la derecha */
+      text-align: right;
+      /* Alineación a la derecha */
+      font-size: 10px;
+    }
+
+    .header-center img {
+      max-width: 100%;
+      max-height: 100px;
+      /* Controla la altura de la imagen */
+      object-fit: contain;
+      /* Evita la deformación */
+    }
+
+    .cuerpo-table {
+      width: 100%;
+      text-align: center;
+      border-collapse: collapse;
+      table-layout: fixed;
+      margin-bottom: 10px;
+    }
+
+    .title {
+      font-size: 18px;
+      text-align: center;
+      margin-top: 20px;
+      margin-bottom: 0px;
+      color: #0a0a84;
+    }
+
+    .table-texto,
+    .table-texto3 {
+      width: 100%;
+      font-size: 12px;
+      text-align: justify;
+    }
+
+    .table-texto3 {
+      margin-bottom: 20px;
+    }
+
+    .table-texto2 {
+      width: 100%;
+      table-layout: fixed;
+
+    }
+
+    .table-texto2 td {
+      text-align: left;
+      font-size: 12px;
+
+    }
+
+    .table-texto2 td:first-child {
       text-align: right;
     }
 
-    .head-2 .rais {
-      font-size: 11px;
-      margin-bottom: 0;
+    .table-footer {
+      width: 100%;
+      text-align: center;
+      margin-top: 170px;
+
     }
 
-    .head-2 .fecha {
-      font-size: 5px;
-      margin-top: 0;
+    .table-content {
+      width: 100%;
+      font-size: 11px;
+      margin-bottom: 20px;
+      border-collapse: collapse;
     }
 
-    .head-2 .user {
-      font-size: 11px;
-      margin-top: 0;
+    .table-content thead th {
+      border-top: 1px solid black;
+      /* Línea superior en el encabezado */
+      border-bottom: 1px solid black;
+      /* Línea inferior en el encabezado */
+      padding: 10px;
+      text-align: left;
+    }
+
+    .table-content tbody td {
+      border-bottom: 1px dashed black;
+      padding: 8px;
+
+    }
+
+    .table-content tbody tr:last-child td {
+      border-bottom: 1px solid black;
+      /* Línea inferior más gruesa en la última fila */
+    }
+
+    .extra-1,
+    .extra-2,
+    .extra-firma {
+      font-size: 12px;
+
     }
 
     .foot-1 {
       position: fixed;
-      bottom: 0px;
+      bottom: -20px;
       left: 0px;
       text-align: left;
-      font-size: 11px;
-      font-style: oblique;
-    }
-
-    .div {
-      position: fixed;
-      top: -45px;
-      width: 100%;
-      height: 0.5px;
-      background: #000;
-    }
-
-    .titulo {
-      width: 754px;
-      font-size: 16px;
-      text-align: center;
-    }
-
-    .texto {
-      font-size: 13px;
-      margin: 20px 0;
-    }
-
-    .table1 {
-      width: 100%;
-      border-collapse: separate;
-    }
-
-    .table1>tbody {
-      border-bottom: 1.5px solid #000;
-    }
-
-    .table1>thead {
-      margin-top: -1px;
       font-size: 10px;
-      border-top: 1.5px solid #000;
-      border-bottom: 1.5px solid #000;
     }
 
-    .table1>thead th {
-      font-weight: normal;
-    }
-
-    .table1>tbody td {
-      font-size: 10px;
-      text-align: center;
-      padding-top: 2px;
-    }
-
-    .table2 {
+    .table-encabezado {
       width: 100%;
-      border-collapse: separate;
-      margin-bottom: 40px;
+      border-collapse: collapse;
+      /* Elimina el espacio extra entre celdas */
     }
 
-    .table2>thead {
-      margin-top: -1px;
-      font-size: 10px;
-      border-bottom: 1.5px solid #000;
+    /* Aplica una línea arriba y otra abajo al thead */
+    .table-encabezado thead tr {
+      border-top: 1px solid #000;
+      border-bottom: 1px solid #000;
     }
 
-    .table2>thead th {
+    .table-encabezado thead th {
       text-align: left;
-      font-weight: normal;
+      padding: 5px;
     }
 
-    .table2>tbody td {
-      font-size: 10px;
-      padding-top: 2px;
-    }
-
-    .extra-1 {
-      font-size: 11px;
-      text-align: left;
-      width: 100%;
-    }
-
-    .extra-2 {
-      font-size: 11px;
-      text-align: right;
-      width: 100%;
-    }
-
-    .extra-firma {
-      font-size: 11px;
-      text-align: center;
-      width: 100%;
-    }
-
-    .titulo_proyecto {
-      font-weight: bold;
-      font-style: oblique;
-    }
-
-    .nom_grupo {
-      background: #D7DFDF;
-      font-size: 10px;
-      padding: 2px;
-      margin: 0 1px;
-      border-top: 1.5px solid #000;
-    }
-
-    .nom_grupo>p {
-      margin: 1px 5px;
-    }
-
-    .fac_grupo {
-      font-size: 10px;
-      margin: 2px;
-      text-align: right;
+    .table-encabezado tbody td {
+      padding: 2px 4px;
+      /* Reduce el espacio interno */
+      line-height: 1.2;
+      /* Reduce la altura de línea */
     }
   </style>
 </head>
 
 
 <body>
-  <div class="head-1">
-    <img src="{{ public_path('head-pdf.jpg') }}" alt="Header">
-    <p class="titulo">
-      <strong>
-        Proyectos de Grupos de Investigación {{ $periodo }}
-      </strong>
-    </p>
-  </div>
-  <div class="head-2">
-    <p class="rais">© RAIS</p>
-    <p class="fecha">
-      Fecha: {{ date('d/m/Y') }}<br>
-      Hora: {{ date('H:i:s') }}
-    </p>
-    <br>
-    <p class="user">
-      ichajaya
-    </p>
-  </div>
+  @php
+    // Variables de control para evitar repeticiones
+    $currentGroup = null; // Para controlar el grupo
+    $currentProject = null; // Para controlar el proyecto
+    $currentTipo = null; // Para controlar el "Condición" del proyecto
+    $numProyecto = 1; // Contador de proyectos
+    $firstEl = false; // Para saber si ya hemos impreso al menos un proyecto
+    $numProyecto = 1;
+  @endphp
+  <table class="header-table">
+    <tr>
+      <td class="header-left">
+        <span>Fecha: {{ date('d/m/Y') }}</span><br>
+        <span>Hora: {{ date('H:i:s') }}</span>
+      </td>
+      <td class="header-center">
+        <img src="{{ public_path('head-pdf.jpg') }}" alt="Header">
+      </td>
+      <td class="header-right">
+        <span>© RAIS</span><br>
+        <span>Usuario: Omontes</span>
+      </td>
+    </tr>
+  </table>
+
+  <table class="cuerpo-table">
+    <tr class="title">
+      <td><b>{{ $tipo . ' ' . 'Año ' . $periodo }}
+        </b><br></td>
+    </tr>
+  </table>
+
   <div class="div"></div>
   <div class="foot-1">RAIS - Registro de Actividades de Investigación de San Marcos</div>
-
   <div class="cuerpo">
     @foreach ($lista as $item)
-      @if ($tituloActual != $item->titulo)
-        @if ($firstEl == 1)
+      {{-- Verificamos si cambió de grupo (g.id). Si cambió, imprimimos el bloque de "Área / Facultad / Grupo" --}}
+      @if ($currentGroup != $item->grupo_id)
+        {{-- Cerramos tablas anteriores si no es la primera vez que imprimimos --}}
+        @if ($firstEl)
           </tbody>
           </table>
         @endif
+        @if ($currentGroup != null)
+          <div style="border-top: 1px solid black; margin: 0px 0;"></div>
+        @endif
+        {{-- Bloque con Área y Facultad (solo se imprime cuando cambia de grupo) --}}
+        <table class="table-texto"
+          style="width: 100%; border-bottom: 1px solid #e4e4e4; border-collapse: collapse; font-size:10px; margin-top: 15px;">
+          <tr>
+            <td style="text-align: left; width: 70%;">
+              Área: {{ $item->sigla . ' ' . $item->area }}
+            </td>
+            <td style="text-align: right; width: 30%;">
+              Facultad: {{ $item->facultad_grupo }}
+            </td>
+          </tr>
+        </table>
+
+        {{-- Nombre del grupo (solo se imprime cuando cambia de grupo) --}}
+        <table
+          style="
+                        width: 100%;
+                        margin:0 5px 0 0;
+                        background-color: #e0e0e0;
+                        border: 1px solid #ccc;
+                        padding: 0px;
+                        font-size:10px;
+                        border-collapse: collapse;">
+          <tr>
+            <td style="padding: 5px;">
+              Nombre del grupo:
+              <strong>{{ $item->grupo_nombre . ' (' . strtoupper($item->grupo_nombre_corto) . ')' }}</strong>
+            </td>
+          </tr>
+        </table>
+
         @php
-          $firstEl = 1;
+          $currentGroup = $item->grupo_id; // Actualizamos el grupo actual
+          // Reseteamos variables para que se imprima el siguiente proyecto desde cero
+          $currentProject = null;
         @endphp
-        <div class="fac_grupo"><strong>Facultad:</strong> {{ $item->facultad_grupo }}</div>
-        <div class="nom_grupo">
-          <p>Nombre del grupo: <strong>{{ $item->grupo_nombre }}</strong></p>
-        </div>
-        <table class="table1">
+      @endif
+
+      {{-- Verificamos si cambió de proyecto (p.titulo). Si cambió, imprimimos el bloque de "Proyecto" --}}
+      @if ($currentProject != $item->titulo)
+        {{-- Cerramos la tabla de proyecto anterior, si no es la primera vez --}}
+        @if ($firstEl)
+          </tbody>
+          </table>
+        @endif
+
+        {{-- Encabezado del nuevo proyecto --}}
+        <table class="table-encabezado" style="font-size:9px;">
           <thead>
             <tr>
-              <th style="width: 5%;">Nro.</th>
-              <th style="width: 10%;">Código</th>
-              <th style="width: 65%;">Título del proyecto</th>
+              <th style="width: 1%;">N°</th>
+              <th style="width: 4%;">Código</th>
+              <th style="width: 70%; text-align: center;">Título del proyecto</th>
               <th style="width: 10%;">Presupuesto</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td>{{ $numTituloActual }}</td>
+              <td>{{ $numProyecto }}</td>
               <td>{{ $item->codigo_proyecto }}</td>
-              <td class="titulo_proyecto">{{ $item->titulo }}</td>
-              <td>{{ $item->presupuesto }}</td>
+              <td style="font-style: italic;"><b>{{ strtoupper($item->titulo) }}</b></td>
+              <td><b>S/ {{ number_format($item->presupuesto, 2, '.', ',') }}</b></td>
             </tr>
           </tbody>
         </table>
-        <table class="table2">
+        @php
+          $numProyecto++;
+        @endphp
+
+        {{-- Tabla para la lista de integrantes / condiciones --}}
+        <table class="table-encabezado" style="font-size: 9px; padding-left:75px;">
           <thead>
             <tr>
-              <th>Condición/Código</th>
-              <th>Nombre</th>
-              <th>Tipo</th>
-              <th>Facultad</th>
-              <th>Condición en GI</th>
+              <th style="width: 22%;">Condición</th>
+              <th style="width: 45%; text-align: center;">Apellidos y nombres</th>
+              <th style="width: 20%;">Tipo</th>
+              <th style="width: 30%;">Facultad</th>
+              <th style="width: 17%;">Condición en GI</th>
             </tr>
           </thead>
           <tbody>
-            @php
-              $numTituloActual++;
-            @endphp
+            {{-- Continúa la lista de integrantes dentro de esta tbody --}}
       @endif
+
+      {{-- Verificamos si cambió la "Condición" (p.ej. Titular, Miembro, etc.) para mostrarla como título de bloque --}}
       @if ($currentTipo != $item->condicion)
         <tr>
-          <td>{{ $item->condicion }}</td>
+          <td style="font-style: italic;"><b>{{ $item->condicion }}</b></td>
           <td></td>
           <td></td>
           <td></td>
           <td></td>
         </tr>
+        @php
+          $currentTipo = $item->condicion;
+        @endphp
       @endif
+
+      {{-- Mostramos los datos del integrante (filas repetidas) --}}
       <tr>
-        <td>{{ $item->codigo }}</td>
-        <td>{{ $item->nombres }}</td>
-        <td>{{ $item->tipo }}</td>
+        <td style="padding-left:35px;">{{ $item->codigo }}</td>
+        <td style="font-size:8px;">{{ $item->nombres }}</td>
+        <td>{{ $item->condicion }}</td>
         <td>{{ $item->facultad_miembro }}</td>
         <td>{{ $item->condicion_gi }}</td>
       </tr>
-      @php
-        $currentTipo = $item->condicion;
-        $tituloActual = $item->titulo;
-      @endphp
-    @endforeach
-  </div>
 
+      {{-- Actualizamos variables para siguiente iteración --}}
+      @php
+        $currentProject = $item->titulo;
+        $firstEl = true; // Ya hemos impreso al menos un proyecto
+      @endphp
+
+      {{-- 
+                Si el siguiente registro sigue siendo el mismo proyecto, se mantendrá en la misma tabla. 
+                Si cambia de proyecto, en la próxima iteración se cerrará y abrirá otra. 
+                Si cambia de grupo, también se mostrará Área/Facultad/Grupo de nuevo.
+            --}}
+    @endforeach
+
+    {{-- Cierra la última tabla al terminar el foreach --}}
+    @if ($firstEl)
+      </tbody>
+
+      </table>
+    @endif
+    <div style="border-top: 1px solid black; margin: 15px 0;"></div>
+  </div>
   <script type="text/php">
     if (isset($pdf)) {
       $x = 527;

@@ -7,37 +7,50 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
 
 class ProyectoController extends Controller {
+
   public function reporte($facultad, $tipo, $periodo) {
-    $proyectos = DB::table('Proyecto AS a')
-      ->leftJoin('Proyecto_integrante AS b', 'b.proyecto_id', '=', 'a.id')
-      ->leftJoin('Usuario_investigador AS c', 'c.id', '=', 'b.investigador_id')
-      ->leftJoin('Proyecto_integrante_tipo AS d', 'd.id', '=', 'b.proyecto_integrante_tipo_id')
-      ->leftJoin('Proyecto_presupuesto AS e', 'e.proyecto_id', '=', 'a.id')
-      ->leftJoin('Grupo_integrante AS f', 'f.id', '=', 'b.grupo_integrante_id')
-      ->leftJoin('Grupo AS g', 'g.id', '=', 'b.grupo_id')
-      ->leftJoin('Facultad AS h', 'h.id', '=', 'c.facultad_id')
-      ->leftJoin('Facultad AS i', 'i.id', '=', 'g.facultad_id')
+
+    $proyectos = DB::table('view_proyecto_gi as p')
       ->select(
-        'g.grupo_nombre',
-        'i.nombre AS facultad_grupo',
-        'a.codigo_proyecto',
-        'a.titulo',
-        DB::raw('SUM(e.monto) AS presupuesto'),
-        'd.nombre AS condicion',
-        'c.codigo',
-        DB::raw('CONCAT(c.apellido1, " ", c.apellido2, ", ", c.nombres) AS nombres'),
-        'f.tipo',
-        'h.nombre AS facultad_miembro',
-        'f.condicion AS condicion_gi'
+        'p.sigla_area AS sigla',
+        'p.area as area',
+        'p.grupo_nombre_corto',
+        'p.grupo_nombre',
+        'p.facultad_proyecto as facultad_grupo',
+        'p.codigo_proyecto',
+        'p.titulo',
+        'p.integrante as nombres',
+        'p.condicion_proyecto as condicion',
+        'p.facultad_docente as facultad_miembro',
+        'p.codigo_docente as codigo',
+        'p.condicion_gi',
+        'p.grupo_id',
+        'p.total_presupuesto as presupuesto'
       )
-      ->where('a.facultad_id', '=', $facultad)
-      ->where('a.tipo_proyecto', '=', $tipo)
-      ->where('a.periodo', '=', $periodo)
-      ->where('a.estado', '>', '0')
-      ->groupBy('a.id', 'c.id', 'd.id', 'f.id', 'g.id')
+      ->where('p.tipo_proyecto', '=', $tipo)
+      ->where('p.facultad_id_proyecto', '=', $facultad)
+      ->where('p.periodo', '=', $periodo)
+      ->orderByRaw('p.grupo_id, p.proyecto_id, p.proyecto_integrante_tipo_id')
       ->get();
 
-    $pdf = Pdf::loadView('admin.reportes.proyectoPDF', ['lista' => $proyectos, 'periodo' => $periodo]);
+    switch ($tipo) {
+      case 'PCONFIGI':
+        $tipo = 'Proyectos de Investigación con Financiamiento para Grupos de Investigación';
+        break;
+      case 'PCONFIGI-INV':
+        $tipo = 'Proyectos de Innovación para  Grupos de Investigación “INNOVA SAN MARCOS';
+        break;
+      case 'PRO-CTIE':
+        $tipo = 'Proyectos de Ciencia, Tecnología, Innovación y Emprendimiento (PRO-CTIE) para Estudiantes de la UNMSM';
+        break;
+      case 'ECI':
+        $tipo = 'Programa de Equipamiento Científico para la Investigación de la UNMSM';
+        break;
+      default:
+        $tipo = 'Tipo de Proyecto Desconocido';
+    }
+
+    $pdf = Pdf::loadView('admin.reportes.proyectoPDF', ['lista' => $proyectos, 'periodo' => $periodo, 'tipo' => $tipo]);
     return $pdf->stream();
   }
 }
