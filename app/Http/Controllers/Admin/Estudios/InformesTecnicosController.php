@@ -11,8 +11,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Maatwebsite\Excel\Facades\Excel;
 
-
-
 class InformesTecnicosController extends S3Controller {
   public function proyectosListado(Request $request) {
     if ($request->query('lista') == 'nuevos') {
@@ -144,10 +142,9 @@ class InformesTecnicosController extends S3Controller {
       return $informes;
     } else {
       $informes = DB::table('Informe_tecnico_H AS a')
-        ->leftJoin('Informe_tipo AS b', 'b.id', '=', 'a.tipo')
         ->select(
           'a.id',
-          'b.informe',
+          'a.tipo_informe AS informe',
           'a.status AS estado',
           'a.fecha_presentacion AS fecha_envio',
           'a.created_at',
@@ -446,6 +443,11 @@ class InformesTecnicosController extends S3Controller {
         $this->uploadFile($request->file('file1'), "proyecto-doc", $name);
         $this->updateFile($proyecto_id, $date1, $name, "informe-PCONFIGI-INV-INFORME", "Archivos de informe", 22);
       }
+      if ($request->hasFile('file2')) {
+        $name = $request->input('proyecto_id') . "/" . $date_format . "-" . Str::random(8) . "." . $request->file('file2')->getClientOriginalExtension();
+        $this->uploadFile($request->file('file2'), "proyecto-doc", $name);
+        $this->updateFile($proyecto_id, $date1, $name, "viabilidad", "Actividades", 65);
+      }
     } else if ($request->input('tipo_proyecto') == "PINTERDIS") {
       if ($request->hasFile('file1')) {
         $name = $request->input('proyecto_id') . "/" . $date_format . "-" . Str::random(8) . "." . $request->file('file1')->getClientOriginalExtension();
@@ -731,5 +733,71 @@ class InformesTecnicosController extends S3Controller {
     $export = new InformeTecnicoExport($filters);
 
     return Excel::download($export, 'informe_tencnico.xlsx');
+  }
+
+  public function getDataPresentarInformeAntiguo(Request $request) {
+    $proyecto = DB::table('Proyecto_H AS a')
+      ->leftJoin('Facultad AS b', 'b.id', '=', 'a.facultad_id')
+      ->leftJoin('Instituto AS c', 'c.id', '=', 'a.instituto_id')
+      ->leftJoin('Linea_investigacion AS d', 'd.id', '=', 'a.linea_id')
+      ->leftJoin('Proyecto_integrante_H AS e', function (JoinClause $join) {
+        $join->on('e.proyecto_id', '=', 'a.id')
+          ->where('e.condicion', '=', 'Responsable');
+      })
+      ->leftJoin('Usuario_investigador AS f', 'f.id', '=', 'e.investigador_id')
+      ->select([
+        'a.id',
+        'a.titulo',
+        'a.tipo',
+        'a.codigo',
+        'a.periodo',
+        'a.resolucion',
+        'b.nombre AS facultad',
+        'c.instituto',
+        'd.nombre AS linea',
+        'a.tipo_investigacion',
+        DB::raw('CONCAT(f.apellido1, " " , f.apellido2, ", ", f.nombres) AS responsable')
+      ])
+      ->where('a.id', '=', $request->query('proyecto_id'))
+      ->first();
+
+    return $proyecto;
+  }
+
+  public function presentarInformeAntiguo(Request $request) {
+    $date1 = Carbon::now();
+    $date_format =  $date1->format('Ymd-His');
+
+    $informe_id = DB::table('Informe_tecnico_H')
+      ->insertGetId([
+        'proyecto_id' => $request->input('proyecto_id'),
+        'tipo_informe' => $request->input('tipo_informe'),
+        'status' => $request->input('estado'),
+        'fecha_presentacion' => $request->input('fecha_presentacion'),
+        'registro_nro_vri' => $request->input('registro_nro_vrip'),
+        'registro_fecha_csi' => $request->input('fecha_registro_csi'),
+        'observaciones' => $request->input('observaciones'),
+        'observaciones_admin' => $request->input('observaciones_admin'),
+        'created_at' => $date1,
+        'updated_at' => $date1
+      ]);
+
+    if ($request->hasFile('file1')) {
+      $name = $request->input('proyecto_id') . "/" . $date_format . "-" . Str::random(8) . "." . $request->file('file1')->getClientOriginalExtension();
+      $this->uploadFile($request->file('file1'), "informe-tecnico-antiguo", $name);
+      DB::table('File')
+        ->insert([
+          'tabla_id' => $informe_id,
+          'tabla' => 'Informe_tecnico_H',
+          'bucket' => 'informe-tecnico-antiguo',
+          'key' => $name,
+          'recurso' => 'ANEXO',
+          'estado' => 20,
+          'created_at' => $date1,
+          'updated_at' => $date1
+        ]);
+    }
+
+    return ['message' => 'success', 'detail' => 'Informe presentado'];
   }
 }

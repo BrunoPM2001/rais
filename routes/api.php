@@ -263,7 +263,7 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
       Route::get('reporte', [UtilInformeAdminController::class, 'reporte']);
       Route::get('excel', [InformesTecnicosController::class, 'excel']);
 
-      Route::get('getDataPresentarInforme', [InformesTecnicosController::class, 'getDataPresentarInforme']);
+      Route::get('getDataPresentarInformeAntiguo', [InformesTecnicosController::class, 'getDataPresentarInformeAntiguo']);
       Route::post('presentarInformeAntiguo', [InformesTecnicosController::class, 'presentarInformeAntiguo']);
     });
 

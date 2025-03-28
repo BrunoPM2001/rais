@@ -125,11 +125,6 @@
       font-size: 11px;
       padding: 5px 3px 6px 3px;
     }
-
-    h6,
-    h5 {
-      margin-bottom: 5px;
-    }
   </style>
 </head>
 
@@ -149,7 +144,7 @@
   <div class="foot-1">RAIS - Registro de Actividades de Investigación de San Marcos</div>
   <p class="titulo">
     <strong>
-      Programa de equipamiento científico para la investigación de la UNMSM
+      Proyecto de Investigación Interdisciplinario para Grupos de Investigación
     </strong>
   </p>
 
@@ -206,9 +201,14 @@
           <td style="width: 75%;" valign="top">{{ $proyecto->codigo_proyecto }}</td>
         </tr>
         <tr>
-          <td style="width: 24%;" valign="top"><strong>Facultad</strong></td>
+          <td style="width: 24%;" valign="top"><strong>Resolución </strong></td>
           <td style="width: 1%;" valign="top">:</td>
-          <td style="width: 75%;" valign="top">{{ $proyecto->facultad }}</td>
+          <td style="width: 75%;" valign="top">{{ $proyecto->resolucion_rectoral }}</td>
+        </tr>
+        <tr>
+          <td style="width: 24%;" valign="top"><strong>Año</strong></td>
+          <td style="width: 1%;" valign="top">:</td>
+          <td style="width: 75%;" valign="top">{{ $proyecto->periodo }}</td>
         </tr>
         <tr>
           <td style="width: 24%;" valign="top"><strong>Grupo</strong></td>
@@ -216,130 +216,127 @@
           <td style="width: 75%;" valign="top">{{ $proyecto->grupo_nombre }}</td>
         </tr>
         <tr>
-          <td style="width: 24%;" valign="top"><strong>Coordinador</strong></td>
+          <td style="width: 24%;" valign="top"><strong>Localización</strong></td>
           <td style="width: 1%;" valign="top">:</td>
-          <td style="width: 75%;" valign="top">{{ $proyecto->responsable }}</td>
+          <td style="width: 75%;" valign="top">{{ $proyecto->localizacion }}</td>
         </tr>
         <tr>
-          <td style="width: 24%;" valign="top"><strong>Resolución </strong></td>
+          <td style="width: 24%;" valign="top"><strong>Facultad</strong></td>
           <td style="width: 1%;" valign="top">:</td>
-          <td style="width: 75%;" valign="top">{{ $proyecto->resolucion_rectoral }}</td>
+          <td style="width: 75%;" valign="top">{{ $proyecto->facultad }}</td>
+        </tr>
+        <tr>
+          <td style="width: 24%;" valign="top"><strong>Línea de investigación</strong></td>
+          <td style="width: 1%;" valign="top">:</td>
+          <td style="width: 75%;" valign="top">{{ $proyecto->linea }}</td>
+        </tr>
+        <tr>
+          <td style="width: 24%;" valign="top"><strong>Monto financiado</strong></td>
+          <td style="width: 1%;" valign="top">:</td>
+          <td style="width: 75%;" valign="top">{{ $proyecto->monto }}</td>
         </tr>
       </tbody>
     </table>
 
-    <h5>II. Contenido del informe:</h5>
-
-    <h6>2.1 Resumen</h6>
-    <div class="desc">
-      {!! $detalles->resumen_ejecutivo !!}
-    </div>
-
-    <h6>2.2 Proceso de instalación</h6>
-    <div class="desc">
-      {!! $detalles->infinal1 !!}
-    </div>
-
-    <h6>2.3 Funcionamiento</h6>
-    <div class="desc">
-      {!! $detalles->infinal2 !!}
-    </div>
-
-    <h6>2.4 Gestión del uso</h6>
-    <div class="desc">
-      {!! $detalles->infinal3 !!}
-    </div>
-
-    <h5>III. Impacto:</h5>
-
-    <h6>3.1 Aplicación práctica e impacto</h6>
-    <div class="desc">
-      {!! $detalles->infinal4 !!}
-    </div>
-
-    <h6>3.2 Uso</h6>
-    <div class="desc">
-      {!! $detalles->infinal5 !!}
-    </div>
-
-
-    <h5>IV. Documentos adjuntos:</h5>
+    <h5>II. Miembros del equipo de investigación:</h5>
 
     <table class="table">
       <thead>
         <tr>
-          <th>Nombre</th>
-          <th></th>
+          <th>Código</th>
+          <th>Apellidos y Nombres </th>
+          <th>Condición</th>
+          <th>Tipo</th>
         </tr>
       </thead>
       <tbody>
-        <tr>
-          <td>Documento de conformidad firmada por el coordinador del GI</td>
-          <td>
-            @if (isset($archivos['anexo1']))
-              Sí
-            @else
-              No
-            @endif
-          </td>
-        </tr>
-        <tr>
-          <td>Imágenes de equipo/gabinete instalado</td>
-          <td>
-            @if (isset($archivos['anexo2']))
-              Sí
-            @else
-              No
-            @endif
-          </td>
-        </tr>
-        <tr>
-          <td>Imágenes de equipos complementarios al equipo/gabinete instalado</td>
-          <td>
-            @if (isset($archivos['anexo3']))
-              Sí
-            @else
-              No
-            @endif
-          </td>
-        </tr>
-        <tr>
-          <td>Formato de control del uso del equipo, incluir uso compartido</td>
-          <td>
-            @if (isset($archivos['anexo4']))
-              Sí
-            @else
-              No
-            @endif
-          </td>
-        </tr>
-        <tr>
-          <td>Plan de manejo de residuos, efluentes y/o emisiones</td>
-          <td>
-            @if (isset($archivos['anexo5']))
-              Sí
-            @else
-              No
-            @endif
-          </td>
-        </tr>
-        <tr>
-          <td>Otros documentos</td>
-          <td>
-            @if (isset($archivos['anexo6']))
-              Sí
-            @else
-              No
-            @endif
-          </td>
-        </tr>
+        @foreach ($miembros as $item)
+          <tr>
+            <td>{{ $item->codigo }}</td>
+            <td>{{ $item->nombres }}</td>
+            <td>{{ $item->condicion }}</td>
+            <td>{{ $item->tipo }}</td>
+          </tr>
+        @endforeach
       </tbody>
     </table>
 
+    <h5>III. Contenido del informe:</h5>
 
-    <h5>V. Dificultades encontradas:</h5>
+    <h6>3.1 Resumen</h6>
+    <div class="desc">
+      {!! $detalles->resumen_ejecutivo !!}
+    </div>
+
+    <h6>3.2 Palabras clave</h6>
+    <div class="desc">
+      {!! $detalles->palabras_clave !!}
+    </div>
+
+    <h6>3.3 Introduccción</h6>
+    <div class="desc">
+      {!! $detalles->infinal1 !!}
+    </div>
+
+    <h6>3.4 Metodologías</h6>
+    <div class="desc">
+      {!! $detalles->infinal2 !!}
+    </div>
+
+    <h6>3.5 Resultados</h6>
+    <div class="desc">
+      {!! $detalles->infinal3 !!}
+    </div>
+
+    <h6>3.6 Discusión</h6>
+    <div class="desc">
+      {!! $detalles->infinal4 !!}
+    </div>
+
+    <h6>3.7 Conclusiones</h6>
+    <div class="desc">
+      {!! $detalles->infinal5 !!}
+    </div>
+
+    <h6>3.8 Recomendaciones</h6>
     <div class="desc">
       {!! $detalles->infinal6 !!}
+    </div>
+
+    <h6>3.9 Referencias bibliográficas</h6>
+    <div class="desc">
+      {!! $detalles->infinal7 !!}
+    </div>
+
+    <h6>3.10 Anexos</h6>
+    <div class="desc">
+      Informe:
+      @if (isset($archivos['informe-PCONFIGI-INFORME']))
+        Sí
+      @else
+        No
+      @endif
+    </div>
+
+    <div class="desc">
+      Formulario:
+      @if (isset($archivos['viabilidad']))
+        Sí
+      @else
+        No
+      @endif
+    </div>
+
+    <h5>IV. Impacto:</h5>
+
+    <h6>4.1 Aplicación práctica e impacto</h6>
+    <div class="desc">
+      {!! $detalles->infinal9 !!}
+    </div>
+
+    <h6>4.2 Publicación</h6>
+    <div class="desc">
+      {!! $detalles->infinal10 !!}
     </div>
 
   </div>

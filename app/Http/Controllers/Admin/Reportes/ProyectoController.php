@@ -4,11 +4,25 @@ namespace App\Http\Controllers\Admin\Reportes;
 
 use App\Http\Controllers\Controller;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class ProyectoController extends Controller {
 
-  public function reporte($facultad, $tipo, $periodo) {
+  public function reporte(Request $request) {
+
+    $adminId = $request->attributes->get('token_decoded')->id;
+
+    $admin = DB::table('Usuario_admin')
+      ->select(DB::raw('CONCAT(apellido1, " ", apellido2, ", ", nombres) AS nombres'))
+      ->where('id', '=', $adminId)
+      ->first();
+
+    $facultad = $request->query('facultad');
+    $periodo = $request->query('periodo');
+    $tipo = $request->query('tipo_proyecto');
+
 
     $proyectos = DB::table('view_proyecto_gi as p')
       ->select(
@@ -23,6 +37,7 @@ class ProyectoController extends Controller {
         'p.condicion_proyecto as condicion',
         'p.facultad_docente as facultad_miembro',
         'p.codigo_docente as codigo',
+        'p.tipo_investigador',
         'p.condicion_gi',
         'p.grupo_id',
         'p.total_presupuesto as presupuesto'
@@ -30,8 +45,40 @@ class ProyectoController extends Controller {
       ->where('p.tipo_proyecto', '=', $tipo)
       ->where('p.facultad_id_proyecto', '=', $facultad)
       ->where('p.periodo', '=', $periodo)
-      ->orderByRaw('p.grupo_id, p.proyecto_id, p.proyecto_integrante_tipo_id')
+      ->orderByRaw('p.grupo_nombre, 
+      p.codigo_proyecto, 
+      FIELD(p.proyecto_integrante_tipo_id,
+        1, 2, 3, 5, 6, 4, 31, 32, 33, 35,
+        7, 8, 9, 11, 12, 10, 42, 50, 51, 52, 55,
+        13, 14, 53, 54,
+        15, 16,
+        17, 18,
+        19, 20,
+        21, 22, 23, 24, 26, 25, 27,
+        28, 29,
+        30, 34,
+        36, 37, 38, 40, 41, 39,
+        44, 45, 46, 47, 48, 49, 90, 91,
+        56, 57, 58, 59, 60, 61, 94, 62, 63, 64, 65, 82,
+        66, 67, 68, 69,
+        70, 71,
+        74, 75, 76, 77, 78, 79, 80, 81,
+        83, 84, 85,
+        86, 88,
+        92, 93
+      ),
+      p.integrante')
       ->get();
+
+    $area = DB::table('Facultad AS fx')
+      ->leftJoin('Area as ax', 'ax.id', '=', 'fx.area_id')
+      ->select('ax.nombre', 'ax.sigla', 'fx.nombre as facultad')
+      ->where('fx.id', '=', $facultad)
+      ->first();
+
+    $qrUrl = "https://vrip.unmsm.edu.pe/convocatorias/"; // Aquí va la URL fija del sistema RAIS
+    $qrCode = base64_encode(QrCode::format('png')->size(200)->generate($qrUrl));
+
 
     switch ($tipo) {
       case 'PCONFIGI':
@@ -46,11 +93,21 @@ class ProyectoController extends Controller {
       case 'ECI':
         $tipo = 'Programa de Equipamiento Científico para la Investigación de la UNMSM';
         break;
+      case 'PSINFIPU':
+        $tipo = 'Proyectos de Publicación Académica para Grupos de Investigación';
+        break;
       default:
         $tipo = 'Tipo de Proyecto Desconocido';
     }
 
-    $pdf = Pdf::loadView('admin.reportes.proyectoPDF', ['lista' => $proyectos, 'periodo' => $periodo, 'tipo' => $tipo]);
+    $pdf = Pdf::loadView('admin.reportes.proyectoPDF', [
+      'lista' => $proyectos,
+      'periodo' => $periodo,
+      'tipo' => $tipo,
+      'area' => $area,
+      'admin' => $admin,
+      'qr' => $qrCode,
+    ]);
     return $pdf->stream();
   }
 }

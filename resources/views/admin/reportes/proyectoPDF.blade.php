@@ -13,6 +13,13 @@
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <title>Reporte</title>
   <style>
+    @page {
+      margin-top: 200px;
+      /* espacio reservado para el encabezado */
+      margin-bottom: 80px;
+      /* para el pie de página */
+    }
+
     * {
       font-family: Arial, sans-serif;
     }
@@ -21,7 +28,7 @@
       width: 100%;
       border-collapse: collapse;
       table-layout: fixed;
-      margin-bottom: 20px;
+      margin-bottom: 10px;
     }
 
     .header-table td {
@@ -35,6 +42,18 @@
       text-align: left;
       /* Alineación a la izquierda */
       font-size: 10px;
+    }
+
+    header {
+      position: fixed;
+      top: -170px;
+      left: 0;
+      right: 0;
+      height: 100px;
+    }
+
+    .content {
+      margin-top: 2px;
     }
 
     .header-center {
@@ -65,13 +84,14 @@
       text-align: center;
       border-collapse: collapse;
       table-layout: fixed;
-      margin-bottom: 10px;
+      margin-bottom: 5px;
+      margin-top: 0px;
+
     }
 
     .title {
-      font-size: 18px;
+      font-size: 16px;
       text-align: center;
-      margin-top: 20px;
       margin-bottom: 0px;
       color: #0a0a84;
     }
@@ -144,13 +164,13 @@
 
     }
 
-    .foot-1 {
-      position: fixed;
-      bottom: -20px;
-      left: 0px;
-      text-align: left;
-      font-size: 10px;
-    }
+    /* .foot-1 {
+            position: fixed;
+            bottom: 60px;
+            left: 0px;
+            text-align: left;
+            font-size: 10px;
+        } */
 
     .table-encabezado {
       width: 100%;
@@ -189,32 +209,64 @@
     $firstEl = false; // Para saber si ya hemos impreso al menos un proyecto
     $numProyecto = 1;
   @endphp
-  <table class="header-table">
-    <tr>
-      <td class="header-left">
-        <span>Fecha: {{ date('d/m/Y') }}</span><br>
-        <span>Hora: {{ date('H:i:s') }}</span>
-      </td>
-      <td class="header-center">
-        <img src="{{ public_path('head-pdf.jpg') }}" alt="Header">
-      </td>
-      <td class="header-right">
-        <span>© RAIS</span><br>
-        <span>Usuario: Omontes</span>
-      </td>
-    </tr>
-  </table>
-
-  <table class="cuerpo-table">
-    <tr class="title">
-      <td><b>{{ $tipo . ' ' . 'Año ' . $periodo }}
-        </b><br></td>
-    </tr>
-  </table>
+  <header>
+    <table class="header-table">
+      <tr>
+        <td class="header-left">
+          <span>Fecha: {{ date('d/m/Y') }}</span><br>
+          <span>Hora: {{ date('H:i:s') }}</span>
+        </td>
+        <td class="header-center">
+          <img src="{{ public_path('head-pdf.jpg') }}" alt="Header">
+        </td>
+        <td class="header-right">
+          <span>© RAIS</span><br>
+          <span>Usuario: {{ $admin->nombres }}</span>
+        </td>
+      </tr>
+    </table>
+    <div style="border-top: 2px solid black; margin: 5px 0;"></div>
+    <table class="cuerpo-table">
+      <tr class="title">
+        <td><b>{{ $tipo }} <br>Año {{ $periodo }}</b></td>
+      </tr>
+    </table>
+    <table class="table-texto" style="width: 100%; font-size:12px; margin-bottom: 0px;">
+      <tr>
+        <td style="text-align: left; width: 70%;">
+          Área: {{ $area->sigla . ' ' . $area->nombre }}
+        </td>
+        <td style="text-align: right; width: 30%;">
+          Facultad: {{ $area->facultad }}
+        </td>
+      </tr>
+    </table>
+    <div style="border-top: 1px solid black; margin: 0px 0;"></div>
+  </header>
 
   <div class="div"></div>
-  <div class="foot-1">RAIS - Registro de Actividades de Investigación de San Marcos</div>
-  <div class="cuerpo">
+
+  <div class="foot-1" style="position: fixed; bottom: -60px; width: 100%;">
+    <div style="border-top: 2px solid black; margin: 1px 0;width:40%;"></div>
+    <table style="width: 100%; font-size: 9px; font-style: italic; table-layout: fixed;">
+      <tr>
+        <td style="width: 90%; text-align: justify; line-height: 1.3;">
+          Esta es una copia auténtica e imprimible de un documento electrónico resguardado por la Universidad
+          Nacional Mayor de San Marcos, a través del Vicerrectorado de Investigación y Posgrado (VRIP),
+          correspondiente a proyectos ganadores aprobados mediante Resolución Rectoral. Su autenticidad e
+          integridad
+          pueden ser verificadas a través del siguiente enlace web:
+          <span style="font-size: 8px;">https://rais.vrip.unmsm.edu.pe</span>
+        </td>
+        <td style="width: 10%; text-align: center;">
+          <img src="data:image/png;base64,{{ $qr }}" alt="Código QR" style="width: 30px; height: 30px;">
+        </td>
+      </tr>
+    </table>
+  </div>
+
+
+  <div class="content">
     @foreach ($lista as $item)
       {{-- Verificamos si cambió de grupo (g.id). Si cambió, imprimimos el bloque de "Área / Facultad / Grupo" --}}
       @if ($currentGroup != $item->grupo_id)
@@ -226,18 +278,6 @@
         @if ($currentGroup != null)
           <div style="border-top: 1px solid black; margin: 0px 0;"></div>
         @endif
-        {{-- Bloque con Área y Facultad (solo se imprime cuando cambia de grupo) --}}
-        <table class="table-texto"
-          style="width: 100%; border-bottom: 1px solid #e4e4e4; border-collapse: collapse; font-size:10px; margin-top: 15px;">
-          <tr>
-            <td style="text-align: left; width: 70%;">
-              Área: {{ $item->sigla . ' ' . $item->area }}
-            </td>
-            <td style="text-align: right; width: 30%;">
-              Facultad: {{ $item->facultad_grupo }}
-            </td>
-          </tr>
-        </table>
 
         {{-- Nombre del grupo (solo se imprime cuando cambia de grupo) --}}
         <table
@@ -252,7 +292,7 @@
           <tr>
             <td style="padding: 5px;">
               Nombre del grupo:
-              <strong>{{ $item->grupo_nombre . ' (' . strtoupper($item->grupo_nombre_corto) . ')' }}</strong>
+              <strong>{{ $item->grupo_nombre . ' (' . mb_strtoupper($item->grupo_nombre_corto, 'UTF-8') . ')' }}</strong>
             </td>
           </tr>
         </table>
@@ -286,7 +326,7 @@
             <tr>
               <td>{{ $numProyecto }}</td>
               <td>{{ $item->codigo_proyecto }}</td>
-              <td style="font-style: italic;"><b>{{ strtoupper($item->titulo) }}</b></td>
+              <td style="font-style: italic;"><b>{{ mb_strtoupper($item->titulo, 'UTF-8') }}</b></td>
               <td><b>S/ {{ number_format($item->presupuesto, 2, '.', ',') }}</b></td>
             </tr>
           </tbody>
@@ -300,10 +340,10 @@
           <thead>
             <tr>
               <th style="width: 22%;">Condición</th>
-              <th style="width: 45%; text-align: center;">Apellidos y nombres</th>
-              <th style="width: 20%;">Tipo</th>
+              <th style="width: 45%;">Apellidos y nombres</th>
+              <th style="width: 24%;">Tipo</th>
               <th style="width: 30%;">Facultad</th>
-              <th style="width: 17%;">Condición en GI</th>
+              <th style="width: 18%;">Condición en GI</th>
             </tr>
           </thead>
           <tbody>
@@ -327,8 +367,8 @@
       {{-- Mostramos los datos del integrante (filas repetidas) --}}
       <tr>
         <td style="padding-left:35px;">{{ $item->codigo }}</td>
-        <td style="font-size:8px;">{{ $item->nombres }}</td>
-        <td>{{ $item->condicion }}</td>
+        <td style="font-size:8px;">{{ mb_strtoupper($item->nombres, 'UTF-8') }}</td>
+        <td style="font-size:8px;">{{ $item->tipo_investigador }}</td>
         <td>{{ $item->facultad_miembro }}</td>
         <td>{{ $item->condicion_gi }}</td>
       </tr>
@@ -356,8 +396,8 @@
   </div>
   <script type="text/php">
     if (isset($pdf)) {
-      $x = 527;
-      $y = 818;
+      $x = 520;
+      $y = 825;
       $text = "Página {PAGE_NUM} de {PAGE_COUNT}";
       $font = $fontMetrics->get_font("Helvetica", "Italic");
       $size = 8;

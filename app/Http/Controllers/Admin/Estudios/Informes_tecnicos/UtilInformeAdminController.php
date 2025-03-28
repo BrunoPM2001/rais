@@ -48,6 +48,10 @@ class UtilInformeAdminController extends Controller {
         $util = new PtpdoctoController();
         return $util->reporte($request);
         break;
+      case "PINTERDIS":
+        $util = new PinterdisController();
+        return $util->reporte($request);
+        break;
     }
   }
 }
