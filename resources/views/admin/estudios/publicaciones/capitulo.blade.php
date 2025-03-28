@@ -105,6 +105,7 @@
     .cuerpo>p {
       font-size: 11px;
     }
+
     .obs {
       background-color: #ff9a9a;
       border-radius: 2px;
@@ -137,76 +138,91 @@
 
   <p class="titulo"><strong>Registro de capítulo de libro publicado con ISBN</strong></p>
 
-    <p class="subtitulo">
-      <strong>
-      Estado: 
-        @switch($publicacion->estado)
-          @case(-1)
-            Eliminado
-          @break
-  
-          @case(1)
-            Registrado
-          @break
-  
-          @case(2)
-            Observado
-          @break
-  
-          @case(5)
-            Enviado
-          @break
-  
-          @case(6)
-            En proceso
-          @break
-  
-          @case(7)
-            Anulado
-          @break
-  
-          @case(8)
-            No registrado
-          @break
-  
-          @case(9)
-            Duplicado
-          @break
-  
-          @default
-            Sin estado
-        @endswitch
-         {{ Carbon::parse($publicacion->updated_at)->format("d/m/Y") }}
-      </strong>
-    </p>
+  <p class="subtitulo">
+    <strong>
+      Estado:
+      @switch($publicacion->estado)
+        @case(-1)
+          Eliminado
+        @break
 
-    @if ($publicacion->estado == 2)
-      <table class="obs">
-        <tbody>
-          <tr>
-            <td style="width: 12%;" valign="top"><strong>Observaciones</strong></td>
-            <td style="width: 1%;" valign="top">:</td>
-            <td style="width: 87%;" valign="top">{{ $publicacion->observaciones_usuario }}</td>
-          </tr>
-        </tbody>
-      </table>
-    @endif
-  
-    @if ($publicacion->categoria != null)
+        @case(1)
+          Registrado
+        @break
+
+        @case(2)
+          Observado
+        @break
+
+        @case(5)
+          Enviado
+        @break
+
+        @case(6)
+          En proceso
+        @break
+
+        @case(7)
+          Anulado
+        @break
+
+        @case(8)
+          No registrado
+        @break
+
+        @case(9)
+          Duplicado
+        @break
+
+        @default
+          Sin estado
+      @endswitch
+      {{ Carbon::parse($publicacion->updated_at)->format('d/m/Y') }}
+    </strong>
+  </p>
+
+  @if (
+      $publicacion->estado == 2 ||
+          $publicacion->estado == -1 ||
+          $publicacion->estado == 7 ||
+          $publicacion->estado == 8 ||
+          $publicacion->estado == 9)
+    <table class="obs">
+      <tbody>
+        <tr>
+          <td style="width: 12%;" valign="top"><strong>Observaciones</strong></td>
+          <td style="width: 1%;" valign="top">:</td>
+          <td style="width: 87%;" valign="top">{{ $publicacion->observaciones_usuario }}</td>
+        </tr>
+      </tbody>
+    </table>
+  @endif
+
+  @if ($publicacion->categoria != null)
     <p class="subtitulo-1">
       <strong>
-      {{ $publicacion->categoria }}
+        {{ $publicacion->categoria }}
       </strong>
     </p>
-    @endif
+  @endif
 
-    <div class="cuerpo">
+  <div class="cuerpo">
 
     <h5>I. Descripción de la Publicación:</h5>
 
     <p>
-      <b>1.1 Código:</b>
-      {{ $publicacion->codigo_registro == null ? 'No tiene código' : $publicacion->codigo_registro }}
+      @if (
+          $publicacion->estado == 2 ||
+              $publicacion->estado == -1 ||
+              $publicacion->estado == 7 ||
+              $publicacion->estado == 8 ||
+              $publicacion->estado == 9)
+        <b>1.1 Id:</b>
+        {{ $publicacion->id }}
+      @else
+        <b>1.1 Código:</b>
+        {{ $publicacion->codigo_registro == null ? 'No tiene código' : $publicacion->codigo_registro }}
+      @endif
     </p>
     <p>
       <b>1.2 Título: </b>
@@ -272,9 +288,9 @@
       <b>1.17 Anexo: </b>
       @php
         if ($publicacion->anexo) {
-          echo "Sí";
+            echo 'Sí';
         } else {
-          echo "No";
+            echo 'No';
         }
       @endphp
     </p>
@@ -309,7 +325,7 @@
             <td>{{ $loop->iteration }}</td>
             <td>{{ $autor->autor }}</td>
             <td>{{ $autor->nombres }}</td>
-            <td>{{ Carbon::parse($autor->created_at)->format("Y-m-d") }}</td>
+            <td>{{ Carbon::parse($autor->created_at)->format('Y-m-d') }}</td>
             <td>{{ $autor->nro_registro }}</td>
             <td>{{ $autor->puntaje }}</td>
           </tr>

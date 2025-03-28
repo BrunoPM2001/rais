@@ -70,6 +70,7 @@ class EventoController extends S3Controller {
           ->where('c.estado', '=', 20);
       })
       ->select([
+        'a.id',
         'a.codigo_registro',
         'a.titulo',
         'a.tipo_presentacion',

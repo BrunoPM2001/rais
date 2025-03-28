@@ -24,10 +24,11 @@ class PublicacionesController extends S3Controller {
       $publicaciones = DB::table('Publicacion AS a')
         ->leftJoin('Publicacion_autor AS b', function (JoinClause $join) {
           $join->on('b.publicacion_id', '=', 'a.id')
+            ->leftJoin('Usuario_investigador AS c', 'c.id', '=', 'b.investigador_id')
+            ->leftJoin('Facultad AS d', 'd.id', '=', 'c.facultad_id')
+            ->leftJoin('Area AS e', 'e.id', '=', 'd.area_id')
             ->where('b.presentado', '=', 1);
         })
-        ->leftJoin('Usuario_investigador AS c', 'c.id', '=', 'b.investigador_id')
-        ->leftJoin('Facultad AS d', 'd.id', '=', 'c.facultad_id')
         ->select(
           'a.id',
           'a.codigo_registro',
@@ -43,11 +44,15 @@ class PublicacionesController extends S3Controller {
           'a.tipo_publicacion',
           'a.isbn',
           'a.issn',
+          'a.publicacion_nombre AS revista',
           'a.editorial',
           'a.evento_nombre',
           DB::raw("CONCAT(c.apellido1, ' ', c.apellido2, ', ', c.nombres) AS presentador"),
           'd.nombre AS facultad',
+          'e.nombre AS area',
           'a.titulo',
+          'a.doi',
+          'a.url',
           'a.fecha_publicacion',
           DB::raw("YEAR(a.fecha_publicacion) AS periodo"),
           'a.created_at',
@@ -75,6 +80,7 @@ class PublicacionesController extends S3Controller {
         })
         ->leftJoin('Usuario_investigador AS c', 'c.id', '=', 'b.investigador_id')
         ->leftJoin('Facultad AS d', 'd.id', '=', 'c.facultad_id')
+        ->leftJoin('Area AS e', 'e.id', '=', 'd.area_id')
         ->select([
           DB::raw("CONCAT('0', a.id) AS id"),
           'a.nro_registro AS codigo_registro',
@@ -82,6 +88,7 @@ class PublicacionesController extends S3Controller {
           'a.tipo AS tipo_patente',
           DB::raw("CONCAT(c.apellido1, ' ', c.apellido2, ', ', c.nombres) AS presentador"),
           'd.nombre AS facultad',
+          'e.nombre AS area',
           'a.titulo',
           'a.created_at',
           'a.updated_at',
@@ -109,6 +116,7 @@ class PublicacionesController extends S3Controller {
         })
         ->leftJoin('Usuario_investigador AS d', 'd.id', '=', 'c.investigador_id')
         ->leftJoin('Facultad AS e', 'e.id', '=', 'd.facultad_id')
+        ->leftJoin('Area AS f', 'f.id', '=', 'e.area_id')
         ->select(
           'b.id',
           'b.codigo_registro',
@@ -124,11 +132,15 @@ class PublicacionesController extends S3Controller {
           'b.tipo_publicacion',
           'b.isbn',
           'b.issn',
+          'b.publicacion_nombre AS revista',
           'b.editorial',
           'b.evento_nombre',
           DB::raw("CONCAT(d.apellido1, ' ', d.apellido2, ', ', d.nombres) AS presentador"),
           'e.nombre AS facultad',
+          'f.nombre AS area',
           'b.titulo',
+          'b.doi',
+          'b.url',
           'b.fecha_publicacion',
           DB::raw("YEAR(b.fecha_publicacion) AS periodo"),
           'b.created_at',
@@ -158,6 +170,7 @@ class PublicacionesController extends S3Controller {
         })
         ->leftJoin('Usuario_investigador AS d', 'd.id', '=', 'c.investigador_id')
         ->leftJoin('Facultad AS e', 'e.id', '=', 'd.facultad_id')
+        ->leftJoin('Area AS f', 'f.id', '=', 'e.area_id')
         ->select([
           DB::raw("CONCAT('0', a.id) AS id"),
           'a.nro_registro AS codigo_registro',
@@ -165,6 +178,7 @@ class PublicacionesController extends S3Controller {
           'a.tipo AS tipo_patente',
           DB::raw("CONCAT(d.apellido1, ' ', d.apellido2, ', ', d.nombres) AS presentador"),
           'e.nombre AS facultad',
+          'f.nombre AS area',
           'a.titulo',
           'a.created_at',
           'a.updated_at',

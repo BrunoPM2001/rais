@@ -72,6 +72,7 @@
       font-size: 16px;
       text-align: center;
     }
+
     .subtitulo {
       font-size: 14px;
       text-align: center;
@@ -104,6 +105,7 @@
     .cuerpo>p {
       font-size: 11px;
     }
+
     .obs {
       background-color: #ff9a9a;
       border-radius: 2px;
@@ -138,7 +140,7 @@
 
   <p class="subtitulo">
     <strong>
-    Estado: 
+      Estado:
       @switch($publicacion->estado)
         @case(-1)
           Eliminado
@@ -175,11 +177,16 @@
         @default
           Sin estado
       @endswitch
-       {{ Carbon::parse($publicacion->updated_at)->format("d/m/Y") }}
+      {{ Carbon::parse($publicacion->updated_at)->format('d/m/Y') }}
     </strong>
   </p>
 
-  @if ($publicacion->estado == 2)
+  @if (
+      $publicacion->estado == 2 ||
+          $publicacion->estado == -1 ||
+          $publicacion->estado == 7 ||
+          $publicacion->estado == 8 ||
+          $publicacion->estado == 9)
     <table class="obs">
       <tbody>
         <tr>
@@ -192,20 +199,30 @@
   @endif
 
   @if ($publicacion->categoria != null)
-  <p class="subtitulo-1">
-    <strong>
-    {{ $publicacion->categoria }}
-    </strong>
-  </p>
+    <p class="subtitulo-1">
+      <strong>
+        {{ $publicacion->categoria }}
+      </strong>
+    </p>
   @endif
-  
+
   <div class="cuerpo">
 
     <h5>I. Descripción de la Publicación:</h5>
 
     <p>
-      <b>1.1 Código:</b>
-      {{ $publicacion->codigo_registro == null ? 'No tiene código' : $publicacion->codigo_registro }}
+      @if (
+          $publicacion->estado == 2 ||
+              $publicacion->estado == -1 ||
+              $publicacion->estado == 7 ||
+              $publicacion->estado == 8 ||
+              $publicacion->estado == 9)
+        <b>1.1 Id:</b>
+        {{ $publicacion->id }}
+      @else
+        <b>1.1 Código:</b>
+        {{ $publicacion->codigo_registro == null ? 'No tiene código' : $publicacion->codigo_registro }}
+      @endif
     </p>
     <p>
       <b>1.2 Tipo de artículo: </b>
@@ -267,9 +284,9 @@
       <b>1.16 Anexo: </b>
       @php
         if ($publicacion->anexo) {
-          echo "Sí";
+            echo 'Sí';
         } else {
-          echo "No";
+            echo 'No';
         }
       @endphp
     </p>
@@ -304,7 +321,7 @@
             <td>{{ $loop->iteration }}</td>
             <td>{{ $autor->autor }}</td>
             <td>{{ $autor->nombres }}</td>
-            <td>{{ Carbon::parse($autor->created_at)->format("Y-m-d") }}</td>
+            <td>{{ Carbon::parse($autor->created_at)->format('Y-m-d') }}</td>
             <td>{{ $autor->nro_registro }}</td>
             <td>{{ $autor->puntaje }}</td>
           </tr>

@@ -72,6 +72,7 @@
       font-size: 16px;
       text-align: center;
     }
+
     .subtitulo {
       font-size: 14px;
       text-align: center;
@@ -104,6 +105,7 @@
     .cuerpo>p {
       font-size: 11px;
     }
+
     .obs {
       background-color: #ff9a9a;
       border-radius: 2px;
@@ -138,7 +140,7 @@
 
   <p class="subtitulo">
     <strong>
-    Estado: 
+      Estado:
       @switch($patente->estado)
         @case(-1)
           Eliminado
@@ -175,11 +177,16 @@
         @default
           Sin estado
       @endswitch
-       {{ Carbon::parse($patente->updated_at)->format("d/m/Y") }}
+      {{ Carbon::parse($patente->updated_at)->format('d/m/Y') }}
     </strong>
   </p>
 
-  @if ($patente->estado == 2)
+  @if (
+      $publicacion->estado == 2 ||
+          $publicacion->estado == -1 ||
+          $publicacion->estado == 7 ||
+          $publicacion->estado == 8 ||
+          $publicacion->estado == 9)
     <table class="obs">
       <tbody>
         <tr>
@@ -190,7 +197,7 @@
       </tbody>
     </table>
   @endif
-  
+
   <div class="cuerpo">
 
     <h5>I. Descripción de la propiedad intelectual:</h5>
@@ -223,9 +230,9 @@
       <b>1.7 Certificado: </b>
       @php
         if ($patente->url) {
-          echo "Sí";
+            echo 'Sí';
         } else {
-          echo "No";
+            echo 'No';
         }
       @endphp
     </p>
