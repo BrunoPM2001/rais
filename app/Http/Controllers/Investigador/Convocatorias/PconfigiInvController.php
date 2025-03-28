@@ -676,7 +676,7 @@ class PconfigiInvController extends S3Controller {
     $partidas = DB::table('Proyecto_presupuesto AS a')
       ->join('Partida_proyecto AS b', function (JoinClause $join) {
         $join->on('b.partida_id', '=', 'a.partida_id')
-          ->where('b.tipo_proyecto', '=', 'ECI');
+          ->where('b.tipo_proyecto', '=', 'PCONFIGI-INV');
       })
       ->leftJoin('Partida_proyecto_grupo AS c', 'c.partida_proyecto_id', '=', 'b.id')
       ->leftJoin('Partida_grupo AS d', 'd.id', '=', 'c.partida_grupo_id')
