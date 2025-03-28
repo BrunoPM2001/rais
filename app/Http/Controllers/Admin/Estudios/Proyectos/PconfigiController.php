@@ -10,6 +10,56 @@ use Illuminate\Support\Facades\DB;
 
 class PconfigiController extends Controller {
 
+  public function responsable(Request $request) {
+    $responsable = DB::table('Proyecto_integrante AS a')
+      ->join('Proyecto_integrante_tipo AS b', function (JoinClause $join) {
+        $join->on('b.id', '=', 'a.proyecto_integrante_tipo_id')
+          ->where('b.nombre', '=', 'Responsable');
+      })
+      ->join('Usuario_investigador AS c', 'c.id', '=', 'a.investigador_id')
+      ->leftJoin('Dependencia AS d', 'd.id', '=', 'c.dependencia_id')
+      ->leftJoin('Facultad AS e', 'e.id', '=', 'c.facultad_id')
+      ->leftJoin('Grupo_integrante AS f', function (JoinClause $join) {
+        $join->on('f.investigador_id', '=', 'c.id')
+          ->whereNot('f.condicion', 'LIKE', 'Ex%');
+      })
+      ->leftJoin('Grupo AS g', 'g.id', '=', 'f.grupo_id')
+      ->leftJoin('Area AS h', 'h.id', '=', 'e.area_id')
+      ->select([
+        'c.nombres',
+        DB::raw("CONCAT(c.apellido1, ' ', c.apellido2) AS apellidos"),
+        'c.doc_numero',
+        'c.telefono_movil',
+        'c.telefono_trabajo',
+        'c.especialidad',
+        'c.titulo_profesional',
+        'c.grado',
+        'c.tipo',
+        DB::raw("CONCAT((CASE
+          WHEN SUBSTRING_INDEX(c.docente_categoria, '-', 1) = '1' THEN 'Principal'
+          WHEN SUBSTRING_INDEX(c.docente_categoria, '-', 1) = '2' THEN 'Asociado'
+          WHEN SUBSTRING_INDEX(c.docente_categoria, '-', 1) = '3' THEN 'Auxiliar'
+          WHEN SUBSTRING_INDEX(c.docente_categoria, '-', 1) = '4' THEN 'Jefe de Práctica'
+          ELSE 'Sin categoría'
+        END), ' | ', (CASE
+          WHEN SUBSTRING_INDEX(SUBSTRING_INDEX(c.docente_categoria, '-', 2), '-', -1) = '1' THEN 'Dedicación Exclusiva'
+          WHEN SUBSTRING_INDEX(SUBSTRING_INDEX(c.docente_categoria, '-', 2), '-', -1) = '2' THEN 'Tiempo Completo'
+          WHEN SUBSTRING_INDEX(SUBSTRING_INDEX(c.docente_categoria, '-', 2), '-', -1) = '3' THEN 'Tiempo Parcial'
+          ELSE 'Sin clase'
+        END)) AS docente_categoria"),
+        'c.codigo',
+        'd.dependencia',
+        'e.nombre AS facultad',
+        'c.email3',
+        'g.grupo_nombre',
+        'h.nombre AS area'
+      ])
+      ->where('a.proyecto_id', '=', $request->query('proyecto_id'))
+      ->first();
+
+    return $responsable;
+  }
+
   public function reporte(Request $request) {
     $proyecto = DB::table('Proyecto AS a')
       ->leftJoin('Grupo AS b', function (JoinClause $join) {

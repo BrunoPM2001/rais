@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\Estudios\Proyectos\PicvController;
 use App\Http\Controllers\Admin\Estudios\Proyectos\PmultiController;
 use App\Http\Controllers\S3Controller;
 use Carbon\Carbon;
+use Illuminate\Database\Query\JoinClause;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use PhpOffice\PhpWord\IOFactory;
@@ -24,7 +25,10 @@ class ProyectosGrupoController extends S3Controller {
     $proyectos = DB::table('Proyecto AS a')
       ->leftJoin('Grupo AS b', 'b.id', '=', 'a.grupo_id')
       ->leftJoin('Linea_investigacion AS c', 'c.id', '=', 'a.linea_investigacion_id')
-      ->leftJoin('Proyecto_integrante AS d', 'd.proyecto_id', '=', 'a.id')
+      ->leftJoin('Proyecto_integrante AS d', function (JoinClause $join) {
+        $join->on('d.proyecto_id', '=', 'a.id')
+          ->where('d.condicion', '=', 'Responsable');
+      })
       ->leftJoin('Facultad AS e', 'e.id', '=', 'b.facultad_id')
       ->leftJoin('Proyecto_presupuesto AS f', 'f.proyecto_id', '=', 'a.id')
       ->leftJoin('Usuario_investigador AS g', 'g.id', '=', 'd.investigador_id')
@@ -55,7 +59,6 @@ class ProyectosGrupoController extends S3Controller {
             WHEN 11 THEN 'Concluído'
           ELSE 'Sin estado' END AS estado"),
       )
-      ->where('d.condicion', '=', 'Responsable')
       ->where('a.periodo', '=', $periodo)
       ->groupBy('a.id')
       ->get();
@@ -71,6 +74,8 @@ class ProyectosGrupoController extends S3Controller {
 
     switch ($tipo->tipo_proyecto) {
       case "PCONFIGI":
+        $ctrl = new PconfigiController();
+        $responsable = $ctrl->responsable($request);
         $detalle = $this->detalle($request);
         $miembros = $this->miembros($request);
         $descripcion = $this->descripcion($request);
@@ -80,6 +85,7 @@ class ProyectosGrupoController extends S3Controller {
         return [
           'detalle' => $detalle,
           'miembros' => $miembros,
+          'responsable' => $responsable,
           'descripcion' => $descripcion,
           'actividades' => $actividades,
           'presupuesto' => $presupuesto,
