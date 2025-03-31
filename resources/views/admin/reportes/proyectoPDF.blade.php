@@ -164,14 +164,6 @@
 
     }
 
-    /* .foot-1 {
-            position: fixed;
-            bottom: 60px;
-            left: 0px;
-            text-align: left;
-            font-size: 10px;
-        } */
-
     .table-encabezado {
       width: 100%;
       border-collapse: collapse;

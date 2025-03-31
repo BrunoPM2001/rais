@@ -14,9 +14,10 @@ class ProyectoController extends Controller {
 
     $adminId = $request->attributes->get('token_decoded')->id;
 
-    $admin = DB::table('Usuario_admin')
-      ->select(DB::raw('CONCAT(apellido1, " ", apellido2, ", ", nombres) AS nombres'))
-      ->where('id', '=', $adminId)
+    $admin = DB::table('Usuario_admin AS admin')
+      ->join('Usuario AS ux', 'admin.id', '=', 'ux.tabla_id')
+      ->select('ux.username as nombres')
+      ->where('admin.id', '=', $adminId)
       ->first();
 
     $facultad = $request->query('facultad');
@@ -37,7 +38,11 @@ class ProyectoController extends Controller {
         'p.condicion_proyecto as condicion',
         'p.facultad_docente as facultad_miembro',
         'p.codigo_docente as codigo',
-        'p.tipo_investigador',
+        DB::raw("CASE 
+        WHEN p.tipo_investigador = 'DOCENTE PERMANENTE' THEN 'Docente permanente'
+        WHEN p.tipo_investigador = 'Estudiante Pre Grado' THEN 'Estudiante pregrado'
+        ELSE p.tipo_investigador
+    END AS tipo_investigador"),
         'p.condicion_gi',
         'p.grupo_id',
         'p.total_presupuesto as presupuesto'

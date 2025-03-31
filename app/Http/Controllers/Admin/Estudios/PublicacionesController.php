@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin\Estudios;
 
 use App\Exports\Admin\FromDataExport;
+use App\Exports\Admin\PublicacionesExport;
 use App\Http\Controllers\Admin\Estudios\Publicaciones\ArticulosController;
 use App\Http\Controllers\Admin\Estudios\Publicaciones\CapitulosLibrosController;
 use App\Http\Controllers\Admin\Estudios\Publicaciones\EventoController;
@@ -740,5 +741,15 @@ class PublicacionesController extends S3Controller {
     $export = new FromDataExport($data);
 
     return Excel::download($export, 'proyectos.xlsx');
+  }
+
+  public function excelComplete(Request $request) {
+
+    $filters = $request->all();
+    set_time_limit(300);
+
+    $export = new PublicacionesExport($filters);
+
+    return Excel::download($export, 'publicaciones.xlsx');
   }
 }

@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Investigador\Constancias;
 
 use App\Http\Controllers\S3Controller;
-use App\Mail\Investigador\Constancias\ConstanciaParaFirma;
+use App\Mail\Secretaria\Constancias\ConstanciaFirmada;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -594,14 +594,13 @@ class ReporteController extends S3Controller {
     }
 
     $this->loadFile($pdf["file"], 'constancias', $pdf["name"]);
-    $this->loadFile($pdf["file"], 'constancias', $pdf["original_file"]);
 
     DB::table('Constancia')
       ->insert([
         'investigador_id' => $request->attributes->get('token_decoded')->investigador_id,
         'tipo' => $request->input('tipo_desc'),
-        'archivo_original' => $pdf["original_file"],
         'archivo_firmado' => $pdf["name"],
+        'estado' => 1,
         'created_at' => Carbon::now(),
         'updated_at' => Carbon::now(),
       ]);
@@ -614,8 +613,14 @@ class ReporteController extends S3Controller {
       ->where('id', '=', $request->attributes->get('token_decoded')->investigador_id)
       ->first();
 
-    Mail::to('vrip@unmsm.edu.pe')->send(new ConstanciaParaFirma($investigador->nombres, $investigador->email3, $pdf["file"]));
+    $file = $this->getFile('constancias', $pdf["name"]);
 
-    return ['message' => 'success', 'detail' => 'Solicitud enviada con éxito'];
+    Mail::to($investigador->email3)->cc('jninom@unmsm.edu.pe')->send(new ConstanciaFirmada(
+      $investigador->nombres,
+      $request->input('tipo_desc'),
+      $file
+    ));
+
+    return ['message' => 'success', 'detail' => 'Constancia emitida con éxito'];
   }
 }

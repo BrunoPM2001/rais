@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Admin\Estudios;
 
-use App\Exports\Admin\InformeTecnicoExport;
+use App\Exports\Admin\FromDataExport;
 use App\Http\Controllers\S3Controller;
 use Carbon\Carbon;
 use Illuminate\Database\Query\JoinClause;
@@ -13,6 +13,7 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class InformesTecnicosController extends S3Controller {
   public function proyectosListado(Request $request) {
+
     if ($request->query('lista') == 'nuevos') {
       $responsable = DB::table('Proyecto_integrante AS a')
         ->leftJoin('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
@@ -35,14 +36,17 @@ class InformesTecnicosController extends S3Controller {
         ])
         ->groupBy('a.proyecto_id');
 
+
       //  TODO - Incluir deuda dentro de otra consulta para una nueva tabla en la UI
       $proyectos = DB::table('Proyecto AS a')
         ->leftJoin('Informe_tecnico AS b', 'b.proyecto_id', '=', 'a.id')
+        ->leftJoin('Informe_tipo AS itipo', 'itipo.id', '=', 'b.informe_tipo_id')
         ->leftJoin('Facultad AS c', 'c.id', '=', 'a.facultad_id')
         ->leftJoinSub($responsable, 'res', 'res.proyecto_id', '=', 'a.id')
         ->leftJoinSub($deuda, 'deu', 'deu.proyecto_id', '=', 'a.id')
         ->select(
           'a.id',
+          'b.id as informe_id',
           'a.tipo_proyecto',
           'a.codigo_proyecto',
           'a.titulo',
@@ -52,6 +56,13 @@ class InformesTecnicosController extends S3Controller {
           'res.responsable',
           'c.nombre AS facultad',
           'a.periodo',
+          'b.fecha_envio',
+          'b.fecha_registro_csi as fecha_registro_dgitt',
+          'b.created_at',
+          'b.updated_at',
+          'itipo.informe as tipo_informe',
+          'b.observaciones as observaciones_investigador',
+          'b.observaciones_admin',
           DB::raw("CASE(b.estado)
             WHEN 0 THEN 'En proceso'
             WHEN 1 THEN 'Aprobado'
@@ -88,6 +99,9 @@ class InformesTecnicosController extends S3Controller {
         ])
         ->groupBy('a.proyecto_id');
 
+
+
+
       $proyectos = DB::table('Proyecto_H AS a')
         ->leftJoin('Informe_tecnico_H AS b', 'b.proyecto_id', '=', 'a.id')
         ->leftJoin('Facultad AS c', 'c.id', '=', 'a.facultad_id')
@@ -99,9 +113,15 @@ class InformesTecnicosController extends S3Controller {
         ->leftJoinSub($deuda, 'deu', 'deu.proyecto_id', '=', 'a.id')
         ->select(
           'a.id',
+          'b.id as informe_id',
+          'b.tipo_informe',
           'a.tipo AS tipo_proyecto',
           'a.codigo AS codigo_proyecto',
           'a.titulo',
+          'b.registro_fecha_csi as fecha_registro_digtt',
+          'b.created_at',
+          'b.updated_at',
+          'b.fecha_presentacion as fecha_envio',
           'deu.deuda',
           'deu.categoria AS tipo_deuda',
           DB::raw('COUNT(b.id) AS cantidad_informes'),
@@ -728,11 +748,11 @@ class InformesTecnicosController extends S3Controller {
 
   public function excel(Request $request) {
 
-    $filters = $request->all();
+    $data = $request->all();
 
-    $export = new InformeTecnicoExport($filters);
+    $export = new FromDataExport($data);
 
-    return Excel::download($export, 'informe_tencnico.xlsx');
+    return Excel::download($export, 'informeTecnico.xlsx');
   }
 
   public function getDataPresentarInformeAntiguo(Request $request) {

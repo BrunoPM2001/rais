@@ -253,6 +253,10 @@
       text-align: left;
       font-size: 10px;
     }
+
+    .firma {
+      width: 150px;
+    }
   </style>
 </head>
 
@@ -535,9 +539,17 @@
         de {{ $fecha->year }}</td>
     </tr>
   </table>
+
   <table class="table-footer">
     <tr class="extra-firma">
-      <td>Dr. José Segundo Niño Montero <br><strong>Vicerrector</strong></td>
+      <td>
+        <img class="firma" src="{{ public_path('firma.png') }}" alt="Firma">
+      </td>
+    </tr>
+    <tr>
+      <td>
+        Dr. José Segundo Niño Montero <br><strong>Vicerrector</strong>
+      </td>
     </tr>
   </table>
 
