@@ -356,7 +356,7 @@
   <table class="table-footer">
     <tr class="extra-firma">
       <td>
-        <img class="firma" src="{{ public_path('firma.png') }}" alt="Firma">
+        <img class="firma" src="{{ public_path('firma-negra.jpg') }}" alt="Firma">
       </td>
     </tr>
     <tr>
