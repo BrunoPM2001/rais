@@ -156,6 +156,24 @@
     .firma {
       width: 150px;
     }
+
+    .sello {
+      width: 100px;
+    }
+
+    .table-sello-firma {
+      margin: auto;
+      width: 60%;
+      text-align: center;
+      margin-top: 50px;
+    }
+
+    .nombre-vice {
+      top: -28px;
+      position: relative;
+      text-align: center;
+      font-size: 14px;
+    }
   </style>
 </head>
 
@@ -276,18 +294,22 @@
     </tr>
   </table>
 
-  <table class="table-footer">
+  <table class="table-sello-firma">
     <tr class="extra-firma">
+      <td style="margin-top: 15px;">
+        <img class="sello" src="{{ public_path('sello.jpg') }}" alt="Firma">
+      </td>
       <td>
         <img class="firma" src="{{ public_path('firma-negra.jpg') }}" alt="Firma">
       </td>
-    </tr>
-    <tr>
-      <td>
-        Dr. José Segundo Niño Montero <br><strong>Vicerrector</strong>
+      <td style="width: 100px;">
       </td>
     </tr>
   </table>
+
+  <p class="nombre-vice">
+    Dr. José Segundo Niño Montero <br><strong>Vicerrector</strong>
+  </p>
 
   <div class="foot-1">
     <table style="width: 80%; font-size: 10px;">

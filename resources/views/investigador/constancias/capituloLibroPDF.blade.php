@@ -159,13 +159,13 @@
 
     .table-sello-firma {
       margin: auto;
-      width: 55%;
+      width: 60%;
       text-align: center;
       margin-top: 50px;
     }
 
     .nombre-vice {
-      top: -45px;
+      top: -28px;
       position: relative;
       text-align: center;
       font-size: 14px;
@@ -305,7 +305,7 @@
 
   <table class="table-sello-firma">
     <tr class="extra-firma">
-      <td style="margin-top: 15px; margin-left: 10px;">
+      <td style="margin-top: 15px;">
         <img class="sello" src="{{ public_path('sello.jpg') }}" alt="Firma">
       </td>
       <td>
