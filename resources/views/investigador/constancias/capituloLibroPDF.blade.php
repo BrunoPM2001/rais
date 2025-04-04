@@ -90,13 +90,11 @@
     .table-texto2 {
       width: 100%;
       table-layout: fixed;
-
     }
 
     .table-texto2 td {
       text-align: left;
       font-size: 12px;
-
     }
 
     .table-texto2 td:first-child {
@@ -106,8 +104,6 @@
     .table-footer {
       width: 100%;
       text-align: center;
-      margin-top: 100px;
-
     }
 
     .table-content {
@@ -144,10 +140,6 @@
 
     }
 
-    .extra-firma {
-      font-size: 14px;
-    }
-
     .foot-1 {
       width: 100%;
       position: fixed;
@@ -159,6 +151,24 @@
 
     .firma {
       width: 150px;
+    }
+
+    .sello {
+      width: 100px;
+    }
+
+    .table-sello-firma {
+      margin: auto;
+      width: 55%;
+      text-align: center;
+      margin-top: 50px;
+    }
+
+    .nombre-vice {
+      top: -45px;
+      position: relative;
+      text-align: center;
+      font-size: 14px;
     }
   </style>
 
@@ -239,16 +249,6 @@
 
   @php $i=0; @endphp
   @foreach ($publicaciones as $libro)
-    {{-- <table  style="width: 100%;margin-bottom:0;margin-top:0;padding:0;">
-            <tr>
-                <td colspan="100%" style="margin: 0;padding: 0;">
-                    <h6
-                        style="width: 100%; padding: 10px; background-color: #f5f5f5; border: 1px solid #ddd; border-radius: 10px; ">
-                        Capitulo de Libro
-                    </h6>
-                </td>
-            </tr>
-        </table> --}}
     <table class="table-content">
       <thead>
         <tr>
@@ -303,19 +303,22 @@
     </tr>
   </table>
 
-
-  <table class="table-footer">
+  <table class="table-sello-firma">
     <tr class="extra-firma">
+      <td style="margin-top: 15px; margin-left: 10px;">
+        <img class="sello" src="{{ public_path('sello.jpg') }}" alt="Firma">
+      </td>
       <td>
         <img class="firma" src="{{ public_path('firma-negra.jpg') }}" alt="Firma">
       </td>
-    </tr>
-    <tr>
-      <td>
-        Dr. José Segundo Niño Montero <br><strong>Vicerrector</strong>
+      <td style="width: 100px;">
       </td>
     </tr>
   </table>
+
+  <p class="nombre-vice">
+    Dr. José Segundo Niño Montero <br><strong>Vicerrector</strong>
+  </p>
 
   <div class="foot-1">
     <table style="width: 80%; font-size: 10px;">

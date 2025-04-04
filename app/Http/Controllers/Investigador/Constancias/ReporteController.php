@@ -403,31 +403,33 @@ class ReporteController extends S3Controller {
       ->get();
 
 
-    if (!$solicitud) {
-      $pdf = Pdf::loadView('admin.constancias.capituloLibroPDF', [
-        'docente' => $docente[0],
-        'publicaciones' => $publicaciones,
-        'username' => false
-      ]);
-      return $pdf->stream();
-    } else {
-      $date = Carbon::now();
-      $nameFile = 'capitulos_' . $request->attributes->get('token_decoded')->investigador_id . '_' . $date->format('YmdHis') . '_' . Str::random(8) . '.pdf';
-      $nameFileN = 'capitulos_' . $request->attributes->get('token_decoded')->investigador_id . '_' . $date->format('YmdHis') . '_' . Str::random(8) . '_original.pdf';
+    // if (!$solicitud) {
+    //   $pdf = Pdf::loadView('admin.constancias.capituloLibroPDF', [
+    //     'docente' => $docente[0],
+    //     'publicaciones' => $publicaciones,
+    //     'username' => false
+    //   ]);
+    //   return $pdf->stream();
+    // } else {
+    $date = Carbon::now();
+    $nameFile = 'capitulos_' . $request->attributes->get('token_decoded')->investigador_id . '_' . $date->format('YmdHis') . '_' . Str::random(8) . '.pdf';
+    // $nameFileN = 'capitulos_' . $request->attributes->get('token_decoded')->investigador_id . '_' . $date->format('YmdHis') . '_' . Str::random(8) . '_original.pdf';
 
-      $qrUrl =  env('URL_CONSTANCIAS') . "constancias/" . $nameFile;
-      $qrCode = base64_encode(QrCode::format('png')->size(300)->generate($qrUrl));
+    $qrUrl =  env('URL_CONSTANCIAS') . "constancias/" . $nameFile;
+    $qrCode = base64_encode(QrCode::format('png')->size(300)->generate($qrUrl));
 
-      $pdf = Pdf::loadView('investigador.constancias.capituloLibroPDF', [
-        'docente' => $docente[0],
-        'publicaciones' => $publicaciones,
-        'username' => false,
-        'file' => $nameFile,
-        'qrCode' => $qrCode
-      ]);
+    $pdf = Pdf::loadView('investigador.constancias.capituloLibroPDF', [
+      'docente' => $docente[0],
+      'publicaciones' => $publicaciones,
+      'username' => false,
+      'file' => $nameFile,
+      'qrCode' => $qrCode
+    ]);
 
-      return ['file' => $pdf->output(), 'name' => $nameFile, 'original_file' => $nameFileN];
-    }
+    return $pdf->stream();
+
+    // return ['file' => $pdf->output(), 'name' => $nameFile, 'original_file' => $nameFileN];
+    // }
   }
 
   public function getConstanciaPublicacionesCientificas(Request $request, $solicitud = false) {
@@ -615,7 +617,7 @@ class ReporteController extends S3Controller {
 
     $file = $this->getFile('constancias', $pdf["name"]);
 
-    Mail::to($investigador->email3)->cc('jninom@unmsm.edu.pe')->send(new ConstanciaFirmada(
+    Mail::to('alefran2020@gmail.com')->send(new ConstanciaFirmada(
       $investigador->nombres,
       $request->input('tipo_desc'),
       $file
