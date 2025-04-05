@@ -179,17 +179,14 @@ class MonitoreoController extends Controller {
 
     $publicaciones = DB::table('Publicacion AS a')
       ->leftJoin('Publicacion_autor AS b', 'b.publicacion_id', '=', 'a.id')
-      ->leftJoin('Publicacion_proyecto AS c', function (JoinClause $join) use ($request) {
-        $join->on('c.publicacion_id', '=', 'a.id')
-          ->where('c.proyecto_id', '=', $request->query('id'));
-      })
+      ->leftJoin('Publicacion_proyecto AS c', 'c.publicacion_id', '=', 'a.id')
       ->select(
         'a.id',
         'a.titulo',
         DB::raw('YEAR(a.fecha_publicacion) AS periodo'),
+        DB::raw('COUNT(c.id) AS proyectos_asociados')
       )
       ->where('a.estado', '=', 1)
-      ->whereNull('c.id')
       ->where('b.investigador_id', '=', $proyecto->investigador_id)
       ->where('a.tipo_publicacion', '=', $request->query('tipo_publicacion'))
       ->having('periodo', '>=', $proyecto->periodo)
@@ -201,36 +198,44 @@ class MonitoreoController extends Controller {
   }
 
   public function agregarPublicacion(Request $request) {
-    $proyecto = DB::table('Proyecto AS a')
-      ->join('Proyecto_integrante AS b', 'b.proyecto_id', '=', 'a.id')
-      ->join('Proyecto_integrante_tipo AS c', function (JoinClause $join) {
-        $join->on('c.id', '=', 'b.proyecto_integrante_tipo_id')
-          ->whereIn('c.nombre', ['Responsable', 'Asesor', 'Autor Corresponsal', 'Coordinador']);
-      })
-      ->join('Usuario_investigador AS d', 'd.id', '=', 'b.investigador_id')
-      ->select([
-        'a.titulo',
-        'a.codigo_proyecto',
-        'd.id AS investigador_id'
-      ])
-      ->where('a.id', '=', $request->input('proyecto_id'))
-      ->first();
+    $count = DB::table('Publicacion_proyecto')
+      ->where('publicacion_id', '=', $request->input('publicacion_id'))
+      ->count();
 
-    DB::table('Publicacion_proyecto')
-      ->insert([
-        'investigador_id' => $proyecto->investigador_id,
-        'publicacion_id' => $request->input('publicacion_id'),
-        'proyecto_id' => $request->input('proyecto_id'),
-        'tipo' => 'INTERNO',
-        'codigo_proyecto' => $proyecto->codigo_proyecto,
-        'nombre_proyecto' => $proyecto->titulo,
-        'entidad_financiadora' => 'UNMSM',
-        'estado' => 1,
-        'created_at' => Carbon::now(),
-        'updated_at' => Carbon::now(),
-      ]);
+    if ($count == 0) {
+      $proyecto = DB::table('Proyecto AS a')
+        ->join('Proyecto_integrante AS b', 'b.proyecto_id', '=', 'a.id')
+        ->join('Proyecto_integrante_tipo AS c', function (JoinClause $join) {
+          $join->on('c.id', '=', 'b.proyecto_integrante_tipo_id')
+            ->whereIn('c.nombre', ['Responsable', 'Asesor', 'Autor Corresponsal', 'Coordinador']);
+        })
+        ->join('Usuario_investigador AS d', 'd.id', '=', 'b.investigador_id')
+        ->select([
+          'a.titulo',
+          'a.codigo_proyecto',
+          'd.id AS investigador_id'
+        ])
+        ->where('a.id', '=', $request->input('proyecto_id'))
+        ->first();
 
-    return ['message' => 'success', 'detail' => 'Publicación añadida'];
+      DB::table('Publicacion_proyecto')
+        ->insert([
+          'investigador_id' => $proyecto->investigador_id,
+          'publicacion_id' => $request->input('publicacion_id'),
+          'proyecto_id' => $request->input('proyecto_id'),
+          'tipo' => 'INTERNO',
+          'codigo_proyecto' => $proyecto->codigo_proyecto,
+          'nombre_proyecto' => $proyecto->titulo,
+          'entidad_financiadora' => 'UNMSM',
+          'estado' => 1,
+          'created_at' => Carbon::now(),
+          'updated_at' => Carbon::now(),
+        ]);
+
+      return ['message' => 'success', 'detail' => 'Publicación añadida'];
+    } else {
+      return ['message' => 'warning', 'detail' => 'Esta publicación ya está asociada a un proyecto'];
+    }
   }
 
   public function eliminarPublicacion(Request $request) {

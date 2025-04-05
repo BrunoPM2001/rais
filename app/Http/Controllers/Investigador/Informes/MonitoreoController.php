@@ -166,17 +166,14 @@ class MonitoreoController extends S3Controller {
 
     $publicaciones = DB::table('Publicacion AS a')
       ->leftJoin('Publicacion_autor AS b', 'b.publicacion_id', '=', 'a.id')
-      ->leftJoin('Publicacion_proyecto AS c', function (JoinClause $join) use ($request) {
-        $join->on('c.publicacion_id', '=', 'a.id')
-          ->where('c.proyecto_id', '=', $request->query('id'));
-      })
+      ->leftJoin('Publicacion_proyecto AS c', 'c.publicacion_id', '=', 'a.id')
       ->select(
         'a.id',
         'a.titulo',
         DB::raw('YEAR(a.fecha_publicacion) AS periodo'),
+        DB::raw('COUNT(c.id) AS proyectos_asociados')
       )
       ->where('a.estado', '=', 1)
-      ->whereNull('c.id')
       ->where('b.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
       ->where('a.tipo_publicacion', '=', $request->query('tipo_publicacion'))
       ->having('periodo', '>=', $periodo->periodo)
@@ -188,29 +185,37 @@ class MonitoreoController extends S3Controller {
   }
 
   public function agregarPublicacion(Request $request) {
-    $proyecto = DB::table('Proyecto')
-      ->select([
-        'titulo',
-        'codigo_proyecto'
-      ])
-      ->where('id', '=', $request->input('proyecto_id'))
-      ->first();
+    $count = DB::table('Publicacion_proyecto')
+      ->where('publicacion_id', '=', $request->input('publicacion_id'))
+      ->count();
 
-    DB::table('Publicacion_proyecto')
-      ->insert([
-        'investigador_id' => $request->attributes->get('token_decoded')->investigador_id,
-        'publicacion_id' => $request->input('publicacion_id'),
-        'proyecto_id' => $request->input('proyecto_id'),
-        'tipo' => 'INTERNO',
-        'codigo_proyecto' => $proyecto->codigo_proyecto,
-        'nombre_proyecto' => $proyecto->titulo,
-        'entidad_financiadora' => 'UNMSM',
-        'estado' => 1,
-        'created_at' => Carbon::now(),
-        'updated_at' => Carbon::now(),
-      ]);
+    if ($count == 0) {
+      $proyecto = DB::table('Proyecto')
+        ->select([
+          'titulo',
+          'codigo_proyecto'
+        ])
+        ->where('id', '=', $request->input('proyecto_id'))
+        ->first();
 
-    return ['message' => 'success', 'detail' => 'Publicación añadida'];
+      DB::table('Publicacion_proyecto')
+        ->insert([
+          'investigador_id' => $request->attributes->get('token_decoded')->investigador_id,
+          'publicacion_id' => $request->input('publicacion_id'),
+          'proyecto_id' => $request->input('proyecto_id'),
+          'tipo' => 'INTERNO',
+          'codigo_proyecto' => $proyecto->codigo_proyecto,
+          'nombre_proyecto' => $proyecto->titulo,
+          'entidad_financiadora' => 'UNMSM',
+          'estado' => 1,
+          'created_at' => Carbon::now(),
+          'updated_at' => Carbon::now(),
+        ]);
+
+      return ['message' => 'success', 'detail' => 'Publicación añadida'];
+    } else {
+      return ['message' => 'warning', 'detail' => 'Esta publicación ya está asociada a un proyecto'];
+    }
   }
 
   public function eliminarPublicacion(Request $request) {
