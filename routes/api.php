@@ -1200,6 +1200,7 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
       Route::delete('eliminarPublicacion', [InformesMonitoreoController::class, 'eliminarPublicacion']);
 
       Route::post('remitir', [InformesMonitoreoController::class, 'remitir']);
+      Route::put('actualizar', [InformesMonitoreoController::class, 'actualizar']);
     });
   });
 

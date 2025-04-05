@@ -74,6 +74,7 @@ class MonitoreoController extends S3Controller {
       ->leftJoin('Facultad AS e', 'e.id', '=', 'a.facultad_id')
       ->leftJoin('Monitoreo_proyecto AS f', 'f.proyecto_id', '=', 'a.id')
       ->select([
+        'f.id',
         'a.titulo',
         'a.tipo_proyecto',
         'a.codigo_proyecto',
@@ -344,5 +345,17 @@ class MonitoreoController extends S3Controller {
     ]);
 
     return $pdf->stream();
+  }
+
+  public function actualizar(Request $request) {
+    DB::table('Monitoreo_proyecto')
+      ->where('id', '=', $request->input('id'))
+      ->update([
+        'estado' => 5,
+        'descripcion' => $request->input('descripcion'),
+        'updated_at' => Carbon::now()
+      ]);
+
+    return ['message' => 'info', 'detail' => 'Información actualizada con éxito'];
   }
 }
