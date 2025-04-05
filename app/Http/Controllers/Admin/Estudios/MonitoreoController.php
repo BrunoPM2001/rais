@@ -27,6 +27,11 @@ class MonitoreoController extends Controller {
       })
       ->join('Meta_publicacion AS g', 'g.meta_tipo_proyecto_id', '=', 'e.id')
       ->leftJoin('Monitoreo_proyecto AS h', 'h.proyecto_id', '=', 'a.id')
+      ->leftJoin('Proyecto_integrante AS i', function (JoinClause $join) {
+        $join->on('i.proyecto_id', '=', 'a.id')
+          ->where('i.condicion', '=', 'Responsable');
+      })
+      ->leftJoin('Usuario_investigador AS j', 'j.id', '=', 'i.investigador_id')
       ->select(
         'a.id',
         'a.codigo_proyecto',
@@ -46,6 +51,7 @@ class MonitoreoController extends Controller {
             WHEN 11 THEN 'Concluído'
           ELSE 'Sin estado' END AS estado"),
         'a.tipo_proyecto',
+        DB::raw('CONCAT(j.apellido1, " " , j.apellido2, ", ", j.nombres) AS responsable'),
         'a.periodo',
         DB::raw("CASE(h.estado)
             WHEN 0 THEN 'No aprobado'
@@ -74,6 +80,7 @@ class MonitoreoController extends Controller {
       ->leftJoin('Facultad AS e', 'e.id', '=', 'a.facultad_id')
       ->leftJoin('Monitoreo_proyecto AS f', 'f.proyecto_id', '=', 'a.id')
       ->select([
+        'f.id',
         'a.titulo',
         'a.tipo_proyecto',
         'a.codigo_proyecto',
@@ -354,5 +361,40 @@ class MonitoreoController extends Controller {
     $export = new MonitoreoExport($filters);
 
     return Excel::download($export, 'monitero.xlsx');
+  }
+
+  public function guardar(Request $request) {
+    if ($request->input('id')) {
+      DB::table('Monitoreo_proyecto')
+        ->where('id', '=', $request->input('id'))
+        ->update([
+          'observacion' => $request->input('observacion'),
+          'descripcion' => $request->input('descripcion'),
+          'estado' => $request->input('estado'),
+          'updated_at' => Carbon::now()
+        ]);
+
+      return ['message' => 'info', 'detail' => 'Data actualizada'];
+    } else {
+      $count = DB::table('Monitoreo_proyecto')
+        ->where('proyecto_id', '=', $request->input('proyecto_id'))
+        ->count();
+      if ($count == 0) {
+        DB::table('Monitoreo_proyecto')
+          ->insert([
+            'proyecto_id' => $request->input('proyecto_id'),
+            'observacion' => $request->input('observacion'),
+            'descripcion' => $request->input('descripcion'),
+            'estado' => 5,
+            'fecha_envio' => Carbon::now(),
+            'created_at' => Carbon::now(),
+            'updated_at' => Carbon::now()
+          ]);
+
+        return ['message' => 'info', 'detail' => 'Registro de monitoreo agregado'];
+      } else {
+        return ['message' => 'warning', 'detail' => 'Ya hay un registro de monitoreo para este proyecto, recargue la página'];
+      }
+    }
   }
 }
