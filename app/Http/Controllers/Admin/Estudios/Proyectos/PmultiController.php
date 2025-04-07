@@ -10,6 +10,34 @@ use Illuminate\Http\Request;
 
 class PmultiController extends S3Controller {
 
+  public function detalle(Request $request) {
+    $detalle = DB::table('Proyecto AS a')
+      ->leftJoin('Linea_investigacion AS c', 'c.id', '=', 'a.linea_investigacion_id')
+      ->leftJoin('Facultad_programa AS d', 'd.id', '=', 'a.programa_id')
+      ->leftJoin('Geco_proyecto AS e', 'e.proyecto_id', '=', 'a.id')
+      ->select(
+        'a.tipo_proyecto',
+        'a.estado',
+        'a.titulo',
+        'a.codigo_proyecto',
+        'a.resolucion_rectoral',
+        DB::raw("IFNULL(a.resolucion_fecha, '') AS resolucion_fecha"),
+        'c.nombre AS linea',
+        'a.localizacion',
+        'd.programa',
+        'a.comentario',
+        'a.observaciones_admin',
+        'e.id AS geco_proyecto_id'
+      )
+      ->where('a.id', '=', $request->query('proyecto_id'))
+      ->first();
+
+    return $detalle;
+  }
+
+  public function gruposParticipantes(Request $request) {
+  }
+
   public function reporte(Request $request) {
     $proyecto = DB::table('Proyecto AS a')
       ->leftJoin('Proyecto_descripcion AS b', function (JoinClause $join) {

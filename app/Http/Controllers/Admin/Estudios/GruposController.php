@@ -664,7 +664,13 @@ class GruposController extends S3Controller {
   public function agregarMiembro(Request $request) {
     $id = $request->input('grupo_id');
     $date = Carbon::now();
-    $name = $id . "-formato_adhesion-" . $date->format('Ymd-His');
+    $name = '';
+    //  Archivo nombre
+    if ($request->input('tipo_registro') == 'externo_inter') {
+      $name = $id . "-resolucion-"  . $date->format('Ymd-His');
+    } else {
+      $name = $id .  "-formato_adhesion-" . $date->format('Ymd-His');
+    }
 
     if ($request->hasFile('file')) {
       $nameFile = $id . "/" . $name . "." . $request->file('file')->getClientOriginalExtension();
@@ -714,6 +720,60 @@ class GruposController extends S3Controller {
               'grupo_id' => $request->input('grupo_id'),
               'investigador_id' => $investigador_id,
               'nombre' => 'Formato de adhesión',
+              'key' => $name,
+              'fecha' => $date,
+              'estado' => 1
+            ]);
+
+          return [
+            'message' => 'success',
+            'detail' => 'Miembro registrado exitosamente'
+          ];
+          break;
+        case 'externo_inter':
+          $investigador_id = DB::table('Usuario_investigador')
+            ->insertGetId([
+              'codigo_orcid' => $request->input('codigo_orcid'),
+              'apellido1' => $request->input('apellido1'),
+              'apellido2' => $request->input('apellido2'),
+              'nombres' => $request->input('nombres'),
+              'sexo' => $request->input('sexo'),
+              'institucion' => $request->input('institucion'),
+              'pais' => $request->input('pais'),
+              'email1' => $request->input('email1'),
+              'doc_tipo' => $request->input('doc_tipo'),
+              'doc_numero' => $request->input('doc_numero'),
+              'tipo' => 'Externo Internacional',
+              'telefono_movil' => $request->input('telefono_movil'),
+              'titulo_profesional' => $request->input('titulo_profesional'),
+              'grado' => $request->input('grado'),
+              'especialidad' => $request->input('especialidad'),
+              'researcher_id' => $request->input('researcher_id'),
+              'scopus_id' => $request->input('scopus_id'),
+              'link' => $request->input('link'),
+              'posicion_unmsm' => $request->input('posicion_unmsm'),
+              'biografia' => $request->input('biografia'),
+            ]);
+
+          DB::table('Grupo_integrante')
+            ->insert([
+              'grupo_id' => $request->input('grupo_id'),
+              'investigador_id' => $investigador_id,
+              'tipo' => 'Externo Internacional',
+              'condicion' => 'Adherente',
+              'resolucion' => $request->input('resolucion'),
+              'observacion' => $request->input('observacion'),
+              'fecha_inclusion' => $date,
+              'estado' => '1',
+              'created_at' => $date,
+              'updated_at' => $date
+            ]);
+
+          DB::table('Grupo_integrante_doc')
+            ->insert([
+              'grupo_id' => $request->input('grupo_id'),
+              'investigador_id' => $investigador_id,
+              'nombre' => 'Resolución',
               'key' => $name,
               'fecha' => $date,
               'estado' => 1
@@ -858,16 +918,23 @@ class GruposController extends S3Controller {
       ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
       ->leftJoin('Dependencia AS c', 'c.id', '=', 'b.dependencia_id')
       ->leftJoin('Facultad AS d', 'd.id', '=', 'b.facultad_id')
+      ->leftJoin('Grupo_integrante_doc AS e', function (JoinClause $join) {
+        $join->on('e.grupo_id', '=', 'a.grupo_id')
+          ->on('e.investigador_id', '=', 'b.id');
+      })
       ->select([
         DB::raw("CONCAT(b.apellido1, ' ', b.apellido2, ', ', b.nombres) AS nombre"),
         'b.codigo',
+        'b.doc_tipo',
         'b.doc_numero',
+        'b.sexo',
         'b.docente_categoria',
         'c.dependencia',
         'd.nombre AS facultad',
         'b.codigo_orcid',
         'b.researcher_id',
         'b.scopus_id',
+        'b.institucion',
         'b.biografia',
         'a.resolucion_oficina',
         'a.fecha_inclusion',
@@ -885,7 +952,11 @@ class GruposController extends S3Controller {
         'b.tipo',
         'b.telefono_movil',
         'b.telefono_casa',
-        'b.telefono_trabajo'
+        'b.telefono_trabajo',
+        //  Documento
+        'e.nombre AS nombre_documento',
+        'e.fecha AS fecha_documento',
+        DB::raw("CONCAT('/minio/grupo-integrante-doc/', e.key, '.pdf') AS url")
       ])
       ->where('a.id', '=', $request->query('grupo_integrante_id'))
       ->first();

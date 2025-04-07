@@ -260,6 +260,7 @@ class InformesTecnicosController extends S3Controller {
       case "PSINFINV":
       case "PSINFIPU":
       case "PTPBACHILLER":
+      case "PTPMAEST":
       case "PTPDOCTO":
         $proyecto = DB::table('Proyecto AS a')
           ->leftJoin('Facultad AS b', 'b.id', '=', 'a.facultad_id')

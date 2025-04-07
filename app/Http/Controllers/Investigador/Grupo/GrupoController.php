@@ -756,7 +756,7 @@ class GrupoController extends S3Controller {
     $miembros = DB::table('Grupo_integrante AS a')
       ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
       ->leftJoin('Facultad AS c', 'c.id', '=', 'b.facultad_id')
-      ->leftJoin('Proyecto_integrante AS d', 'd.grupo_integrante_id', '=', 'a.id')
+      ->leftJoin('Proyecto_integrante AS d', 'd.investigador_id', '=', 'b.id')
       ->select(
         'a.id',
         'a.investigador_id',
@@ -1295,6 +1295,7 @@ class GrupoController extends S3Controller {
       ->leftJoin('Dependencia AS c', 'c.id', '=', 'b.dependencia_id')
       ->leftJoin('Facultad AS d', 'd.id', '=', 'b.facultad_id')
       ->select([
+        'b.id AS investigador_id',
         DB::raw("CONCAT(b.apellido1, ' ', b.apellido2, ', ', b.nombres) AS nombre"),
         'b.codigo',
         'b.doc_numero',
@@ -1326,8 +1327,7 @@ class GrupoController extends S3Controller {
       ->where('a.id', '=', $request->query('grupo_integrante_id'))
       ->first();
 
-    $proyectos = DB::table('Grupo_integrante AS a')
-      ->join('Proyecto_integrante AS b', 'b.grupo_integrante_id', '=', 'a.id')
+    $proyectos = DB::table('Proyecto_integrante AS b')
       ->join('Proyecto AS c', 'c.id', '=', 'b.proyecto_id')
       ->leftJoin('Proyecto_integrante_tipo AS d', 'd.id', '=', 'b.proyecto_integrante_tipo_id')
       ->select([
@@ -1336,11 +1336,22 @@ class GrupoController extends S3Controller {
         'c.titulo',
         'd.nombre AS condicion',
         'c.periodo',
-        'c.estado'
+        DB::raw("CASE(c.estado)
+          WHEN -1 THEN 'Eliminado'
+          WHEN 0 THEN 'No aprobado'
+          WHEN 1 THEN 'Aprobado'
+          WHEN 2 THEN 'Observado'
+          WHEN 3 THEN 'En evaluacion'
+          WHEN 5 THEN 'Enviado'
+          WHEN 6 THEN 'En proceso'
+          WHEN 7 THEN 'Anulado'
+          WHEN 8 THEN 'Sustentado'
+          WHEN 9 THEN 'En ejecución'
+          WHEN 10 THEN 'Ejecutado'
+          WHEN 11 THEN 'Concluído'
+        ELSE 'Sin estado' END AS estado"),
       ])
-      ->where('a.id', '=', $request->query('grupo_integrante_id'))
-      ->where('c.estado', '=', 1)
-      ->groupBy('c.id')
+      ->where('b.investigador_id', '=', $informacion->investigador_id)
       ->get();
 
     return ['informacion' => $informacion, 'proyectos' => $proyectos];

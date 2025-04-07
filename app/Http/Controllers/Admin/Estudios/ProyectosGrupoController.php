@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\Estudios\Proyectos\PsinfinvController;
 use App\Http\Controllers\Admin\Estudios\Proyectos\PsinfipuController;
 use App\Http\Controllers\Admin\Estudios\Proyectos\PicvController;
 use App\Http\Controllers\Admin\Estudios\Proyectos\PmultiController;
+use App\Http\Controllers\Admin\Estudios\Proyectos\PtpmaestController;
 use App\Http\Controllers\S3Controller;
 use Carbon\Carbon;
 use Illuminate\Database\Query\JoinClause;
@@ -165,6 +166,27 @@ class ProyectosGrupoController extends S3Controller {
           'miembros' => $miembros,
           'documentos' => $documentos,
           'actividades' => $actividades,
+        ];
+
+      case "PTPMAEST":
+        $ctrl = new PtpmaestController();
+
+        $detalle = $ctrl->detalle($request);
+        $descripcion = $ctrl->descripcion($request);
+        $miembros = $ctrl->miembros($request);
+        $documentos = $ctrl->documentos($request);
+        $presupuesto = $this->presupuesto($request);
+        $actividades = $ctrl->actividades($request);
+        $responsableTesista = $ctrl->responsableTesista($request);
+
+        return [
+          'detalle' => $detalle,
+          'descripcion' => $descripcion,
+          'miembros' => $miembros,
+          'documentos' => $documentos,
+          'actividades' => $actividades,
+          'presupuesto' => $presupuesto,
+          'responsableTesista' => $responsableTesista,
         ];
 
       default:
@@ -495,6 +517,9 @@ class ProyectosGrupoController extends S3Controller {
         return $ctrl->reporte($request);
       case "PICV":
         $ctrl = new PicvController();
+        return $ctrl->reporte($request);
+      case "PTPMAEST":
+        $ctrl = new PtpmaestController();
         return $ctrl->reporte($request);
       default:
     }
