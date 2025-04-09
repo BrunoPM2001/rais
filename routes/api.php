@@ -577,6 +577,9 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
     //  Proyectos con financiamiento
     Route::prefix('conFinanciamiento')->group(function () {
       Route::get('listado', [ProyectoConFinanciamientoController::class, 'listado']);
+      Route::get('formatoDj', [ProyectoConFinanciamientoController::class, 'formatoDj']);
+      Route::post('uploadDocumento', [ProyectoConFinanciamientoController::class, 'uploadDocumento']);
+      Route::get('djFirmada', [ProyectoConFinanciamientoController::class, 'djFirmada']);
     });
     //  Proyectos sin financiamiento
     Route::prefix('sinFinanciamiento')->group(function () {

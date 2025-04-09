@@ -57,7 +57,8 @@ class ProyectoDetalleController extends Controller {
             'a.fecha_inscripcion',
             'a.resolucion_rectoral',
             'a.observaciones_admin',
-            'f.grupo_nombre'
+            'f.grupo_nombre',
+            'a.dj_aceptada'
           ])
           ->where('a.id', '=', $request->query('proyecto_id'))
           ->first();
