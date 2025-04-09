@@ -9,6 +9,44 @@ use Illuminate\Support\Facades\DB;
 
 class ReporteController extends Controller {
 
+  public function searchConstanciaBy(Request $request) {
+    $docente = DB::table('Usuario_investigador AS a')
+      ->leftJoin('Publicacion_autor AS b', 'b.investigador_id', '=', 'a.id')
+      ->select(
+        DB::raw("
+                  CONCAT(
+                      TRIM(a.codigo), ' | ', 
+                      a.doc_numero, ' | ', 
+                      a.apellido1, ' ', a.apellido2, ', ', a.nombres, ' | ', 
+                      COALESCE(a.tipo, CONCAT(a.tipo_investigador, ' - ', a.tipo_investigador_estado))
+                  ) AS value
+              "),
+        'a.id AS investigador_id',
+        'a.id',
+        'a.codigo',
+        'a.doc_numero',
+        'a.apellido1',
+        'a.apellido2',
+        'a.nombres',
+        'a.tipo',
+        'a.tipo_investigador',
+        'a.tipo_investigador_estado',
+        DB::raw("COUNT(b.id) AS publicaciones")
+      )
+      ->whereRaw('LOWER(a.tipo_investigador) LIKE ?', ['docente%'])
+      ->orWhereRaw('LOWER(a.tipo) LIKE ?', ['docente%'])
+      ->orWhereRaw('LOWER(a.tipo_investigador) LIKE ?', ['estudiante%'])
+      ->orWhereRaw('LOWER(a.tipo) LIKE ?', ['estudiante%'])
+      ->orWhereRaw('LOWER(a.tipo_investigador) LIKE ?', ['externo%'])
+      ->orWhereRaw('LOWER(a.tipo) LIKE ?', ['externo%'])
+      ->having('value', 'LIKE', '%' . $request->query('query') . '%')
+      ->groupBy('a.id')
+      ->limit(10)
+      ->get();
+
+    return $docente;
+  }
+
   public function  checkTiposConstancia($investigador_id) {
 
     $estudio = $this->getConstanciaEstudiosInvestigacion($investigador_id);

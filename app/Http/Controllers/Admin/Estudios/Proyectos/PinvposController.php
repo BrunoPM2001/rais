@@ -40,6 +40,7 @@ class PinvposController extends Controller {
       ->leftJoin('Proyecto_integrante_dedicado AS d', 'd.investigador_id', '=', 'b.id')
       ->select([
         'a.id',
+        'b.codigo',
         'c.nombre AS tipo_integrante',
         'd.cargo',
         DB::raw("CONCAT(b.apellido1, ' ', b.apellido2, ', ', b.nombres) AS nombre"),

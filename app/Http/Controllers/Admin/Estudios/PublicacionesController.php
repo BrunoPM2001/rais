@@ -33,6 +33,7 @@ class PublicacionesController extends S3Controller {
         ->select(
           'a.id',
           'a.codigo_registro',
+          'a.cod_old',
           DB::raw("CASE (a.tipo_publicacion)
             WHEN 'articulo' THEN 'Artículo en revista'
             WHEN 'capitulo' THEN 'Capítulo de libro'
@@ -51,6 +52,14 @@ class PublicacionesController extends S3Controller {
           DB::raw("CONCAT(c.apellido1, ' ', c.apellido2, ', ', c.nombres) AS presentador"),
           'd.nombre AS facultad',
           'e.nombre AS area',
+          DB::raw("CASE (b.filiacion)
+            WHEN 1 THEN 'Sí'
+            ELSE 'No'
+          END AS filiacion"),
+          DB::raw("CASE (b.filiacion_unica)
+            WHEN 1 THEN 'Sí'
+            ELSE 'No'
+          END AS filiacion_unica"),
           'a.titulo',
           'a.doi',
           'a.url',
@@ -121,6 +130,7 @@ class PublicacionesController extends S3Controller {
         ->select(
           'b.id',
           'b.codigo_registro',
+          'b.cod_old',
           DB::raw("CASE (b.tipo_publicacion)
             WHEN 'articulo' THEN 'Artículo en revista'
             WHEN 'capitulo' THEN 'Capítulo de libro'
@@ -139,6 +149,14 @@ class PublicacionesController extends S3Controller {
           DB::raw("CONCAT(d.apellido1, ' ', d.apellido2, ', ', d.nombres) AS presentador"),
           'e.nombre AS facultad',
           'f.nombre AS area',
+          DB::raw("CASE (a.filiacion)
+            WHEN 1 THEN 'Sí'
+            ELSE 'No'
+          END AS filiacion"),
+          DB::raw("CASE (a.filiacion_unica)
+            WHEN 1 THEN 'Sí'
+            ELSE 'No'
+          END AS filiacion_unica"),
           'b.titulo',
           'b.doi',
           'b.url',

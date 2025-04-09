@@ -290,6 +290,7 @@ class ProyectosGrupoController extends S3Controller {
       ->join('Usuario_investigador AS c', 'c.id', '=', 'a.investigador_id')
       ->select(
         'a.id',
+        'c.codigo',
         'b.nombre AS tipo_integrante',
         DB::raw('CONCAT(c.apellido1, " ", c.apellido2, " ", c.nombres) AS nombre'),
         'c.tipo AS tipo_investigador'

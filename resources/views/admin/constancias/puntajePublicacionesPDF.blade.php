@@ -83,7 +83,7 @@
       text-align: center;
       border-collapse: collapse;
       table-layout: fixed;
-      margin-bottom: 5px;
+      margin-bottom: 2px;
     }
 
     .title {
@@ -131,7 +131,7 @@
     .table {
       width: 100%;
       border-collapse: separate;
-      margin-bottom: 40px;
+      margin-bottom: 20px;
     }
 
     .table>tbody {
@@ -166,14 +166,6 @@
     .row-right {
       text-align: right;
       padding-right: 10px;
-    }
-
-
-    .extra-1,
-    .extra-2,
-    {
-    font-size: 12px;
-
     }
 
     .extra-firma {
@@ -221,14 +213,14 @@
     </tr>
   </table>
 
-  <table class="texto-1">
+  <table class="texto-1" style="margin-bottom:0px;">
     <tr>
       <td> El Vicerrector de Investigación y Posgrado de la Universidad Nacional Mayor de
         San Marcos hace constar que:</td>
     </tr>
   </table>
 
-  <table style="width: 100%;  font-size: 12px; margin-top: 15px;">
+  <table style="width: 100%;  font-size: 12px; margin-top: 10px;">
     <tr>
       <!-- Primera columna (50%) -->
       <td style="width: 65%; vertical-align: top;border-collapse:collapse; padding:10px;border: 1px solid #111111;">
@@ -275,7 +267,7 @@
       </td>
     </tr>
   </table>
-  <table class="texto-1">
+  <table class="texto-1" style="margin-top: 3px;margin-bottom:10px;">
     <tr>
       <td>Ha registrado las siguiente publicaciones:</td>
     </tr>
@@ -338,7 +330,7 @@
       <tfoot>
         <tr>
           <td></td>
-          <td class="row-right">Sub-Total</td>
+          <td class="row-right">Total</td>
           <td class="row-center">{{ $subtotal }}</td>
           <td class="row-right">{{ number_format($puntajetotal, 2) }}</td>
         </tr>
@@ -348,11 +340,13 @@
   </div>
   <table>
     <tr>
-      <td class="extra-1">Se expide la presente constancia a solicitud del(de la) interesado(a) para los fines que
+      <td style="margin-top: 0px;margin-bottom:0px; font-size: 12px;">Se expide la presente constancia a solicitud
+        del(de la) interesado(a) para los fines que
         considere conveniente.</td>
     </tr><br>
     <tr>
-      <td class="extra-2">Lima, {{ $fecha->isoFormat('DD') }} de {{ ucfirst($fecha->monthName) }}
+      <td style="margin-top:0px;font-size: 12px;">Lima, {{ $fecha->isoFormat('DD') }} de
+        {{ ucfirst($fecha->monthName) }}
         de {{ $fecha->year }}</td>
     </tr>
   </table>

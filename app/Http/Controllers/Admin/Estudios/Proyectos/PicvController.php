@@ -75,6 +75,7 @@ class PicvController extends Controller {
       })
       ->select([
         'a.id',
+        'b.codigo',
         'c.nombre AS tipo_integrante',
         DB::raw("CONCAT(b.apellido1, ' ', b.apellido2, ', ', b.nombres) AS nombre"),
         'b.tipo',
