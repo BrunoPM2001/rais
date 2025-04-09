@@ -30,20 +30,6 @@ class MonitoreoController extends S3Controller {
         'a.id',
         'a.codigo_proyecto',
         'a.titulo',
-        DB::raw("CASE(a.estado)
-            WHEN -1 THEN 'Eliminado'
-            WHEN 0 THEN 'No aprobado'
-            WHEN 1 THEN 'Aprobado'
-            WHEN 2 THEN 'Observado'
-            WHEN 3 THEN 'En evaluacion'
-            WHEN 5 THEN 'Enviado'
-            WHEN 6 THEN 'En proceso'
-            WHEN 7 THEN 'Anulado'
-            WHEN 8 THEN 'Sustentado'
-            WHEN 9 THEN 'En ejecución'
-            WHEN 10 THEN 'Ejecutado'
-            WHEN 11 THEN 'Concluído'
-          ELSE 'Sin estado' END AS estado"),
         'a.tipo_proyecto',
         'a.periodo',
         DB::raw("CASE(h.estado)
@@ -103,7 +89,6 @@ class MonitoreoController extends S3Controller {
             WHEN 6 THEN 'En proceso'
           ELSE 'Por presentar' END AS estado_meta"),
         'f.descripcion',
-        'f.observacion'
       ])
       ->where('a.id', '=', $request->query('id'))
       ->first();
@@ -149,10 +134,19 @@ class MonitoreoController extends S3Controller {
       ->where('a.proyecto_id', '=', $request->query('id'))
       ->get();
 
+    $observacion = DB::table('Monitoreo_proyecto_obs')
+      ->select([
+        'observacion'
+      ])
+      ->where('monitoreo_proyecto_id', '=', $datos->id)
+      ->orderByDesc('id')
+      ->first();
+
     return [
       'datos' => $datos,
       'metas' => $metas,
-      'publicaciones' => $publicaciones
+      'publicaciones' => $publicaciones,
+      'observacion' => $observacion
     ];
   }
 
@@ -177,6 +171,7 @@ class MonitoreoController extends S3Controller {
       ->where('b.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
       ->where('a.tipo_publicacion', '=', $request->query('tipo_publicacion'))
       ->having('periodo', '>=', $periodo->periodo)
+      ->having('periodo', '<=', $periodo->periodo + 1)
       ->orderByDesc('a.updated_at')
       ->groupBy('a.id')
       ->get();
@@ -361,6 +356,35 @@ class MonitoreoController extends S3Controller {
         'updated_at' => Carbon::now()
       ]);
 
+    $ultima_obs = DB::table('Monitoreo_proyecto_obs')
+      ->select([
+        'id'
+      ])
+      ->where('monitoreo_proyecto_id', '=', $request->input('id'))
+      ->orderByDesc('id')
+      ->first();
+
+    DB::table('Monitoreo_proyecto_obs')
+      ->where('id', '=', $ultima_obs->id)
+      ->update([
+        'updated_at' => Carbon::now()
+      ]);
+
     return ['message' => 'info', 'detail' => 'Información actualizada con éxito'];
+  }
+
+  public function verObs(Request $request) {
+    $observaciones = DB::table('Monitoreo_proyecto_obs')
+      ->select([
+        'id',
+        'observacion',
+        'created_at',
+        'updated_at'
+      ])
+      ->where('monitoreo_proyecto_id', '=', $request->query('id'))
+      ->orderByDesc('id')
+      ->get();
+
+    return $observaciones;
   }
 }

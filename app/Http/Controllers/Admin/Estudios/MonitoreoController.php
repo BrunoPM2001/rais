@@ -36,20 +36,6 @@ class MonitoreoController extends Controller {
         'a.id',
         'a.codigo_proyecto',
         'a.titulo',
-        DB::raw("CASE(a.estado)
-            WHEN -1 THEN 'Eliminado'
-            WHEN 0 THEN 'No aprobado'
-            WHEN 1 THEN 'Aprobado'
-            WHEN 2 THEN 'Observado'
-            WHEN 3 THEN 'En evaluacion'
-            WHEN 5 THEN 'Enviado'
-            WHEN 6 THEN 'En proceso'
-            WHEN 7 THEN 'Anulado'
-            WHEN 8 THEN 'Sustentado'
-            WHEN 9 THEN 'En ejecución'
-            WHEN 10 THEN 'Ejecutado'
-            WHEN 11 THEN 'Concluído'
-          ELSE 'Sin estado' END AS estado"),
         'a.tipo_proyecto',
         DB::raw('CONCAT(j.apellido1, " " , j.apellido2, ", ", j.nombres) AS responsable'),
         'a.periodo',
@@ -62,7 +48,7 @@ class MonitoreoController extends Controller {
           ELSE 'Por presentar' END AS estado_meta")
       )
       ->whereIn('c.nombre', ['Responsable', 'Asesor', 'Autor Corresponsal', 'Coordinador'])
-      ->whereIn('a.estado', [1, 9, 10, 11])
+      ->whereIn('a.estado', [1, 8, 9, 10, 11])
       ->groupBy('a.id')
       ->get();
 
@@ -190,6 +176,7 @@ class MonitoreoController extends Controller {
       ->where('b.investigador_id', '=', $proyecto->investigador_id)
       ->where('a.tipo_publicacion', '=', $request->query('tipo_publicacion'))
       ->having('periodo', '>=', $proyecto->periodo)
+      ->having('periodo', '<=', $proyecto->periodo + 1)
       ->orderByDesc('a.updated_at')
       ->groupBy('a.id')
       ->get();
@@ -402,5 +389,38 @@ class MonitoreoController extends Controller {
         return ['message' => 'warning', 'detail' => 'Ya hay un registro de monitoreo para este proyecto, recargue la página'];
       }
     }
+  }
+
+  public function verObs(Request $request) {
+    $observaciones = DB::table('Monitoreo_proyecto_obs')
+      ->select([
+        'observacion',
+        'created_at',
+        'updated_at'
+      ])
+      ->where('monitoreo_proyecto_id', '=', $request->query('id'))
+      ->orderByDesc('created_at')
+      ->get();
+
+    return $observaciones;
+  }
+
+  public function observar(Request $request) {
+    DB::table('Monitoreo_proyecto')
+      ->where('id', '=', $request->input('id'))
+      ->update([
+        'estado' => 2,
+        'updated_at' => Carbon::now()
+      ]);
+
+    DB::table('Monitoreo_proyecto_obs')
+      ->insert([
+        'monitoreo_proyecto_id' => $request->input('id'),
+        'observacion' => $request->input('observacion'),
+        'created_at' => Carbon::now(),
+        'updated_at' => Carbon::now()
+      ]);
+
+    return ['message' => 'info', 'detail' => 'Monitoreo observado'];
   }
 }

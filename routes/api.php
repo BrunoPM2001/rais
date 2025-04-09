@@ -271,6 +271,8 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
     Route::prefix('monitoreo')->group(function () {
       Route::get('listadoProyectos', [MonitoreoController::class, 'listadoProyectos']);
       Route::get('detalles', [MonitoreoController::class, 'detalles']);
+      Route::get('verObs', [MonitoreoController::class, 'verObs']);
+      Route::put('observar', [MonitoreoController::class, 'observar']);
 
       Route::put('guardar', [MonitoreoController::class, 'guardar']);
 
@@ -1196,6 +1198,7 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
     Route::prefix('monitoreo')->group(function () {
       Route::get('listadoProyectos', [InformesMonitoreoController::class, 'listadoProyectos']);
       Route::get('detalles', [InformesMonitoreoController::class, 'detalles']);
+      Route::get('verObs', [InformesMonitoreoController::class, 'verObs']);
       Route::get('reporte', [InformesMonitoreoController::class, 'reporte']);
 
       Route::get('publicacionesDisponibles', [InformesMonitoreoController::class, 'publicacionesDisponibles']);

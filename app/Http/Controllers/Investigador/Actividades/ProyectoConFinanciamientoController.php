@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers\Investigador\Actividades;
 
-use App\Http\Controllers\S3Controller;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
+use App\Http\Controllers\S3Controller;
 use Carbon\Carbon;
 
 class ProyectoConFinanciamientoController extends S3Controller {
@@ -148,12 +148,13 @@ class ProyectoConFinanciamientoController extends S3Controller {
 
       $this->uploadFile($request->file('file'), "dj-subvencion", $nameFile);
 
-      $dj_doc = DB::table('Declaracion_jurada_doc')->insert([
-        'proyecto_id'   => $request->input('proyecto_id'),
-        'periodo'       => $proyecto->periodo,
-        'tipo_proyecto' => $proyecto->tipo_proyecto,
-        'responsable'   => $proyecto->responsable,
-        'url'           => $nameFile, // Esto es la ruta relativa en MinIO
+      DB::table('File')->insert([
+        'tabla_id'   => $request->input('proyecto_id'),
+        'tabla' => 'Proyecto',
+        'bucket' => 'dj-subvencion',
+        'key' => $nameFile,
+        'recurso' => 'DJ_FIRMADA',
+        'estado' => '20',
         'created_at'    => now(),
         'updated_at'    => now(),
       ]);
@@ -173,12 +174,16 @@ class ProyectoConFinanciamientoController extends S3Controller {
 
   public function djFirmada(Request $request) {
 
-    $djFirmada = DB::table('Declaracion_jurada_doc as doc')
+    $djFirmada = DB::table('File as doc')
       ->select(
-        'proyecto_id',
-        DB::raw("CONCAT('/minio/dj-subvencion/', url) AS url")
+        'tabla_id AS proyecto_id',
+        DB::raw("CONCAT('/minio/dj-subvencion/', doc.key) AS url")
       )
-      ->where('proyecto_id', '=', $request->input('proyecto_id'))
+      ->where('tabla_id', '=', $request->input('proyecto_id'))
+      ->where('tabla', '=', 'Proyecto')
+      ->where('recurso', '=', 'DJ_FIRMADA')
+      ->where('bucket', '=', 'dj-subvencion')
+      ->where('estado', '=', '20')
       ->first();
 
     return $djFirmada;
