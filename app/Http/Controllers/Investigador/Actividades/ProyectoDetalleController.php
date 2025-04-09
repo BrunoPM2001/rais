@@ -27,6 +27,12 @@ class ProyectoDetalleController extends Controller {
           ->leftJoin('Facultad AS d', 'd.id', '=', 'a.facultad_id')
           ->leftJoin('Linea_investigacion AS e', 'e.id', '=', 'a.linea_investigacion_id')
           ->leftJoin('Grupo AS f', 'f.id', '=', 'a.grupo_id')
+          ->leftJoin('File AS g', function (JoinClause $join) {
+            $join->on('g.tabla_id', '=', 'a.id')
+              ->where('g.tabla', '=', 'Proyecto')
+              ->where('g.recurso', '=', 'DJ_FIRMADA')
+              ->where('g.estado', '=', 20);
+          })
           ->select([
             'a.id',
             DB::raw("CASE(a.estado)
@@ -58,7 +64,8 @@ class ProyectoDetalleController extends Controller {
             'a.resolucion_rectoral',
             'a.observaciones_admin',
             'f.grupo_nombre',
-            'a.dj_aceptada'
+            'a.dj_aceptada',
+            DB::raw("CONCAT('/minio/', g.bucket, '/', g.key) AS url")
           ])
           ->where('a.id', '=', $request->query('proyecto_id'))
           ->first();

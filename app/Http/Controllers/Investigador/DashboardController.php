@@ -25,6 +25,20 @@ class DashboardController extends Controller {
       ->where('investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
       ->count();
 
+    $dj = DB::table('Proyecto as px')
+      ->join('Proyecto_integrante as pix', 'px.id', '=', 'pix.proyecto_id')
+      ->select(
+        'px.dj_aceptada',
+        'px.id',
+      )
+      ->where('pix.condicion', '=', 'Responsable')
+      ->where('pix.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+      ->where('px.estado', '=', 1)
+      ->where('px.tipo_proyecto', '=', 'PCONFIGI')
+      ->where('px.periodo', '=', 2025)
+      ->first();
+
+
     $publicaciones = DB::table('Publicacion AS a')
       ->leftJoin('Publicacion_autor AS b', 'a.id', '=', 'b.publicacion_id')
       ->select(
@@ -102,6 +116,8 @@ class DashboardController extends Controller {
       ],
       'tipos_publicaciones' => $tipos1,
       'tipos_proyectos' => $tipos2,
+      'dj' => $dj->dj_aceptada,
+      'proyecto_id' => $dj->id,
       'alerta' => $const ? $fecha1->greaterThan($fecha2) : false
     ];
   }

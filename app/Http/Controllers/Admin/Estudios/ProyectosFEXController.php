@@ -458,8 +458,8 @@ class ProyectosFEXController extends S3Controller {
         'a.ser_nom AS nombre',
         'b.id AS investigador_id',
         DB::raw("CONCAT(a.ser_ape_pat, ' ', a.ser_ape_mat, ', ', a.ser_nom) AS nombres"),
-        'ser_cod_ant AS codigo',
-        'ser_doc_id_act AS doc_numero',
+        'a.ser_cod_ant AS codigo',
+        'a.ser_doc_id_act AS doc_numero',
         DB::raw("CASE
           WHEN SUBSTRING_INDEX(ser_cat_act, '-', 1) = '1' THEN 'Principal'
           WHEN SUBSTRING_INDEX(ser_cat_act, '-', 1) = '2' THEN 'Asociado'
@@ -473,12 +473,10 @@ class ProyectosFEXController extends S3Controller {
           WHEN SUBSTRING_INDEX(SUBSTRING_INDEX(ser_cat_act, '-', 2), '-', -1) = '3' THEN 'Tiempo Parcial'
           ELSE 'Sin clase'
         END AS clase"),
-        DB::raw("SUBSTRING_INDEX(ser_cat_act, '-', -1) AS horas"),
         'a.des_dep_cesantes AS dependencia',
         'a.ser_cod_dep_ces AS dependencia_id',
         'e.nombre AS facultad',
         'e.id AS facultad_id',
-
         'b.cti_vitae',
         'b.especialidad',
         'b.titulo_profesional',
@@ -489,14 +487,16 @@ class ProyectosFEXController extends S3Controller {
         'b.telefono_casa',
         'b.telefono_trabajo',
         'b.telefono_movil',
+        DB::raw("SUBSTRING_INDEX(ser_cat_act, '-', -1) AS horas"),
       )
-      ->where('des_tip_ser', 'LIKE', 'DOCENTE%')
+      ->where('a.des_tip_ser', 'LIKE', 'DOCENTE%')
+      ->where('b.tipo', 'LIKE', '%DOCENTE%')
       ->where(function ($query) {
         $query->where('c.fecha_fin', '<', date('Y-m-d'))
           ->orWhere('d.id', '=', 9)
           ->orWhereNull('d.tipo');
       })
-      ->groupBy('ser_cod_ant')
+      ->groupBy('a.ser_cod_ant')
       ->having('value', 'LIKE', '%' . $request->query('query') . '%')
       ->limit(10)
       ->get();
@@ -576,7 +576,17 @@ class ProyectosFEXController extends S3Controller {
           'telefono_trabajo' => $request->input('telefono_trabajo'),
           'telefono_movil' => $request->input('telefono_movil'),
         ]);
+
+      $count = DB::table('Proyecto_integrante')
+        ->where('proyecto_id', '=', $request->input('id'))
+        ->where('investigador_id', '=', $investigador_id)
+        ->count();
+
+      if ($count > 0) {
+        return ['message' => 'warning', 'detail' => 'No puede agregar al mismo docente 2 veces'];
+      }
     }
+
 
     DB::table('Proyecto_integrante')
       ->insert([
