@@ -189,6 +189,26 @@ class ProyectosGrupoController extends S3Controller {
           'responsableTesista' => $responsableTesista,
         ];
 
+      case "PMULTI":
+        $ctrl = new PmultiController();
+        $detalle = $ctrl->detalle($request);
+        $miembros = $ctrl->miembros($request);
+        $responsable = $ctrl->responsable($request);
+        $documentos = $ctrl->documentos($request);
+        $descripcion = $ctrl->descripcion($request);
+        $actividades = $ctrl->actividades($request);
+        $presupuesto = $this->presupuesto($request);
+
+        return [
+          'detalle' => $detalle,
+          'miembros' => $miembros,
+          'responsable' => $responsable,
+          'documentos' => $documentos,
+          'descripcion' => $descripcion,
+          'actividades' => $actividades,
+          'presupuesto' => $presupuesto,
+        ];
+
       default:
         $detalle = $this->detalle($request);
         $miembros = $this->miembros($request);
