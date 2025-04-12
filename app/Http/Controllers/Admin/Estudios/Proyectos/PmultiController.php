@@ -50,6 +50,7 @@ class PmultiController extends S3Controller {
         'a.investigador_id',
       ])
       ->where('a.proyecto_id', $request->query('proyecto_id'))
+      ->whereNotNull('a.grupo_id')
       ->get()
       ->groupBy('grupo_id')
       ->map(function ($items) use ($coordinadores) {
