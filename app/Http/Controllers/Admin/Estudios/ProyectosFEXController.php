@@ -1024,7 +1024,10 @@ class ProyectosFEXController extends S3Controller {
       ->join('Proyecto_integrante_tipo AS c', 'c.id', '=', 'a.proyecto_integrante_tipo_id')
       ->join('Facultad AS d', 'd.id', '=', 'b.facultad_id')
       ->select([
-        'c.nombre AS tipo',
+        DB::raw("CASE (c.nombre)
+          WHEN 'Otros' THEN a.responsabilidad
+          ELSE c.nombre
+        END AS tipo"),
         DB::raw("CONCAT(b.apellido1, ' ', b.apellido2, ', ', b.nombres) AS nombre"),
         'b.doc_numero',
         DB::raw("CASE(b.tipo)
