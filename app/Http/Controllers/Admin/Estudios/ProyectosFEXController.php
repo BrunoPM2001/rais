@@ -214,10 +214,17 @@ class ProyectosFEXController extends S3Controller {
       ->leftJoin('Facultad AS d', 'd.id', '=', 'b.facultad_id')
       ->select([
         'a.id',
-        'c.nombre AS tipo_integrante',
+        DB::raw("CASE (c.nombre)
+          WHEN 'Otros' THEN a.responsabilidad
+          ELSE c.nombre
+        END AS tipo_integrante"),
         DB::raw("CONCAT(b.apellido1, ' ', b.apellido2, ', ', b.nombres) AS nombre"),
         'b.doc_numero',
-        'd.nombre AS facultad'
+        DB::raw("CASE(a.condicion)
+          WHEN 'Responsable' THEN 'Sí'
+          ELSE 'No'
+        END AS responsable"),
+        DB::raw("COALESCE(d.nombre, 'Externo') AS facultad")
       ])
       ->where('a.proyecto_id', '=', $request->query('id'))
       ->get();
