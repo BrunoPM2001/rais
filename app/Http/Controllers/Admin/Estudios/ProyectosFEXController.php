@@ -1022,7 +1022,7 @@ class ProyectosFEXController extends S3Controller {
     $integrantes = DB::table('Proyecto_integrante AS a')
       ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
       ->join('Proyecto_integrante_tipo AS c', 'c.id', '=', 'a.proyecto_integrante_tipo_id')
-      ->join('Facultad AS d', 'd.id', '=', 'b.facultad_id')
+      ->leftJoin('Facultad AS d', 'd.id', '=', 'b.facultad_id')
       ->select([
         DB::raw("CASE (c.nombre)
           WHEN 'Otros' THEN a.responsabilidad
