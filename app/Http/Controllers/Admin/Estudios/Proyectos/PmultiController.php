@@ -38,28 +38,49 @@ class PmultiController extends S3Controller {
       ->first();
 
     //  Ver si hay registro
-    $coordinadores = json_decode($detalle->autorizacion_grupo ?? "[]");
-    $ids = array_column($coordinadores, 'investigador_id');
+    $coordinadores = collect(json_decode($detalle->autorizacion_grupo ?: '[]'))
+      ->keyBy('investigador_id');
 
     $grupos = DB::table('Proyecto_integrante AS a')
       ->leftJoin('Grupo AS b', 'b.id', '=', 'a.grupo_id')
       ->select([
-        'a.investigador_id',
+        'b.id AS grupo_id',
+        'b.grupo_categoria',
         DB::raw("UPPER(b.grupo_nombre_corto) AS grupo_nombre_corto"),
+        'a.investigador_id',
       ])
-      ->where('a.proyecto_id', '=', $request->query('proyecto_id'))
-      ->whereIn('a.investigador_id', $ids)
+      ->where('a.proyecto_id', $request->query('proyecto_id'))
       ->get()
-      ->map(function ($item) use ($coordinadores) {
-        foreach ($coordinadores as $coordinador) {
-          if ($coordinador->investigador_id == $item->investigador_id) {
-            return [
-              'grupo_nombre_corto' => $item->grupo_nombre_corto,
-              'autorizado' => $coordinador->autorizado == 1 ? 'SÍ' : 'NO'
-            ];
-          }
+      ->groupBy('grupo_id')
+      ->map(function ($items) use ($coordinadores) {
+        $grupoNombre = $items->first()->grupo_nombre_corto;
+        $grupoCategoria = $items->first()->grupo_categoria;
+
+        // Filtrar los investigadores del grupo que están en el JSON
+        $autorizaciones = collect($items)->map(function ($item) use ($coordinadores) {
+          return $coordinadores->get($item->investigador_id);
+        })->filter(); // quita nulls (los que no están en el json)
+
+        //  En caso no haya autorización
+        $estado = 'NO';
+
+        //  En caso no haya nadie del grupo en el json
+        if ($autorizaciones->isEmpty()) {
+          $estado = '...';
         }
-      });
+
+        //  En caso haya autorización
+        if ($autorizaciones->contains(fn($a) => $a->autorizado == 1)) {
+          $estado = 'SÍ';
+        }
+
+        return [
+          'grupo_nombre_corto' => $grupoNombre,
+          'grupo_categoria' => $grupoCategoria,
+          'autorizado' => $estado,
+        ];
+      })
+      ->values();
 
     $detalle->grupos = $grupos;
 
