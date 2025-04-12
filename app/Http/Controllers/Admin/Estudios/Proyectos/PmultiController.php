@@ -92,6 +92,7 @@ class PmultiController extends S3Controller {
       ->select([
         'a.id',
         'c.nombre AS tipo_integrante',
+        'b.codigo',
         DB::raw("CONCAT(b.apellido1, ' ', b.apellido2, ', ', b.nombres) AS nombre"),
         'b.tipo',
         'd.nombre AS facultad',
@@ -101,6 +102,7 @@ class PmultiController extends S3Controller {
         'a.titulo_tesis'
       ])
       ->where('a.proyecto_id', '=', $request->query('proyecto_id'))
+      ->orderBy('c.id')
       ->get();
 
     return $miembros;
