@@ -7,59 +7,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class CriteriosUtilsController extends Controller {
-
-  // public function fetchPuntajeFormacionRrhh(Request $request)
-  // {
-  //   $rrhhTesistas = DB::table('Proyecto_integrante as t1')
-  //     ->select('t1.proyecto_id')
-  //     ->selectSub(function ($query) {
-  //       $query->from('Proyecto_integrante as pi')
-  //         ->selectRaw('COUNT(*)')
-  //         ->whereColumn('pi.proyecto_id', 't1.proyecto_id')
-  //         ->where('pi.tipo_tesis', 'like', 'bachillerato');
-  //     }, 'cantidad_tesis_bachillerato')
-  //     ->selectSub(function ($query) {
-  //       $query->from('Proyecto_integrante as pi')
-  //         ->selectRaw('COUNT(*)')
-  //         ->whereColumn('pi.proyecto_id', 't1.proyecto_id')
-  //         ->where('pi.tipo_tesis', 'like', 'licenciatura%');
-  //     }, 'cantidad_tesis_licenciatura')
-  //     ->selectSub(function ($query) {
-  //       $query->from('Proyecto_integrante as pi')
-  //         ->selectRaw('COUNT(*)')
-  //         ->whereColumn('pi.proyecto_id', 't1.proyecto_id')
-  //         ->where('pi.tipo_tesis', 'like', 'maestria');
-  //     }, 'cantidad_tesis_maestria')
-  //     ->selectSub(function ($query) {
-  //       $query->from('Proyecto_integrante as pi')
-  //         ->selectRaw('COUNT(*)')
-  //         ->whereColumn('pi.proyecto_id', 't1.proyecto_id')
-  //         ->where('pi.tipo_tesis', 'like', 'doctorado');
-  //     }, 'cantidad_tesis_doctorado')
-  //     ->leftJoin('Proyecto_integrante_tipo as t2', 't1.proyecto_integrante_tipo_id', '=', 't2.id')
-  //     ->where('t1.proyecto_id', $request->query('proyecto_id'))
-  //     ->whereNotNull('t1.tipo_tesis')
-  //     ->where('t2.nombre', 'Tesista')
-  //     ->groupBy('t1.proyecto_id')
-  //     ->first();
-
-
-  //   $cantidadTipoTesis = $rrhhTesistas ? $rrhhTesistas : null;
-  //   $puntaje = 0;
-  //   $puntaje += ($cantidadTipoTesis ? $cantidadTipoTesis->cantidad_tesis_licenciatura : 0) * 1.0;
-  //   $puntaje += ($cantidadTipoTesis ? $cantidadTipoTesis->cantidad_tesis_maestria : 0) * 3.0;
-  //   $puntaje += ($cantidadTipoTesis ? $cantidadTipoTesis->cantidad_tesis_doctorado : 0) * 5.0;
-
-  //   //  Actualizar puntaje
-  //   DB::table('Evaluacion_proyecto')
-  //     ->updateOrInsert([
-  //       'proyecto_id' => $request->query('proyecto_id'),
-  //       'evaluador_id' => $request->attributes->get('token_decoded')->evaluador_id,
-  //       'evaluacion_opcion_id' => 1148
-  //     ], [
-  //       'puntaje' => $puntaje
-  //     ]);
-  // }
   public function puntajeTesistas(Request $request) {
 
     $proyecto = DB::table('Proyecto as p')
@@ -239,7 +186,9 @@ class CriteriosUtilsController extends Controller {
   public function addgiTotal(Request $request) {
     $grupos = [];
     $puntajes = [];
+    $puntajeTotal = 0;
     $puntajeGlobal = 0;
+
 
     $proyecto = DB::table('Proyecto as p')
       ->select('p.tipo_proyecto', 'p.periodo')
@@ -260,66 +209,41 @@ class CriteriosUtilsController extends Controller {
     $puntaje_max = $evaluacionProyecto->puntaje_max;
 
 
-    $ProyectoIntegrantes = DB::table('Proyecto_integrante as t1')
-      ->join('Usuario_investigador as t2', 't1.investigador_id', '=', 't2.id')
-      ->select(
-        't2.id as investigador_id',
-        't1.grupo_id',
-        DB::raw("CONCAT_WS(', ', UPPER(CONCAT_WS(' ', t2.apellido1, t2.apellido2)), t2.nombres) as fullname"),
-        DB::raw("CONCAT_WS(' ', t2.apellido1, t2.apellido2) as apellidos"),
-        't2.nombres as nombres'
-      )
-      ->where('t1.proyecto_id', $request->query('proyecto_id'))
+    $grupos = DB::table('view_cat_gi')
+      ->select('grupo_categoria')
+      ->where('proyecto_id', $request->query('proyecto_id'))
       ->get();
 
-    foreach ($ProyectoIntegrantes as $responsable) {
-      if (!isset($grupos[$responsable->grupo_id])) {
-        // Si no está, lo añadimos al array y marcamos como que ya está presente
-        $grupos[] = $responsable->grupo_id;
-      }
-    }
-    $grupos = array_unique($grupos);
+    $i = 0;
 
     foreach ($grupos as $grupo) {
-      $grupoCat = DB::table('Grupo')
-        ->select('grupo_categoria')
-        ->where('id', $grupo)
-        ->first();
 
-      if (!$grupoCat) {
-        // Manejar el caso en que no se encuentra el grupo, por ejemplo, asignando un valor por defecto
-        $puntajegcat = 0;
-      } else {
-        switch ($grupoCat->grupo_categoria) {
-          case 'A':
-            $puntajegcat = 6;
-            break;
-          case 'B':
-            $puntajegcat = 4;
-            break;
-          case 'C':
-            $puntajegcat = 2;
-            break;
-          case 'D':
-            $puntajegcat = 1;
-            break;
-          default:
-            $puntajegcat = 0;
-            break;
-        }
+      switch ($grupo->grupo_categoria) {
+        case 'A':
+          $puntajegcat = 6;
+          break;
+        case 'B':
+          $puntajegcat = 4;
+          break;
+        case 'C':
+          $puntajegcat = 2;
+          break;
+        case 'D':
+          $puntajegcat = 1;
+          break;
+        default:
+          $puntajegcat = 0;
+          break;
       }
 
-      $puntajes[] = $puntajegcat;
-    }
-    $i = 0;
-    $puntajeTotal = 0;
-
-    foreach ($puntajes as $puntaje) {
+      $puntajeTotal += $puntajegcat;
       $i++;
-      $puntajeTotal = $puntajeTotal + $puntaje;
     }
 
-    $puntajeGlobal = $puntajeTotal / $i;
+    if ($i != 0) {
+      $puntajeGlobal = ($puntajeTotal / $i);
+    }
+
 
     $topeMaximo = $puntaje_max;
 

@@ -59,18 +59,18 @@ class ProyectosFEXController extends S3Controller {
         'a.aporte_no_unmsm',
         'a.aporte_unmsm',
         'a.financiamiento_fuente_externa',
+        'a.entidad_asociada',
         'a.monto_asignado',
+        DB::raw("CASE
+        WHEN f.detalle = 'OTROS' THEN g.detalle
+        ELSE f.detalle
+      END AS fuente_fin"),
+        'p.name as pais',
         'a.fecha_inicio',
         'a.fecha_fin',
         'a.resolucion_rectoral',
         'a.resolucion_fecha',
-        'a.entidad_asociada',
-        'p.name as pais',
         'e.detalle AS participacion_unmsm',
-        DB::raw("CASE
-          WHEN f.detalle = 'OTROS' THEN g.detalle
-          ELSE f.detalle
-        END AS fuente_fin"),
         'a.periodo',
         DB::raw('DATE(a.created_at) AS registrado'),
         DB::raw('DATE(a.updated_at) AS actualizado'),
@@ -214,17 +214,10 @@ class ProyectosFEXController extends S3Controller {
       ->leftJoin('Facultad AS d', 'd.id', '=', 'b.facultad_id')
       ->select([
         'a.id',
-        DB::raw("CASE (c.nombre)
-          WHEN 'Otros' THEN a.responsabilidad
-          ELSE c.nombre
-        END AS tipo_integrante"),
+        'c.nombre AS tipo_integrante',
         DB::raw("CONCAT(b.apellido1, ' ', b.apellido2, ', ', b.nombres) AS nombre"),
         'b.doc_numero',
-        DB::raw("CASE(a.condicion)
-          WHEN 'Responsable' THEN 'Sí'
-          ELSE 'No'
-        END AS responsable"),
-        DB::raw("COALESCE(d.nombre, 'Externo') AS facultad")
+        'd.nombre AS facultad'
       ])
       ->where('a.proyecto_id', '=', $request->query('id'))
       ->get();
@@ -465,8 +458,8 @@ class ProyectosFEXController extends S3Controller {
         'a.ser_nom AS nombre',
         'b.id AS investigador_id',
         DB::raw("CONCAT(a.ser_ape_pat, ' ', a.ser_ape_mat, ', ', a.ser_nom) AS nombres"),
-        'a.ser_cod_ant AS codigo',
-        'a.ser_doc_id_act AS doc_numero',
+        'ser_cod_ant AS codigo',
+        'ser_doc_id_act AS doc_numero',
         DB::raw("CASE
           WHEN SUBSTRING_INDEX(ser_cat_act, '-', 1) = '1' THEN 'Principal'
           WHEN SUBSTRING_INDEX(ser_cat_act, '-', 1) = '2' THEN 'Asociado'
@@ -480,10 +473,12 @@ class ProyectosFEXController extends S3Controller {
           WHEN SUBSTRING_INDEX(SUBSTRING_INDEX(ser_cat_act, '-', 2), '-', -1) = '3' THEN 'Tiempo Parcial'
           ELSE 'Sin clase'
         END AS clase"),
+        DB::raw("SUBSTRING_INDEX(ser_cat_act, '-', -1) AS horas"),
         'a.des_dep_cesantes AS dependencia',
         'a.ser_cod_dep_ces AS dependencia_id',
         'e.nombre AS facultad',
         'e.id AS facultad_id',
+
         'b.cti_vitae',
         'b.especialidad',
         'b.titulo_profesional',
@@ -494,16 +489,14 @@ class ProyectosFEXController extends S3Controller {
         'b.telefono_casa',
         'b.telefono_trabajo',
         'b.telefono_movil',
-        DB::raw("SUBSTRING_INDEX(ser_cat_act, '-', -1) AS horas"),
       )
-      ->where('a.des_tip_ser', 'LIKE', 'DOCENTE%')
-      ->where('b.tipo', 'LIKE', '%DOCENTE%')
+      ->where('des_tip_ser', 'LIKE', 'DOCENTE%')
       ->where(function ($query) {
         $query->where('c.fecha_fin', '<', date('Y-m-d'))
           ->orWhere('d.id', '=', 9)
           ->orWhereNull('d.tipo');
       })
-      ->groupBy('a.ser_cod_ant')
+      ->groupBy('ser_cod_ant')
       ->having('value', 'LIKE', '%' . $request->query('query') . '%')
       ->limit(10)
       ->get();
@@ -583,17 +576,7 @@ class ProyectosFEXController extends S3Controller {
           'telefono_trabajo' => $request->input('telefono_trabajo'),
           'telefono_movil' => $request->input('telefono_movil'),
         ]);
-
-      $count = DB::table('Proyecto_integrante')
-        ->where('proyecto_id', '=', $request->input('id'))
-        ->where('investigador_id', '=', $investigador_id)
-        ->count();
-
-      if ($count > 0) {
-        return ['message' => 'warning', 'detail' => 'No puede agregar al mismo docente 2 veces'];
-      }
     }
-
 
     DB::table('Proyecto_integrante')
       ->insert([
@@ -1029,12 +1012,9 @@ class ProyectosFEXController extends S3Controller {
     $integrantes = DB::table('Proyecto_integrante AS a')
       ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
       ->join('Proyecto_integrante_tipo AS c', 'c.id', '=', 'a.proyecto_integrante_tipo_id')
-      ->leftJoin('Facultad AS d', 'd.id', '=', 'b.facultad_id')
+      ->join('Facultad AS d', 'd.id', '=', 'b.facultad_id')
       ->select([
-        DB::raw("CASE (c.nombre)
-          WHEN 'Otros' THEN a.responsabilidad
-          ELSE c.nombre
-        END AS tipo"),
+        'c.nombre AS tipo',
         DB::raw("CONCAT(b.apellido1, ' ', b.apellido2, ', ', b.nombres) AS nombre"),
         'b.doc_numero',
         DB::raw("CASE(b.tipo)
