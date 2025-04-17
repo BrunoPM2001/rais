@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Investigador;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Investigador\Perfil\OrcidController;
 use Carbon\Carbon;
+use Illuminate\Database\Query\JoinClause;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -14,6 +15,15 @@ class DashboardController extends Controller {
     //  Detalles
     $orcid = new OrcidController();
     $isOrcidValid = $orcid->validarRegistro($request);
+
+    $publicacionesEnProceso = DB::table('Publicacion AS a')
+      ->join('Publicacion_autor AS b', function (JoinClause $join) {
+        $join->on('a.id', '=', 'b.publicacion_id')
+          ->where('b.presentado', '=', 1);
+      })
+      ->where('a.estado', '=', 6)
+      ->where('b.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+      ->count();
 
     //  Métricas
     $grupos = DB::table('Grupo_integrante')
@@ -105,7 +115,8 @@ class DashboardController extends Controller {
 
     return [
       'detalles' => [
-        'orcid' => $isOrcidValid
+        'orcid' => $isOrcidValid,
+        'publicacionesProceso' => $publicacionesEnProceso
       ],
       'metricas' => [
         'grupos' => $grupos,
@@ -116,8 +127,8 @@ class DashboardController extends Controller {
       ],
       'tipos_publicaciones' => $tipos1,
       'tipos_proyectos' => $tipos2,
-      'dj' => $dj->dj_aceptada,
-      'proyecto_id' => $dj->id,
+      'dj' => $dj?->dj_aceptada,
+      'proyecto_id' => $dj?->id,
       'alerta' => $const ? $fecha1->greaterThan($fecha2) : false
     ];
   }
