@@ -34,7 +34,8 @@ class InvestigadoresController extends Controller {
         'a.fecha_nac',
         'a.doc_tipo',
         'a.doc_numero',
-        'a.telefono_movil'
+        'a.telefono_movil',
+        'a.email3'
       )
       ->get();
 
@@ -50,7 +51,10 @@ class InvestigadoresController extends Controller {
         'tipo_investigador_estado',
         'tipo',
         'estado',
-        'rrhh_status',
+        DB::raw("CASE (rrhh_status)
+          WHEN 1 THEN 'Activo'
+          ELSE 'Inactivo'
+        END AS rrhh_status"),
         'fecha_icsi',
         'nombres',
         'apellido1',
@@ -148,13 +152,14 @@ class InvestigadoresController extends Controller {
         DB::raw("DATE(a.created_at) AS created_at")
       ])
       ->where('a.investigador_id', '=', $request->query('id'))
+      ->whereNot('a.condicion', 'LIKE', 'Ex%')
       ->get();
 
     $proyectos = DB::table('Proyecto_integrante AS a')
       ->join('Proyecto AS b', 'b.id', '=', 'a.proyecto_id')
       ->join('Proyecto_integrante_tipo AS c', 'c.id', '=', 'a.proyecto_integrante_tipo_id')
       ->select([
-        'a.id',
+        'b.id',
         'b.periodo',
         'b.tipo_proyecto',
         'b.titulo',
