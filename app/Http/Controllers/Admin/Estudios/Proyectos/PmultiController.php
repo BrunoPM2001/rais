@@ -13,12 +13,21 @@ class PmultiController extends S3Controller {
   public function detalle(Request $request) {
     $detalle = DB::table('Proyecto AS a')
       ->leftJoin('Linea_investigacion AS c', 'c.id', '=', 'a.linea_investigacion_id')
-      ->leftJoin('Facultad_programa AS d', 'd.id', '=', 'a.programa_id')
+      ->leftJoin('Ocde AS d', 'd.id', '=', 'a.ocde_id')
       ->leftJoin('Geco_proyecto AS e', 'e.proyecto_id', '=', 'a.id')
       ->leftJoin('Proyecto_descripcion AS f', function (JoinClause $join) {
         $join->on('f.proyecto_id', '=', 'a.id')
           ->where('f.codigo', '=', 'autorizacion_grupo');
       })
+      ->join('Proyecto_descripcion AS g', function (JoinClause $join) {
+        $join->on('g.proyecto_id', '=', 'a.id')
+          ->where('g.codigo', '=', 'objetivo_ods');
+      })
+      ->join('Proyecto_descripcion AS h', function (JoinClause $join) {
+        $join->on('h.proyecto_id', '=', 'a.id')
+          ->where('h.codigo', '=', 'area_tematica');
+      })
+      ->join('Ods AS i', 'i.id', '=', 'g.detalle')
       ->select(
         'a.tipo_proyecto',
         'a.estado',
@@ -28,11 +37,13 @@ class PmultiController extends S3Controller {
         DB::raw("IFNULL(a.resolucion_fecha, '') AS resolucion_fecha"),
         'c.nombre AS linea',
         'a.localizacion',
-        'd.programa',
+        'd.linea AS ocde',
         'a.comentario',
         'a.observaciones_admin',
         'e.id AS geco_proyecto_id',
-        'f.detalle AS autorizacion_grupo'
+        'f.detalle AS autorizacion_grupo',
+        'i.descripcion AS ods',
+        'h.detalle AS area_tematica'
       )
       ->where('a.id', '=', $request->query('proyecto_id'))
       ->first();
