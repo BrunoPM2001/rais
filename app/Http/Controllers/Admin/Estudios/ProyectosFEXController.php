@@ -972,18 +972,20 @@ class ProyectosFEXController extends S3Controller {
         'a.fecha_inicio',
         'a.fecha_fin',
         DB::raw("CASE(a.estado)
-            WHEN -1 THEN 'Eliminado'
-            WHEN 0 THEN 'No aprobado'
-            WHEN 1 THEN 'Aprobado'
-            WHEN 3 THEN 'En evaluacion'
-            WHEN 5 THEN 'Enviado'
-            WHEN 6 THEN 'En proceso'
-            WHEN 7 THEN 'Anulado'
-            WHEN 8 THEN 'Sustentado'
-            WHEN 9 THEN 'En ejecución'
-            WHEN 10 THEN 'Ejecutado'
-            WHEN 11 THEN 'Concluído'
-          ELSE 'Sin estado' END AS estado"),
+          WHEN -1 THEN 'Eliminado'
+          WHEN 0 THEN 'No aprobado'
+          WHEN 1 THEN 'Aprobado'
+          WHEN 2 THEN 'Observado'
+          WHEN 3 THEN 'En evaluacion'
+          WHEN 5 THEN 'Enviado'
+          WHEN 6 THEN 'En proceso'
+          WHEN 7 THEN 'Anulado'
+          WHEN 8 THEN 'Sustentado'
+          WHEN 9 THEN 'En ejecución'
+          WHEN 10 THEN 'Ejecutado'
+          WHEN 11 THEN 'Concluído'
+        ELSE 'Sin estado' END AS estado"),
+        'a.observaciones_admin',
         'a.updated_at'
       ])
       ->where('a.id', '=', $request->query('id'))

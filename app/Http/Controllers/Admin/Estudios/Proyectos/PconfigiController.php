@@ -60,6 +60,56 @@ class PconfigiController extends Controller {
     return $responsable;
   }
 
+  public function detalle(Request $request) {
+    $detalle = DB::table('Proyecto AS a')
+      ->leftJoin('Linea_investigacion AS b', 'b.id', '=', 'a.linea_investigacion_id')
+      ->leftJoin('Ocde AS c', 'c.id', '=', 'a.ocde_id')
+      ->select(
+        'a.titulo',
+        'a.codigo_proyecto',
+        'a.tipo_proyecto',
+        'a.estado',
+        'a.resolucion_rectoral',
+        DB::raw("IFNULL(a.resolucion_fecha, '') AS resolucion_fecha"),
+        'a.comentario',
+        'a.observaciones_admin',
+        'a.fecha_inicio',
+        'a.fecha_fin',
+        'a.palabras_clave',
+        'b.nombre AS linea',
+        'c.linea AS ocde',
+        'a.localizacion',
+        DB::raw("CASE (a.dj_aceptada)
+          WHEN 1 THEN CONCAT('/minio/declaracion-jurada/dj_PCONFIGI_', a.id, '.pdf')
+          ELSE NULL
+        END AS dj")
+      )
+      ->where('a.id', '=', $request->query('proyecto_id'))
+      ->first();
+
+    return $detalle;
+  }
+
+  public function miembros(Request $request) {
+    $miembros = DB::table('Proyecto_integrante AS a')
+      ->join('Proyecto_integrante_tipo AS b', 'b.id', '=', 'a.proyecto_integrante_tipo_id')
+      ->join('Usuario_investigador AS c', 'c.id', '=', 'a.investigador_id')
+      ->select(
+        'a.id',
+        'c.codigo',
+        'b.nombre AS tipo_integrante',
+        DB::raw('CONCAT(c.apellido1, " ", c.apellido2, " ", c.nombres) AS nombre'),
+        'c.tipo AS tipo_investigador',
+        'a.tipo_tesis',
+        'a.titulo_tesis'
+      )
+      ->where('a.proyecto_id', '=', $request->query('proyecto_id'))
+      ->orderBy('b.id')
+      ->get();
+
+    return $miembros;
+  }
+
   public function reporte(Request $request) {
     $proyecto = DB::table('Proyecto AS a')
       ->leftJoin('Grupo AS b', function (JoinClause $join) {

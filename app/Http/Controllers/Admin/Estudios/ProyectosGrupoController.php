@@ -77,8 +77,8 @@ class ProyectosGrupoController extends S3Controller {
       case "PCONFIGI":
         $ctrl = new PconfigiController();
         $responsable = $ctrl->responsable($request);
-        $detalle = $this->detalle($request);
-        $miembros = $this->miembros($request);
+        $detalle = $ctrl->detalle($request);
+        $miembros = $ctrl->miembros($request);
         $descripcion = $this->descripcion($request);
         $actividades = $this->actividades($request);
         $presupuesto = $this->presupuesto($request);
