@@ -381,7 +381,8 @@ class EvaluadorProyectosController extends S3Controller {
         'li.nombre AS linea_investigacion',
         'g.grupo_nombre AS grupo',
         'p.localizacion',
-        'a.nombre AS area'
+        'a.nombre AS area',
+        'p.palabras_clave'
       ])
       ->where('p.id', '=', $request->query('proyecto_id'))
       ->first();
@@ -405,8 +406,6 @@ class EvaluadorProyectosController extends S3Controller {
       ->where('p.id', '=', $request->query('proyecto_id'))
       ->distinct() // Agrega esto si hay duplicados
       ->first();
-
-
 
     $descripciones = DB::table('Proyecto_descripcion')
       ->select([
@@ -492,6 +491,34 @@ class EvaluadorProyectosController extends S3Controller {
         return [$item->categoria => $item->url, 'comentario' => $item->comentario, 'categoria' => $item->categoria, 'nombre' => $item->nombre];
       });
 
+    $colaboracionExterna = DB::table('Proyecto_doc')
+      ->select([
+        'id',
+        'comentario',
+        DB::raw("CONCAT('/minio/proyecto-doc/', archivo) AS url")
+      ])
+      ->where('proyecto_id', '=', $request->query('proyecto_id'))
+      ->where('tipo', '=', 25)
+      ->where('categoria', '=', 'documento')
+      ->where('nombre', '=', 'Documento de colaboración externa')
+      ->get();
+
+    $estadoArte = DB::table('Proyecto_doc')
+      ->select([
+        'id',
+        'comentario',
+        'nombre',
+        'categoria',
+        DB::raw("CONCAT('/minio/proyecto-doc/', archivo) AS url"),
+
+      ])
+      ->where('proyecto_id', '=', $request->query('proyecto_id'))
+      ->where('tipo', '=', 27)
+      ->where('categoria', '=', 'anexo')
+      ->where('nombre', '=', 'Estado del arte')
+      ->where('estado', '=', 1)
+      ->first();
+
     $investigacion_base = isset($descripciones['investigacion_base']) ? $descripciones['investigacion_base'] : null;
     $proyectoId = $investigacion_base ? explode('-', $investigacion_base)[0] : 0;
 
@@ -547,6 +574,8 @@ class EvaluadorProyectosController extends S3Controller {
       'responsable' => $responsable,
       'documentos' => $documentos,
       'proyectoDoc' => $proyectoDoc,
+      'colaboracionExterna' => $colaboracionExterna,
+      'estadoArte' => $estadoArte,
       'investigacion' => $inv_unmsm
     ];
   }
