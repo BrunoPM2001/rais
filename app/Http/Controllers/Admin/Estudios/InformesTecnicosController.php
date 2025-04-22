@@ -821,4 +821,45 @@ class InformesTecnicosController extends S3Controller {
 
     return ['message' => 'success', 'detail' => 'Informe presentado'];
   }
+
+  public function getDataInformeAntiguo(Request $request) {
+    $detalles = DB::table('Informe_tecnico_H AS a')
+      ->join('Proyecto_H AS b', 'b.id', '=', 'a.proyecto_id')
+      ->select([
+        'a.proyecto_id',
+        'a.*',
+      ])
+      ->where('a.id', '=', $request->query('id'))
+      ->first();
+
+    $proyecto = DB::table('Proyecto_H AS a')
+      ->leftJoin('Facultad AS b', 'b.id', '=', 'a.facultad_id')
+      ->leftJoin('Instituto AS c', 'c.id', '=', 'a.instituto_id')
+      ->leftJoin('Linea_investigacion AS d', 'd.id', '=', 'a.linea_id')
+      ->leftJoin('Proyecto_integrante_H AS e', function (JoinClause $join) {
+        $join->on('e.proyecto_id', '=', 'a.id')
+          ->where('e.condicion', '=', 'Responsable');
+      })
+      ->leftJoin('Usuario_investigador AS f', 'f.id', '=', 'e.investigador_id')
+      ->select([
+        'a.id',
+        'a.titulo',
+        'a.tipo AS tipo_proyecto',
+        'a.codigo AS codigo_proyecto',
+        'a.periodo',
+        'a.resolucion',
+        'b.nombre AS facultad',
+        'c.instituto',
+        'd.nombre AS linea',
+        'a.tipo_investigacion',
+        DB::raw('CONCAT(f.apellido1, " " , f.apellido2, ", ", f.nombres) AS responsable')
+      ])
+      ->where('a.id', '=', $detalles->proyecto_id)
+      ->first();
+
+    return [
+      'detalles' => $detalles,
+      'proyecto' => $proyecto
+    ];
+  }
 }

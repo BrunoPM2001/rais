@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class GrupoController extends Controller {
 
@@ -25,6 +26,25 @@ class GrupoController extends Controller {
   }
 
   public function reporte(Request $request) {
+
+    $adminId = $request->attributes->get('token_decoded')->id;
+    $facultadId = $request->query('facultad');
+    $condiciones = $request->input('condiciones', []);
+    $detalle = $request->query('detalle', '');
+
+    $area = DB::table('Facultad AS fx')
+      ->leftJoin('Area as ax', 'ax.id', '=', 'fx.area_id')
+      ->select('ax.nombre', 'ax.sigla', 'fx.nombre as facultad')
+      ->where('fx.id', '=', $facultadId)
+      ->first();
+
+
+    $admin = DB::table('Usuario_admin AS admin')
+      ->join('Usuario AS ux', 'admin.id', '=', 'ux.tabla_id')
+      ->select('ux.username as nombres')
+      ->where('admin.id', '=', $adminId)
+      ->first();
+
     $lista = $request->query('grupo_id') ?
       DB::table('Grupo AS a')
       ->join('Grupo_integrante AS b', 'b.grupo_id', '=', 'a.id')
@@ -49,10 +69,32 @@ class GrupoController extends Controller {
         END AS condicion"),
         'c.codigo',
         DB::raw('CONCAT(c.apellido1, " ", c.apellido2, ", ", c.nombres) AS nombre'),
-        'c.tipo',
+        DB::raw("CASE 
+        WHEN c.tipo = 'DOCENTE PERMANENTE' THEN 'Docente permanente'
+        WHEN c.tipo = 'Estudiante Pre Grado' THEN 'Estudiante pregrado'
+        WHEN c.tipo = 'Estudiante Pos Grado' THEN 'Estudiante posgrado'
+        ELSE c.tipo
+    END AS tipo"),
         'e.nombre AS facultad_miembro'
       )
       ->where('a.id', '=', $request->query('grupo_id'))
+      ->where('b.condicion', 'not like', 'Ex %')
+      ->when(!empty($condiciones), function ($query) use ($condiciones) {
+        // Extrae 'Coordinador' si está presente
+        $contieneCoordinador = in_array('Coordinador', $condiciones);
+
+        // Filtrar condiciones que no son 'Coordinador'
+        $otrasCondiciones = array_filter($condiciones, fn($c) => $c !== 'Coordinador');
+
+        $query->where(function ($q) use ($contieneCoordinador, $otrasCondiciones) {
+          if ($contieneCoordinador) {
+            $q->orWhere('b.cargo', '=', 'Coordinador');
+          }
+          if (!empty($otrasCondiciones)) {
+            $q->orWhereIn('b.condicion', $otrasCondiciones);
+          }
+        });
+      })
       ->whereNull('b.fecha_exclusion')
       ->orderBy('a.grupo_nombre')
       ->orderByRaw("CASE
@@ -62,6 +104,7 @@ class GrupoController extends Controller {
         WHEN b.condicion = 'Adherente' AND c.tipo = 'Externo' THEN 4
         ELSE 5
       END")
+      ->orderBy('nombre')
       ->get()
       :
       DB::table('Grupo AS a')
@@ -87,11 +130,33 @@ class GrupoController extends Controller {
         END AS condicion"),
         'c.codigo',
         DB::raw('CONCAT(c.apellido1, " ", c.apellido2, ", ", c.nombres) AS nombre'),
-        'c.tipo',
+        DB::raw("CASE 
+        WHEN c.tipo = 'DOCENTE PERMANENTE' THEN 'Docente permanente'
+        WHEN c.tipo = 'Estudiante Pre Grado' THEN 'Estudiante pregrado'
+        WHEN c.tipo = 'Estudiante Pos Grado' THEN 'Estudiante posgrado'
+        ELSE c.tipo
+    END AS tipo"),
         'e.nombre AS facultad_miembro'
       )
       ->where('a.facultad_id', '=', $request->query('facultad'))
       ->where('a.estado', '=', $request->query('estado'))
+      ->where('b.condicion', 'not like', 'Ex %')
+      ->when(!empty($condiciones), function ($query) use ($condiciones) {
+        // Extrae 'Coordinador' si está presente
+        $contieneCoordinador = in_array('Coordinador', $condiciones);
+
+        // Filtrar condiciones que no son 'Coordinador'
+        $otrasCondiciones = array_filter($condiciones, fn($c) => $c !== 'Coordinador');
+
+        $query->where(function ($q) use ($contieneCoordinador, $otrasCondiciones) {
+          if ($contieneCoordinador) {
+            $q->orWhere('b.cargo', '=', 'Coordinador');
+          }
+          if (!empty($otrasCondiciones)) {
+            $q->orWhereIn('b.condicion', $otrasCondiciones);
+          }
+        });
+      })
       ->whereNull('b.fecha_exclusion')
       ->orderBy('a.grupo_nombre')
       ->orderByRaw("CASE
@@ -101,9 +166,22 @@ class GrupoController extends Controller {
         WHEN b.condicion = 'Adherente' AND c.tipo = 'Externo' THEN 4
         ELSE 5
       END")
+      ->orderBy('nombre')
       ->get();
+    $qrUrl = "https://vrip.unmsm.edu.pe/convocatorias/"; // Aquí va la URL fija del sistema RAIS
+    $qrCode = base64_encode(QrCode::format('png')->size(200)->generate($qrUrl));
 
-    $pdf = Pdf::loadView('admin.reportes.grupoPDF', ['lista' => $lista]);
+    $pdf = Pdf::loadView(
+      'admin.reportes.grupoPDF',
+      [
+        'lista' => $lista,
+        'admin' => $admin,
+        'area' => $area,
+        'detalle' => $detalle,
+        'qr' => $qrCode,
+      ]
+
+    );
     return $pdf->stream();
   }
 }
