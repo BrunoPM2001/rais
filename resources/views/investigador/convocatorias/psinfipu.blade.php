@@ -213,21 +213,22 @@
         <tr>
           <td style="width: 40%;" valign="top"><strong>Editorial o revista en la que se publicará</strong></td>
           <td style="width: 1%;" valign="top">:</td>
-          <td style="width: 59%;" valign="top">{{ $detalles["publicacion_editorial"] }}</td>
+          <td style="width: 59%;" valign="top">{{ $detalles['publicacion_editorial'] }}</td>
         </tr>
         <tr>
-          <td style="width: 40%;" valign="top"><strong>Url de la editorial o revista en la que se publicará</strong></td>
+          <td style="width: 40%;" valign="top"><strong>Url de la editorial o revista en la que se publicará</strong>
+          </td>
           <td style="width: 1%;" valign="top">:</td>
-          <td style="width: 59%;" valign="top">{{ $detalles["publicacion_url"] }}</td>
+          <td style="width: 59%;" valign="top">{{ $detalles['publicacion_url'] }}</td>
         </tr>
         <tr>
           <td style="width: 40%;" valign="top"><strong>Tipo de publicación que realizará la propuesta</strong></td>
           <td style="width: 1%;" valign="top">:</td>
-          <td style="width: 59%;" valign="top">{{ $detalles["publicacion_tipo"] }}</td>
+          <td style="width: 59%;" valign="top">{{ $detalles['publicacion_tipo'] }}</td>
         </tr>
       </tbody>
     </table>
-    
+
     <h5>III. Investigación base:</h5>
 
     <table class="tableData">
@@ -240,12 +241,12 @@
         <tr>
           <td style="width: 24%;" valign="top"><strong>Tesis Maestría</strong></td>
           <td style="width: 1%;" valign="top">:</td>
-          <td style="width: 75%;" valign="top">{{ $proyecto->url1 }}</td>
+          <td style="width: 75%;" valign="top">{{ $proyecto->url2 }}</td>
         </tr>
         <tr>
           <td style="width: 24%;" valign="top"><strong>Investigación UNMSM</strong></td>
           <td style="width: 1%;" valign="top">:</td>
-          <td style="width: 75%;" valign="top">{{ $responsable->facultad }}</td>
+          <td style="width: 75%;" valign="top">{{ $proyecto_base->titulo }}</td>
         </tr>
       </tbody>
     </table>

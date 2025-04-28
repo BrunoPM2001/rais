@@ -145,7 +145,14 @@
     </p>
   </div>
   <div class="div"></div>
-  <div class="foot-1">RAIS - Registro de Actividades de Investigación de San Marcos</div>
+
+  <div class="foot-1">
+    <div style="border-top: 1px solid black; margin: 1px 0;"></div>
+    <strong>
+      RAIS - UNMSM -
+      {{ $extra->id . ' - ' . $extra->proyecto_id . ' - ' . $extra->evaluador_id }}
+    </strong>
+  </div>
 
   <p class="titulo"><strong>Ficha de evaluación 2025 - {{ $extra->tipo_proyecto }}</strong></p>
   <div class="cuerpo">
@@ -157,9 +164,9 @@
           <td style="width: 79%;" valign="top">{{ $extra->titulo }}</td>
         </tr>
         <tr>
-          <td style="width: 20%;" valign="top"><strong>Nombre del evaluador</strong></td>
+          <td style="width: 20%;" valign="top"><strong>Responsable</strong></td>
           <td style="width: 1%;" valign="top">:</td>
-          <td style="width: 79%;" valign="top">{{ $extra->evaluador }}</td>
+          <td style="width: 79%;" valign="top">{{ $extra->responsable }}</td>
         </tr>
       </tbody>
     </table>
@@ -168,8 +175,8 @@
       <thead>
         <tr>
           <th style="width: 40%;" align="left" valign="top">Criterio de evaluación</th>
-          <th style="width: 10%;" align="left" valign="top">Puntaje Máximo</th>
-          <th style="width: 10%;" align="left" valign="top">Puntaje Obtenido</th>
+          <th style="width: 10%;" align="center" valign="top">Puntaje Máximo</th>
+          <th style="width: 10%;" align="center" valign="top">Puntaje Obtenido</th>
           <th style="width: 40%;" align="left" valign="top">Comentario</th>
         </tr>
       </thead>
@@ -195,14 +202,7 @@
 
     <h6>Comentario</h5>
 
-      <p>{{ $extra->comentario }}</p>
-
-      <p class="extra-firma">
-        <strong>Firma:</strong> ______________________
-      </p>
-      <p class="extra-firma2">
-        <strong>Fecha:</strong> ______________________
-      </p>
+      <p style="text-align: justify;">{{ $extra->comentario }}</p>
   </div>
 
   <script type="text/php">

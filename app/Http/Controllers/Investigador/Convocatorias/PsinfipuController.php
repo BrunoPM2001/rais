@@ -633,6 +633,13 @@ class PsinfipuController extends S3Controller {
         return [$item->codigo => $item->detalle];
       });
 
+    $proyecto_base = DB::table('Proyecto')
+      ->select([
+        DB::raw("CONCAT(tipo_proyecto, ' - ', titulo) AS titulo")
+      ])
+      ->where('id', '=', explode("-", $detalles["investigacion_base"])[0])
+      ->first();
+
     $responsable = DB::table('Proyecto_integrante AS a')
       ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
       ->join('Facultad AS c', 'c.id', '=', 'b.facultad_id')
@@ -680,6 +687,7 @@ class PsinfipuController extends S3Controller {
       'responsable' => $responsable,
       'integrantes' => $integrantes,
       'detalles' => $detalles,
+      'proyecto_base' => $proyecto_base,
       'actividades' => $actividades,
     ]);
     return $pdf->stream();

@@ -40,6 +40,8 @@ class ProyectosEvaluadosController extends Controller {
       })
       ->select([
         'a.id',
+        'a.evaluador_id',
+        'a.proyecto_id',
         DB::raw("CONCAT(b.apellidos, ' ', b.nombres) AS evaluador"),
         'c.tipo_proyecto',
         'c.titulo',
@@ -102,14 +104,23 @@ class ProyectosEvaluadosController extends Controller {
     $extra = DB::table('Proyecto_evaluacion AS a')
       ->join('Usuario_evaluador AS b', 'a.evaluador_id', '=', 'b.id')
       ->join('Proyecto AS c', 'c.id', '=', 'a.proyecto_id')
-      ->select([
+      ->join('Proyecto_integrante AS pix', 'pix.proyecto_id', '=', 'a.proyecto_id')
+      ->join('Usuario_investigador AS ix', 'ix.id', '=', 'pix.investigador_id')
+      ->select(
         'a.comentario',
+        'a.id',
+        'a.proyecto_id',
+        'b.id as evaluador_id',
         'c.titulo',
         'c.tipo_proyecto',
-        DB::raw("CONCAT(b.apellidos, ' ', b.nombres) AS evaluador")
-      ])
+        DB::raw("CONCAT(b.apellidos, ' ', b.nombres) AS evaluador"),
+        DB::raw("CONCAT(ix.apellido1, ' ', ix.apellido2 ,' ', ix.nombres) AS responsable")
+      )
       ->where('a.id', '=', $request->query('id'))
+      ->whereIn('pix.condicion', ['Responsable', 'Coordinador', 'Asesor'])
       ->first();
+
+
 
     $pdf = Pdf::loadView('evaluador.ficha', ['evaluacion' => $criterios, 'extra' => $extra, 'total' => $total]);
     return $pdf->stream();

@@ -519,6 +519,22 @@ class EvaluadorProyectosController extends S3Controller {
       ->where('estado', '=', 1)
       ->first();
 
+
+    $metodologia_trabajo = DB::table('Proyecto_doc')
+      ->select([
+        'id',
+        'comentario',
+        'nombre',
+        'categoria',
+        DB::raw("CONCAT('/minio/proyecto-doc/', archivo) AS url")
+      ])
+      ->where('proyecto_id', '=', $request->query('proyecto_id'))
+      ->where('tipo', '=', 26)
+      ->where('categoria', '=', 'anexo')
+      ->where('nombre', '=', 'Metodología de trabajo')
+      ->where('estado', '=', 1)
+      ->first();
+
     $investigacion_base = isset($descripciones['investigacion_base']) ? $descripciones['investigacion_base'] : null;
     $proyectoId = $investigacion_base ? explode('-', $investigacion_base)[0] : 0;
 
@@ -576,6 +592,7 @@ class EvaluadorProyectosController extends S3Controller {
       'proyectoDoc' => $proyectoDoc,
       'colaboracionExterna' => $colaboracionExterna,
       'estadoArte' => $estadoArte,
+      'metodologiaTrabajo' => $metodologia_trabajo,
       'investigacion' => $inv_unmsm
     ];
   }

@@ -10,6 +10,13 @@ use Illuminate\Support\Facades\DB;
 
 class ProyectoDetalleController extends Controller {
   public function detalleProyecto(Request $request) {
+
+    $responsable = DB::table('Proyecto_integrante AS pix')
+      ->where('pix.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+      ->where('pix.condicion', '=', 'Responsable')
+      ->where('pix.proyecto_id', '=', $request->query('proyecto_id'))
+      ->count();
+
     if ($request->query('antiguo') == "no") {
 
       $esIntegrante = DB::table('Proyecto_integrante')
@@ -83,6 +90,7 @@ class ProyectoDetalleController extends Controller {
 
         return [
           'detalles' => $detalles,
+          'responsable' => $responsable,
           'participantes' => $participantes
         ];
       } else {
@@ -120,6 +128,7 @@ class ProyectoDetalleController extends Controller {
 
         return [
           'detalles' => $detalles,
+          'responsable' => $responsable,
           'participantes' => $participantes
         ];
       } else {
