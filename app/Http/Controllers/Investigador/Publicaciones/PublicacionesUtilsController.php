@@ -418,14 +418,33 @@ class PublicacionesUtilsController extends S3Controller {
         ->where('publicacion_id', '=', $request->query('publicacion_id'))
         ->get();
 
-      $cumple = DB::table('Publicacion_autor')
-        ->where('publicacion_id', '=', $request->query('publicacion_id'))
-        ->where(function ($query) {
-          $query->whereNull('autor')
-            ->orWhereNull('filiacion')
-            ->orWhereNull('filiacion_unica');
-        })
-        ->count();
+      $cumple = 0;
+      $pub = DB::table('Publicacion')
+        ->select([
+          'tipo_publicacion'
+        ])
+        ->where('id', '=', $request->query('publicacion_id'))
+        ->first();
+
+      if ($pub->tipo_publicacion == 'tesis-asesoria') {
+        $cumple = DB::table('Publicacion_autor')
+          ->where('publicacion_id', '=', $request->query('publicacion_id'))
+          ->where(function ($query) {
+            $query->whereNull('autor')
+              ->orWhereNull('filiacion');
+          })
+          ->count();
+      } else {
+        $cumple = DB::table('Publicacion_autor')
+          ->where('publicacion_id', '=', $request->query('publicacion_id'))
+          ->where(function ($query) {
+            $query->whereNull('autor')
+              ->orWhereNull('filiacion')
+              ->orWhereNull('filiacion_unica');
+          })
+          ->count();
+      }
+
 
       return ['listado' => $autores, 'cumple' => $cumple > 0 ? false : true];
     } else {
