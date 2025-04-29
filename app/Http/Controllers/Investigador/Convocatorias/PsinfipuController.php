@@ -35,10 +35,15 @@ class PsinfipuController extends S3Controller {
       ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
       ->where('a.condicion', '=', 'Responsable')
       ->where('b.tipo_proyecto', '=', 'PSINFIPU')
-      ->where('b.periodo', '=', 2024)
+      ->where('b.periodo', '=', 2025)
       ->get();
 
-    return $listado;
+    $errores = $this->verificar($request);
+
+    return [
+      'listado' => $listado,
+      'errores' => $errores["estado"] ? [] : $errores["errores"]
+    ];
   }
 
   //  Verifica las condiciones para participar
@@ -68,6 +73,12 @@ class PsinfipuController extends S3Controller {
 
       $req2 == 0 && $errores[] = "No figura como responsable del proyecto";
     }
+
+    $req3 = DB::table('view_deudores AS vdeuda')
+      ->where('vdeuda.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+      ->count();
+
+    $req3 != 0 && $errores[] = "Usted tiene registradas deudas pendientes que deben ser resueltas para participar en el concurso";
 
     if (!empty($errores)) {
       return ['estado' => false, 'errores' => $errores];
