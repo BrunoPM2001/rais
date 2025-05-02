@@ -120,8 +120,6 @@ class ProyectosEvaluadosController extends Controller {
       ->whereIn('pix.condicion', ['Responsable', 'Coordinador', 'Asesor'])
       ->first();
 
-
-
     $pdf = Pdf::loadView('evaluador.ficha', ['evaluacion' => $criterios, 'extra' => $extra, 'total' => $total]);
     return $pdf->stream();
   }

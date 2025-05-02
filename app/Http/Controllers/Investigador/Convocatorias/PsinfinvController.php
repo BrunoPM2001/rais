@@ -42,7 +42,7 @@ class PsinfinvController extends S3Controller {
         ->join('Proyecto AS b', 'b.id', '=', 'a.proyecto_id')
         ->where('a.condicion', '=', 'Responsable')
         ->where('b.tipo_proyecto', '=', 'PSINFINV')
-        ->where('b.periodo', '=', 2024)
+        ->where('b.periodo', '=', 2025)
         ->where('b.estado', '!=', 6)
         ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
         ->count();
@@ -53,7 +53,7 @@ class PsinfinvController extends S3Controller {
         ->join('Proyecto AS b', 'b.grupo_id', '=', 'a.grupo_id')
         ->join('Proyecto_integrante AS c', 'c.proyecto_id', '=', 'b.id')
         ->where('b.tipo_proyecto', '=', 'PSINFINV')
-        ->where('b.periodo', '=', 2024)
+        ->where('b.periodo', '=', 2025)
         ->where('a.condicion', '=', 'Titular')
         ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
         ->where('c.condicion', '!=', 'Responsable')
@@ -70,7 +70,7 @@ class PsinfinvController extends S3Controller {
         ])
         ->where('a.condicion', '=', 'Responsable')
         ->where('b.tipo_proyecto', '=', 'PSINFINV')
-        ->where('b.periodo', '=', 2024)
+        ->where('b.periodo', '=', 2025)
         ->where('b.estado', '=', 6)
         ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
         ->first();
@@ -513,8 +513,15 @@ class PsinfinvController extends S3Controller {
 
     $listado = Db::table('Grupo_integrante AS a')
       ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
+      ->join('Repo_sum AS c', 'c.codigo_alumno', '=', 'b.codigo')
       ->select(
         DB::raw("CONCAT(b.tipo, ' - ' , a.condicion, ' | ', b.apellido1, ' ', b.apellido2, ', ', b.nombres) AS value"),
+        DB::raw("CASE
+            WHEN c.programa LIKE 'E.P.%' THEN 'Licenciatura o Segunda Especialidad'
+            WHEN c.programa LIKE 'Maest%' THEN 'Maestría'
+            WHEN c.programa LIKE 'Doct%' THEN 'Doctorado'
+            ELSE 'Licenciatura o Segunda Especialidad'
+        END AS tipo_programa"),
         'a.investigador_id',
         'a.id AS grupo_integrante_id',
         'a.grupo_id'

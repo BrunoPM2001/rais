@@ -37,6 +37,7 @@ class ListadoDeudoresController extends Controller {
         'a.categoria',
       ])
       ->whereBetween('a.tipo', [1, 3])
+      ->whereNotIn('g.id', [6, 7])
       ->groupBy('a.id')
       ->orderByDesc('d.periodo');
 
@@ -66,6 +67,7 @@ class ListadoDeudoresController extends Controller {
         'a.categoria',
       ])
       ->whereBetween('a.tipo', [1, 3])
+      ->whereNotIn('g.id', [6, 7])
       ->groupBy('a.id')
       ->orderByDesc('d.periodo')
       ->union($deudasA)

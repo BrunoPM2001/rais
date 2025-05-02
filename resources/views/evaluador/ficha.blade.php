@@ -150,7 +150,7 @@
     <div style="border-top: 1px solid black; margin: 1px 0;"></div>
     <strong>
       RAIS - UNMSM -
-      {{ $extra->id . ' - ' . $extra->proyecto_id . ' - ' . $extra->evaluador_id }}
+      {{ $extra->proyecto_id . ' - ' . $extra->id . ' - ' . $extra->evaluador_id }}
     </strong>
   </div>
 
