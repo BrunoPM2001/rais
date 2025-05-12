@@ -542,6 +542,9 @@ class ProyectosGrupoController extends S3Controller {
       case "PTPMAEST":
         $ctrl = new PtpmaestController();
         return $ctrl->reporte($request);
+      case "ECI":
+        $ctrl = new EciController();
+        return $ctrl->reporte($request);
       default:
     }
   }

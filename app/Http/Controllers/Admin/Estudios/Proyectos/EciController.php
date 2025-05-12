@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin\Estudios\Proyectos;
 
 use App\Http\Controllers\Controller;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -106,5 +107,23 @@ class EciController extends Controller {
       'impacto' => $impacto,
       'archivos' => $archivos
     ];
+  }
+
+  public function reporte(Request $request) {
+    $detalles = DB::table('Proyecto_descripcion')
+      ->select([
+        'codigo',
+        'detalle'
+      ])
+      ->where('proyecto_id', '=', $request->query('proyecto_id'))
+      ->get()
+      ->mapWithKeys(function ($item) {
+        return [$item->codigo => $item->detalle];
+      });
+
+    $pdf = Pdf::loadView('admin.estudios.proyectos.sin_detalles.eci', [
+      'detalles' => $detalles,
+    ]);
+    return $pdf->stream();
   }
 }
