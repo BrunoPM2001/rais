@@ -115,6 +115,8 @@ class ProyectoConFinanciamientoController extends S3Controller {
       case 'PSINFIPU':
         $tipo = 'Proyectos de Publicación Académica para Grupos de Investigación';
         break;
+      case 'PMULTI':
+        $tipo = 'Proyectos multidisciplinarios';
       default:
         $tipo = 'Tipo de Proyecto Desconocido';
     }

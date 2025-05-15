@@ -101,6 +101,9 @@ class ProyectoController extends Controller {
       case 'PSINFIPU':
         $tipo = 'Proyectos de Publicación Académica para Grupos de Investigación';
         break;
+      case 'PMULTI':
+        $tipo = 'Proyectos multidisciplinarios';
+        break;
       default:
         $tipo = 'Tipo de Proyecto Desconocido';
     }
