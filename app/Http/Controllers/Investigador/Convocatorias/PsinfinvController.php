@@ -545,18 +545,28 @@ class PsinfinvController extends S3Controller {
     if ($count == 0) {
 
       if ($request->input('tipo_tesis') == null) {
-        DB::table('Proyecto_integrante')
-          ->insert([
-            'proyecto_id' => $request->input('id'),
-            'grupo_id' => $request->input('grupo_id'),
-            'investigador_id' => $request->input('investigador_id'),
-            'grupo_integrante_id' => $request->input('grupo_integrante_id'),
-            'proyecto_integrante_tipo_id' => $request->input('proyecto_integrante_tipo_id'),
-            'contribucion' => $request->input('contribucion'),
-            'excluido' => 'Incluido',
-            'created_at' => Carbon::now(),
-            'updated_at' => Carbon::now(),
-          ]);
+
+        $deudas = DB::table('view_deudores AS vdeuda')
+          ->select(['vdeuda.ptipo', 'vdeuda.categoria', 'vdeuda.periodo'])
+          ->where('vdeuda.investigador_id', '=', $request->input('investigador_id'))
+          ->count();
+
+        if ($deudas > 0) {
+          return ['message' => 'warning', 'detail' => 'El integrante que intenta añadir tiene deudas'];
+        } else {
+          DB::table('Proyecto_integrante')
+            ->insert([
+              'proyecto_id' => $request->input('id'),
+              'grupo_id' => $request->input('grupo_id'),
+              'investigador_id' => $request->input('investigador_id'),
+              'grupo_integrante_id' => $request->input('grupo_integrante_id'),
+              'proyecto_integrante_tipo_id' => $request->input('proyecto_integrante_tipo_id'),
+              'contribucion' => $request->input('contribucion'),
+              'excluido' => 'Incluido',
+              'created_at' => Carbon::now(),
+              'updated_at' => Carbon::now(),
+            ]);
+        }
       } else {
         DB::table('Proyecto_integrante')
           ->insert([
@@ -581,6 +591,14 @@ class PsinfinvController extends S3Controller {
   }
 
   public function eliminarIntegrante(Request $request) {
+    $count = DB::table('Proyecto_actividad')
+      ->where('proyecto_integrante_id', '=', $request->query('id'))
+      ->count();
+
+    if ($count > 0) {
+      return ['message' => 'warning', 'detail' => 'No se puede eliminar a este integrante porque tiene actividades asociadas, elimine las actividades en el siguiente paso'];
+    }
+
     DB::table('Proyecto_integrante')
       ->where('id', '=', $request->query('id'))
       ->delete();
