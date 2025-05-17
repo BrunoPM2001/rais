@@ -24,35 +24,50 @@ class ProyectoController extends Controller {
     $periodo = $request->query('periodo');
     $tipo = $request->query('tipo_proyecto');
 
-
-    $proyectos = DB::table('view_proyecto_gi as p')
-      ->select(
-        'p.sigla_area AS sigla',
-        'p.area as area',
-        'p.grupo_nombre_corto',
-        'p.grupo_nombre',
-        'p.facultad_proyecto as facultad_grupo',
-        'p.codigo_proyecto',
-        'p.titulo',
-        'p.integrante as nombres',
-        'p.condicion_proyecto as condicion',
-        'p.facultad_docente as facultad_miembro',
-        'p.codigo_docente as codigo',
+    $proyectos = DB::table('Proyecto as a')
+      ->leftJoin('Proyecto_integrante as b', 'a.id', '=', 'b.proyecto_id')
+      ->leftJoin('Usuario_investigador as c', 'b.investigador_id', '=', 'c.id')
+      ->leftJoin('Facultad as d', 'a.facultad_id', '=', 'd.id')
+      ->leftJoin('Area as e', 'd.area_id', '=', 'e.id')
+      ->leftJoin('Grupo as f', 'a.grupo_id', '=', 'f.id')
+      ->leftJoin('Facultad as g', 'c.facultad_id', '=', 'g.id')
+      ->leftJoin('Proyecto_integrante_tipo as h', 'b.proyecto_integrante_tipo_id', '=', 'h.id')
+      ->leftJoin('Grupo_integrante as i', 'c.id', '=', 'i.investigador_id')
+      ->leftJoin('Proyecto_presupuesto as j', 'a.id', '=', 'j.proyecto_id')
+      ->select([
+        'a.id',
+        'e.sigla',
+        'e.nombre as area',
+        'f.grupo_nombre_corto',
+        'f.grupo_nombre',
+        'd.nombre as facultad_grupo',
+        'a.codigo_proyecto',
+        'a.titulo',
+        DB::raw("CONCAT(c.apellido1, ' ', c.apellido2, ', ', c.nombres) as nombres"),
+        'h.nombre as condicion',
+        'g.nombre as facultad_miembro',
+        'c.codigo',
         DB::raw("CASE 
-        WHEN p.tipo_investigador = 'DOCENTE PERMANENTE' THEN 'Docente permanente'
-        WHEN p.tipo_investigador = 'Estudiante Pre Grado' THEN 'Estudiante pregrado'
-        ELSE p.tipo_investigador
-    END AS tipo_investigador"),
-        'p.condicion_gi',
-        'p.grupo_id',
-        'p.total_presupuesto as presupuesto'
-      )
-      ->where('p.tipo_proyecto', '=', $tipo)
-      ->where('p.facultad_id_proyecto', '=', $facultad)
-      ->where('p.periodo', '=', $periodo)
-      ->orderByRaw('p.grupo_nombre, 
-      p.codigo_proyecto, 
-      FIELD(p.proyecto_integrante_tipo_id,
+            WHEN c.tipo_investigador = 'DOCENTE PERMANENTE' THEN 'Docente permanente'
+            WHEN c.tipo_investigador = 'Estudiante Pre Grado' THEN 'Estudiante pregrado'
+            WHEN c.tipo_investigador IS NULL THEN 'Externo'
+            ELSE c.tipo_investigador
+        END as tipo_investigador"),
+        'i.condicion as condicion_gi',
+        'f.id as grupo_id',
+        DB::raw("SUM(j.monto) as presupuesto"),
+      ])
+      ->where('a.tipo_proyecto', '=', $tipo)
+      ->where('a.facultad_id', '=', $facultad)
+      ->where('a.periodo', '=', $periodo)
+      ->whereIn('a.estado', [1, 8])
+      ->where(function ($query) {
+        $query->where('i.condicion', 'not like', 'Ex%')
+          ->orWhereNull('i.condicion');
+      })
+      ->orderByRaw('f.grupo_nombre, 
+      a.codigo_proyecto, 
+      FIELD(b.proyecto_integrante_tipo_id,
         1, 2, 3, 5, 6, 4, 31, 32, 33, 35,
         7, 8, 9, 11, 12, 10, 42, 50, 51, 52, 55,
         13, 14, 53, 54,
@@ -70,9 +85,10 @@ class ProyectoController extends Controller {
         74, 75, 76, 77, 78, 79, 80, 81,
         83, 84, 85,
         86, 88,
-        92, 93
+        92, 93, 94
       ),
-      p.integrante')
+      c.apellido1, c.apellido2, c.nombres')
+      ->groupBy('b.id')
       ->get();
 
     $area = DB::table('Facultad AS fx')
