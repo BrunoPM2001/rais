@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Admin\Estudios;
 use App\Exports\Admin\FromDataExport;
 use App\Http\Controllers\Admin\Estudios\Proyectos\EciController;
 use App\Http\Controllers\Admin\Estudios\Proyectos\PconfigiController;
-use App\Http\Controllers\Admin\Estudios\Proyectos\PconfigiInvController;
 use App\Http\Controllers\Admin\Estudios\Proyectos\PinvposController;
 use App\Http\Controllers\Admin\Estudios\Proyectos\PsinfinvController;
 use App\Http\Controllers\Admin\Estudios\Proyectos\PsinfipuController;
@@ -543,8 +542,11 @@ class ProyectosGrupoController extends S3Controller {
       case "PTPMAEST":
         $ctrl = new PtpmaestController();
         return $ctrl->reporte($request);
+      case "ECI":
+        $ctrl = new EciController();
+        return $ctrl->reporte($request);
       case "PCONFIGI-INV":
-        $ctrl = new PconfigiInvController();
+        $ctrl = new EciController();
         return $ctrl->reporte($request);
       default:
     }
