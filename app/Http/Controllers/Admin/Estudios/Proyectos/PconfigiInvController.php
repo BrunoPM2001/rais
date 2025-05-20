@@ -95,7 +95,7 @@ class PconfigiInvController extends Controller {
       ->where('a.proyecto_id', '=', $request->query('proyecto_id'))
       ->get();
 
-    $pdf = Pdf::loadView('admin.estudios.proyectos.sin_detalles.pconfigi', [
+    $pdf = Pdf::loadView('admin.estudios.proyectos.sin_detalles.pconfigi_inv', [
       'proyecto' => $proyecto,
       'detalles' => $detalles,
       'calendario' => $calendario,
