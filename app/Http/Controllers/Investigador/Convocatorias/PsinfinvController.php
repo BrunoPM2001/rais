@@ -62,6 +62,12 @@ class PsinfinvController extends S3Controller {
 
       $req4 > 0 && $errores[] = "Su grupo de investigación ya está presentando un proyecto";
 
+      $req5 = DB::table('view_deudores AS vdeuda')
+        ->where('vdeuda.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+        ->count();
+
+      $req5 != 0 && $errores[] = "Usted tiene registradas deudas pendientes que deben ser resueltas para participar en el concurso";
+
       $detail = DB::table('Proyecto_integrante AS a')
         ->join('Proyecto AS b', 'b.id', '=', 'a.proyecto_id')
         ->select([
@@ -237,6 +243,8 @@ class PsinfinvController extends S3Controller {
           'grupo_id' => $datos->grupo_id,
           'grupo_integrante_id' => $datos->id,
           'condicion' => 'Responsable',
+          'created_at' => $date,
+          'updated_at' => $date,
         ]);
       return ['message' => 'success', 'detail' => 'Datos guardados', 'id' => $id];
     }
