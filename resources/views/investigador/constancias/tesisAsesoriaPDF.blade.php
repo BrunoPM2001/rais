@@ -294,22 +294,25 @@
     </tr>
   </table>
 
-  <table class="table-sello-firma">
-    <tr class="extra-firma">
-      <td style="margin-top: 15px;">
-        <img class="sello" src="{{ public_path('sello.jpg') }}" alt="Firma">
-      </td>
-      <td>
-        <img class="firma" src="{{ public_path('firma-negra.jpg') }}" alt="Firma">
-      </td>
-      <td style="width: 100px;">
-      </td>
-    </tr>
-  </table>
+  <div style="page-break-inside: avoid;">
 
-  <p class="nombre-vice">
-    Dr. José Segundo Niño Montero <br><strong>Vicerrector</strong>
-  </p>
+    <table class="table-sello-firma">
+      <tr class="extra-firma">
+        <td style="width: 100px;">
+        </td>
+        <td>
+          <img class="firma" src="{{ public_path('firma-negra.jpg') }}" alt="Firma">
+        </td>
+        <td style="margin-top: 15px;">
+          <img class="sello" src="{{ public_path('sello.jpg') }}" alt="Firma">
+        </td>
+      </tr>
+    </table>
+
+    <p class="nombre-vice">
+      Dr. José Segundo Niño Montero <br><strong>Vicerrector</strong>
+    </p>
+  </div>
 
   <div class="foot-1">
     <table style="width: 80%; font-size: 10px;">
