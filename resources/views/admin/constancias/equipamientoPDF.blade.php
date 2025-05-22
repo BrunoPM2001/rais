@@ -174,7 +174,7 @@
     </tr>
   </table>
 
-  <table class="cuerpo-table">
+  <table class="cuerpo-tablecuerpo-table">
     <tr class="title">
       <td><b>Constancia de participación al Programa de Equipamiento</b><br>
         <b>Científico para la Investigación de la UNMSM</b>
@@ -209,53 +209,50 @@
     </tr>
   </table>
 
-  <table style="font-size: 12px;padding-top:5px; ">
-    <tr>
-      <td>Ha registrado participación en el(los) siguiente(s) Programa(s) de
-        Equipamiento Científico para la Investigación:</td>
-    </tr>
-  </table>
-  <table style="margin: 0;padding:0;">
-    <tr>
-      <td colspan="100%" style="margin: 0;padding: 0;">
-        <h5
-          style="width: 100%; padding: 10px; background-color: #f5f5f5; border: 1px solid #ddd; border-radius: 10px; ">
-          Grupo : {{ $equipamiento[0]->grupo }}
-        </h5>
-      </td>
-    </tr>
-  </table>
+  @if (sizeof($equipamiento) > 0)
 
-
-  <table class="table-content">
-    <thead>
+    <table style="font-size: 12px;padding-top:5px; ">
       <tr>
-        <th>Periodo</th>
-        <th>Código</th>
-        <th style="text-align: center;">Título</th>
-        <th>Condición</th>
-        <th>Resolución Rectoral</th>
-
+        <td>Ha registrado participación en el(los) siguiente(s) Programa(s) de
+          Equipamiento Científico para la Investigación:</td>
       </tr>
-    </thead>
-    <tbody>
+    </table>
+    <table style="margin: 0;padding:0;">
+      <tr>
+        <td colspan="100%" style="margin: 0;padding: 0;">
+          <h5
+            style="width: 100%; padding: 10px; background-color: #f5f5f5; border: 1px solid #ddd; border-radius: 10px; ">
+            Grupo : {{ $equipamiento[0]->grupo }}
+          </h5>
+        </td>
+      </tr>
+    </table>
 
-
-
-      @foreach ($equipamiento as $item)
+    <table class="table-content">
+      <thead>
         <tr>
-          <td>{{ $item->periodo }}</td>
-          <td>{{ $item->codigo_proyecto }}</td>
-          <td>{{ $item->titulo }} <br>Monto: S/. {{ $item->presupuesto }}</td>
-          <td>{{ $item->condicion_gi }}</td>
-          <td>{{ $item->rr }}</td>
+          <th>Periodo</th>
+          <th>Código</th>
+          <th style="text-align: center;">Título</th>
+          <th>Condición</th>
         </tr>
-      @endforeach
-
-    </tbody>
-
-
-  </table>
+      </thead>
+      <tbody>
+        @foreach ($equipamiento as $item)
+          <tr>
+            <td>{{ $item->periodo }}</td>
+            <td>{{ $item->codigo_proyecto }}</td>
+            <td>{{ $item->titulo }} <br>Monto: S/. {{ $item->presupuesto }}</td>
+            <td>{{ $item->condicion_gi }}</td>
+          </tr>
+        @endforeach
+      </tbody>
+    </table>
+  @else
+    <p class="table-texto">
+      El investigador seleccionado no tiene participaciones registradas
+    </p>
+  @endif
 
   <table>
     <tr>

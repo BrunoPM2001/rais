@@ -226,10 +226,8 @@ class ReporteController extends Controller {
         'a.grupo',
         'a.grupo_nombre_corto',
         'a.grupo_categoria',
-        'p.presupuesto',
+        'p.total_monto AS presupuesto',
         'a.condicion_gi',
-        'p.rr'
-
       )
       ->join('view_proyecto_presupuesto AS p', 'p.proyecto_id', '=', 'a.proyecto_id')
       ->where('a.tipo_proyecto', '=', 'ECI')

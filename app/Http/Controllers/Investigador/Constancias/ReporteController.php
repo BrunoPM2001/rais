@@ -34,8 +34,7 @@ class ReporteController extends S3Controller {
         'c.clase'
       )
       ->where('a.id', '=', $request->attributes->get('token_decoded')->investigador_id)
-      ->get()
-      ->toArray();
+      ->first();
 
     return $docente;
   }
@@ -55,7 +54,7 @@ class ReporteController extends S3Controller {
 
     if (!$solicitud) {
       $pdf = Pdf::loadView('admin.constancias.tesisAsesoriaPDF', [
-        'docente' => $docente[0],
+        'docente' => $docente,
         'tesis' => $tesis,
         'username' => false
       ]);
@@ -70,7 +69,7 @@ class ReporteController extends S3Controller {
       $qrCode = base64_encode(QrCode::format('png')->size(300)->generate($qrUrl));
 
       $pdf = Pdf::loadView('investigador.constancias.tesisAsesoriaPDF', [
-        'docente' => $docente[0],
+        'docente' => $docente,
         'tesis' => $tesis,
         'username' => false,
         'file' => $nameFile,
@@ -155,7 +154,7 @@ class ReporteController extends S3Controller {
     if (!$solicitud) {
 
       $pdf = Pdf::loadView('admin.constancias.estudiosInvestigacionPDF', [
-        'docente' => $docente[0], // Pasar el docente
+        'docente' => $docente, // Pasar el docente
         'con_incentivo' => $con_incentivo, // Pasar cada array por separado
         'financiamiento_gi' => $financiamiento_gi,
         'pmulti' => $pmulti,
@@ -182,7 +181,7 @@ class ReporteController extends S3Controller {
       $qrCode = base64_encode(QrCode::format('png')->size(300)->generate($qrUrl));
 
       $pdf = Pdf::loadView('investigador.constancias.estudiosInvestigacionPDF', [
-        'docente' => $docente[0], // Pasar el docente
+        'docente' => $docente, // Pasar el docente
         'con_incentivo' => $con_incentivo, // Pasar cada array por separado
         'financiamiento_gi' => $financiamiento_gi,
         'pmulti' => $pmulti,
@@ -210,6 +209,7 @@ class ReporteController extends S3Controller {
     $docente = $this->getDatosDocente($request);
 
     $equipamiento = DB::table('view_proyecto_reporte AS a')
+      ->join('view_proyecto_presupuesto AS p', 'p.proyecto_id', '=', 'a.proyecto_id')
       ->select(
         'a.periodo',
         'a.codigo_proyecto',
@@ -218,12 +218,9 @@ class ReporteController extends S3Controller {
         'a.grupo',
         'a.grupo_nombre_corto',
         'a.grupo_categoria',
-        'p.presupuesto',
+        'p.total_monto AS presupuesto',
         'a.condicion_gi',
-        'p.rr'
-
       )
-      ->join('view_proyecto_presupuesto AS p', 'p.proyecto_id', '=', 'a.proyecto_id')
       ->where('a.tipo_proyecto', '=', 'ECI')
       ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
       ->orderBy('a.periodo', 'DESC')
@@ -231,7 +228,7 @@ class ReporteController extends S3Controller {
 
     if (!$solicitud) {
       $pdf = Pdf::loadView('admin.constancias.equipamientoPDF', [
-        'docente' => $docente[0],
+        'docente' => $docente,
         'equipamiento' => $equipamiento,
         'username' => false
       ]);
@@ -245,7 +242,7 @@ class ReporteController extends S3Controller {
       $qrCode = base64_encode(QrCode::format('png')->size(300)->generate($qrUrl));
 
       $pdf = Pdf::loadView('investigador.constancias.equipamientoPDF', [
-        'docente' => $docente[0],
+        'docente' => $docente,
         'equipamiento' => $equipamiento,
         'username' => false,
         'file' => $nameFile,
@@ -270,7 +267,7 @@ class ReporteController extends S3Controller {
 
     if (!$solicitud) {
       $pdf = Pdf::loadView('admin.constancias.noDeudaPDF', [
-        'docente' => $docente[0],
+        'docente' => $docente,
         'deuda' => $deuda,
         'username' => false
       ]);
@@ -284,7 +281,7 @@ class ReporteController extends S3Controller {
       $qrCode = base64_encode(QrCode::format('png')->size(300)->generate($qrUrl));
 
       $pdf = Pdf::loadView('investigador.constancias.noDeudaPDF', [
-        'docente' => $docente[0],
+        'docente' => $docente,
         'deuda' => $deuda,
         'username' => false,
         'file' => $nameFile,
@@ -336,7 +333,7 @@ class ReporteController extends S3Controller {
 
     if (!$solicitud) {
       $pdf = Pdf::loadView('admin.constancias.puntajePublicacionesPDF', [
-        'docente' => $docente[0],
+        'docente' => $docente,
         'publicaciones' => $publicaciones,
         'patentes' => $patentes,
         'username' => false
@@ -351,7 +348,7 @@ class ReporteController extends S3Controller {
       $qrCode = base64_encode(QrCode::format('png')->size(300)->generate($qrUrl));
 
       $pdf = Pdf::loadView('investigador.constancias.puntajePublicacionesPDF', [
-        'docente' => $docente[0],
+        'docente' => $docente,
         'publicaciones' => $publicaciones,
         'patentes' => $patentes,
         'username' => false,
@@ -404,7 +401,7 @@ class ReporteController extends S3Controller {
 
     if (!$solicitud) {
       $pdf = Pdf::loadView('admin.constancias.capituloLibroPDF', [
-        'docente' => $docente[0],
+        'docente' => $docente,
         'publicaciones' => $publicaciones,
         'username' => false
       ]);
@@ -418,7 +415,7 @@ class ReporteController extends S3Controller {
       $qrCode = base64_encode(QrCode::format('png')->size(300)->generate($qrUrl));
 
       $pdf = Pdf::loadView('investigador.constancias.capituloLibroPDF', [
-        'docente' => $docente[0],
+        'docente' => $docente,
         'publicaciones' => $publicaciones,
         'username' => false,
         'file' => $nameFile,
@@ -481,7 +478,7 @@ class ReporteController extends S3Controller {
 
     if (!$solicitud) {
       $pdf = Pdf::loadView('admin.constancias.publicacionesCientificasPDF', [
-        'docente' => $docente[0],
+        'docente' => $docente,
         'publicaciones' => $publicaciones,
         'patentes' => $patentes,
         'username' => false
@@ -497,7 +494,7 @@ class ReporteController extends S3Controller {
       $qrCode = base64_encode(QrCode::format('png')->size(300)->generate($qrUrl));
 
       $pdf = Pdf::loadView('investigador.constancias.publicacionesCientificasPDF', [
-        'docente' => $docente[0],
+        'docente' => $docente,
         'publicaciones' => $publicaciones,
         'patentes' => $patentes,
         'username' => false,

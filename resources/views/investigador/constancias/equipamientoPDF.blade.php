@@ -249,7 +249,6 @@
     </tr>
   </table>
 
-
   <table class="table-content">
     <thead>
       <tr>
@@ -257,27 +256,18 @@
         <th>Código</th>
         <th style="text-align: center;">Título</th>
         <th>Condición</th>
-        <th>Resolución Rectoral</th>
-
       </tr>
     </thead>
     <tbody>
-
-
-
       @foreach ($equipamiento as $item)
         <tr>
           <td>{{ $item->periodo }}</td>
           <td>{{ $item->codigo_proyecto }}</td>
           <td>{{ $item->titulo }} <br>Monto: S/. {{ $item->presupuesto }}</td>
           <td>{{ $item->condicion_gi }}</td>
-          <td>{{ $item->rr }}</td>
         </tr>
       @endforeach
-
     </tbody>
-
-
   </table>
 
   <div style="page-break-inside: avoid;">
