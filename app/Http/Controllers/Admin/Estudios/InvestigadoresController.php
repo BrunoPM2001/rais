@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers\Admin\Estudios;
 
+use App\Exports\Admin\InvestigadoresExport;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Maatwebsite\Excel\Facades\Excel;
 
 class InvestigadoresController extends Controller {
   public function listado() {
@@ -476,5 +478,15 @@ class InvestigadoresController extends Controller {
       ->get();
 
     return $estudiantes;
+  }
+
+  public function excelComplete(Request $request) {
+
+    $filters = $request->all();
+    set_time_limit(300);
+
+    $export = new InvestigadoresExport($filters);
+
+    return Excel::download($export, 'publicaciones.xlsx');
   }
 }

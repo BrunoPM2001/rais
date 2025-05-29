@@ -396,6 +396,8 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
       Route::put('updateLicencia', [InvestigadoresController::class, 'updateLicencia']);
       Route::delete('deleteLicencia', [InvestigadoresController::class, 'deleteLicencia']);
 
+      Route::get('excelComplete', [InvestigadoresController::class, 'excelComplete']);
+
       //  Search
       Route::get('searchDocenteRrhh', [InvestigadoresController::class, 'searchDocenteRrhh']);
       Route::get('searchEstudiante', [InvestigadoresController::class, 'searchEstudiante']);

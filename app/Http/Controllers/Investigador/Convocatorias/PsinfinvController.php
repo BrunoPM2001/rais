@@ -68,6 +68,21 @@ class PsinfinvController extends S3Controller {
 
       $req5 != 0 && $errores[] = "Usted tiene registradas deudas pendientes que deben ser resueltas para participar en el concurso";
 
+      $req6 = DB::table('Proyecto_integrante_deuda AS d')
+        ->join('Proyecto_integrante AS pi', 'd.proyecto_integrante_id', '=', 'pi.id')
+        ->where('pi.investigador_id', $request->attributes->get('token_decoded')->investigador_id)
+        ->whereIn('d.tipo', [1, 2, 3])
+        ->whereNotExists(function ($query) {
+          $query->select(DB::raw(1))
+            ->from('Proyecto_integrante_deuda AS d2')
+            ->whereRaw('d2.proyecto_integrante_id = d.proyecto_integrante_id')
+            ->where('d2.categoria', 'like', '%Subsan%');
+        })
+        ->count();
+
+      $req6 > 0 && $errores[] =
+        "Tiene deudas de informes técnicos, académicos o económicos pendientes.";
+
       $detail = DB::table('Proyecto_integrante AS a')
         ->join('Proyecto AS b', 'b.id', '=', 'a.proyecto_id')
         ->select([
@@ -576,6 +591,22 @@ class PsinfinvController extends S3Controller {
             ]);
         }
       } else {
+        $yaEsTesista = DB::table('Proyecto_integrante AS pi')
+          ->join('Proyecto AS p', 'p.id', '=', 'pi.proyecto_id')
+          ->where('pi.investigador_id', $request->input('investigador_id'))
+          ->whereNotNull('pi.tipo_tesis')
+          ->where('pi.tipo_tesis', '!=', '')
+          ->where('p.tipo_proyecto', 'PSINFINV')
+          ->whereNotIn('p.estado', [-1, 0, 7])
+          ->count();
+
+        if ($yaEsTesista > 0) {
+          return [
+            'message' => 'error',
+            'detail'  => 'Este tesista ya participa (o participó) en otro proyecto PSINFINV como tesista'
+          ];
+        }
+
         DB::table('Proyecto_integrante')
           ->insert([
             'proyecto_id' => $request->input('id'),
