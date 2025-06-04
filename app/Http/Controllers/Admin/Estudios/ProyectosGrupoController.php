@@ -92,6 +92,25 @@ class ProyectosGrupoController extends S3Controller {
           'actividades' => $actividades,
           'presupuesto' => $presupuesto,
         ];
+      case "PCONFIGI-INV":
+        $ctrl = new PconfigiInvController();
+        $responsable = $ctrl->responsable($request);
+        $detalle = $ctrl->detalle($request);
+        $miembros = $ctrl->miembros($request);
+        $documentos = $ctrl->documentos($request);
+        $descripcion = $this->descripcion($request);
+        $actividades = $this->actividades($request);
+        $presupuesto = $this->presupuesto($request);
+
+        return [
+          'detalle' => $detalle,
+          'miembros' => $miembros,
+          'responsable' => $responsable,
+          'descripcion' => $descripcion,
+          'actividades' => $actividades,
+          'presupuesto' => $presupuesto,
+          'documentos' => $documentos,
+        ];
       case "ECI":
         $ctrl = new EciController();
         $detalle = $ctrl->detalle($request);
@@ -601,6 +620,20 @@ class ProyectosGrupoController extends S3Controller {
       case "PCONFIGI-INV":
         $ctrl = new PconfigiInvController();
         return $ctrl->reporte($request);
+      default:
+    }
+  }
+
+  public function reporteCompleto(Request $request) {
+    $tipo = DB::table('Proyecto')
+      ->select(['tipo_proyecto'])
+      ->where('id', '=', $request->query('proyecto_id'))
+      ->first();
+
+    switch ($tipo->tipo_proyecto) {
+      case "PCONFIGI-INV":
+        $ctrl = new PconfigiInvController();
+        return $ctrl->reporteCompleto($request);
       default:
     }
   }

@@ -203,6 +203,7 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
 
       Route::get('exportToWord', [ProyectosGrupoController::class, 'exportToWord']);
       Route::get('reporte', [ProyectosGrupoController::class, 'reporte']);
+      Route::get('reporteCompleto', [ProyectosGrupoController::class, 'reporteCompleto']);
       Route::post('excel', [ProyectosGrupoController::class, 'excel']);
     });
 

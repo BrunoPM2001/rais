@@ -362,7 +362,7 @@ class PconfigiInvController extends S3Controller {
       DB::table('Proyecto_doc')
         ->where('proyecto_id', '=', $request->input('id'))
         ->where('categoria', '=', 'documento')
-        ->where('nombre', '=', 'Carta de compromiso de confidencialidad')
+        ->where('nombre', '=', 'Carta de Vinculación')
         ->where('estado', '=', 1)
         ->update([
           'estado' => 0
