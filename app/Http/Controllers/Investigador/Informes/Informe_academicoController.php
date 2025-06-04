@@ -15,7 +15,7 @@ class Informe_academicoController extends S3Controller {
         ->join('Proyecto_integrante as b', 'b.proyecto_id', '=', 'a.id')
         ->join('Proyecto_integrante_tipo as c', function ($join) {
           $join->on('c.id', '=', 'b.proyecto_integrante_tipo_id')
-            ->whereIn('c.nombre', ['Responsable', 'Coordinador', 'Asesor']);
+            ->whereIn('c.nombre', ['Responsable', 'Coordinador', 'Asesor', 'Autor Corresponsal']);
         })
         ->leftJoin('Informe_tecnico as d', 'd.proyecto_id', '=', 'a.id')
         ->leftJoin('Informe_tipo as e', 'd.informe_tipo_id', '=', 'e.id')
