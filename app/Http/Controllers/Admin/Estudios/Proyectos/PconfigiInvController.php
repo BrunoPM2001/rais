@@ -110,7 +110,7 @@ class PconfigiInvController extends Controller {
   }
 
   public function documentos(Request $request) {
-    $documentos = DB::table('Proyecto_doc')
+    $documento1 = DB::table('Proyecto_doc')
       ->select([
         DB::raw("CONCAT('/minio/proyecto-doc/', archivo) AS archivo")
       ])
@@ -121,7 +121,20 @@ class PconfigiInvController extends Controller {
       ->orderByDesc('id')
       ->first();
 
-    return $documentos;
+    $documento2 = DB::table('File AS a')
+      ->select([
+        DB::raw("CONCAT('/minio/proyecto-doc/', a.key) AS archivo")
+      ])
+      ->where('a.tabla_id', '=', $request->query('proyecto_id'))
+      ->where('a.tabla', '=', 'Proyecto')
+      ->where('a.estado', '=', 20)
+      ->where('a.recurso', '=', 'METODOLOGIA_TRABAJO')
+      ->first();
+
+    return [
+      'documento1' => $documento1,
+      'documento2' => $documento2,
+    ];
   }
 
   public function reporte(Request $request) {
@@ -258,20 +271,6 @@ class PconfigiInvController extends Controller {
         return [$item->codigo => $item->detalle];
       });
 
-    $integrantes = DB::table('Proyecto_integrante AS a')
-      ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
-      ->join('Proyecto_integrante_tipo AS c', 'c.id', '=', 'a.proyecto_integrante_tipo_id')
-      ->select([
-        'c.nombre AS tipo_integrante',
-        DB::raw("CONCAT(b.apellido1, ' ', b.apellido2, ', ', b.nombres) AS nombre"),
-        'b.tipo',
-        'a.tipo_tesis',
-        'a.titulo_tesis',
-      ])
-      ->where('a.proyecto_id', '=', $request->query('proyecto_id'))
-      ->groupBy('b.id')
-      ->get();
-
     $actividades = DB::table('Proyecto_actividad')
       ->select([
         'actividad',
@@ -293,9 +292,8 @@ class PconfigiInvController extends Controller {
       ->orderBy('a.tipo')
       ->get();
 
-    $pdf = Pdf::loadView('investigador.convocatorias.pconfigi_inv', [
+    $pdf = Pdf::loadView('admin.estudios.proyectos.pconfigi_inv', [
       'proyecto' => $proyecto,
-      'integrantes' => $integrantes,
       'detalles' => $detalles,
       'actividades' => $actividades,
       'presupuesto' => $presupuesto,

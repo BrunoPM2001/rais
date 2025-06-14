@@ -722,11 +722,23 @@ class PsinfipuController extends S3Controller {
   }
 
   public function enviar(Request $request) {
+    //  Verificar autorización de grupo
+    $req1 = DB::table('Proyecto')
+      ->where('id', '=', $request->input('id'))
+      ->where('estado', '=', 6)
+      ->where('autorizacion_grupo', '=', 1)
+      ->count();
+
+    if ($req1 == 0) {
+      return ['message' => 'error', 'detail' => 'Necesita que el coordinador de su grupo autorice la propuesta de proyecto'];
+    }
+
     $count = DB::table('Proyecto')
       ->where('id', '=', $request->input('id'))
       ->where('estado', '=', 6)
       ->update([
-        'estado' => 5
+        'estado' => 5,
+        'updated_at' => Carbon::now()
       ]);
 
     if ($count > 0) {

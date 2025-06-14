@@ -596,7 +596,6 @@ class PsinfinvController extends S3Controller {
           ->where('pi.investigador_id', $request->input('investigador_id'))
           ->whereNotNull('pi.tipo_tesis')
           ->where('pi.tipo_tesis', '!=', '')
-          ->where('p.tipo_proyecto', 'PSINFINV')
           ->whereNotIn('p.estado', [-1, 0, 7])
           ->count();
 
@@ -809,11 +808,23 @@ class PsinfinvController extends S3Controller {
   }
 
   public function enviar(Request $request) {
+    //  Verificar autorización de grupo
+    $req1 = DB::table('Proyecto')
+      ->where('id', '=', $request->input('id'))
+      ->where('estado', '=', 6)
+      ->where('autorizacion_grupo', '=', 1)
+      ->count();
+
+    if ($req1 == 0) {
+      return ['message' => 'error', 'detail' => 'Necesita que el coordinador de su grupo autorice la propuesta de proyecto'];
+    }
+
     $count = DB::table('Proyecto')
       ->where('id', '=', $request->input('id'))
       ->where('estado', '=', 6)
       ->update([
-        'estado' => 5
+        'estado' => 5,
+        'updated_at' => Carbon::now()
       ]);
 
     if ($count > 0) {
