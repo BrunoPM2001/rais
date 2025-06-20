@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin\Estudios;
 
 use App\Http\Controllers\Controller;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -433,8 +434,9 @@ class DeudaProyectosController extends Controller {
               'categoria' => $categoria,
               'informe' => $deudaDetalle,
               'detalle' => $deudaComentario,
-              'fecha_deuda' => $deudaFecha
-
+              'fecha_deuda' => $deudaFecha,
+              'created_at' => Carbon::now(),
+              'updated_at' => Carbon::now()
             ]);
             $resultados[] = $resultado;
 
@@ -451,8 +453,9 @@ class DeudaProyectosController extends Controller {
                 'categoria' => $categoria,
                 'informe' => $deudaDetalle,
                 'detalle' => $deudaComentario,
-                'fecha_deuda' => $deudaFecha
-
+                'fecha_deuda' => $deudaFecha,
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now()
               ]);
               $resultados[] = $resultado;
             }
@@ -473,8 +476,9 @@ class DeudaProyectosController extends Controller {
                 'categoria' => $categoria,
                 'informe' => $deudaDetalle,
                 'detalle' => $deudaComentario,
-                'fecha_deuda' => $deudaFecha
-
+                'fecha_deuda' => $deudaFecha,
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now()
               ]);
               $resultados[] = $resultado;
             } else {
@@ -488,8 +492,9 @@ class DeudaProyectosController extends Controller {
                 'categoria' => $categoria,
                 'informe' => $deudaDetalle,
                 'detalle' => $deudaComentario,
-                'fecha_deuda' => $deudaFecha
-
+                'fecha_deuda' => $deudaFecha,
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now()
               ]);
               $resultados[] = $resultado;
             }
@@ -512,7 +517,8 @@ class DeudaProyectosController extends Controller {
                   'categoria' => $categoria,
                   'informe' => $deudaDetalle,
                   'detalle' => $deudaComentario,
-                  'fecha_deuda' => $deudaFecha
+                  'fecha_deuda' => $deudaFecha,
+                  'updated_at' => Carbon::now()
                 ]);
               $resultados[] = $resultado;
             } else if ($tipoDeuda == 2) {
@@ -527,7 +533,8 @@ class DeudaProyectosController extends Controller {
                     'categoria' => $categoria,
                     'informe' => $deudaDetalle,
                     'detalle' => $deudaComentario,
-                    'fecha_deuda' => $deudaFecha
+                    'fecha_deuda' => $deudaFecha,
+                    'updated_at' => Carbon::now()
                   ]);
                 $resultados[] = $resultado;
               } else {
@@ -549,7 +556,8 @@ class DeudaProyectosController extends Controller {
                     'categoria' => $categoria,
                     'informe' => $deudaDetalle,
                     'detalle' => $deudaComentario,
-                    'fecha_deuda' => $deudaFecha
+                    'fecha_deuda' => $deudaFecha,
+                    'updated_at' => Carbon::now()
                   ]);
                 $resultados[] = $resultado;
               } else {
@@ -557,14 +565,14 @@ class DeudaProyectosController extends Controller {
                 $categoria = 'Deuda Académica';
 
                 $resultado = DB::table('Proyecto_integrante_deuda')->insert([
-
                   'proyecto_integrante_id' => $integrante->id,
                   'tipo' => $tipoDeuda,
                   'categoria' => $categoria,
                   'informe' => $deudaDetalle,
                   'detalle' => $deudaComentario,
-                  'fecha_deuda' => $deudaFecha
-
+                  'fecha_deuda' => $deudaFecha,
+                  'created_at' => Carbon::now(),
+                  'updated_at' => Carbon::now()
                 ]);
                 $resultados[] = $resultado;
               }
@@ -589,14 +597,14 @@ class DeudaProyectosController extends Controller {
 
         if ($numIntegrante == 0) {
           DB::table('Proyecto_integrante_deuda')->insert([
-
             'proyecto_integrante_h_id' => $integrante->id,
             'tipo' => $tipoDeuda,
             'categoria' => $categoria,
             'informe' => $deudaDetalle,
             'detalle' => $deudaComentario,
-            'fecha_deuda' => $deudaFecha
-
+            'fecha_deuda' => $deudaFecha,
+            'created_at' => Carbon::now(),
+            'updated_at' => Carbon::now()
           ]);
         } else {
 
@@ -607,7 +615,8 @@ class DeudaProyectosController extends Controller {
               'categoria' => $categoria,
               'informe' => $deudaDetalle,
               'detalle' => $deudaComentario,
-              'fecha_deuda' => $deudaFecha
+              'fecha_deuda' => $deudaFecha,
+              'updated_at' => Carbon::now()
             ]);
         }
       }
@@ -637,82 +646,82 @@ class DeudaProyectosController extends Controller {
         $tipoIntegrante = [1];
         break;
 
-        // Responsable
+      // Responsable
       case 'PCONFIGI-INV':
         $tipoIntegrante = [36];
         break;
 
-        // Responsable
+      // Responsable
       case 'PSINFINV':
         $tipoIntegrante = [7];
         break;
 
-        // Autor Corresponsal
+      // Autor Corresponsal
       case 'PSINFIPU':
         $tipoIntegrante = [13];
         break;
 
-        // Asesor
+      // Asesor
       case 'PTPGRADO':
         $tipoIntegrante = [15];
         break;
 
-        // Asesor
+      // Asesor
       case 'PTPMAEST':
         $tipoIntegrante = [17];
         break;
 
-        //Comite
+      //Comite
       case 'PTPDOCTO':
         $tipoIntegrante = [19];
         break;
 
-        //Responsable
+      //Responsable
       case 'PEVENTO':
         $tipoIntegrante = [21];
         break;
 
-        // Responsable
+      // Responsable
       case 'PINVPOS':
         $tipoIntegrante = [28];
         break;
 
-        // Responsable
+      // Responsable
       case 'PTPBACHILLER':
         $tipoIntegrante = [66];
         break;
 
-        // Responsable
+      // Responsable
       case 'PMULTI':
         $tipoIntegrante = [56];
         break;
 
-        // Responsable
+      // Responsable
       case 'PINTERDIS':
         $tipoIntegrante = [74];
         break;
 
-        // Asesor
+      // Asesor
       case 'PRO-CTIE':
         $tipoIntegrante = [86];
         break;
 
-        // Coordinador
+      // Coordinador
       case 'ECI':
         $tipoIntegrante = [30];
         break;
 
-        // Coordinador General
+      // Coordinador General
       case 'PFEX':
         $tipoIntegrante = [44];
         break;
 
-        // Autor Corresponsal
+      // Autor Corresponsal
       case 'RFPLU':
         $tipoIntegrante = [70];
         break;
 
-        // Asesor
+      // Asesor
       case 'SPINOFF':
         $tipoIntegrante = [83];
         break;
@@ -845,7 +854,8 @@ class DeudaProyectosController extends Controller {
               'categoria' => $categoria,
               'informe' => $deudaDetalle,
               'detalle' => $deudaComentario,
-              'fecha_sub' => $fechaSubsanar
+              'fecha_sub' => $fechaSubsanar,
+              'updated_at' => Carbon::now()
             ]);
           $resultados[] = $resultado;
           /** Subsanar Deuda Economica */
@@ -859,7 +869,8 @@ class DeudaProyectosController extends Controller {
                 'categoria' => $categoria,
                 'informe' => $deudaDetalle,
                 'detalle' => $deudaComentario,
-                'fecha_sub' => $fechaSubsanar
+                'fecha_sub' => $fechaSubsanar,
+                'updated_at' => Carbon::now()
               ]);
             $resultados[] = $resultado;
           }
@@ -881,7 +892,8 @@ class DeudaProyectosController extends Controller {
                 'categoria' => $categoria,
                 'informe' => $deudaDetalle,
                 'detalle' => $deudaComentario,
-                'fecha_sub' => $fechaSubsanar
+                'fecha_sub' => $fechaSubsanar,
+                'updated_at' => Carbon::now()
               ]);
             $resultados[] = $resultado;
           } else {
@@ -905,7 +917,8 @@ class DeudaProyectosController extends Controller {
                 'categoria' => $categoria,
                 'informe' => $deudaDetalle,
                 'detalle' => $deudaComentario,
-                'fecha_sub' => $fechaSubsanar
+                'fecha_sub' => $fechaSubsanar,
+                'updated_at' => Carbon::now()
               ]);
             $resultados[] = $resultado;
           }
@@ -925,7 +938,8 @@ class DeudaProyectosController extends Controller {
               'categoria' => $categoria,
               'informe' => $deudaDetalle,
               'detalle' => $deudaComentario,
-              'fecha_sub' => $fechaSubsanar
+              'fecha_sub' => $fechaSubsanar,
+              'updated_at' => Carbon::now()
             ]);
           /** Subsanar Deuda Economica */
         } else if ($integrante->tipo == 2) {
@@ -937,7 +951,8 @@ class DeudaProyectosController extends Controller {
               'categoria' => $categoria,
               'informe' => $deudaDetalle,
               'detalle' => $deudaComentario,
-              'fecha_sub' => $fechaSubsanar
+              'fecha_sub' => $fechaSubsanar,
+              'updated_at' => Carbon::now()
             ]);
           /** Subsanar Deuda Academica y Economica */
         } else if ($integrante->tipo == 3) {
@@ -959,7 +974,8 @@ class DeudaProyectosController extends Controller {
                 'categoria' => $categoria,
                 'informe' => $deudaDetalle,
                 'detalle' => $deudaComentario,
-                'fecha_sub' => $fechaSubsanar
+                'fecha_sub' => $fechaSubsanar,
+                'updated_at' => Carbon::now()
               ]);
           } else {
 
@@ -981,7 +997,8 @@ class DeudaProyectosController extends Controller {
                 'categoria' => $categoria,
                 'informe' => $deudaDetalle,
                 'detalle' => $deudaComentario,
-                'fecha_sub' => $fechaSubsanar
+                'fecha_sub' => $fechaSubsanar,
+                'updated_at' => Carbon::now()
               ]);
           }
         }

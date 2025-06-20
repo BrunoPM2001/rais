@@ -205,6 +205,7 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
       Route::get('reporte', [ProyectosGrupoController::class, 'reporte']);
       Route::get('reporteCompleto', [ProyectosGrupoController::class, 'reporteCompleto']);
       Route::post('excel', [ProyectosGrupoController::class, 'excel']);
+      Route::get('generarDeclaracion', [ProyectosGrupoController::class, 'generarDeclaracion']);
     });
 
     //  Proyectos FEX

@@ -646,4 +646,7 @@ class ProyectosGrupoController extends S3Controller {
 
     return Excel::download($export, 'proyectos.xlsx');
   }
+
+  public function generarDeclaracion(Request $request) {
+  }
 }
