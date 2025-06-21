@@ -118,6 +118,7 @@ class ConvocatoriasController extends Controller {
       ->select(
         'id',
         'tipo',
+        'evento',
         'fecha_inicial',
         'fecha_final',
         'fecha_corte',
@@ -125,7 +126,7 @@ class ConvocatoriasController extends Controller {
         'convocatoria',
         'estado'
       )
-      ->where('evento', '=', 'registro')
+      ->whereIn('evento', ['registro', 'evaluacion'])
       ->get();
 
     return ['data' => $convocatorias];
@@ -341,6 +342,27 @@ class ConvocatoriasController extends Controller {
         'estado' => 'APROBADO',
         'updated_at' => Carbon::now()
       ]);
+
+    $registros = DB::table('Evaluacion_template_opcion')
+      ->select([
+        'opcion',
+        'puntaje_max',
+        'nivel',
+        'orden',
+        'tipo',
+        'periodo',
+        'editable',
+        'otipo',
+        'puntos_adicionales'
+      ])
+      ->where('evaluacion_template_id', '=', $request->input('id'))
+      ->get()
+      ->map(function ($item) {
+        return (array) $item;
+      })
+      ->toArray();
+
+    DB::table('Evaluacion_opcion')->insert($registros);
 
     return ['message' => 'info', 'detail' => 'Criterios aprobados'];
   }

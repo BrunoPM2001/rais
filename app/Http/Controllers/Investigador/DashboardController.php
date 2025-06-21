@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\DB;
 class DashboardController extends Controller {
 
   public function getData(Request $request) {
+    $now = Carbon::now()->toDateString();
+
     //  Detalles
     $orcid = new OrcidController();
     $isOrcidValid = $orcid->validarRegistro($request);
@@ -113,6 +115,19 @@ class DashboardController extends Controller {
       $fecha2 = Carbon::parse($const->fecha_fin);
     }
 
+    $convocatorias = DB::table('Convocatoria')
+      ->select([
+        'tipo',
+        'descripcion',
+        DB::raw("CASE
+          WHEN fecha_inicial <= '" . $now . "' && fecha_final >= '" . $now . "' THEN 'Abierta'
+          ELSE 'Cerrada'
+        END AS estado")
+      ])
+      ->where('evento', '=', 'registro')
+      ->where('convocatoria', '=', 1)
+      ->get();
+
     return [
       'detalles' => [
         'orcid' => $isOrcidValid,
@@ -129,7 +144,8 @@ class DashboardController extends Controller {
       'tipos_proyectos' => $tipos2,
       'dj' => $dj?->dj_aceptada,
       'proyecto_id' => $dj?->id,
-      'alerta' => $const ? $fecha1->greaterThan($fecha2) : false
+      'alerta' => $const ? $fecha1->greaterThan($fecha2) : false,
+      'convocatorias' => $convocatorias
     ];
   }
 }

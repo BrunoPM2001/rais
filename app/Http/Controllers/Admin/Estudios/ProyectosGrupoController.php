@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\Estudios\Proyectos\PicvController;
 use App\Http\Controllers\Admin\Estudios\Proyectos\PmultiController;
 use App\Http\Controllers\Admin\Estudios\Proyectos\PtpmaestController;
 use App\Http\Controllers\S3Controller;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Database\Query\JoinClause;
 use Illuminate\Http\Request;
@@ -20,6 +21,8 @@ use Illuminate\Support\Facades\DB;
 use PhpOffice\PhpWord\IOFactory;
 use PhpOffice\PhpWord\PhpWord;
 use Maatwebsite\Excel\Facades\Excel;
+
+use function PHPSTORM_META\map;
 
 class ProyectosGrupoController extends S3Controller {
 
@@ -648,5 +651,55 @@ class ProyectosGrupoController extends S3Controller {
   }
 
   public function generarDeclaracion(Request $request) {
+
+    $detalle = DB::table('Proyecto AS a')
+      ->join('Proyecto_integrante AS b', 'a.id', '=', 'b.proyecto_id')
+      ->join('Proyecto_integrante_tipo AS c', function (JoinClause $join) {
+        $join->on('c.id', '=', 'b.proyecto_integrante_tipo_id')
+          ->where('c.nombre', '=', 'Responsable');
+      })
+      ->join('Usuario_investigador AS d', 'd.id', '=', 'b.investigador_id')
+      ->join('Facultad AS e', 'e.id', '=', 'd.facultad_id')
+      ->join('Grupo AS f', 'f.id', '=', 'a.grupo_id')
+      ->join('Proyecto_presupuesto AS g', 'g.proyecto_id', '=', 'a.id')
+      ->select([
+        'a.id',
+        DB::raw("CONCAT(d.apellido1, ' ', d.apellido2, ' ', d.nombres) AS responsable"),
+        'e.nombre AS facultad',
+        'd.codigo',
+        'd.doc_numero',
+        DB::raw("CASE
+          WHEN SUBSTRING_INDEX(d.docente_categoria, '-', 1) = '1' THEN 'Principal'
+          WHEN SUBSTRING_INDEX(d.docente_categoria, '-', 1) = '2' THEN 'Asociado'
+          WHEN SUBSTRING_INDEX(d.docente_categoria, '-', 1) = '3' THEN 'Auxiliar'
+          WHEN SUBSTRING_INDEX(d.docente_categoria, '-', 1) = '4' THEN 'Jefe de Práctica'
+          ELSE 'Sin categoría'
+        END AS categoria"),
+        DB::raw("CASE
+          WHEN SUBSTRING_INDEX(SUBSTRING_INDEX(d.docente_categoria, '-', 2), '-', -1) = '1' THEN 'Dedicación Exclusiva'
+          WHEN SUBSTRING_INDEX(SUBSTRING_INDEX(d.docente_categoria, '-', 2), '-', -1) = '2' THEN 'Tiempo Completo'
+          WHEN SUBSTRING_INDEX(SUBSTRING_INDEX(d.docente_categoria, '-', 2), '-', -1) = '3' THEN 'Tiempo Parcial'
+          ELSE 'Sin clase'
+        END AS clase"),
+        DB::raw("UPPER(f.grupo_nombre) AS grupo_nombre"),
+        'a.titulo',
+        'a.codigo_proyecto',
+        DB::raw("SUM(g.monto) AS presupuesto"),
+        'a.tipo_proyecto'
+      ])
+      ->where('a.id', '=', $request->query('proyecto_id'))
+      ->groupBy('a.id')
+      ->first();
+
+    $nameFile = 'dj_' . $detalle->tipo_proyecto . '_' . $detalle->id . '.pdf';
+
+    $pdf = Pdf::loadView('admin.estudios.proyectos.declaracion.pconfigi', [
+      'detalle' => $detalle
+    ]);
+
+    $file = $pdf->output();
+    $this->loadFile($file, 'declaracion-jurada', $nameFile);
+
+    return ['message' => 'success', 'detail' => 'Declaración generada correctamente'];
   }
 }
