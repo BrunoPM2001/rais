@@ -35,6 +35,7 @@ class ConsolidadoGeneralController extends Controller {
         ...$countExp,
       )
       ->where('a.periodo', '=', $periodo)
+      ->where('a.estado', '=', 1)
       ->groupBy('a.facultad_id')
       ->orderBy('a.facultad_id')
       ->get();

@@ -291,12 +291,18 @@ class EvaluadorProyectosController extends S3Controller {
     $extra = DB::table('Proyecto_evaluacion AS a')
       ->join('Usuario_evaluador AS b', 'a.evaluador_id', '=', 'b.id')
       ->join('Proyecto AS c', 'c.id', '=', 'a.proyecto_id')
-      ->select([
+      ->join('Proyecto_integrante AS d', 'd.proyecto_id', '=', 'a.proyecto_id')
+      ->join('Usuario_investigador AS e', 'e.id', '=', 'd.investigador_id')
+      ->select(
         'a.comentario',
+        'a.id',
+        'a.proyecto_id',
+        'b.id as evaluador_id',
         'c.titulo',
         'c.tipo_proyecto',
-        DB::raw("CONCAT(b.apellidos, ' ', b.nombres) AS evaluador")
-      ])
+        DB::raw("CONCAT(b.apellidos, ' ', b.nombres) AS evaluador"),
+        DB::raw("CONCAT(e.apellido1, ' ', e.apellido2 ,' ', e.nombres) AS responsable")
+      )
       ->where('a.proyecto_id', '=', $request->query('proyecto_id'))
       ->where('a.evaluador_id', '=', $request->attributes->get('token_decoded')->evaluador_id)
       ->first();
@@ -519,6 +525,21 @@ class EvaluadorProyectosController extends S3Controller {
       ->where('estado', '=', 1)
       ->first();
 
+    $archivoseci = DB::table('Proyecto_doc')
+      ->select([
+        'id',
+        'nombre',
+        'comentario',
+        'archivo'
+      ])
+      ->where('proyecto_id', '=', $request->query('proyecto_id'))
+      ->whereIn('categoria', ['especificaciones-tecnicas', 'cotizacion-equipo'])
+      ->get()
+      ->map(function ($item) {
+        $item->archivo = "/minio/proyecto-doc/" . $item->archivo;
+        return $item;
+      });
+
 
     $metodologia_trabajo = DB::table('Proyecto_doc')
       ->select([
@@ -560,7 +581,13 @@ class EvaluadorProyectosController extends S3Controller {
       ->where('p.id', '=', $proyectoId)
       ->first();
 
-
+    $especificaciones = DB::table('Proyecto_descripcion')
+      ->select(
+        'detalle'
+      )
+      ->where('proyecto_id', '=', $request->query('proyecto_id'))
+      ->where('codigo', '=', 'desc_equipo')
+      ->first();
 
     foreach ($integrantes as $integrante) {
       $deudas = DB::table('view_deudores as vdeuda')
@@ -581,7 +608,58 @@ class EvaluadorProyectosController extends S3Controller {
       $integrante->deudas = $deudas;
     }
 
+    $detallesEci = DB::table('Proyecto_descripcion')
+      ->select(
+        'codigo',
+        'detalle'
+      )
+      ->where('proyecto_id', '=', $request->query('proyecto_id'))
+      ->whereIn('codigo', ['impacto_propuesta', 'plan_manejo'])
+      ->get();
+
+    $impacto = [];
+    foreach ($detallesEci as $data) {
+      $impacto[$data->codigo] = $data->detalle;
+    }
+
+    $archivoseci = DB::table('Proyecto_doc')
+      ->select([
+        'nombre',
+        'comentario',
+        'archivo'
+      ])
+      ->where('proyecto_id', '=', $request->query('proyecto_id'))
+      ->whereIn('categoria', ['impacto', 'sustento'])
+      ->get()
+      ->map(function ($item) {
+        $item->archivo = "/minio/proyecto-doc/" . $item->archivo;
+        return $item;
+      });
+
+    $archivoscotizacion = DB::table('Proyecto_doc')
+      ->select([
+        'id',
+        'nombre',
+        'comentario',
+        'archivo'
+      ])
+      ->where('proyecto_id', '=', $request->query('proyecto_id'))
+      ->whereIn('categoria', ['especificaciones-tecnicas', 'cotizacion-equipo'])
+      ->get()
+      ->map(function ($item) {
+        $item->archivo = "/minio/proyecto-doc/" . $item->archivo;
+        return $item;
+      });
+
+    $archivos = $this->eciArchivos($request->query('proyecto_id'));
+
     return [
+      'archivos_sustento' => $archivos,
+      'archivocotizacion' => $archivoscotizacion,
+      'archivoseci' => $archivoseci,
+      'detallesEci' => $detallesEci,
+      'especificaciones' => $especificaciones,
+      'archivoeci' => $archivoseci,
       'proyecto' => $proyecto,
       'detalles' => $descripciones,
       'calendario' => $calendario,
@@ -595,5 +673,20 @@ class EvaluadorProyectosController extends S3Controller {
       'metodologiaTrabajo' => $metodologia_trabajo,
       'investigacion' => $inv_unmsm
     ];
+  }
+
+  public function eciArchivos(int $proyecto_id) {
+    $items = DB::table('Proyecto_doc')
+      ->select([
+        'nombre',
+        'comentario',
+        DB::raw("CONCAT('/minio/proyecto-doc/', archivo) AS url")
+      ])
+      ->where('proyecto_id', '=', $proyecto_id)
+      ->where('estado', '=', 1)
+      ->whereIn('categoria', '=', 'sustento')
+      ->get();
+
+    return $items;
   }
 }
