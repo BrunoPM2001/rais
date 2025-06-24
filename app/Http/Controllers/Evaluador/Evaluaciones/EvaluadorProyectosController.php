@@ -684,7 +684,7 @@ class EvaluadorProyectosController extends S3Controller {
       ])
       ->where('proyecto_id', '=', $proyecto_id)
       ->where('estado', '=', 1)
-      ->whereIn('categoria', '=', 'sustento')
+      ->where('categoria', '=', 'sustento')
       ->get();
 
     return $items;
