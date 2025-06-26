@@ -259,7 +259,7 @@ class GruposController extends S3Controller {
     }
   }
 
-  public function miembros($grupo_id, $estado) {
+  public function miembros(Request $request) {
     $miembros = DB::table('Grupo_integrante AS a')
       ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
       ->leftJoin('Facultad AS c', 'c.id', '=', 'b.facultad_id')
@@ -281,10 +281,10 @@ class GruposController extends S3Controller {
         'a.fecha_inclusion',
         'a.fecha_exclusion'
       )
-      ->where('a.grupo_id', '=', $grupo_id);
+      ->where('a.grupo_id', '=', $request->query('grupo_id'));
 
     //  Tipo de miembro
-    $miembros = $estado == 1 ? $miembros->whereNot('a.condicion', 'LIKE', 'Ex%') : $miembros->where('a.condicion', 'LIKE', 'Ex%');
+    $miembros = $request->query('estado') == 1 ? $miembros->whereNot('a.condicion', 'LIKE', 'Ex%') : $miembros->where('a.condicion', 'LIKE', 'Ex%');
 
     $miembros = $miembros->groupBy('a.id')
       ->orderByDesc('a.cargo')
@@ -292,7 +292,7 @@ class GruposController extends S3Controller {
       ->orderBy('nombres')
       ->get();
 
-    return ['data' => $miembros];
+    return $miembros;
   }
 
   public function docs(Request $request) {
@@ -318,7 +318,7 @@ class GruposController extends S3Controller {
     return ['message' => 'info', 'detail' => 'Documento eliminado correctamente'];
   }
 
-  public function lineas($grupo_id) {
+  public function lineas(Request $request) {
     $lineas = DB::table('Grupo_linea AS a')
       ->join('Grupo AS b', 'b.id', '=', 'a.grupo_id')
       ->join('Linea_investigacion AS c', 'c.id', '=', 'a.linea_investigacion_id')
@@ -328,13 +328,13 @@ class GruposController extends S3Controller {
         'c.nombre',
       )
       ->whereNull('a.concytec_codigo')
-      ->where('a.grupo_id', '=', $grupo_id)
+      ->where('a.grupo_id', '=', $request->query('grupo_id'))
       ->get();
 
-    return ['data' => $lineas];
+    return $lineas;
   }
 
-  public function proyectos($grupo_id) {
+  public function proyectos(Request $request) {
     $miembros = DB::table('Grupo_integrante AS b')
       ->join('Usuario_investigador AS c', 'c.id', 'b.investigador_id')
       ->join('Proyecto_integrante AS d', 'd.investigador_id', '=', 'c.id')
@@ -344,7 +344,7 @@ class GruposController extends S3Controller {
         DB::raw("CONCAT(c.apellido1, ' ', c.apellido2, ', ', c.nombres) AS nombres"),
         DB::raw("CONCAT(c.id, '_i') AS id_unico")
       ])
-      ->where('b.grupo_id', '=', $grupo_id)
+      ->where('b.grupo_id', '=', $request->query('grupo_id'))
       ->whereNot('b.condicion', 'LIKE', 'Ex%')
       ->groupBy('c.id')
       ->get();
@@ -361,7 +361,7 @@ class GruposController extends S3Controller {
         'b.investigador_id',
         DB::raw("CONCAT(d.id, '_ph_', b.investigador_id) AS id_unico")
       ])
-      ->where('b.grupo_id', '=', $grupo_id);
+      ->where('b.grupo_id', '=', $request->query('grupo_id'));
 
     $proyectos = DB::table('Grupo_integrante AS b')
       ->join('Proyecto_integrante_H AS c', 'c.investigador_id', '=', 'b.investigador_id')
@@ -375,14 +375,14 @@ class GruposController extends S3Controller {
         'b.investigador_id',
         DB::raw("CONCAT(d.id, '_p_', b.investigador_id) AS id_unico")
       ])
-      ->where('b.grupo_id', '=', $grupo_id)
+      ->where('b.grupo_id', '=', $request->query('grupo_id'))
       ->union($proyectos_nuevos)
       ->get();
 
     return $miembros->merge($proyectos);
   }
 
-  public function publicaciones($grupo_id) {
+  public function publicaciones(Request $request) {
     $publicaciones = DB::table('Grupo_integrante AS a')
       ->join('Publicacion_autor AS b', 'b.investigador_id', '=', 'a.investigador_id')
       ->join('Publicacion AS c', 'c.id', '=', 'b.publicacion_id')
@@ -391,13 +391,24 @@ class GruposController extends S3Controller {
         'c.id',
         'c.titulo',
         'c.fecha_publicacion',
-        'd.tipo'
+        'd.tipo',
+        DB::raw("CASE(c.estado)
+            WHEN -1 THEN 'Eliminado'
+            WHEN 1 THEN 'Registrado'
+            WHEN 2 THEN 'Observado'
+            WHEN 5 THEN 'Enviado'
+            WHEN 6 THEN 'En proceso'
+            WHEN 7 THEN 'Anulado'
+            WHEN 8 THEN 'No registrado'
+            WHEN 9 THEN 'Duplicado'
+          ELSE 'Sin estado' END AS estado"),
       )
-      ->where('a.grupo_id', '=', $grupo_id)
+      ->where('a.grupo_id', '=', $request->query('grupo_id'))
+      ->whereNot('a.condicion', 'LIKE', 'Ex%')
       ->groupBy('c.id')
       ->get();
 
-    return ['data' => $publicaciones];
+    return $publicaciones;
   }
 
   public function laboratorios(Request $request) {

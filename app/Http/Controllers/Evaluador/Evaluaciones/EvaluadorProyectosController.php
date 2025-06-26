@@ -345,12 +345,10 @@ class EvaluadorProyectosController extends S3Controller {
     switch ($proyecto->tipo_proyecto) {
 
       case "PMULTI":
-
         $utils->puntajeTesistas($request);
         $utils->AddExperienciaResponsable($request);
         $utils->AddExperienciaMiembros($request);
         $utils->addgiTotal($request);
-
         break;
 
       case "PSINFINV":
@@ -360,12 +358,18 @@ class EvaluadorProyectosController extends S3Controller {
       case "PSINFIPU":
         $utils->totalpuntajeIntegrantesRenacyt($request);
         break;
+
       case "PCONFIGI":
         $utils->docenteInvestigador($request);
         $utils->puntaje7UltimosAños($request);
         $utils->giCat($request);
         $utils->DocentesRecienteIngresoRRHH($request);
+        break;
 
+      case "ECI":
+        // Tu código
+        $utils->experiencia_gi($request);
+        $utils->presupuesto_eci($request);
         break;
     }
   }

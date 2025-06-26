@@ -1381,6 +1381,7 @@ class GrupoController extends S3Controller {
       ->where('a.grupo_id', '=', $request->query('id'))
       ->whereNot('a.condicion', 'LIKE', 'Ex%')
       ->whereIn('d.nombre', ['Responsable', 'Coordinador'])
+      ->orderByDesc('e.created_at')
       ->get();
 
     return $proyectos;

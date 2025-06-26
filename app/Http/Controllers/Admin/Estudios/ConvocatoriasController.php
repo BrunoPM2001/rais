@@ -13,7 +13,8 @@ class ConvocatoriasController extends Controller {
     //  Convocatoria de registro
     $id = DB::table('Convocatoria')
       ->insertGetId([
-        'tipo' => $request->input('tipo')["value"],
+        'tipo' => $request->input('tipo'),
+        'descripcion' => $request->input('descripcion'),
         'periodo' => $request->input('periodo'),
         'evento' => 'registro',
         'estado' => 1,
@@ -28,7 +29,7 @@ class ConvocatoriasController extends Controller {
     //  Convocatoria calendario
     DB::table('Convocatoria')
       ->insert([
-        'tipo' => $request->input('tipo')["value"],
+        'tipo' => $request->input('tipo'),
         'periodo' => $request->input('periodo'),
         'parent_id' => $id,
         'evento' => 'calendario',
@@ -41,7 +42,7 @@ class ConvocatoriasController extends Controller {
     //  Convocatoria evaluacion
     DB::table('Convocatoria')
       ->insert([
-        'tipo' => $request->input('tipo')["value"],
+        'tipo' => $request->input('tipo'),
         'periodo' => $request->input('periodo'),
         'parent_id' => $id,
         'evento' => 'evaluacion',

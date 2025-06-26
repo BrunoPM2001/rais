@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Evaluador\Evaluaciones;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Database\Query\JoinClause;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -61,7 +62,6 @@ class CriteriosUtilsController extends Controller {
       ]);
   }
 
-
   public function AddExperienciaResponsable(Request $request) {
     $proyecto = DB::table('Proyecto as p')
       ->select('p.tipo_proyecto', 'p.periodo')
@@ -119,7 +119,6 @@ class CriteriosUtilsController extends Controller {
         'puntaje' => $total
       ]);
   }
-
 
   public function AddExperienciaMiembros(Request $request) {
 
@@ -262,9 +261,6 @@ class CriteriosUtilsController extends Controller {
       ]);
   }
 
-
-
-
   public function totalpuntajeIntegrantesRenacyt(Request $request) {
     $proyectoId = $request->query('proyecto_id');
     $fechaInicial = date("Y") - 7;
@@ -333,6 +329,7 @@ class CriteriosUtilsController extends Controller {
         'puntaje' => $total
       ]);
   }
+
   public function docenteInvestigador(Request $request) {
 
     $proyectoId = $request->query('proyecto_id');
@@ -384,6 +381,7 @@ class CriteriosUtilsController extends Controller {
         'puntaje' => $puntajeDocente
       ]);
   }
+
   public function puntaje7UltimosAños(Request $request) {
     $proyectoId = $request->query('proyecto_id');
     $totalPuntajeUltimos = 0;
@@ -512,6 +510,114 @@ class CriteriosUtilsController extends Controller {
         'evaluacion_opcion_id' => 1221
       ], [
         'puntaje' => $puntajeDocente
+      ]);
+  }
+
+  // Eci
+  public function experiencia_gi(Request $request) {
+    //  Cuenta de artículos(WOS, Scielo y Scopus) y tesis
+    $count1 = DB::table('Proyecto_integrante AS a')
+      ->join('Grupo_integrante AS b', function (JoinClause $join) {
+        $join->on('b.investigador_id', '=', 'a.investigador_id')
+          ->where('b.cargo', '=', 'Coordinador');
+      })
+      ->join('Grupo_integrante AS c', function (JoinClause $join) {
+        $join->on('c.grupo_id', '=', 'b.grupo_id')
+          ->whereNot('c.condicion', 'LIKE', 'Ex%');
+      })
+      ->join('Publicacion_autor AS d', 'd.investigador_id', '=', 'c.investigador_id')
+      ->join('Publicacion AS e', 'e.id', '=', 'd.publicacion_id')
+      ->join('Publicacion_categoria AS f', 'f.id', '=', 'e.categoria_id')
+      ->select([
+        'e.id',
+      ])
+      ->where('a.proyecto_id', '=', $request->query('proyecto_id'))
+      ->whereRaw('YEAR(e.fecha_publicacion) >= 2022')
+      ->whereRaw('YEAR(e.fecha_publicacion) <= 2024')
+      ->where('e.estado', '=', 1)
+      ->where(function ($q1) {
+        $q1->where(function ($sub) {
+          $sub->where('e.tipo_publicacion', '=', 'articulo')
+            ->where(function ($query) {
+              $query->where('f.categoria', 'LIKE', '%WOS%')
+                ->orWhere('f.categoria', 'LIKE', '%Scielo%')
+                ->orWhere('f.categoria', 'LIKE', '%Scopus%');
+            });
+        })
+          ->orWhere('e.tipo_publicacion', '=', 'tesis');
+      })
+      ->groupBy('e.id')
+      ->get()
+      ->count();
+
+    $count2 = DB::table('Proyecto_integrante AS a')
+      ->join('Grupo_integrante AS b', function (JoinClause $join) {
+        $join->on('b.investigador_id', '=', 'a.investigador_id')
+          ->where('b.cargo', '=', 'Coordinador');
+      })
+      ->join('Grupo_integrante AS c', function (JoinClause $join) {
+        $join->on('c.grupo_id', '=', 'b.grupo_id')
+          ->whereNot('c.condicion', 'LIKE', 'Ex%');
+      })
+      ->join('Proyecto_integrante AS d', 'd.investigador_id', '=', 'c.investigador_id')
+      ->join('Proyecto AS e', 'e.id', '=', 'd.proyecto_id')
+      ->select([
+        'e.id',
+      ])
+      ->where('a.proyecto_id', '=', $request->query('proyecto_id'))
+      ->where('e.periodo', '<=', 2024)
+      ->where('e.periodo', '>=', 2022)
+      ->where('e.estado', '=', 1)
+      ->groupBy('e.id')
+      ->get()
+      ->count();
+
+    $total = $count1 + $count2;
+    $puntos = 0;
+
+    if ($total == 1) {
+      $puntos = 3;
+    } else if ($total == 2 || $total == 3) {
+      $puntos = 6;
+    } else if ($total >= 4) {
+      $puntos = 10;
+    }
+
+    DB::table('Evaluacion_proyecto')
+      ->updateOrInsert([
+        'proyecto_id' => $request->query('proyecto_id'),
+        'evaluador_id' => $request->attributes->get('token_decoded')->evaluador_id,
+        'evaluacion_opcion_id' => 1253
+      ], [
+        'puntaje' => $puntos
+      ]);
+  }
+
+  public function presupuesto_eci(Request $request) {
+    $puntos = 0;
+    $presupuesto = DB::table('Proyecto_presupuesto')
+      ->select([
+        DB::raw("SUM(monto) AS monto")
+      ])
+      ->where('proyecto_id', '=', $request->query('proyecto_id'))
+      ->groupBy('proyecto_id')
+      ->first();
+
+    info($presupuesto->monto);
+
+    if ($presupuesto->monto < 4 * 5350) {
+      $puntos = 5;
+    } else {
+      $puntos = 10;
+    }
+
+    DB::table('Evaluacion_proyecto')
+      ->updateOrInsert([
+        'proyecto_id' => $request->query('proyecto_id'),
+        'evaluador_id' => $request->attributes->get('token_decoded')->evaluador_id,
+        'evaluacion_opcion_id' => 1245
+      ], [
+        'puntaje' => $puntos
       ]);
   }
 }
