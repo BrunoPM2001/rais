@@ -312,6 +312,11 @@ class GestionComprobantesController extends S3Controller {
 
   public function listadoPartidasComprobante(Request $request) {
 
+    $datos = DB::table('Geco_documento')
+      ->select()
+      ->where('id', '=', $request->query('geco_documento_id'))
+      ->first();
+
     $partidas = DB::table('Geco_documento_item AS a')
       ->join('Partida AS b', 'b.id', '=', 'a.partida_id')
       ->select([
@@ -335,7 +340,7 @@ class GestionComprobantesController extends S3Controller {
       $comprobante->url = '/minio/geco-documento/' . $comprobante->key;
     }
 
-    return ['partidas' => $partidas, 'comprobante' => $comprobante->url];
+    return ['datos' => $datos, 'partidas' => $partidas, 'comprobante' => $comprobante->url];
   }
 
   public function updateEstadoComprobante(Request $request) {
