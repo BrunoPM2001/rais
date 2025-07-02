@@ -289,6 +289,7 @@ class GestionComprobantesController extends S3Controller {
       ->select([
         'id',
         'tipo',
+        'tipo_documento',
         'numero',
         'fecha',
         DB::raw("ROUND(total_declarado, 2) AS total_declarado"),

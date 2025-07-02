@@ -587,7 +587,7 @@ class CriteriosUtilsController extends Controller {
       ->updateOrInsert([
         'proyecto_id' => $request->query('proyecto_id'),
         'evaluador_id' => $request->attributes->get('token_decoded')->evaluador_id,
-        'evaluacion_opcion_id' => 1253
+        'evaluacion_opcion_id' => 1312 //ver en la base de datos de producción el codigo de la tabla correspondiente 
       ], [
         'puntaje' => $puntos
       ]);
@@ -615,7 +615,7 @@ class CriteriosUtilsController extends Controller {
       ->updateOrInsert([
         'proyecto_id' => $request->query('proyecto_id'),
         'evaluador_id' => $request->attributes->get('token_decoded')->evaluador_id,
-        'evaluacion_opcion_id' => 1245
+        'evaluacion_opcion_id' => 1320 //ver en la base de datos de producción el codigo de la tabla correspondiente 
       ], [
         'puntaje' => $puntos
       ]);

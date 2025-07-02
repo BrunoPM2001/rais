@@ -906,7 +906,7 @@ class FacultadListadoController extends Controller {
 
     return $deudas;
   }
-
+  
   public function pdfDeudas(Request $request) {
     $facultadId = $this->facultadId($request);
 

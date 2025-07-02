@@ -805,7 +805,7 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
 
       Route::get('incluirMiembroData', [InvestigadorGrupoController::class, 'incluirMiembroData']);
       Route::post('agregarMiembro', [InvestigadorGrupoController::class, 'agregarMiembro']);
-      Route::delete('eliminarMiembro', [InvestigadorGrupoController::class, 'eliminarMiembro']);
+      /*Route::delete('eliminarMiembro', [InvestigadorGrupoController::class, 'eliminarMiembro']);*/
       Route::get('getPaises', [InvestigadorGrupoController::class, 'getPaises']);
 
       Route::post('agregarLinea', [InvestigadorGrupoController::class, 'agregarLinea']);
@@ -826,7 +826,7 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
     Route::get('searchEgresado', [InvestigadorGrupoController::class, 'searchEgresado']);
     Route::get('incluirMiembroData', [InvestigadorGrupoController::class, 'incluirMiembroData']);
     Route::post('agregarMiembro', [InvestigadorGrupoController::class, 'agregarMiembro']);
-    Route::put('excluirMiembro', [InvestigadorGrupoController::class, 'excluirMiembro']);
+    //Route::put('excluirMiembro', [InvestigadorGrupoController::class, 'excluirMiembro']);
     Route::get('visualizarMiembro', [InvestigadorGrupoController::class, 'visualizarMiembro']);
 
     Route::get('listarProyectos', [InvestigadorGrupoController::class, 'listarProyectos']);

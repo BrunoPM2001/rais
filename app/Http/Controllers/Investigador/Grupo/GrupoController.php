@@ -1056,16 +1056,16 @@ class GrupoController extends S3Controller {
     }
   }
 
-  public function eliminarMiembro(Request $request) {
-    DB::table('Grupo_integrante')
-      ->where('id', '=', $request->query('id'))
-      ->delete();
+  /*public function eliminarMiembro(Request $request) {
+    //DB::table('Grupo_integrante')
+      //->where('id', '=', $request->query('id'))
+      //->delete();
 
-    return [
-      'message' => 'info',
-      'detail' => 'Miembro eliminado exitosamente'
-    ];
-  }
+    //return [
+     // 'message' => 'info',
+      //'detail' => 'Miembro eliminado exitosamente'
+    //];
+  }*/
 
   public function getPaises() {
     $paises = DB::table('Pais')
