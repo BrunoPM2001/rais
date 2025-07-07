@@ -127,6 +127,7 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
       Route::post('createCriterio', [ConvocatoriasController::class, 'createCriterio']);
       Route::put('editCriterio', [ConvocatoriasController::class, 'editCriterio']);
       Route::put('aprobarCriterios', [ConvocatoriasController::class, 'aprobarCriterios']);
+      Route::put('reOrdenarCriterios', [ConvocatoriasController::class, 'reOrdenarCriterios']);
 
       //  Partidas
       Route::get('listadoGruposPartidas', [ConvocatoriasController::class, 'listadoGruposPartidas']);

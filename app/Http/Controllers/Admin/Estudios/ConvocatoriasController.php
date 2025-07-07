@@ -267,7 +267,10 @@ class ConvocatoriasController extends Controller {
         'a.puntaje_max',
         'a.nivel',
         'a.orden',
-        'a.editable',
+        DB::raw("CASE(a.editable)
+          WHEN 1 THEN 'Sí'
+          ELSE 'No'
+        END AS editable"),
         'a.otipo',
         'a.periodo',
         'a.puntos_adicionales'
@@ -334,6 +337,20 @@ class ConvocatoriasController extends Controller {
       ]);
 
     return ['message' => 'info', 'detail' => 'Criterio actualizado'];
+  }
+
+  public function reOrdenarCriterios(Request $request) {
+    $index = 1;
+    foreach ($request->input('criterios') as $item) {
+      DB::table('Evaluacion_template_opcion')
+        ->where('id', '=', $item["id"])
+        ->update([
+          'orden' => $index
+        ]);
+      $index++;
+    }
+
+    return ['message' => 'info', 'detail' => 'Autores reordenados'];
   }
 
   public function aprobarCriterios(Request $request) {
