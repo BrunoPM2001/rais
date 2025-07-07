@@ -144,7 +144,7 @@ class PsinfinvController extends S3Controller {
         'b.nombre AS label'
       ])
       ->where('a.grupo_id', '=', $datos->grupo_id)
-      ->whereNull('a.concytec_codigo')
+      ->whereNotNull('a.concytec_codigo')
       ->get();
 
     $ocde = DB::table('Ocde')
