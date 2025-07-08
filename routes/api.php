@@ -1132,40 +1132,43 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
       Route::post('enviar', [PconfigiInvController::class, 'enviar']);
     });
 
-    Route::get('verificar', [ProCTIController::class, 'verificar']);
+    Route::prefix('pro-ctie')->group(function () { 
+      Route::get('verificar', [ProCTIController::class, 'verificar']);
 
-    Route::get('datosPaso1', [ProCTIController::class, 'datosPaso1']);
-    Route::get('getDataToPaso1', [ProCTIController::class, 'getDataToPaso1']);
-    Route::post('registrarPaso1', [ProCTIController::class, 'registrarPaso1']);
+      Route::get('datosPaso1', [ProCTIController::class, 'datosPaso1']);
+      Route::get('getDataToPaso1', [ProCTIController::class, 'getDataToPaso1']);
+      Route::post('registrarPaso1', [ProCTIController::class, 'registrarPaso1']);
 
-    Route::get('getDataPaso2', [ProCTIController::class, 'getDataPaso2']);
-    Route::post('registrarPaso2', [ProCTIController::class, 'registrarPaso2']);
+      Route::get('getDataPaso2', [ProCTIController::class, 'getDataPaso2']);
+      Route::post('registrarPaso2', [ProCTIController::class, 'registrarPaso2']);
 
-    Route::get('listarIntegrantes', [ProCTIController::class, 'listarIntegrantes']);
-    Route::get('searchEstudiante', [ProCTIController::class, 'searchEstudiante']);
-    Route::get('verificarEstudiante', [ProCTIController::class, 'verificarEstudiante']);
-    Route::post('agregarIntegrante', [ProCTIController::class, 'agregarIntegrante']);
-    Route::post('agregarIntegranteExterno', [ProCTIController::class, 'agregarIntegranteExterno']);
-    Route::delete('eliminarIntegrante', [ProCTIController::class, 'eliminarIntegrante']);
+      Route::get('listarIntegrantes', [ProCTIController::class, 'listarIntegrantes']);
+      Route::get('searchEstudiante', [ProCTIController::class, 'searchEstudiante']);
+      Route::get('verificarEstudiante', [ProCTIController::class, 'verificarEstudiante']);
+      Route::post('agregarIntegrante', [ProCTIController::class, 'agregarIntegrante']);
+      Route::post('agregarIntegranteExterno', [ProCTIController::class, 'agregarIntegranteExterno']);
+      Route::delete('eliminarIntegrante', [ProCTIController::class, 'eliminarIntegrante']);
 
-    Route::get('getDataPaso4', [ProCTIController::class, 'getDataPaso4']);
-    Route::post('registrarPaso4', [ProCTIController::class, 'registrarPaso4']);
+      Route::get('getDataPaso4', [ProCTIController::class, 'getDataPaso4']);
+      Route::post('registrarPaso4', [ProCTIController::class, 'registrarPaso4']);
 
-    Route::get('listarActividades', [ProCTIController::class, 'listarActividades']);
-    Route::post('agregarActividad', [ProCTIController::class, 'agregarActividad']);
-    Route::delete('eliminarActividad', [ProCTIController::class, 'eliminarActividad']);
+      Route::get('listarActividades', [ProCTIController::class, 'listarActividades']);
+      Route::post('agregarActividad', [ProCTIController::class, 'agregarActividad']);
+      Route::delete('eliminarActividad', [ProCTIController::class, 'eliminarActividad']);
 
-    Route::get('listarPartidas', [ProCTIController::class, 'listarPartidas']);
-    Route::get('listarTiposPartidas', [ProCTIController::class, 'listarTiposPartidas']);
-    Route::post('agregarPartida', [ProCTIController::class, 'agregarPartida']);
-    Route::delete('eliminarPartida', [ProCTIController::class, 'eliminarPartida']);
+      Route::get('listarPartidas', [ProCTIController::class, 'listarPartidas']);
+      Route::get('listarTiposPartidas', [ProCTIController::class, 'listarTiposPartidas']);
+      Route::post('agregarPartida', [ProCTIController::class, 'agregarPartida']);
+      Route::delete('eliminarPartida', [ProCTIController::class, 'eliminarPartida']);
 
-    Route::put('enviarProyecto', [ProCTIController::class, 'enviarProyecto']);
-    Route::get('reportePDF', [ProCTIController::class, 'reportePDF']);
+      Route::put('enviarProyecto', [ProCTIController::class, 'enviarProyecto']);
+      Route::get('reportePDF', [ProCTIController::class, 'reportePDF']);
 
-    //  Extras
-    Route::get('getOcde', [ProCTIController::class, 'getOcde']);
-    Route::get('getOds', [ProCTIController::class, 'getOds']);
+      //  Extras
+      Route::get('getOcde', [ProCTIController::class, 'getOcde']);
+      Route::get('getOds', [ProCTIController::class, 'getOds']);
+    });
+
   });
 
   //  Informes
