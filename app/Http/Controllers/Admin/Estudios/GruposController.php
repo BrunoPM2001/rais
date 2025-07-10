@@ -1259,20 +1259,65 @@ class GruposController extends S3Controller {
 
   //  ARCHIVO EXTERNO SE GUARDA EN GRUPO
   //  TODO - implementar reporte de calificación e imprimir
+  /**
+   * Detalles para la clasificación
+   * Artículos en Wos/Scopus/Medline
+   *  A) Art. primario:                   37, 40
+   *  B) Art. de revisión:                38, 41
+   *  C) Comunicaciones y notas cortas:   39, 42
+   * 
+   * Artículos en Scielo
+   *  A) Art. primario:                   43
+   *  B) Art. de revisión:                44
+   *  C) Comunicaciones y notas cortas:   45
+   * 
+   * Autor de libro
+   *  A) Internacional:                   52
+   *  B) Nacional:                        54
+   * 
+   * Autor de cap. de libro
+   *  A) Internacional:                   56
+   *  B) Nacional:                        57
+   *
+   * Edición de libro
+   *  A) Internacional:                   53
+   *  B) Nacional:                        55
+   * 
+   * Prop intelectual
+   *  Sacar la query de la misma tabla de patentes
+   * 
+   * ------------------------------------------------
+   * 
+   * Asesorías
+   *  A) Doctorado:                       63
+   *  B) Maestría:                        64
+   *  C) Título o seg esp                 65, 66
+   *  D) Bachiller                        67
+   * 
+   * Dedicación a la investigación
+   *  No aplica por falta de detalle
+   * 
+   * Investigador renacyt
+   *  Sacar query con la cantidad de titulares vigentes con renacyt
+   * 
+   */
   public function calificacion(Request $request) {
-    DB::table('Grupo_integrante AS a')
-      ->leftJoin('Publicacion_autor AS b', 'b.investigador', '=', 'a.investigador_id')
+    $data = DB::table('Grupo_integrante AS a')
+      ->leftJoin('Publicacion_autor AS b', 'b.investigador_id', '=', 'a.investigador_id')
       ->leftJoin('Publicacion AS c', 'c.id', '=', 'b.publicacion_id')
       ->rightJoin('Publicacion_categoria AS d', 'd.id', '=', 'c.categoria_id')
       ->select([
         'd.titulo',
         'd.categoria',
         DB::raw("COUNT(c.id) AS cuenta"),
-        'c.puntaje'
+        'd.puntaje'
       ])
       ->where('a.condicion', '=', 'Titular')
+      ->where('a.grupo_id', '=', $request->query('grupo_id'))
       ->groupBy('d.id')
       ->get();
+
+    return $data;
   }
 
   public function reporte(Request $request) {
