@@ -1348,7 +1348,7 @@ class GruposController extends S3Controller {
       ->groupBy('c.tipo')
       ->get()
       ->mapWithKeys(function ($item) {
-        return [$item->id => $item->cuenta];
+        return [$item->tipo => $item->cuenta];
       });
 
     $renacyt = DB::table('Grupo_integrante AS a')
@@ -1356,7 +1356,7 @@ class GruposController extends S3Controller {
       ->select('b.id')
       ->where('a.condicion', '=', 'Titular')
       ->where('a.grupo_id', '=', $request->query('grupo_id'))
-      ->whereIn('b.renacyt', ["I", "II", "III", "IV", "V", "VI", "VII", "Investigador Distinguido"])
+      ->whereIn('b.renacyt_nivel', ["I", "II", "III", "IV", "V", "VI", "VII", "Investigador Distinguido"])
       ->count();
 
     $pdf = Pdf::loadView('admin.estudios.grupos.calificacion', [

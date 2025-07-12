@@ -134,7 +134,7 @@
   <table class="table">
     <tbody>
       <tr>
-        <td class="th1" colspan="2">Rubro 1. Producción científica/tecnológica</td>
+        <td class="th1" colspan="2"><strong>Rubro 1. Producción científica/tecnológica</strong></td>
         <td class="th3">Cantidad</td>
         <td class="th3">Puntaje</td>
         <td class="th3">Puntaje Obtenido</td>
@@ -162,18 +162,26 @@
       <tr>
         <td class="th2" rowspan="3">1.2 Artículos publicados en revistas indizadas en WoS/ Scopus /Medline</td>
         <td>A) Artículo primario: <strong>6.0 ptos.</strong></td>
-        <td></td>
-        <td>0</td>
+        <td>
+          {{ ($publicaciones['37']['cuenta'] ?? 0) + ($publicaciones['40']['cuenta'] ?? 0) }}
+        </td>
+        <td>
+          {{ ($publicaciones['37']['cuenta'] ?? 0) * ($publicaciones['37']['puntaje'] ?? 0) + ($publicaciones['40']['cuenta'] ?? 0) * ($publicaciones['40']['puntaje'] ?? 0) }}
+        </td>
       </tr>
       <tr>
         <td>B) Artículo de revisión: <strong>7.0 ptos.</strong></td>
-        <td>0</td>
-        <td>0</td>
+        <td>{{ ($publicaciones['38']['cuenta'] ?? 0) + ($publicaciones['41']['cuenta'] ?? 0) }}</td>
+        <td>
+          {{ ($publicaciones['38']['cuenta'] ?? 0) * ($publicaciones['38']['puntaje'] ?? 0) + ($publicaciones['41']['cuenta'] ?? 0) * ($publicaciones['41']['puntaje'] ?? 0) }}
+        </td>
       </tr>
       <tr>
         <td>C) Comunicaciones y notas cortas: <strong>2.0 ptos.</strong></td>
-        <td>0</td>
-        <td>0</td>
+        <td>{{ ($publicaciones['39']['cuenta'] ?? 0) + ($publicaciones['42']['cuenta'] ?? 0) }}</td>
+        <td>
+          {{ ($publicaciones['39']['cuenta'] ?? 0) * ($publicaciones['39']['puntaje'] ?? 0) + ($publicaciones['42']['cuenta'] ?? 0) * ($publicaciones['42']['puntaje'] ?? 0) }}
+        </td>
       </tr>
 
       <tr>
@@ -181,71 +189,95 @@
           Fondo Editorial
           de la UNMSM</td>
         <td>A) Artículo primario: <strong>6.0 ptos.</strong></td>
-        <td>0</td>
-        <td>0</td>
+        <td>{{ $publicaciones['43']['cuenta'] ?? 0 }}</td>
+        <td>
+          {{ ($publicaciones['43']['cuenta'] ?? 0) * ($publicaciones['43']['puntaje'] ?? 0) }}
+        </td>
       </tr>
       <tr>
         <td>B) Artículo de revisión: <strong>7.0 ptos.</strong></td>
-        <td>0</td>
-        <td>0</td>
+        <td>{{ $publicaciones['44']['cuenta'] ?? 0 }}</td>
+        <td>
+          {{ ($publicaciones['44']['cuenta'] ?? 0) * ($publicaciones['44']['puntaje'] ?? 0) }}
+        </td>
       </tr>
       <tr>
         <td>C) Comunicaciones y notas cortas: <strong>2.0 ptos.</strong></td>
-        <td>0</td>
-        <td>0</td>
+        <td>{{ $publicaciones['45']['cuenta'] ?? 0 }}</td>
+        <td>
+          {{ ($publicaciones['45']['cuenta'] ?? 0) * ($publicaciones['45']['puntaje'] ?? 0) }}
+        </td>
       </tr>
 
       <tr>
         <td class="th2" rowspan="2">1.4 Autor de libros</td>
         <td>A) De editorial internacional: <strong>6.0 ptos.</strong></td>
-        <td>0</td>
-        <td>0</td>
+        <td>{{ $publicaciones['52']['cuenta'] ?? 0 }}</td>
+        <td>
+          {{ ($publicaciones['52']['cuenta'] ?? 0) * ($publicaciones['52']['puntaje'] ?? 0) }}
+        </td>
       </tr>
       <tr>
         <td>B) De editorial nacional: <strong>7.0 ptos.</strong></td>
-        <td>0</td>
-        <td>0</td>
+        <td>{{ $publicaciones['54']['cuenta'] ?? 0 }}</td>
+        <td>
+          {{ ($publicaciones['54']['cuenta'] ?? 0) * ($publicaciones['54']['puntaje'] ?? 0) }}
+        </td>
       </tr>
 
       <tr>
         <td class="th2" rowspan="2">1.5 Capítulos de libro</td>
         <td>A) De editorial internacional: <strong>6.0 ptos.</strong></td>
-        <td>0</td>
-        <td>0</td>
+        <td>{{ $publicaciones['56']['cuenta'] ?? 0 }}</td>
+        <td>
+          {{ ($publicaciones['56']['cuenta'] ?? 0) * ($publicaciones['56']['puntaje'] ?? 0) }}
+        </td>
       </tr>
       <tr>
         <td>B) De editorial nacional: <strong>7.0 ptos.</strong></td>
-        <td>0</td>
-        <td>0</td>
+        <td>{{ $publicaciones['57']['cuenta'] ?? 0 }}</td>
+        <td>
+          {{ ($publicaciones['57']['cuenta'] ?? 0) * ($publicaciones['57']['puntaje'] ?? 0) }}
+        </td>
       </tr>
 
       <tr>
         <td class="th2" rowspan="2">1.6 Edición de libros</td>
         <td>A) Publicado por una editorial internacional: <strong>6.0 ptos.</strong></td>
-        <td>0</td>
-        <td>0</td>
+        <td>{{ $publicaciones['53']['cuenta'] ?? 0 }}</td>
+        <td>
+          {{ ($publicaciones['53']['cuenta'] ?? 0) * ($publicaciones['53']['puntaje'] ?? 0) }}
+        </td>
       </tr>
       <tr>
         <td>B) Publicado por una editorial nacional: <strong>7.0 ptos.</strong></td>
-        <td>0</td>
-        <td>0</td>
+        <td>{{ $publicaciones['55']['cuenta'] ?? 0 }}</td>
+        <td>
+          {{ ($publicaciones['55']['cuenta'] ?? 0) * ($publicaciones['55']['puntaje'] ?? 0) }}
+        </td>
       </tr>
 
       <tr>
         <td class="th2" rowspan="3">1.7 Propiedad intelectual/industrial registrada en Indecopi</td>
         <td>A) Patente de invención: <strong>6.0 ptos.</strong></td>
-        <td>0</td>
-        <td>0</td>
+        <td>{{ $patentes['Patente de invención'] ?? 0 }}</td>
+        <td>
+          {{ ($patentes['Patente de invención'] ?? 0) * 6 }}
+        </td>
       </tr>
       <tr>
         <td>B) Modelo de utilidad: <strong>7.0 ptos.</strong></td>
-        <td>0</td>
-        <td>0</td>
+        <td>{{ $patentes['Modelo de utilidad'] ?? 0 }}</td>
+        <td>
+          {{ ($patentes['Modelo de utilidad'] ?? 0) * 7 }}
+        </td>
       </tr>
       <tr>
         <td>C) Certificado de obtentor: <strong>2.0 ptos.</strong></td>
-        <td>0</td>
-        <td>0</td>
+        <td>{{ $patentes['Certificado de obtentor'] ?? 0 }}</td>
+        <td>
+          {{ ($patentes['Certificado de obtentor'] ?? 0) * 2 }}
+        </td>
       </tr>
 
       <tr>
@@ -259,24 +291,32 @@
         <td class="th2" rowspan="4">2.1. Formación de recursos humanos: Asesoría de tesis o trabajo de
           investigación</td>
         <td>A) Tesis de posgrado doctoral: <strong>3.0 ptos.</strong></td>
-        <td>0</td>
-        <td>0</td>
+        <td>{{ $publicaciones['63']['cuenta'] ?? 0 }}</td>
+        <td>
+          {{ ($publicaciones['63']['cuenta'] ?? 0) * ($publicaciones['63']['puntaje'] ?? 0) }}
+        </td>
         <td rowspan="4">1.5</td>
       </tr>
       <tr>
         <td>B) Tesis de posgrado maestría: <strong>2.0 ptos.</strong></td>
-        <td>0</td>
-        <td>0</td>
+        <td>{{ $publicaciones['64']['cuenta'] ?? 0 }}</td>
+        <td>
+          {{ ($publicaciones['64']['cuenta'] ?? 0) * ($publicaciones['64']['puntaje'] ?? 0) }}
+        </td>
       </tr>
       <tr>
         <td>C) Tesis para título profesional o segunda especialidad: <strong>1.5 ptos.</strong></td>
-        <td>0</td>
-        <td>0</td>
+        <td>{{ ($publicaciones['65']['cuenta'] ?? 0) + ($publicaciones['66']['cuenta'] ?? 0) }}</td>
+        <td>
+          {{ ($publicaciones['65']['cuenta'] ?? 0) * ($publicaciones['65']['puntaje'] ?? 0) + ($publicaciones['66']['cuenta'] ?? 0) * ($publicaciones['66']['puntaje'] ?? 0) }}
+        </td>
       </tr>
       <tr>
         <td>D) Trabajo de investigación para bachillerato: <strong>1.0 ptos.</strong></td>
-        <td>0</td>
-        <td>0</td>
+        <td>{{ $publicaciones['67']['cuenta'] ?? 0 }}</td>
+        <td>
+          {{ ($publicaciones['67']['cuenta'] ?? 0) * ($publicaciones['67']['puntaje'] ?? 0) }}
+        </td>
       </tr>
 
       <tr>
@@ -295,7 +335,7 @@
         <td>A) Con fondo externo internacional superior a 200.000.00 soles: <strong>5.0 ptos.</strong></td>
         <td>0</td>
         <td>0</td>
-        <td rowspan="6">4</td>
+        <td rowspan="6">0</td>
       </tr>
       <tr>
         <td>B) Con fondo externo internacional inferior a 200.000.00 soles: <strong>1.5 ptos.</strong></td>
@@ -321,8 +361,10 @@
       <tr>
         <td>3.2 Investigador UNMSM-RENACYT</td>
         <td>A) Investigador calificado: <strong>2 ptos.</strong></td>
-        <td>0</td>
-        <td>0</td>
+        <td>{{ $renacyt }}</td>
+        <td>
+          {{ $renacyt * 2 }}
+        </td>
       </tr>
 
       <tr>
