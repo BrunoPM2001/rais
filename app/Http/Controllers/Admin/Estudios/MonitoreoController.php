@@ -44,7 +44,7 @@ class MonitoreoController extends Controller {
             WHEN 1 THEN 'Aprobado'
             WHEN 2 THEN 'Observado'
             WHEN 5 THEN 'Enviado'
-            WHEN 6 THEN 'En proceso'
+            WHEN 6 THEN 'Por presentar'
           ELSE 'Por presentar' END AS estado_meta")
       )
       ->whereIn('c.nombre', ['Responsable', 'Asesor', 'Autor Corresponsal', 'Coordinador'])
@@ -92,7 +92,7 @@ class MonitoreoController extends Controller {
             WHEN 1 THEN 'Aprobado'
             WHEN 2 THEN 'Observado'
             WHEN 5 THEN 'Enviado'
-            WHEN 6 THEN 'En proceso'
+            WHEN 6 THEN 'Por presentar'
           ELSE 'Por presentar' END AS estado_meta"),
         'f.descripcion',
         'f.observacion'
