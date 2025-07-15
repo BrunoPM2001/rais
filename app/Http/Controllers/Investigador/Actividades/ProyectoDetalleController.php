@@ -441,9 +441,12 @@ class ProyectoDetalleController extends Controller {
     $integrantes = DB::table('Proyecto_integrante AS a')
       ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
       ->join('Proyecto_integrante_tipo AS c', 'c.id', '=', 'a.proyecto_integrante_tipo_id')
-      ->join('Facultad AS d', 'd.id', '=', 'b.facultad_id')
+      ->leftJoin('Facultad AS d', 'd.id', '=', 'b.facultad_id')
       ->select([
-        'c.nombre AS tipo',
+        DB::raw("CASE
+          WHEN a.responsabilidad IN ('', 'null') OR a.responsabilidad IS NULL THEN c.nombre
+          ELSE a.responsabilidad
+        END AS tipo"),
         DB::raw("CONCAT(b.apellido1, ' ', b.apellido2, ', ', b.nombres) AS nombre"),
         'b.doc_numero',
         DB::raw("CASE(b.tipo)

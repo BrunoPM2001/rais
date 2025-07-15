@@ -1259,20 +1259,113 @@ class GruposController extends S3Controller {
 
   //  ARCHIVO EXTERNO SE GUARDA EN GRUPO
   //  TODO - implementar reporte de calificación e imprimir
+  /**
+   * Detalles para la clasificación
+   * Artículos en Wos/Scopus/Medline
+   *  A) Art. primario:                   37, 40
+   *  B) Art. de revisión:                38, 41
+   *  C) Comunicaciones y notas cortas:   39, 42
+   * 
+   * Artículos en Scielo
+   *  A) Art. primario:                   43
+   *  B) Art. de revisión:                44
+   *  C) Comunicaciones y notas cortas:   45
+   * 
+   * Autor de libro
+   *  A) Internacional:                   52
+   *  B) Nacional:                        54
+   * 
+   * Autor de cap. de libro
+   *  A) Internacional:                   56
+   *  B) Nacional:                        57
+   *
+   * Edición de libro
+   *  A) Internacional:                   53
+   *  B) Nacional:                        55
+   * 
+   * Prop intelectual
+   *  Sacar la query de la misma tabla de patentes
+   * 
+   * ------------------------------------------------
+   * 
+   * Asesorías
+   *  A) Doctorado:                       63
+   *  B) Maestría:                        64
+   *  C) Título o seg esp                 65, 66
+   *  D) Bachiller                        67
+   * 
+   * Dedicación a la investigación
+   *  No aplica por falta de detalle
+   * 
+   * Investigador renacyt
+   *  Sacar query con la cantidad de titulares vigentes con renacyt
+   * 
+   */
+
+
+  // Utilizar!!!!!
+
+
+
   public function calificacion(Request $request) {
-    DB::table('Grupo_integrante AS a')
-      ->leftJoin('Publicacion_autor AS b', 'b.investigador', '=', 'a.investigador_id')
+    $publicaciones = DB::table('Grupo_integrante AS a')
+      ->leftJoin('Publicacion_autor AS b', 'b.investigador_id', '=', 'a.investigador_id')
       ->leftJoin('Publicacion AS c', 'c.id', '=', 'b.publicacion_id')
-      ->rightJoin('Publicacion_categoria AS d', 'd.id', '=', 'c.categoria_id')
+      ->rightJoin('Publicacion_categoria AS d', function (JoinClause $join) {
+        $join->on('d.id', '=', 'c.categoria_id')
+          ->whereIn('d.id', [37, 38, 39, 40, 41, 42, 43, 44, 45, 52, 53, 54, 55, 56, 57, 63, 64, 65, 66, 67]);
+      })
       ->select([
-        'd.titulo',
+        'd.id',
         'd.categoria',
-        DB::raw("COUNT(c.id) AS cuenta"),
-        'c.puntaje'
+        DB::raw("COUNT(DISTINCT c.id) AS cuenta"),
+        'd.puntaje'
       ])
       ->where('a.condicion', '=', 'Titular')
+      ->where('a.grupo_id', '=', $request->query('grupo_id'))
+      ->where('c.fecha_publicacion', '>=', '2018-01-01')
       ->groupBy('d.id')
-      ->get();
+      ->get()
+      ->mapWithKeys(function ($item) {
+        return [$item->id => [
+          'cuenta' => $item->cuenta,
+          'puntaje' => $item->puntaje,
+        ]];
+      });
+
+    $patentes = DB::table('Grupo_integrante AS a')
+      ->leftJoin('Patente_autor AS b', 'b.investigador_id', '=', 'a.investigador_id')
+      ->leftJoin('Patente AS c', function (JoinClause $join) {
+        $join->on('c.id', '=', 'b.patente_id')
+          ->whereIn('c.tipo', ['Patente de invención', 'Modelo de utilidad', 'Certificado de obtentor']);
+      })
+      ->select([
+        'c.tipo',
+        DB::raw("COUNT(DISTINCT c.id) AS cuenta"),
+      ])
+      ->where('a.condicion', '=', 'Titular')
+      ->where('a.grupo_id', '=', $request->query('grupo_id'))
+      ->groupBy('c.tipo')
+      ->get()
+      ->mapWithKeys(function ($item) {
+        return [$item->tipo => $item->cuenta];
+      });
+
+    $renacyt = DB::table('Grupo_integrante AS a')
+      ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
+      ->select('b.id')
+      ->where('a.condicion', '=', 'Titular')
+      ->where('a.grupo_id', '=', $request->query('grupo_id'))
+      ->whereIn('b.renacyt_nivel', ["I", "II", "III", "IV", "V", "VI", "VII", "Investigador Distinguido"])
+      ->count();
+
+    $pdf = Pdf::loadView('admin.estudios.grupos.calificacion', [
+      'publicaciones' => $publicaciones,
+      'patentes' => $patentes,
+      'renacyt' => $renacyt,
+    ]);
+
+    return $pdf->stream();
   }
 
   public function reporte(Request $request) {

@@ -185,6 +185,9 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
 
       //  Reporte
       Route::get('reporte', [GruposController::class, 'reporte']);
+
+      //  Calificación
+      Route::get('calificacion', [GruposController::class, 'calificacion']);
     });
 
     //  Proyectos grupo
