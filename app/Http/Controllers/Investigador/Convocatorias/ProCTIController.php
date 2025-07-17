@@ -7,6 +7,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class ProCTIController extends S3Controller {
   public function verificar(Request $request) {
@@ -451,17 +452,90 @@ class ProCTIController extends S3Controller {
       ->where('c.codigo', '=', $request->query('codigo'))
       ->where('b.tipo_proyecto', '=', 'PRO-CTIE')
       ->where('b.periodo', '=', '2024')
-      ->count();
+      ->exists();
 
-    if ($participaProyecto > 0) {
+    if ($participaProyecto) {
       $errores[] = 'Ya es participante en otro proyecto PRO-CTI de este año.';
     }
 
-    if (!empty($errores)) {
-      return ['message' => 'error', 'detail' => $errores[0]];
-    } else {
-      return ['message' => 'success', 'detail' => 'Cumple con los requisitos para ser incluído'];
+    Log::info('Verificación de participación en otro proyecto PRO-CTIE:', [
+        'codigo' => $request->query('codigo'),
+        'participaProyecto' => $participaProyecto
+    ]);
+
+    // 1. Buscar el proyecto_id del estudiante usando su investigador_id
+    $proyectoId = DB::table('Proyecto_integrante AS a')
+        ->where('a.investigador_id', '=', $request->query('investigador_id')) // Buscamos usando el investigador_id
+        ->value('a.proyecto_id'); // Obtenemos el proyecto_id
+
+    Log::info('Proyecto ID del estudiante:', [
+      'investigador_id' => $request->query('investigador_id'),
+      'proyectoId' => $proyectoId
+    ]);
+
+    if (!$proyectoId) {
+        $errores[] = 'El estudiante no está asociado a un proyecto.';
     }
+
+    // 2. Buscar los integrantes del proyecto usando el proyecto_id
+    $integrantes = DB::table('Proyecto_integrante AS a')
+        ->where('a.proyecto_id', '=', $proyectoId) // Filtramos por proyecto_id
+        ->get();
+
+    Log::info('Integrantes del proyecto:', [
+        'proyecto_id' => $proyectoId,
+        'integrantes' => $integrantes
+    ]);
+
+    // 3. Encontrar al Responsable (Asesor)
+    $responsable = $integrantes->firstWhere('condicion', "Responsable");
+
+    Log::info('Responsable (Asesor) encontrado:', [
+        'responsable' => $responsable
+    ]);
+
+    if (!$responsable) {
+        $errores[] = 'No se ha encontrado un Responsable (Asesor) para este proyecto.';
+    }
+
+    // 4. Verificar la deuda del Responsable (Asesor)
+    if ($responsable) {
+        // Buscamos la deuda del Responsable en la tabla Proyecto_integrante_deuda
+        $deudaResponsable = DB::table('Proyecto_integrante_deuda')
+            ->where('proyecto_integrante_id', $responsable->id)
+            ->first();
+
+        Log::info('Deuda del Responsable (Asesor):', [
+            'responsable_id' => $responsable->id,
+            'deudaResponsable' => $deudaResponsable
+        ]);
+        // Si la deuda existe y no ha sido subsanada
+        if ($deudaResponsable) {
+            // Verificamos si la deuda sigue activa
+            if (in_array($deudaResponsable->categoria, ['Deuda Económica', 'Deuda Técnica']) && is_null($deudaResponsable->fecha_sub)) {
+                $errores[] = 'El estudiante tiene una deuda activa.';
+
+                Log::warning('Deuda activa asociada al Asesor:', [
+                  'deuda_categoria' => $deudaResponsable->categoria,
+                  'fecha_sub' => $deudaResponsable->fecha_sub
+                ]);
+            }
+        } else {
+          Log::info('El Asesor no tiene deuda activa o no está registrado en la tabla de deuda.');
+        }
+    }
+
+    // Evaluar condiciones finales
+    if (!empty($errores)) {
+      Log::error('Errores encontrados en la verificación:', ['errores' => $errores]);
+      return ['message' => 'error', 'detail' => $errores[0]]; // Si hay errores, retornamos el primero.
+    } 
+
+    Log::info('El estudiante cumple con los requisitos para ser incluido.', [
+      'codigo' => $request->query('codigo')
+    ]);
+    
+    return ['message' => 'success', 'detail' => 'Cumple con los requisitos para ser incluído'];
   }
 
   public function agregarIntegrante(Request $request) {
