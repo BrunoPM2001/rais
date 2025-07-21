@@ -220,7 +220,7 @@ class ProCTIController extends S3Controller {
           'tipo_proyecto' => 'PRO-CTIE',
           'fecha_inscripcion' => Carbon::now(),
           'localizacion' => $request->input('localizacion')["value"],
-          'periodo' => 2024,
+          'periodo' => 2025,
           'convocatoria' => 1,
           'step' => 2,
           'estado' => 6,
