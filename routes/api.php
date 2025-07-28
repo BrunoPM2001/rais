@@ -273,6 +273,7 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
       Route::post('presentarInformeAntiguo', [InformesTecnicosController::class, 'presentarInformeAntiguo']);
 
       Route::get('getDataInformeAntiguo', [InformesTecnicosController::class, 'getDataInformeAntiguo']);
+      Route::post('updateInformeAntiguo', [InformesTecnicosController::class, 'updateInformeAntiguo']);
     });
 
     //  Monitoreo
