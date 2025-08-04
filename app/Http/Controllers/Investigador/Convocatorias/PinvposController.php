@@ -396,6 +396,15 @@ class PinvposController extends S3Controller {
               'archivo' => $nameFile,
               'estado' => 1
             ]);
+
+                  // 🔄 ACTUALIZAR fecha y periodo del proyecto
+          DB::table('Proyecto')
+            ->where('id', '=', $id)
+            ->update([
+              'fecha_inscripcion' => $date,
+              'updated_at' => $date,
+              'periodo' => 2025
+            ]);
         }
 
         return ['message' => 'success', 'detail' => 'Datos guardados', 'id' => $id];
@@ -452,7 +461,7 @@ class PinvposController extends S3Controller {
           ->insertGetId([
             'titulo' => 'Líneas de investigación de los GI en el marco de los Objetivos de Desarrollo Sostenible (ODS)',
             'tipo_proyecto' => 'PINVPOS',
-            'periodo' => 2024,
+            'periodo' => 2025,
             'step' => 2,
             'estado' => 6,
             'monto_asignado' => $monto_asignado,

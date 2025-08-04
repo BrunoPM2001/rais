@@ -81,6 +81,7 @@ use App\Http\Controllers\Investigador\Publicaciones\TesisPropiasController;
 use App\Http\Controllers\Secretaria\Constancias\ConstanciasController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\SessionController;
+use Maatwebsite\Excel\Row;
 
 /*
 |--------------------------------------------------------------------------
@@ -1146,6 +1147,10 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
       Route::post('registrarPaso2', [ProCTIController::class, 'registrarPaso2']);
 
       Route::get('listarIntegrantes', [ProCTIController::class, 'listarIntegrantes']);
+      Route::get('listarAdherentes', [ProCTIController::class, 'listarAdherentes']);
+      Route::post('agregarAdherente', [ProCTIController::class, 'agregarAdherente']);
+      Route::get('listarpaises', [ProCTIController::class, 'listarpaises']);
+      Route::post('verificarEstudianteExterno', [ProCTIController::class, 'verificarEstudianteExterno']);
       Route::get('searchEstudiante', [ProCTIController::class, 'searchEstudiante']);
       Route::get('verificarEstudiante', [ProCTIController::class, 'verificarEstudiante']);
       Route::post('agregarIntegrante', [ProCTIController::class, 'agregarIntegrante']);

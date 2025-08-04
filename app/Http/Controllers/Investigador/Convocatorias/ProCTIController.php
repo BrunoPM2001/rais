@@ -394,7 +394,7 @@ class ProCTIController extends S3Controller {
       })
       ->select([
         'a.id',
-        'b.nombre AS tipo_integrante',
+        DB::raw("CASE WHEN a.condicion = 'Adherente' THEN 'Adherente' ELSE b.nombre END AS tipo_integrante"),
         DB::raw("CONCAT(c.apellido1, ' ', c.apellido2, ', ', c.nombres) AS nombre"),
         'c.tipo',
         'd.nombre AS facultad',
@@ -406,7 +406,7 @@ class ProCTIController extends S3Controller {
     $key = DB::table('Proyecto_doc')
       ->select([
         'archivo',
-      ])
+      ])  
       ->where('proyecto_id', '=', $request->query('proyecto_id'))
       ->where('categoria', '=', 'carta')
       ->where('nombre', '=', 'Carta de compromiso del asesor')
@@ -444,98 +444,156 @@ class ProCTIController extends S3Controller {
   }
 
   public function verificarEstudiante(Request $request) {
+    Log::info('Datos recibidos en verificarEstudiante:', $request->all());
     $errores = [];
 
+    // Función para normalizar texto (sin tildes, todo en mayúsculas)
+    $normalizarTexto = function ($texto) {
+        $texto = strtoupper(trim($texto));
+        $texto = strtr($texto, [
+            'Á' => 'A', 'É' => 'E', 'Í' => 'I', 'Ó' => 'O', 'Ú' => 'U',
+            'á' => 'A', 'é' => 'E', 'í' => 'I', 'ó' => 'O', 'ú' => 'U',
+            'Ñ' => 'N', 'ñ' => 'N'
+        ]);
+        return $texto;
+    };
+
+    // 1) ¿Ya participa en otro PRO-CTIE 2025?
     $participaProyecto = DB::table('Proyecto_integrante AS a')
       ->join('Proyecto AS b', 'b.id', '=', 'a.proyecto_id')
       ->join('Usuario_investigador AS c', 'c.id', '=', 'a.investigador_id')
       ->where('c.codigo', '=', $request->query('codigo'))
       ->where('b.tipo_proyecto', '=', 'PRO-CTIE')
-      ->where('b.periodo', '=', '2024')
+      ->where('b.periodo', '=', '2025')
       ->exists();
+
+      Log::info('¿Participa en otro PRO-CTIE?', ['participaProyecto' => $participaProyecto]);
 
     if ($participaProyecto) {
       $errores[] = 'Ya es participante en otro proyecto PRO-CTI de este año.';
     }
 
-    Log::info('Verificación de participación en otro proyecto PRO-CTIE:', [
-        'codigo' => $request->query('codigo'),
-        'participaProyecto' => $participaProyecto
-    ]);
-
-    // 1. Buscar el proyecto_id del estudiante usando su investigador_id
-    $proyectoId = DB::table('Proyecto_integrante AS a')
-        ->where('a.investigador_id', '=', $request->query('investigador_id')) // Buscamos usando el investigador_id
-        ->value('a.proyecto_id'); // Obtenemos el proyecto_id
-
-    Log::info('Proyecto ID del estudiante:', [
-      'investigador_id' => $request->query('investigador_id'),
-      'proyectoId' => $proyectoId
-    ]);
+    // 2) Resolver proyecto actual
+    $proyectoId = $request->query('proyecto_id');
+    if (!$proyectoId && $request->query('investigador_id')) {
+        $proyectoId = DB::table('Proyecto_integrante')
+            ->where('investigador_id', '=', $request->query('investigador_id'))
+            ->value('proyecto_id');
+    }
+      Log::info('Proyecto ID encontrado:', ['proyecto_id' => $proyectoId]);
 
     if (!$proyectoId) {
         $errores[] = 'El estudiante no está asociado a un proyecto.';
     }
 
-    // 2. Buscar los integrantes del proyecto usando el proyecto_id
-    $integrantes = DB::table('Proyecto_integrante AS a')
-        ->where('a.proyecto_id', '=', $proyectoId) // Filtramos por proyecto_id
-        ->get();
+    // 3) Validación HISTÓRICA: ¿ha participado antes en algún proyecto?
+    $investigadorId = DB::table('Usuario_investigador AS ui')
+        ->where('ui.codigo', '=', $request->query('codigo'))
+        ->value('ui.id');
 
-    Log::info('Integrantes del proyecto:', [
-        'proyecto_id' => $proyectoId,
-        'integrantes' => $integrantes
-    ]);
+        Log::info('Investigador ID resuelto (para validación histórica):', ['investigador_id' => $investigadorId]);
 
-    // 3. Encontrar al Responsable (Asesor)
-    $responsable = $integrantes->firstWhere('condicion', "Responsable");
+      if ($investigadorId) {
+      $haParticipadoAntes = DB::table('Proyecto_integrante AS pi')
+          ->where('pi.investigador_id', '=', $investigadorId)
+          ->when($proyectoId, fn($q) => $q->where('pi.proyecto_id', '<>', $proyectoId))
+          ->exists();
 
-    Log::info('Responsable (Asesor) encontrado:', [
-        'responsable' => $responsable
-    ]);
+        Log::info('¿Participó antes en algún proyecto?', ['haParticipadoAntes' => $haParticipadoAntes]);
+
+      if ($haParticipadoAntes) {
+          $errores[] = 'Este estudiante ya ha participado en un proyecto anterior.';
+      }
+    }
+
+    // 4) Duplicado por nombre/doc dentro del proyecto actual
+    if ($proyectoId) {
+        $integrantes = DB::table('Proyecto_integrante AS a')
+            ->join('Usuario_investigador AS u', 'u.id', '=', 'a.investigador_id')
+            ->where('a.proyecto_id', $proyectoId)
+            ->select('u.apellido1', 'u.apellido2', 'u.nombres', 'u.doc_numero')
+            ->get();
+
+        Log::info('Integrantes actuales del proyecto:', $integrantes->toArray());
+
+        $nuevoApellido1 = $normalizarTexto($request->query('apellido1'));
+        $nuevoApellido2 = $normalizarTexto($request->query('apellido2'));
+        $nuevosNombres  = $normalizarTexto($request->query('nombres'));
+        $nuevoDocNumero = trim($request->query('doc_numero'));
+
+        Log::info('Datos normalizados a verificar:', [
+            'apellido1' => $nuevoApellido1,
+            'apellido2' => $nuevoApellido2,
+            'nombres'   => $nuevosNombres,
+            'doc_numero'=> $nuevoDocNumero,
+        ]);
+        
+        foreach ($integrantes as $i) {
+            $ap1 = $normalizarTexto($i->apellido1);
+            $ap2 = $normalizarTexto($i->apellido2);
+            $nom = $normalizarTexto($i->nombres);
+            $doc = trim($i->doc_numero);
+
+            if ($ap1 === $nuevoApellido1 && $ap2 === $nuevoApellido2 && $nom === $nuevosNombres) {
+                Log::info('Duplicado por nombre detectado:', ['integrante' => $i]);
+                //$errores[] = 'Ya existe un integrante con el mismo nombre completo.';
+            }
+
+            if (!empty($doc) && $doc === $nuevoDocNumero) {
+                Log::info('Duplicado por documento detectado:', ['integrante' => $i]);
+                //$errores[] = 'Ya existe un integrante con el mismo número de documento.';
+            }
+
+            if (
+                $ap1 === $nuevoApellido1 &&
+                $ap2 === $nuevoApellido2 &&
+                $nom === $nuevosNombres &&
+                $doc === $nuevoDocNumero
+            ) {
+                Log::info('Duplicado exacto detectado (nombre y documento):', ['integrante' => $i]);
+                $errores[] = 'Este estudiante ya ha sido registrado en el proyecto.';
+            }
+        }
+    }
+
+
+    // 5) Responsable (Asesor)
+    $responsable = DB::table('Proyecto_integrante')
+        ->where('proyecto_id', $proyectoId)
+        ->where('condicion', 'Responsable')
+        ->first();
 
     if (!$responsable) {
         $errores[] = 'No se ha encontrado un Responsable (Asesor) para este proyecto.';
     }
 
-    // 4. Verificar la deuda del Responsable (Asesor)
+    // 6) Deuda del Responsable
     if ($responsable) {
-        // Buscamos la deuda del Responsable en la tabla Proyecto_integrante_deuda
         $deudaResponsable = DB::table('Proyecto_integrante_deuda')
             ->where('proyecto_integrante_id', $responsable->id)
             ->first();
 
-        Log::info('Deuda del Responsable (Asesor):', [
-            'responsable_id' => $responsable->id,
-            'deudaResponsable' => $deudaResponsable
-        ]);
-        // Si la deuda existe y no ha sido subsanada
         if ($deudaResponsable) {
-            // Verificamos si la deuda sigue activa
-            if (in_array($deudaResponsable->categoria, ['Deuda Económica', 'Deuda Técnica']) && is_null($deudaResponsable->fecha_sub)) {
+            if (in_array($deudaResponsable->categoria, ['Deuda Económica', 'Deuda Técnica']) &&
+                is_null($deudaResponsable->fecha_sub)) {
                 $errores[] = 'El estudiante tiene una deuda activa.';
-
-                Log::warning('Deuda activa asociada al Asesor:', [
-                  'deuda_categoria' => $deudaResponsable->categoria,
-                  'fecha_sub' => $deudaResponsable->fecha_sub
-                ]);
             }
-        } else {
-          Log::info('El Asesor no tiene deuda activa o no está registrado en la tabla de deuda.');
         }
     }
 
-    // Evaluar condiciones finales
-    if (!empty($errores)) {
-      Log::error('Errores encontrados en la verificación:', ['errores' => $errores]);
-      return ['message' => 'error', 'detail' => $errores[0]]; // Si hay errores, retornamos el primero.
-    } 
 
-    Log::info('El estudiante cumple con los requisitos para ser incluido.', [
-      'codigo' => $request->query('codigo')
-    ]);
-    
-    return ['message' => 'success', 'detail' => 'Cumple con los requisitos para ser incluído'];
+    // 7) Retorno
+    if (!empty($errores)) {
+        return [
+          'message' => 'error', 
+          'detail' => $errores
+        ];
+    }
+
+    return [
+      'message' => 'success', 
+      'detail' => ['Cumple con los requisitos para ser incluído']
+    ];
   }
 
   public function agregarIntegrante(Request $request) {
@@ -677,6 +735,188 @@ class ProCTIController extends S3Controller {
       return ['message' => 'error', 'detail' => 'Error al cargar archivo'];
     }
   }
+
+  public function listarAdherentes(Request $request)
+  {
+      $proyectoId = $request->query('proyecto_id');
+
+      $grupo = DB::table('Proyecto')
+          ->join('Grupo', 'Grupo.id', '=', 'Proyecto.grupo_id')
+          ->where('Proyecto.id', '=', $proyectoId)
+          ->select('Grupo.id as grupo_id')
+          ->first();
+
+      if (!$grupo) {
+          return response()->json([], 200);
+    }
+
+      $adherentes = DB::table('Grupo_integrante as gi')
+          ->join('Usuario_investigador as ui', 'ui.id', '=', 'gi.investigador_id')
+          ->join('Facultad as f', 'f.id', '=', 'gi.facultad_id')
+          ->where('gi.grupo_id', $grupo->grupo_id)
+          ->where('gi.condicion', 'Adherente')
+          ->where('gi.permanencia', 'Activo')
+          ->where('gi.tipo', '!=', 'Estudiante pregrado')
+          ->select(
+              'gi.id',
+              'gi.investigador_id',
+              DB::raw("CONCAT(ui.apellido1, ' ', ui.apellido2) as apellidos"),
+              'ui.nombres',
+              'ui.doc_numero',
+              'ui.codigo',
+              'gi.permanencia',
+              'ui.email1',
+              'f.nombre as facultad'
+          )
+          ->get();
+
+    return response()->json($adherentes, 200);
+  }
+
+  public function agregarAdherente(Request $request)
+  {
+    if (!$request->hasFile('file')) {
+        return response()->json([
+            'message' => 'error',
+            'detail' => 'Debe adjuntar la carta de compromiso.'
+        ], 400);
+    }
+
+    $date = Carbon::now();
+    $proyectoId = $request->input('proyecto_id');
+    $investigadorId = $request->input('investigador_id');
+
+    // Verifica si ya existe el investigador en este proyecto
+    $existe = DB::table('Proyecto_integrante')
+        ->where('proyecto_id', $proyectoId)
+        ->where('investigador_id', $investigadorId)
+        ->exists();
+
+    if ($existe) {
+        return response()->json([
+            'message' => 'warning',
+            'detail' => 'Este adherente ya está registrado en el proyecto.'
+        ]);
+    }
+        // Obtener grupo_id del proyecto
+    $grupo = DB::table('Proyecto')
+        ->where('id', $proyectoId)
+        ->select('grupo_id')
+        ->first();
+
+    // Obtener grupo_integrante_id correspondiente al investigador en ese grupo
+    $grupoIntegrante = DB::table('Grupo_integrante')
+        ->where('grupo_id', $grupo->grupo_id)
+        ->where('investigador_id', $investigadorId)
+        ->select('id')
+        ->first();
+
+    // Insertar en Proyecto_integrante
+    $id = DB::table('Proyecto_integrante')->insertGetId([
+        'proyecto_id' => $proyectoId,
+        'investigador_id' => $investigadorId,
+        'grupo_id' => $grupo->grupo_id ?? null,
+        'grupo_integrante_id' => $grupoIntegrante->id ?? null,
+        'condicion' => 'Adherente',
+        'proyecto_integrante_tipo_id' => 88, // Asumiendo que 88 es el tipo para Adherente
+        'estado' => 1,
+        'created_at' => Carbon::now(),
+        'updated_at' => Carbon::now(),
+    ]);
+
+     // Generar nombre y registrar en tabla File
+    $ext = $request->file('file')->getClientOriginalExtension();
+    $nameFile = $proyectoId . '-' . $date->format('Ymd-His') . "-" . $id . '.' . $ext;
+    $bucket = "proyecto-doc/$proyectoId";
+
+    DB::table('File')->insert([
+        'tabla_id' => $id,
+        'tabla' => 'Proyecto_integrante',
+        'bucket' => $bucket,
+        'key' => $nameFile,
+        'recurso' => 'CARTA_COMPROMISO',
+        'estado' => 1,
+        'created_at' => $date,
+        'updated_at' => $date,
+    ]);
+
+    // Subida a MinIO
+    $this->uploadFile($request->file('file'), $bucket, $nameFile);
+
+    return response()->json([
+        'message' => 'success',
+        'detail' => 'Adherente agregado correctamente al proyecto.'
+    ]);
+  }
+
+  public function listarPaises()
+    {
+        $paises = DB::table('Pais')
+            ->select('code', 'name')
+            ->orderBy('name', 'asc')
+            ->get()
+            ->map(function ($pais) {
+                return [
+                    'label' => $pais->name . "   ({$pais->code})",
+                    'value' => $pais->code,
+                ];
+            });
+
+        return response()->json($paises);
+    }
+
+  public function verificarEstudianteExterno(Request $request)
+{
+    $request->validate([
+        'proyecto_id' => 'required|integer',
+        'apellido1' => 'required|string',
+        'apellido2' => 'required|string',
+        'nombres' => 'required|string',
+        'doc_numero' => 'required|string',
+    ]);
+
+    $apellido1 = strtoupper(trim($request->apellido1));
+    $apellido2 = strtoupper(trim($request->apellido2));
+    $nombres   = strtoupper(trim($request->nombres));
+    $docNumero = trim($request->doc_numero);
+
+    // Buscar IDs de investigadores vinculados al proyecto
+    $investigadoresIds = DB::table('Proyecto_integrante')
+        ->where('proyecto_id', $request->proyecto_id)
+        ->pluck('investigador_id');
+
+    // Verificar si existe coincidencia exacta de nombres y apellidos
+    $existeNombre = DB::table('Usuario_investigador')
+        ->whereIn('id', $investigadoresIds)
+        ->whereRaw('UPPER(TRIM(apellido1)) = ?', [$apellido1])
+        ->whereRaw('UPPER(TRIM(apellido2)) = ?', [$apellido2])
+        ->whereRaw('UPPER(TRIM(nombres)) = ?', [$nombres])
+        ->exists();
+
+    // Verificar si ya existe el mismo número de documento
+    $existeDocumento = DB::table('Usuario_investigador')
+        ->whereIn('id', $investigadoresIds)
+        ->where('doc_numero', $docNumero)
+        ->exists();
+
+    if ($existeNombre) {
+        return response()->json([
+            'status' => 'duplicate',
+            'field' => 'nombre_completo',
+            'message' => 'Ya existe un integrante con el mismo nombre completo registrado en este proyecto.'
+        ]);
+    }
+
+    if ($existeDocumento) {
+        return response()->json([
+            'status' => 'duplicate',
+            'field' => 'doc_numero',
+            'message' => 'Ya existe un integrante con el mismo número de documento registrado en este proyecto.'
+        ]);
+    }
+
+    return response()->json(['status' => 'ok']);
+}
 
   public function eliminarIntegrante(Request $request) {
     DB::table('Proyecto_integrante')
