@@ -161,7 +161,7 @@
     </p>
     <br>
     <p class="user">
-      ichajaya
+      {{ $admin->nombres }}
     </p>
   </div>
   <div class="div"></div>
