@@ -10,6 +10,238 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class ProCTIController extends S3Controller {
+
+    public function verificarRegistroProyecto(Request $request) {
+      $investigadorId = $request->attributes->get('token_decoded')->investigador_id;
+      $proyectoId = $request->input('proyecto_id');  // Proyecto que el investigador quiere registrar
+
+      // 1. Recuperar los proyectos de tipo 'PRO-CTIE' para el periodo 2025
+      $proyectos = DB::table('Proyecto')
+          ->where('tipo_proyecto', '=', 'PRO-CTIE')
+          ->where('periodo', '=', 2025)
+          ->pluck('id');  // Obtener los ID de los proyectos
+
+      if ($proyectos->isEmpty()) {
+          return response()->json(['message' => 'No hay proyectos PRO-CTIE para la convocatoria 2025.'], 400);
+      }
+
+      // 2. Verificar si el investigador ya tiene un proyecto 'PRO-CTIE' en la convocatoria 2025
+      $proyectoExistente = DB::table('Proyecto_integrante AS pi')
+          ->join('Proyecto AS p', 'p.id', '=', 'pi.proyecto_id')
+          ->whereIn('pi.proyecto_id', $proyectos)
+          ->where('pi.investigador_id', '=', $investigadorId)
+          ->where('pi.condicion', '=', 'Responsable')  // Solo consideramos al responsable del proyecto
+          ->exists();
+
+      if ($proyectoExistente) {
+          return response()->json([
+              'message' => 'Ya existe un proyecto registrado por este investigador en la convocatoria 2025.',
+              'detail' => 'El investigador ya es responsable de un proyecto PRO-CTIE en la misma convocatoria.'
+          ], 400);  // Error si ya está registrado
+      }
+
+      // 3. Verificar si el grupo al que pertenece el investigador ya tiene un proyecto registrado
+      $grupoId = DB::table('Grupo_integrante')
+          ->where('investigador_id', '=', $investigadorId)
+          ->value('grupo_id');  // Obtener el grupo_id del investigador
+
+      if (!$grupoId) {
+          return response()->json([
+              'message' => 'El investigador no pertenece a un grupo de investigación.',
+              'detail' => 'Para registrar un proyecto, el investigador debe pertenecer a un grupo.'
+          ], 400);  // Error si el investigador no pertenece a un grupo
+      }
+
+      // 4. Verificar si ya hay un responsable (condicion = 'Responsable') del grupo para la convocatoria
+      $responsableExistente = DB::table('Proyecto_integrante AS pi')
+          ->join('Proyecto AS p', 'p.id', '=', 'pi.proyecto_id')
+          ->where('p.tipo_proyecto', '=', 'PRO-CTIE')
+          ->where('p.periodo', '=', 2025)
+          ->where('pi.condicion', '=', 'Responsable')
+          ->where('pi.grupo_id', '=', $grupoId)
+          ->exists();  // Verificar si el grupo ya tiene un responsable registrado
+
+      if ($responsableExistente) {
+          return response()->json([
+              'message' => 'Ya existe un responsable de proyecto para este grupo en la convocatoria 2025.',
+              'detail' => 'Solo un miembro del grupo puede registrar un proyecto PRO-CTIE en la convocatoria.'
+          ], 400);  // Error si el grupo ya tiene un responsable
+      }
+
+      // Si todo está bien, permitir registrar el proyecto
+      return response()->json([
+          'message' => 'success',
+          'detail' => 'El investigador puede registrar un nuevo proyecto.'
+      ]);
+  }
+
+    public function listado(Request $request) {
+    $listado = DB::table('Proyecto_integrante AS a')
+      ->join('Proyecto AS b', 'b.id', '=', 'a.proyecto_id')
+      ->select([
+        'b.id',
+        'b.titulo',
+        'b.step',
+        DB::raw("CASE(b.estado)
+            WHEN -1 THEN 'Eliminado'
+            WHEN 0 THEN 'No aprobado'
+            WHEN 1 THEN 'Aprobado'
+            WHEN 3 THEN 'En evaluacion'
+            WHEN 5 THEN 'Enviado'
+            WHEN 6 THEN 'En proceso'
+            WHEN 7 THEN 'Anulado'
+            WHEN 8 THEN 'Sustentado'
+            WHEN 9 THEN 'En ejecución'
+            WHEN 10 THEN 'Ejecutado'
+            WHEN 11 THEN 'Concluído'
+          ELSE 'Sin estado' END AS estado"),
+      ])
+      ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+      ->where('a.condicion', '=', 'Responsable')
+      ->where('b.tipo_proyecto', '=', 'PRO-CTIE')
+      ->where('b.periodo', '=', 2025)
+      ->get();
+
+    return $listado;
+  }
+
+  public function eliminarPropuesta(Request $request) {
+    $proyectoId = $request->query('id');
+
+    if ($proyectoId) {
+      DB::table('Proyecto_descripcion')
+        ->where('proyecto_id', '=', $proyectoId)
+        ->delete();
+
+      DB::table('Proyecto_doc')
+        ->where('proyecto_id', '=', $proyectoId)
+        ->delete();
+
+      DB::table('Proyecto_actividad')
+        ->where('proyecto_id', '=', $proyectoId)
+        ->delete();
+
+      DB::table('Proyecto_presupuesto')
+        ->where('proyecto_id', '=', $proyectoId)
+        ->delete();
+
+      DB::table('Proyecto_integrante')
+        ->where('proyecto_id', '=', $proyectoId)
+        ->delete();
+
+      DB::table('Proyecto')
+        ->where('id', '=', $proyectoId)
+        ->delete();
+
+      return ['message' => 'info', 'detail' => 'Propuesta eliminada correctamente'];
+    } else {
+      return ['message' => 'error', 'detail' => 'No se pudo eliminar la propuesta'];
+    }
+  }
+
+  public function verificarGrupo(Request $request) {
+      // Obtener el investigador_id desde el token decodificado
+      $investigadorId = $request->attributes->get('token_decoded')->investigador_id;
+
+      // Verificar si el investigador_id es null
+      if ($investigadorId === null) {
+          Log::error('El investigador_id no está presente en el request.');
+          return response()->json(['estado' => false, 'message' => 'No se pudo obtener el ID del investigador.'], 400);
+      }
+
+      // 1. Obtener el grupo_id del investigador
+      $grupoId = DB::table('Grupo_integrante')
+          ->where('investigador_id', '=', $investigadorId)
+          ->whereNot('condicion', 'LIKE', 'Ex%')
+          ->value('grupo_id');
+
+      Log::info('Grupo del Investigador', ['investigador_id' => $investigadorId, 'grupo_id' => $grupoId]);
+
+      if (!$grupoId) {
+          return response()->json([
+              'estado' => false,
+              'message' => 'El investigador no pertenece a un grupo de investigación.'
+          ]);
+      }
+
+      // 2. Contar los proyectos de tipo 'PRO-CTIE' registrados para el grupo en el periodo 2025
+      $proyectosRegistrados = DB::table('Proyecto')
+          ->where('tipo_proyecto', '=', 'PRO-CTIE')
+          ->where('periodo', '=', 2025)
+          ->where('grupo_id', '=', $grupoId)  // Asegurarse de que los proyectos sean del mismo grupo
+          ->count();  // Contar los proyectos registrados
+
+      Log::info('Conteo de proyectos registrados por grupo', [
+          'grupo_id' => $grupoId,
+          'proyectos_registrados' => $proyectosRegistrados
+      ]);
+
+      // 3. Verificar que el grupo tenga un máximo de dos proyectos
+      if ($proyectosRegistrados > 5) {
+          Log::info('El grupo ya tiene dos proyectos registrados', ['grupo_id' => $grupoId, 'proyectos_count' => $proyectosRegistrados]);
+
+          // Marcar conflicto solo si hay 2 proyectos registrados y se intenta agregar el tercero
+          return response()->json([
+              'estado' => false,
+              'message' => 'El grupo de investigación ya tiene el máximo de dos proyectos registrados en esta convocatoria. No se puede registrar un tercer proyecto.'
+          ]);
+      }
+
+      // 4. Buscar los 'investigador_id' responsables de esos proyectos
+      $proyectos = DB::table('Proyecto')
+          ->where('tipo_proyecto', '=', 'PRO-CTIE')
+          ->where('periodo', '=', 2025)
+          ->where('grupo_id', '=', $grupoId)  // Asegurarse de que los proyectos sean del mismo grupo
+          ->pluck('id');  // Obtener los IDs de los proyectos en la convocatoria 2025
+
+      $investigadoresResponsables = DB::table('Proyecto_integrante AS pi')
+          ->join('Proyecto AS p', 'p.id', '=', 'pi.proyecto_id')
+          ->whereIn('pi.proyecto_id', $proyectos)
+          ->where('pi.condicion', '=', 'Responsable')
+          ->pluck('pi.investigador_id');  // Obtener los IDs de los investigadores responsables
+
+      Log::info('Investigadores responsables de los proyectos PRO-CTIE', ['investigadores_responsables' => $investigadoresResponsables]);
+
+      // 5. Obtener los grupo_id de los investigadores responsables
+      $grupoIdsResponsables = DB::table('Grupo_integrante')
+          ->whereIn('investigador_id', $investigadoresResponsables)
+          ->pluck('grupo_id');  // Obtener los grupo_id de los responsables
+
+      Log::info('Grupo(s) de los investigadores responsables', ['grupoIdsResponsables' => $grupoIdsResponsables]);
+
+      // 6. Verificar si el investigador pertenece al mismo grupo que los responsables
+      // Excluir al investigador actual de la lista de "conflictos" si ya es responsable de un proyecto
+      $conflictoGrupo = false;
+
+      // Solo verificamos conflicto si el grupo ya tiene 2 proyectos registrados
+      if ($proyectosRegistrados > 5) {
+          $conflictoGrupo = $grupoIdsResponsables->contains($grupoId) && !in_array($investigadorId, $investigadoresResponsables->toArray());
+
+          Log::info('Conflicto de grupo', ['conflictoGrupo' => $conflictoGrupo]);
+      }
+
+      // Si hay conflicto, se devuelve el mensaje adecuado
+      if ($conflictoGrupo) {
+          Log::warning('Conflicto de grupo encontrado', [
+              'investigador_id' => $investigadorId,
+              'grupo_id' => $grupoId,
+              'investigadores_responsables' => $investigadoresResponsables
+          ]);
+          return response()->json([
+              'estado' => false,
+              'conflictoGrupo' => true,
+              'message' => 'El investigador no puede registrar el proyecto, ya que otro miembro de su grupo es responsable de un proyecto registrado en esta convocatoria.'
+          ]);
+      }
+
+      Log::info('No hay conflicto de grupo. El investigador puede registrar su proyecto.');
+
+      // Si no hay conflicto y el grupo tiene menos de 2 proyectos, el investigador puede registrar el proyecto
+      return response()->json(['estado' => true, 'conflictoGrupo' => false]);
+  }
+
+
+
   public function verificar(Request $request) {
     $errores = [];
 
@@ -31,7 +263,7 @@ class ProCTIController extends S3Controller {
       ])
       ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
       ->where('b.tipo_proyecto', '=', 'PRO-CTIE')
-      ->where('b.periodo', '=', '2024')
+      ->where('b.periodo', '=', '2025')
       ->first();
 
     if ($proyecto != null) {
@@ -436,6 +668,7 @@ class ProCTIController extends S3Controller {
         'a.correo_electronico'
       )
       ->whereIn('a.permanencia', ['Activo', 'Reserva de Matricula'])
+      ->where('a.programa', 'LIKE', 'E.P.%') // Filtra aquellos donde el valor en 'a.programa' empiece con 'E.P.'
       ->having('value', 'LIKE', '%' . $request->query('query') . '%')
       ->limit(10)
       ->get();
@@ -444,6 +677,7 @@ class ProCTIController extends S3Controller {
   }
 
   public function verificarEstudiante(Request $request) {
+    $investigadorId = $request->attributes->get('token_decoded')->investigador_id;
     Log::info('Datos recibidos en verificarEstudiante:', $request->all());
     $errores = [];
 
@@ -756,7 +990,7 @@ class ProCTIController extends S3Controller {
           ->where('gi.grupo_id', $grupo->grupo_id)
           ->where('gi.condicion', 'Adherente')
           ->where('gi.permanencia', 'Activo')
-          ->where('gi.tipo', '!=', 'Estudiante pregrado')
+          ->where('gi.tipo', '=', 'Estudiante pregrado')
           ->select(
               'gi.id',
               'gi.investigador_id',
@@ -1170,13 +1404,12 @@ class ProCTIController extends S3Controller {
       ->where('proyecto_id', '=', $request->input('proyecto_id'))
       ->get();
 
-    if (sizeof($cuenta) > 0) {
-      DB::table('Proyecto_presupuesto')
-        ->where('id', '=', $cuenta[0]->id)
-        ->update([
-          'monto' => $cuenta[0]->monto + $request->input('monto'),
-          'updated_at' => Carbon::now()
-        ]);
+    if ($cuenta -> count() > 0) {
+      // Si la partida ya existe, no la dejamos agregar y retornamos un mensaje de error
+      return response()->json([
+        'message' => 'error',
+        'detail' => 'La partida ya ha sido agregada a este proyecto.',
+      ], 400);  // 400 es el código de error por solicitud incorrecta
     } else {
       DB::table('Proyecto_presupuesto')
         ->insert([
@@ -1199,15 +1432,6 @@ class ProCTIController extends S3Controller {
     return ['message' => 'info', 'detail' => 'Partida eliminada correctamente'];
   }
 
-  public function enviarProyecto(Request $request) {
-    DB::table('Proyecto')
-      ->where('id', '=', $request->input('proyecto_id'))
-      ->update([
-        'estado' => 5
-      ]);
-
-    return ['message' => 'info', 'detail' => 'Proyecto enviado para evaluación'];
-  }
 
   public function reportePDF(Request $request) {
 
@@ -1301,4 +1525,68 @@ class ProCTIController extends S3Controller {
     $pdf->setPaper('A4', 'landscape');
     return $pdf->stream();
   }
+
+    public function enviarProyecto(Request $request) {
+      // Log para verificar que se recibió el ID del proyecto
+      Log::info('Enviando proyecto', ['proyecto_id' => $request->input('proyecto_id')]);
+
+      // Verificar que el proyecto_id no esté vacío
+      $proyectoId = $request->input('proyecto_id');
+      if (!$proyectoId) {
+          Log::error('El proyecto_id no está presente en la solicitud');
+          return ['message' => 'error', 'detail' => 'Falta el ID del proyecto'];
+      }
+
+      // 1. Verificar si el proyecto tiene la autorización del coordinador del grupo
+      $req1 = DB::table('Proyecto')
+          ->where('id', '=', $proyectoId)
+          ->where('estado', '=', 6)
+          ->where('autorizacion_grupo', '=', 1)
+          ->count();
+
+      Log::info('Verificación de autorización del coordinador', [
+          'proyecto_id' => $proyectoId,
+          'estado' => 6,
+          'autorizacion_grupo' => 1,
+          'count' => $req1
+      ]);
+
+      if ($req1 == 0) {
+          Log::warning('Autorización del coordinador no encontrada para el proyecto', ['proyecto_id' => $proyectoId]);
+          return ['message' => 'error', 'detail' => 'Necesita que el coordinador de su grupo autorice la propuesta de proyecto'];
+      }
+
+      // 2. Actualizar el estado del proyecto a "Aprobado"
+      $count = DB::table('Proyecto')
+          ->where('id', '=', $proyectoId)
+          ->where('estado', '=', 6)
+          ->update([
+              'estado' => 5,  // Cambiar a "Enviado para evaluación"
+              'updated_at' => Carbon::now()
+          ]);
+
+      Log::info('Actualización de estado del proyecto', [
+          'proyecto_id' => $proyectoId,
+          'estado' => 6,
+          'updated_rows' => $count
+      ]);
+
+      if ($count > 0) {
+          Log::info('Proyecto enviado para evaluación', ['proyecto_id' => $proyectoId]);
+
+          // Verificar si ya fue evaluado y cambiar el estado
+          DB::table('Proyecto')
+              ->where('id', '=', $proyectoId)
+              ->update([
+                  'estado' => 5,  // Cambiar el estado a "Evaluado" o como lo definas
+                  'updated_at' => Carbon::now()
+              ]);
+
+          return ['message' => 'info', 'detail' => 'Proyecto registrado exitosamente'];
+      } else {
+          Log::warning('El proyecto ya fue enviado o no se actualizó', ['proyecto_id' => $proyectoId]);
+          return ['message' => 'info', 'detail' => 'Ya ha enviado su solicitud'];
+      }
+  }
+
 }

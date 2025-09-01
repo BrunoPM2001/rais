@@ -111,6 +111,7 @@ class DeudaProyectosController extends Controller {
         'a.deuda',
         'a.periodo'
       )
+      ->where('a.estado', '=', 1)
       ->where(function ($query) {
         $query->orWhere('a.deuda', '<', '1')
           ->orWhere('a.deuda', '=', 2)

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Investigador\Perfil;
 use App\Http\Controllers\S3Controller;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class PerfilController extends S3Controller {
@@ -99,5 +100,37 @@ class PerfilController extends S3Controller {
       ]);
 
     return ['message' => 'success', 'detail' => 'Datos actualizados con éxito'];
+  }
+
+  public function updatePassword(Request $request) {
+
+    if ($request->input("newPass") != $request->input("newPassAgain")) {
+      return ['message' => 'error', 'detail' => 'Datos erroneos'];
+    }
+
+    $usuario = DB::table('Usuario')
+      ->select([
+        'email'
+      ])
+      ->where('tabla', '=', 'Usuario_investigador')
+      ->where('tabla_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+      ->first();
+
+    if ($usuario) {
+      if (Auth::attempt(['email' => $usuario->email, 'password' => $request->input("currentPass")])) {
+        DB::table('Usuario')
+          ->where('tabla', '=', 'Usuario_investigador')
+          ->where('tabla_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+          ->update([
+            'password' => bcrypt($request->input("newPass"))
+          ]);
+
+        return ['message' => 'success', 'detail' => 'Contraseña actualizada con éxito'];
+      } else {
+        return ['message' => 'error', 'detail' => 'Datos erroneos'];
+      }
+    } else {
+      return ['message' => 'error', 'detail' => 'Error en la cuenta de usuario'];
+    }
   }
 }

@@ -578,6 +578,7 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
     Route::post('actualizarSolicitud', [CdiController::class, 'actualizarSolicitud']);
 
     Route::get('observaciones', [CdiController::class, 'observaciones']);
+    Route::post('updatePassword', [PerfilController::class, 'updatePassword']);
   });
 
   //  Main dashboard
@@ -1138,6 +1139,7 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
 
     Route::prefix('pro-ctie')->group(function () { 
       Route::get('verificar', [ProCTIController::class, 'verificar']);
+      Route::get('verificarGrupo', [ProCTIController::class, 'verificarGrupo']);
 
       Route::get('datosPaso1', [ProCTIController::class, 'datosPaso1']);
       Route::get('getDataToPaso1', [ProCTIController::class, 'getDataToPaso1']);

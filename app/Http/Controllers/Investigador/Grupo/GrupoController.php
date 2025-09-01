@@ -1348,43 +1348,50 @@ class GrupoController extends S3Controller {
   }
 
   public function listarProyectos(Request $request) {
-    $proyectos = DB::table('Grupo_integrante AS a')
-      ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
-      ->join('Proyecto_integrante AS c', 'c.investigador_id', '=', 'b.id')
-      ->join('Proyecto_integrante_tipo AS d', 'd.id', '=', 'c.proyecto_integrante_tipo_id')
-      ->join('Proyecto AS e', 'e.id', '=', 'c.proyecto_id')
-      ->select([
-        'e.id',
-        'e.tipo_proyecto',
-        'e.codigo_proyecto',
-        'e.titulo',
-        DB::raw("CONCAT(b.apellido1, ' ', b.apellido2, ', ', b.nombres) AS responsable"),
-        'e.periodo',
-        'e.resolucion_rectoral',
-        DB::raw("CASE(e.autorizacion_grupo)
-            WHEN 1 THEN 'Sí'
-          ELSE 'No' END AS autorizacion_grupo"),
-        DB::raw("CASE(e.estado)
-            WHEN -1 THEN 'Eliminado'
-            WHEN 0 THEN 'No aprobado'
-            WHEN 1 THEN 'Aprobado'
-            WHEN 3 THEN 'En evaluacion'
-            WHEN 5 THEN 'Enviado'
-            WHEN 6 THEN 'En proceso'
-            WHEN 7 THEN 'Anulado'
-            WHEN 8 THEN 'Sustentado'
-            WHEN 9 THEN 'En ejecución'
-            WHEN 10 THEN 'Ejecutado'
-            WHEN 11 THEN 'Concluído'
-          ELSE 'Sin estado' END AS estado"),
-      ])
-      ->where('a.grupo_id', '=', $request->query('id'))
-      ->whereNot('a.condicion', 'LIKE', 'Ex%')
-      ->whereIn('d.nombre', ['Responsable', 'Coordinador'])
-      ->orderByDesc('e.created_at')
-      ->get();
+      $proyectos = DB::table('Grupo_integrante AS a')
+        ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
+        ->join('Proyecto_integrante AS c', 'c.investigador_id', '=', 'b.id')
+        ->join('Proyecto_integrante_tipo AS d', 'd.id', '=', 'c.proyecto_integrante_tipo_id')
+        ->join('Proyecto AS e', 'e.id', '=', 'c.proyecto_id')
+        ->select([
+          'e.id',
+          'e.tipo_proyecto',
+          'e.codigo_proyecto',
+          'e.titulo',
+          DB::raw("CONCAT(b.apellido1, ' ', b.apellido2, ', ', b.nombres) AS responsable"),
+          'e.periodo',
+          'e.resolucion_rectoral',
+          DB::raw("CASE(e.autorizacion_grupo)
+              WHEN 1 THEN 'Sí'
+            ELSE 'No' END AS autorizacion_grupo"),
+          DB::raw("CASE(e.estado)
+              WHEN -1 THEN 'Eliminado'
+              WHEN 0 THEN 'No aprobado'
+              WHEN 1 THEN 'Aprobado'
+              WHEN 3 THEN 'En evaluacion'
+              WHEN 5 THEN 'Enviado'
+              WHEN 6 THEN 'En proceso'
+              WHEN 7 THEN 'Anulado'
+              WHEN 8 THEN 'Sustentado'
+              WHEN 9 THEN 'En ejecución'
+              WHEN 10 THEN 'Ejecutado'
+              WHEN 11 THEN 'Concluído'
+            ELSE 'Sin estado' END AS estado"),
+        ])
+        ->where('a.grupo_id', '=', $request->query('id'))
+        ->whereNot('a.condicion', 'LIKE', 'Ex%')
+        ->where(function($query) {
+            // Aquí se verifica si el tipo de proyecto es 'PRO-CTIE'
+            $query->whereIn('d.nombre', ['Responsable', 'Coordinador'])  // Para proyectos que no son 'PRO-CTIE'
+                  ->orWhere(function($subQuery) {
+                      $subQuery->where('d.tipo_proyecto', 'PRO-CTIE')
+                              ->whereIn('d.nombre', ['Responsable', 'Coordinador', 'Asesor']);  // Incluir 'Asesor' si el proyecto es 'PRO-CTIE'
+                  });
+        })
+        ->orderByDesc('e.created_at')
+        ->get();
 
-    return $proyectos;
+      return $proyectos;
   }
 
   public function autorizarProyecto(Request $request) {
