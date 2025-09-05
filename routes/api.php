@@ -578,6 +578,8 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
     Route::post('actualizarSolicitud', [CdiController::class, 'actualizarSolicitud']);
 
     Route::get('observaciones', [CdiController::class, 'observaciones']);
+
+    Route::post('updatePassword', [PerfilController::class, 'updatePassword']);
   });
 
   //  Main dashboard

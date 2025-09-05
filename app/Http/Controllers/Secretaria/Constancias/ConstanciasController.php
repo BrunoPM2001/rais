@@ -57,7 +57,7 @@ class ConstanciasController extends S3Controller {
 
       $file = $this->getFile('constancias', $constancia->archivo_firmado);
 
-      Mail::to($constancia->email3)->cc('jninom@unmsm.edu.pe')->send(new ConstanciaFirmada($constancia->nombres, $constancia->tipo, $file));
+      Mail::to($constancia->email3)->cc(['jninom@unmsm.edu.pe', 'vrip@unmsm.edu.pe'])->send(new ConstanciaFirmada($constancia->nombres, $constancia->tipo, $file));
 
       return ['message' => 'success', 'detail' => 'Constancia guardada y enviada correctamente'];
     } else {

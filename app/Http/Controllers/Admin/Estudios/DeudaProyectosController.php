@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class DeudaProyectosController extends Controller {
   public function listadoIntegrantes(Request $request) {
@@ -133,100 +134,86 @@ class DeudaProyectosController extends Controller {
     switch ($tipoProyecto) {
       case 'PCONFIGI':
         $opciones = [
-          'Informe académico' => 'Informe académico',
-          '0' => 'Sin deuda',
+          'value' => 'Informe académico',
         ];
         break;
 
       case 'PCONFIGI-INV':
         $opciones = [
-          'Informe académico' => 'Informe académico',
-          '0' => 'Sin deuda',
+          'value' => 'Informe académico',
         ];
         break;
 
       case 'PSINFINV':
         $opciones = [
-          'Informe académico' => 'Informe académico',
-          '0' => 'Sin deuda',
+          'value' => 'Informe académico',
         ];
         break;
 
       case 'PSINFIPU':
         $opciones = [
-          'Resultados de la publicación' => 'Resultados de la publicación',
-          '0' => 'Sin deuda',
+          'value' => 'Resultados de la publicación',
         ];
         break;
 
       case 'PTPGRADO':
         $opciones = [
-          'Informe académico de avance' => 'Informe académico de avance',
-          'Informe académico final' => 'Informe académico final',
-          '0' => 'Sin deuda',
+          'value' => 'Informe académico de avance',
+          'value' => 'Informe académico final',
         ];
         break;
 
       case 'PTPMAEST':
         $opciones = [
-          'Informe académico de avance' => 'Informe académico de avance',
-          'Informe académico final' => 'Informe académico final',
-          '0' => 'Sin deuda',
+          'value' => 'Informe académico de avance',
+          'value' => 'Informe académico final',
         ];
         break;
 
       case 'PTPDOCTO':
         $opciones = [
-          'Informe académico de avance' => 'Informe académico de avance',
-          'Segundo informe académico de avance' => 'Segundo informe académico de avance',
-          'Informe académico final' => 'Informe académico final',
-          '0' => 'Sin deuda',
+          'value' => 'Informe académico de avance',
+          'value' => 'Segundo informe académico de avance',
+          'value' => 'Informe académico final',
         ];
         break;
 
       case 'PEVENTO':
         $opciones = [
-          'Informe académico' => 'Informe académico',
-          '0' => 'Sin deuda',
+          'value' => 'Informe académico',
         ];
         break;
 
       case 'PINVPOS':
         $opciones = [
-          'Informe académico' => 'Informe académico',
-          '0' => 'Sin deuda',
+          'value' => 'Informe académico',
         ];
         break;
 
       case 'PTPBACHILLER':
         $opciones = [
-          'Informe académico final' => 'Informe académico final',
-          '0' => 'Sin deuda',
+          'value' => 'Informe académico final',
         ];
         break;
 
       case 'PMULTI':
         $opciones = [
-          'Informe académico final' => 'Informe académico',
-          '0' => 'Sin deuda',
+          'value' => 'Informe académico',
         ];
         break;
 
       case 'PINTERDIS':
         $opciones = [
-          'Informe académico final' => 'Informe académico',
-          '0' => 'Sin deuda',
+          'value' => 'Informe académico',
         ];
         break;
 
       default:
-        $opciones = [];
+        return [];
         break;
     }
 
-    return response()->json([
-      'opciones' => $opciones
-    ]);
+    return array($opciones);
   }
   public function getResponsableProyecto($tipoProyecto) {
     $tipoIntegrante = [];
@@ -309,6 +296,7 @@ class DeudaProyectosController extends Controller {
   }
 
   public function asignarDeuda(Request $request) {
+    Log::info("Sample");
 
     $proyectoId = $request->input('proyecto_id');
     $tipoProyecto = $request->input('tipo_proyecto');
@@ -319,21 +307,21 @@ class DeudaProyectosController extends Controller {
     $deudaComentario = $request->input('comentario_deuda');
     $tipoIntegrante = [];
     $categoria = "";
-    $resultados = [];
+    $tipoDeuda = 0;
 
-    if (!is_numeric($deudaAcademica)) {
-      $deudaAcademica = 1;
-    } else {
-      $deudaAcademica = 0;
+    //  No se registran deudas
+    if ($deudaEconomica == "Sin deuda" && $deudaAcademica == "Sin deuda") {
+      return ['message' => 'warning', 'detail' => 'No ha escogido ningún tipo de deuda'];
     }
 
-    $tipoDeuda = intval($deudaAcademica) + intval($deudaEconomica);
-
-    if ($tipoDeuda == 1) {
+    if ($deudaAcademica != "Sin deuda" && $deudaEconomica == "Sin deuda") {
+      $tipoDeuda == 1;
       $categoria = 'Deuda Académica';
-    } else if ($tipoDeuda == 2) {
+    } else if ($deudaAcademica == "Sin deuda" && $deudaEconomica != "Sin deuda") {
+      $tipoDeuda == 2;
       $categoria = 'Deuda Económica';
-    } else if ($tipoDeuda == 3) {
+    } else if ($deudaAcademica != "Sin deuda" && $deudaEconomica != "Sin deuda") {
+      $tipoDeuda == 3;
       $categoria = 'Deuda Académica y Económica';
     }
 
@@ -350,18 +338,27 @@ class DeudaProyectosController extends Controller {
       ->whereIn('proyecto_integrante_tipo_id', $tipoIntegrante)
       ->get();
 
+    if (sizeof($integrantes) == 0) {
+      return ['message' => 'warning', 'detail' => 'No hay integrantes a los que se les pueda asignar deuda'];
+    }
+
+    DB::table('Proyecto')
+      ->where('id', '=', $proyectoId)
+      ->update([
+        'deuda' => 1
+      ]);
+
     foreach ($integrantes as $integrante) {
 
-      $numIntegrante = DB::table('Proyecto_integrante_deuda')
+      $integranteDeuda = DB::table('Proyecto_integrante_deuda')
         ->where('proyecto_integrante_id', $integrante->id)
-        ->count();
+        ->first();
 
       /** NO existe el integrante con Deuda */
-      if ($numIntegrante == 0) {
-        /**Deuda Academica */
-        if ($tipoDeuda == 1) {
+      if (!$integranteDeuda) {
 
-          $resultado = DB::table('Proyecto_integrante_deuda')->insert([
+        if ($tipoDeuda == 1) {
+          DB::table('Proyecto_integrante_deuda')->insert([
             'proyecto_integrante_id' => $integrante->id,
             'tipo' => $tipoDeuda,
             'categoria' => $categoria,
@@ -371,16 +368,10 @@ class DeudaProyectosController extends Controller {
             'created_at' => Carbon::now(),
             'updated_at' => Carbon::now()
           ]);
-          $resultados[] = $resultado;
-
-          /**Deuda Economica */
         } else if ($tipoDeuda == 2) {
-
           $responsable = $this->getResponsableProyecto($tipoProyecto);
-
           if (in_array($integrante->proyecto_integrante_tipo_id, $responsable)) {
-
-            $resultado = DB::table('Proyecto_integrante_deuda')->insert([
+            DB::table('Proyecto_integrante_deuda')->insert([
               'proyecto_integrante_id' => $integrante->id,
               'tipo' => $tipoDeuda,
               'categoria' => $categoria,
@@ -390,60 +381,55 @@ class DeudaProyectosController extends Controller {
               'created_at' => Carbon::now(),
               'updated_at' => Carbon::now()
             ]);
-            $resultados[] = $resultado;
           }
-
-          /** Deuda Academica y Economica */
         } else if ($tipoDeuda == 3) {
-
           $responsable = $this->getResponsableProyecto($tipoProyecto);
-
           if (in_array($integrante->proyecto_integrante_tipo_id, $responsable)) {
-
-            $tipoDeuda = 3;
-            $categoria = 'Deuda Académica y Económica';
-
-            $resultado = DB::table('Proyecto_integrante_deuda')->insert([
+            DB::table('Proyecto_integrante_deuda')->insert([
               'proyecto_integrante_id' => $integrante->id,
-              'tipo' => $tipoDeuda,
-              'categoria' => $categoria,
+              'tipo' => 3,
+              'categoria' => 'Deuda Académica y Económica',
               'informe' => $deudaDetalle,
               'detalle' => $deudaComentario,
               'fecha_deuda' => $deudaFecha,
               'created_at' => Carbon::now(),
               'updated_at' => Carbon::now()
             ]);
-            $resultados[] = $resultado;
           } else {
-            $tipoDeuda = 1;
-            $categoria = 'Deuda Académica';
-
-            $resultado = DB::table('Proyecto_integrante_deuda')->insert([
-
+            DB::table('Proyecto_integrante_deuda')->insert([
               'proyecto_integrante_id' => $integrante->id,
-              'tipo' => $tipoDeuda,
-              'categoria' => $categoria,
+              'tipo' => 1,
+              'categoria' => 'Deuda Académica',
               'informe' => $deudaDetalle,
               'detalle' => $deudaComentario,
               'fecha_deuda' => $deudaFecha,
               'created_at' => Carbon::now(),
               'updated_at' => Carbon::now()
             ]);
-            $resultados[] = $resultado;
           }
         }
 
         /** Existe el integrante con Deuda */
       } else {
 
-        $existeIntegrante = DB::table('Proyecto_integrante_deuda')
-          ->where('proyecto_integrante_id', $integrante->id)
-          ->first();
 
-        if ($existeIntegrante) {
+        if ($tipoDeuda == 1) {
+          DB::table('Proyecto_integrante_deuda')
+            ->where('proyecto_integrante_id', $integrante->id)
+            ->update([
+              'tipo' => $tipoDeuda,
+              'categoria' => $categoria,
+              'informe' => $deudaDetalle,
+              'detalle' => $deudaComentario,
+              'fecha_deuda' => $deudaFecha,
+              'updated_at' => Carbon::now()
+            ]);
+        } else if ($tipoDeuda == 2) {
 
-          if ($tipoDeuda == 1) {
-            $resultado = DB::table('Proyecto_integrante_deuda')
+          $responsable = $this->getResponsableProyecto($tipoProyecto);
+
+          if (in_array($integrante->proyecto_integrante_tipo_id, $responsable)) {
+            DB::table('Proyecto_integrante_deuda')
               ->where('proyecto_integrante_id', $integrante->id)
               ->update([
                 'tipo' => $tipoDeuda,
@@ -453,77 +439,43 @@ class DeudaProyectosController extends Controller {
                 'fecha_deuda' => $deudaFecha,
                 'updated_at' => Carbon::now()
               ]);
-            $resultados[] = $resultado;
-          } else if ($tipoDeuda == 2) {
+          } else {
+            DB::table('Proyecto_integrante_deuda')
+              ->where('proyecto_integrante_id', $integrante->id)
+              ->delete();
+          }
+        } else if ($tipoDeuda == 3) {
 
-            $responsable = $this->getResponsableProyecto($tipoProyecto);
+          $responsable = $this->getResponsableProyecto($tipoProyecto);
 
-            if (in_array($integrante->proyecto_integrante_tipo_id, $responsable)) {
-              $resultado =  DB::table('Proyecto_integrante_deuda')
-                ->where('proyecto_integrante_id', $integrante->id)
-                ->update([
-                  'tipo' => $tipoDeuda,
-                  'categoria' => $categoria,
-                  'informe' => $deudaDetalle,
-                  'detalle' => $deudaComentario,
-                  'fecha_deuda' => $deudaFecha,
-                  'updated_at' => Carbon::now()
-                ]);
-              $resultados[] = $resultado;
-            } else {
-              $resultado = DB::table('Proyecto_integrante_deuda')
-                ->where('proyecto_integrante_id', $integrante->id)
-                ->delete();
-              $resultados[] = $resultado;
-            }
-          } else if ($tipoDeuda == 3) {
-
-            $categoria = 'Deuda Académica y Económica';
-            $responsable = $this->getResponsableProyecto($tipoProyecto);
-
-            if (in_array($integrante->proyecto_integrante_tipo_id, $responsable)) {
-              $resultado = DB::table('Proyecto_integrante_deuda')
-                ->where('proyecto_integrante_id', $integrante->id)
-                ->update([
-                  'tipo' => $tipoDeuda,
-                  'categoria' => $categoria,
-                  'informe' => $deudaDetalle,
-                  'detalle' => $deudaComentario,
-                  'fecha_deuda' => $deudaFecha,
-                  'updated_at' => Carbon::now()
-                ]);
-              $resultados[] = $resultado;
-            } else {
-              $tipoDeuda = 1;
-              $categoria = 'Deuda Académica';
-
-              $resultado = DB::table('Proyecto_integrante_deuda')->insert([
-                'proyecto_integrante_id' => $integrante->id,
+          if (in_array($integrante->proyecto_integrante_tipo_id, $responsable)) {
+            DB::table('Proyecto_integrante_deuda')
+              ->where('proyecto_integrante_id', $integrante->id)
+              ->update([
                 'tipo' => $tipoDeuda,
-                'categoria' => $categoria,
+                'categoria' => 'Deuda Académica y Económica',
                 'informe' => $deudaDetalle,
                 'detalle' => $deudaComentario,
                 'fecha_deuda' => $deudaFecha,
-                'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now()
               ]);
-              $resultados[] = $resultado;
-            }
+          } else {
+
+            DB::table('Proyecto_integrante_deuda')->insert([
+              'proyecto_integrante_id' => $integrante->id,
+              'tipo' => 1,
+              'categoria' => 'Deuda Académica',
+              'informe' => $deudaDetalle,
+              'detalle' => $deudaComentario,
+              'fecha_deuda' => $deudaFecha,
+              'created_at' => Carbon::now(),
+              'updated_at' => Carbon::now()
+            ]);
           }
-        } else {
-          return response()->json(['message' => 'Registro no encontrado'], 404);
         }
       }
     }
-
-    // Validar si todos los registros fueron exitosos
-    $todosExitosos = !in_array(false, $resultados, true);
-
-    if ($todosExitosos) {
-      return response()->json(['message' => 'success', 'detail' => '  Se asigno Deuda a todos los miembros fueron registrados exitosamente'], 200);
-    } else {
-      return response()->json(['message' => 'error', 'detail' => 'Hubo un problema con el registro de algunos miembros'], 500);
-    }
+    return ['message' => 'success', 'detail' => 'Se asigno deuda a todos los miembros correspondientes exitosamente'];
   }
 
   public function proyectoDeuda(Request $request) {
