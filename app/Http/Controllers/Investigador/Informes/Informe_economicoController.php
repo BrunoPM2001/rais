@@ -254,9 +254,9 @@ class Informe_economicoController extends S3Controller {
         ->orderByDesc('created_at')
         ->get();
 
-      //  Informe de cumplimiento
+      //  Informe de cumplimiento //CAMBIAR AQUI EL 35 Y 70 %
       $informe = [];
-      if ($porcentaje < 70) {
+      if ($porcentaje < 35) {
         $informe = ['estado' => 2];
       } else {
         $informe = $this->integrantesCumplimiento($request);

@@ -177,13 +177,13 @@ class ProCTIController extends S3Controller {
       ]);
 
       // 3. Verificar que el grupo tenga un máximo de dos proyectos
-      if ($proyectosRegistrados > 5) {
+      if ($proyectosRegistrados >= 5) {
           Log::info('El grupo ya tiene dos proyectos registrados', ['grupo_id' => $grupoId, 'proyectos_count' => $proyectosRegistrados]);
 
           // Marcar conflicto solo si hay 2 proyectos registrados y se intenta agregar el tercero
           return response()->json([
               'estado' => false,
-              'message' => 'El grupo de investigación ya tiene el máximo de dos proyectos registrados en esta convocatoria. No se puede registrar un tercer proyecto.'
+              'message' => 'El grupo de investigación ya tiene el máximo de dos proyectos registrados en esta convocatoria. No se puede registrar un sexto proyecto.'
           ]);
       }
 
@@ -214,7 +214,7 @@ class ProCTIController extends S3Controller {
       $conflictoGrupo = false;
 
       // Solo verificamos conflicto si el grupo ya tiene 2 proyectos registrados
-      if ($proyectosRegistrados > 5) {
+      if ($proyectosRegistrados >= 5) {
           $conflictoGrupo = $grupoIdsResponsables->contains($grupoId) && !in_array($investigadorId, $investigadoresResponsables->toArray());
 
           Log::info('Conflicto de grupo', ['conflictoGrupo' => $conflictoGrupo]);
