@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\Estudios\Proyectos\PsinfipuController;
 use App\Http\Controllers\Admin\Estudios\Proyectos\PicvController;
 use App\Http\Controllers\Admin\Estudios\Proyectos\PmultiController;
 use App\Http\Controllers\Admin\Estudios\Proyectos\PtpmaestController;
+use App\Http\Controllers\Admin\Estudios\Proyectos\ProCtieController;
 use App\Http\Controllers\S3Controller;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
@@ -21,8 +22,6 @@ use Illuminate\Support\Facades\DB;
 use PhpOffice\PhpWord\IOFactory;
 use PhpOffice\PhpWord\PhpWord;
 use Maatwebsite\Excel\Facades\Excel;
-
-use function PHPSTORM_META\map;
 
 class ProyectosGrupoController extends S3Controller {
 
@@ -176,6 +175,23 @@ class ProyectosGrupoController extends S3Controller {
 
       case "PICV":
         $ctrl = new PicvController();
+
+        $detalle = $ctrl->detalle($request);
+        $descripcion = $ctrl->descripcion($request);
+        $miembros = $ctrl->miembros($request);
+        $documentos = $ctrl->documentos($request);
+        $actividades = $ctrl->actividades($request);
+
+        return [
+          'detalle' => $detalle,
+          'descripcion' => $descripcion,
+          'miembros' => $miembros,
+          'documentos' => $documentos,
+          'actividades' => $actividades,
+        ];
+
+      case "PRO-CTIE":
+        $ctrl = new ProCtieController();
 
         $detalle = $ctrl->detalle($request);
         $descripcion = $ctrl->descripcion($request);

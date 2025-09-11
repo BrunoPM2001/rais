@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Investigador\Convocatorias;
 use App\Http\Controllers\S3Controller;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
+use Illuminate\Database\Query\JoinClause;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -12,13 +13,39 @@ class ProCTIController extends S3Controller {
   public function verificar(Request $request) {
     $errores = [];
 
-    $perteneceGrupo = DB::table('Grupo_integrante')
+    $req1 = DB::table('Grupo_integrante')
       ->where('investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
       ->whereNot('condicion', 'LIKE', 'Ex%')
       ->count();
 
-    if ($perteneceGrupo == 0) {
+    if ($req1 == 0) {
       $errores[] = 'Tiene que pertenecer a algún grupo de investigación.';
+    }
+
+    $req2 = DB::table('view_deudores AS vdeuda')
+      ->where('vdeuda.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+      ->count();
+
+    if ($req2 != 0) {
+      $errores[] = "Usted tiene registradas deudas pendientes que deben ser resueltas para participar en el concurso";
+    }
+
+    $req3_1 = DB::table('Grupo_integrante')
+      ->select([
+        'grupo_id'
+      ])
+      ->where('investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+      ->whereNot('condicion', 'LIKE', 'Ex%')
+      ->first();
+
+    $req3 = DB::table('Proyecto')
+      ->where('tipo_proyecto', '=', 'PRO-CTIE')
+      ->where('periodo', '=', 2025)
+      ->where('grupo_id', '=', $req3_1->grupo_id)
+      ->count();
+
+    if ($req3 >= 5) {
+      $errores[] = "Su grupo en conjunto ya ha registro 5 proyectos, no se permiten más";
     }
 
     $proyecto = DB::table('Proyecto_integrante AS a')
@@ -30,7 +57,7 @@ class ProCTIController extends S3Controller {
       ])
       ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
       ->where('b.tipo_proyecto', '=', 'PRO-CTIE')
-      ->where('b.periodo', '=', '2024')
+      ->where('b.periodo', '=', '2025')
       ->first();
 
     if ($proyecto != null) {
@@ -219,7 +246,7 @@ class ProCTIController extends S3Controller {
           'tipo_proyecto' => 'PRO-CTIE',
           'fecha_inscripcion' => Carbon::now(),
           'localizacion' => $request->input('localizacion')["value"],
-          'periodo' => 2024,
+          'periodo' => 2025,
           'convocatoria' => 1,
           'step' => 2,
           'estado' => 6,
@@ -397,6 +424,7 @@ class ProCTIController extends S3Controller {
         DB::raw("CONCAT(c.apellido1, ' ', c.apellido2, ', ', c.nombres) AS nombre"),
         'c.tipo',
         'd.nombre AS facultad',
+        'a.condicion',
         DB::raw("CONCAT('/minio/', e.bucket, '/', e.key) AS url")
       ])
       ->where('a.proyecto_id', '=', $request->query('proyecto_id'))
@@ -435,6 +463,7 @@ class ProCTIController extends S3Controller {
         'a.correo_electronico'
       )
       ->whereIn('a.permanencia', ['Activo', 'Reserva de Matricula'])
+      ->where('a.programa', 'LIKE', 'E.P.%')
       ->having('value', 'LIKE', '%' . $request->query('query') . '%')
       ->limit(10)
       ->get();
@@ -445,16 +474,26 @@ class ProCTIController extends S3Controller {
   public function verificarEstudiante(Request $request) {
     $errores = [];
 
-    $participaProyecto = DB::table('Proyecto_integrante AS a')
+    $req1 = DB::table('Proyecto_integrante AS a')
       ->join('Proyecto AS b', 'b.id', '=', 'a.proyecto_id')
       ->join('Usuario_investigador AS c', 'c.id', '=', 'a.investigador_id')
       ->where('c.codigo', '=', $request->query('codigo'))
       ->where('b.tipo_proyecto', '=', 'PRO-CTIE')
-      ->where('b.periodo', '=', '2024')
+      ->where('b.periodo', '=', '2025')
       ->count();
 
-    if ($participaProyecto > 0) {
-      $errores[] = 'Ya es participante en otro proyecto PRO-CTI de este año.';
+    if ($req1 > 0) {
+      $errores[] = 'Ya es participante en otro proyecto PRO-CTIE de este año.';
+    }
+
+    $req2 = DB::table('Proyecto_integrante AS a')
+      ->join('Proyecto AS b', 'b.id', '=', 'a.proyecto_id')
+      ->where('a.investigador_id', '=', $request->query('investigador_id'))
+      ->where('b.estado', [1, 8, 9, 10, 11])
+      ->count();
+
+    if ($req2 > 0) {
+      $errores[] = 'Ya ha participado en algún otro proyecto aprobado';
     }
 
     if (!empty($errores)) {
@@ -462,6 +501,113 @@ class ProCTIController extends S3Controller {
     } else {
       return ['message' => 'success', 'detail' => 'Cumple con los requisitos para ser incluído'];
     }
+  }
+
+  public function listarAdherentes(Request $request) {
+
+    $grupo = DB::table('Proyecto')
+      ->join('Grupo', 'Grupo.id', '=', 'Proyecto.grupo_id')
+      ->select('Grupo.id as grupo_id')
+      ->where('Proyecto.id', '=', $request->query('proyecto_id'))
+      ->first();
+
+    if (!$grupo) {
+      return [];
+    }
+
+    $adherentes = DB::table('Grupo_integrante AS a')
+      ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
+      ->join('Facultad AS c', 'c.id', '=', 'a.facultad_id')
+      ->leftJoin('Proyecto_integrante AS d', function (JoinClause $join) use ($request) {
+        $join->on('d.investigador_id', '=', 'b.id')
+          ->where('d.proyecto_id', '=', $request->query('proyecto_id'));
+      })
+      ->join('Repo_sum AS e', function (JoinClause $join) {
+        $join->on('e.codigo_alumno', '=', 'b.codigo')
+          ->where('e.permanencia', '=', 'Activo');
+      })
+      ->select(
+        'a.id',
+        'a.investigador_id',
+        DB::raw("CONCAT(e.apellido_paterno, ' ', e.apellido_materno, ', ', e.nombres, ' | ', e.programa) AS value"),
+        DB::raw("CONCAT(b.apellido1, ' ', b.apellido2) as apellidos"),
+        'b.nombres',
+        'b.doc_numero',
+        'b.codigo',
+        'a.permanencia',
+        'b.email1',
+        'c.nombre as facultad'
+      )
+      ->where('a.grupo_id', '=', $grupo->grupo_id)
+      ->where('a.condicion', '=', 'Adherente')
+      ->where('e.programa', 'LIKE', 'E.P.%')
+      ->whereNull('d.id')
+      ->get();
+
+    return $adherentes;
+  }
+
+  public function agregarAdherente(Request $request) {
+    if (!$request->hasFile('file')) {
+      return ['message' => 'error', 'detail' => 'Debe adjuntar la carta de compromiso.'];
+    }
+
+    $date = Carbon::now();
+    $proyectoId = $request->input('proyecto_id');
+    $investigadorId = $request->input('investigador_id');
+
+    $existe = DB::table('Proyecto_integrante')
+      ->where('proyecto_id', $proyectoId)
+      ->where('investigador_id', $investigadorId)
+      ->exists();
+
+    if ($existe) {
+      return ['message' => 'warning', 'detail' => 'Este adherente ya está registrado en el proyecto.'];
+    }
+
+    $grupo = DB::table('Proyecto')
+      ->select([
+        'grupo_id'
+      ])
+      ->where('id', '=', $request->input('proyecto_id'))
+      ->first();
+
+    $grupoIntegrante = DB::table('Grupo_integrante')
+      ->select([
+        'id'
+      ])
+      ->where('grupo_id', '=', $grupo->grupo_id)
+      ->where('investigador_id', '=', $request->input('investigador_id'))
+      ->first();
+
+    $id = DB::table('Proyecto_integrante')->insertGetId([
+      'proyecto_id' => $request->input('proyecto_id'),
+      'investigador_id' => $request->input('investigador_id'),
+      'grupo_id' => $grupo->grupo_id ?? null,
+      'grupo_integrante_id' => $grupoIntegrante->id ?? null,
+      'condicion' => 'Adherente',
+      'proyecto_integrante_tipo_id' => 88,
+      'created_at' => Carbon::now(),
+      'updated_at' => Carbon::now(),
+    ]);
+
+    $ext = $request->file('file')->getClientOriginalExtension();
+    $nameFile = $proyectoId . '-' . $date->format('Ymd-His') . "-" . $id . '.' . $ext;
+
+    DB::table('File')->insert([
+      'tabla_id' => $id,
+      'tabla' => 'Proyecto_integrante',
+      'bucket' => 'proyecto-doc',
+      'key' => $nameFile,
+      'recurso' => 'CARTA_COMPROMISO',
+      'estado' => 1,
+      'created_at' => $date,
+      'updated_at' => $date,
+    ]);
+
+    $this->uploadFile($request->file('file'), "proyecto-doc", $nameFile);
+
+    return ['message' => 'success', 'detail' => 'Adherente agregado correctamente al proyecto.'];
   }
 
   public function agregarIntegrante(Request $request) {
@@ -775,7 +921,21 @@ class ProCTIController extends S3Controller {
       ->where('proyecto_id', '=', $request->query('proyecto_id'))
       ->get();
 
-    return $actividades;
+    $rango_fechas = DB::table('Convocatoria')
+      ->select([
+        'fecha_inicial',
+        'fecha_final'
+      ])
+      ->where('tipo', '=', 'PRO-CTIE')
+      ->where('periodo', '=', 2025)
+      ->where('evento', '=', 'calendario')
+      ->where('estado', '=', 1)
+      ->first();
+
+    return [
+      'actividades' => $actividades,
+      'rango' => $rango_fechas
+    ];
   }
 
   public function agregarActividad(Request $request) {
@@ -885,7 +1045,50 @@ class ProCTIController extends S3Controller {
     return ['message' => 'info', 'detail' => 'Partida eliminada correctamente'];
   }
 
+  public function validarPresupuesto(Request $request) {
+    $alerta = [];
+
+    $partidas = DB::table('Proyecto_presupuesto AS a')
+      ->join('Partida_proyecto AS b', function (JoinClause $join) {
+        $join->on('b.partida_id', '=', 'a.partida_id')
+          ->where('b.tipo_proyecto', '=', 'PRO-CTIE');
+      })
+      ->leftJoin('Partida_proyecto_grupo AS c', 'c.partida_proyecto_id', '=', 'b.id')
+      ->leftJoin('Partida_grupo AS d', 'd.id', '=', 'c.partida_grupo_id')
+      ->select([
+        'd.nombre',
+        'd.monto_max',
+        DB::raw("SUM(a.monto) AS total")
+      ])
+      ->where('a.proyecto_id', '=', $request->query('id'))
+      ->groupBy('d.id')
+      ->get();
+
+    foreach ($partidas as $item) {
+      if ($item->monto_max < $item->total && $item->nombre != null) {
+        $alerta[] = $item->nombre . ": " . $item->monto_max;
+      }
+    };
+
+    if (sizeof($alerta) == 0) {
+      return ['message' => 'info', 'detail' => 'Su proyecto respeta los límites de la directiva'];
+    } else {
+      return ['message' => 'warning', 'detail' => 'El presupuesto presenta excesos en la(s) siguiente(s) categoría(s). ' . implode(',', $alerta) . '; para mayor detalle revisar la directiva correspondiente.', $alerta];
+    }
+  }
+
   public function enviarProyecto(Request $request) {
+    //  Verificar autorización de grupo
+    $req1 = DB::table('Proyecto')
+      ->where('id', '=', $request->input('proyecto_id'))
+      ->where('estado', '=', 6)
+      ->where('autorizacion_grupo', '=', 1)
+      ->count();
+
+    if ($req1 == 0) {
+      return ['message' => 'error', 'detail' => 'Necesita que el coordinador de su grupo autorice la propuesta de proyecto'];
+    }
+
     DB::table('Proyecto')
       ->where('id', '=', $request->input('proyecto_id'))
       ->update([

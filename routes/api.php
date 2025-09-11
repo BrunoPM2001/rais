@@ -78,7 +78,6 @@ use App\Http\Controllers\Investigador\Publicaciones\PropiedadIntelectualControll
 use App\Http\Controllers\Investigador\Publicaciones\PublicacionesUtilsController;
 use App\Http\Controllers\Investigador\Publicaciones\TesisAsesoriaController;
 use App\Http\Controllers\Investigador\Publicaciones\TesisPropiasController;
-use App\Http\Controllers\Secretaria\Constancias\ConstanciasController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\SessionController;
 
@@ -1138,40 +1137,49 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
       Route::post('enviar', [PconfigiInvController::class, 'enviar']);
     });
 
-    Route::get('verificar', [ProCTIController::class, 'verificar']);
+    Route::prefix('pro-ctie')->group(function () {
+      Route::get('verificar', [ProCTIController::class, 'verificar']);
+      Route::get('verificarGrupo', [ProCTIController::class, 'verificarGrupo']);
 
-    Route::get('datosPaso1', [ProCTIController::class, 'datosPaso1']);
-    Route::get('getDataToPaso1', [ProCTIController::class, 'getDataToPaso1']);
-    Route::post('registrarPaso1', [ProCTIController::class, 'registrarPaso1']);
+      Route::get('datosPaso1', [ProCTIController::class, 'datosPaso1']);
+      Route::get('getDataToPaso1', [ProCTIController::class, 'getDataToPaso1']);
+      Route::post('registrarPaso1', [ProCTIController::class, 'registrarPaso1']);
 
-    Route::get('getDataPaso2', [ProCTIController::class, 'getDataPaso2']);
-    Route::post('registrarPaso2', [ProCTIController::class, 'registrarPaso2']);
+      Route::get('getDataPaso2', [ProCTIController::class, 'getDataPaso2']);
+      Route::post('registrarPaso2', [ProCTIController::class, 'registrarPaso2']);
 
-    Route::get('listarIntegrantes', [ProCTIController::class, 'listarIntegrantes']);
-    Route::get('searchEstudiante', [ProCTIController::class, 'searchEstudiante']);
-    Route::get('verificarEstudiante', [ProCTIController::class, 'verificarEstudiante']);
-    Route::post('agregarIntegrante', [ProCTIController::class, 'agregarIntegrante']);
-    Route::post('agregarIntegranteExterno', [ProCTIController::class, 'agregarIntegranteExterno']);
-    Route::delete('eliminarIntegrante', [ProCTIController::class, 'eliminarIntegrante']);
+      Route::get('listarIntegrantes', [ProCTIController::class, 'listarIntegrantes']);
+      Route::get('listarAdherentes', [ProCTIController::class, 'listarAdherentes']);
+      Route::post('agregarAdherente', [ProCTIController::class, 'agregarAdherente']);
+      Route::get('listarpaises', [ProCTIController::class, 'listarpaises']);
+      Route::post('verificarEstudianteExterno', [ProCTIController::class, 'verificarEstudianteExterno']);
+      Route::get('searchEstudiante', [ProCTIController::class, 'searchEstudiante']);
+      Route::get('verificarEstudiante', [ProCTIController::class, 'verificarEstudiante']);
+      Route::get('listarAdherentes', [ProCTIController::class, 'listarAdherentes']);
+      Route::post('agregarIntegrante', [ProCTIController::class, 'agregarIntegrante']);
+      Route::post('agregarIntegranteExterno', [ProCTIController::class, 'agregarIntegranteExterno']);
+      Route::delete('eliminarIntegrante', [ProCTIController::class, 'eliminarIntegrante']);
 
-    Route::get('getDataPaso4', [ProCTIController::class, 'getDataPaso4']);
-    Route::post('registrarPaso4', [ProCTIController::class, 'registrarPaso4']);
+      Route::get('getDataPaso4', [ProCTIController::class, 'getDataPaso4']);
+      Route::post('registrarPaso4', [ProCTIController::class, 'registrarPaso4']);
 
-    Route::get('listarActividades', [ProCTIController::class, 'listarActividades']);
-    Route::post('agregarActividad', [ProCTIController::class, 'agregarActividad']);
-    Route::delete('eliminarActividad', [ProCTIController::class, 'eliminarActividad']);
+      Route::get('listarActividades', [ProCTIController::class, 'listarActividades']);
+      Route::post('agregarActividad', [ProCTIController::class, 'agregarActividad']);
+      Route::delete('eliminarActividad', [ProCTIController::class, 'eliminarActividad']);
 
-    Route::get('listarPartidas', [ProCTIController::class, 'listarPartidas']);
-    Route::get('listarTiposPartidas', [ProCTIController::class, 'listarTiposPartidas']);
-    Route::post('agregarPartida', [ProCTIController::class, 'agregarPartida']);
-    Route::delete('eliminarPartida', [ProCTIController::class, 'eliminarPartida']);
+      Route::get('listarPartidas', [ProCTIController::class, 'listarPartidas']);
+      Route::get('listarTiposPartidas', [ProCTIController::class, 'listarTiposPartidas']);
+      Route::post('agregarPartida', [ProCTIController::class, 'agregarPartida']);
+      Route::delete('eliminarPartida', [ProCTIController::class, 'eliminarPartida']);
+      Route::get('validarPresupuesto', [ProCTIController::class, 'validarPresupuesto']);
 
-    Route::put('enviarProyecto', [ProCTIController::class, 'enviarProyecto']);
-    Route::get('reportePDF', [ProCTIController::class, 'reportePDF']);
+      Route::put('enviarProyecto', [ProCTIController::class, 'enviarProyecto']);
+      Route::get('reportePDF', [ProCTIController::class, 'reportePDF']);
 
-    //  Extras
-    Route::get('getOcde', [ProCTIController::class, 'getOcde']);
-    Route::get('getOds', [ProCTIController::class, 'getOds']);
+      //  Extras
+      Route::get('getOcde', [ProCTIController::class, 'getOcde']);
+      Route::get('getOds', [ProCTIController::class, 'getOds']);
+    });
   });
 
   //  Informes
@@ -1296,12 +1304,5 @@ Route::prefix('facultad')->middleware('checkRole:Usuario_facultad')->group(funct
 
   Route::prefix('reportes')->group(function () {
     Route::post('excel', [FacultadListadoController::class, 'excel']);
-  });
-});
-
-Route::prefix('secretaria')->middleware('checkRole:Usuario_secretaria')->group(function () {
-  Route::prefix('constancias')->group(function () {
-    Route::get('listado', [ConstanciasController::class, 'listado']);
-    Route::post('cargarDocumento', [ConstanciasController::class, 'cargarDocumento']);
   });
 });

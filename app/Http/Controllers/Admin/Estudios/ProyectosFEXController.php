@@ -62,9 +62,9 @@ class ProyectosFEXController extends S3Controller {
         'a.entidad_asociada',
         'a.monto_asignado',
         DB::raw("CASE
-        WHEN f.detalle = 'OTROS' THEN g.detalle
-        ELSE f.detalle
-      END AS fuente_fin"),
+          WHEN f.detalle = 'OTROS' THEN g.detalle
+          ELSE f.detalle
+        END AS fuente_fin"),
         'p.name as pais',
         'a.fecha_inicio',
         'a.fecha_fin',
@@ -221,13 +221,13 @@ class ProyectosFEXController extends S3Controller {
         END AS tipo_integrante"),
         DB::raw("CONCAT(b.apellido1, ' ', b.apellido2, ', ', b.nombres) AS nombre"),
         'b.doc_numero',
-        DB::raw("CASE(c.id)
-          WHEN 44 THEN 'Sí'
+        DB::raw("CASE(a.condicion)
+          WHEN 'Responsable' THEN 'Sí'
           ELSE 'No'
         END AS responsable"),
         DB::raw("CASE
-          WHEN b.tipo = 'EXTERNO' THEN 'Externo'
-          ELSE d.nombre
+          WHEN a.condicion = 'Responsable' THEN d.nombre
+          ELSE ''
         END AS facultad")
       ])
       ->where('a.proyecto_id', '=', $request->query('id'))

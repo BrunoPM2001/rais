@@ -262,7 +262,7 @@ class FacultadListadoController extends Controller {
         'tipo_proyecto AS title',
         DB::raw('COUNT(*) AS value')
       )
-      ->where('periodo', '=', 2024)
+      ->where('periodo', '=', 2025)
       ->whereNotNull('periodo')
       ->whereNotNull('tipo_proyecto')
       ->where('facultad_id', $facultadId)
