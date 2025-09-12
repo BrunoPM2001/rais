@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers\Investigador\Actividades;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\S3Controller;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
-class EquipamientoCientificoController extends Controller {
+class EquipamientoCientificoController extends S3Controller {
 
   public function listado(Request $request) {
     $proyectos = DB::table('Proyecto AS a')
