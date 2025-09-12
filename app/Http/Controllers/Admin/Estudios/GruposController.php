@@ -1417,6 +1417,9 @@ class GruposController extends S3Controller {
       ])
       ->whereNot('condicion', 'LIKE', 'Ex%')
       ->where('a.grupo_id', '=', $request->query('id'))
+      ->orderByDesc('a.cargo')
+      ->orderByDesc('a.condicion')
+      ->orderBy('nombres')
       ->get();
 
     $lineas = DB::table('Grupo_linea AS a')
