@@ -653,6 +653,9 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
     //  Equipamiento científico
     Route::prefix('eci')->group(function () {
       Route::get('listado', [EquipamientoCientificoController::class, 'listado']);
+      Route::get('formatoDj', [EquipamientoCientificoController::class, 'formatoDj']);
+      Route::post('uploadDocumento', [EquipamientoCientificoController::class, 'uploadDocumento']);
+      Route::get('djFirmada', [EquipamientoCientificoController::class, 'djFirmada']);
     });
     //  Comité editorial
     Route::prefix('comiteEdi')->group(function () {

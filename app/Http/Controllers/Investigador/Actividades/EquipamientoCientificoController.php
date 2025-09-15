@@ -7,8 +7,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
+use App\Http\Controllers\S3Controller;
+use Illuminate\Support\Facades\Log;
 
-class EquipamientoCientificoController extends Controller {
+class EquipamientoCientificoController extends S3Controller {
 
   public function listado(Request $request) {
     $proyectos = DB::table('Proyecto AS a')
@@ -91,7 +93,7 @@ class EquipamientoCientificoController extends Controller {
     }
 
     $pdf = Pdf::loadView(
-      'investigador.dj.pconfigi',
+      'investigador.dj.eci',
       [
         'proyecto' => $proyecto,
         'tipo' => $tipo,
@@ -103,8 +105,15 @@ class EquipamientoCientificoController extends Controller {
 
   public function uploadDocumento(Request $request) {
 
-    if ($request->hasFile('file')) {
+        Log::info('Inicio de uploadDocumento', [
+        'request_data' => $request->all()
+    ]);
 
+    if ($request->hasFile('file')) {
+          Log::info('Archivo recibido', [
+        'file_name' => $request->file('file')->getClientOriginalName(),
+        'file_size' => $request->file('file')->getSize(),
+      ]);
       $proyecto = DB::table('view_declaracion_jurada AS dj')
         ->select(
           'dj.tipo_proyecto',
