@@ -78,10 +78,8 @@ use App\Http\Controllers\Investigador\Publicaciones\PropiedadIntelectualControll
 use App\Http\Controllers\Investigador\Publicaciones\PublicacionesUtilsController;
 use App\Http\Controllers\Investigador\Publicaciones\TesisAsesoriaController;
 use App\Http\Controllers\Investigador\Publicaciones\TesisPropiasController;
-use App\Http\Controllers\Secretaria\Constancias\ConstanciasController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\SessionController;
-use Maatwebsite\Excel\Row;
 
 /*
 |--------------------------------------------------------------------------
@@ -274,6 +272,7 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
       Route::post('presentarInformeAntiguo', [InformesTecnicosController::class, 'presentarInformeAntiguo']);
 
       Route::get('getDataInformeAntiguo', [InformesTecnicosController::class, 'getDataInformeAntiguo']);
+      Route::post('updateInformeAntiguo', [InformesTecnicosController::class, 'updateInformeAntiguo']);
     });
 
     //  Monitoreo
@@ -578,6 +577,7 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
     Route::post('actualizarSolicitud', [CdiController::class, 'actualizarSolicitud']);
 
     Route::get('observaciones', [CdiController::class, 'observaciones']);
+
     Route::post('updatePassword', [PerfilController::class, 'updatePassword']);
   });
 
@@ -814,7 +814,7 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
 
       Route::get('incluirMiembroData', [InvestigadorGrupoController::class, 'incluirMiembroData']);
       Route::post('agregarMiembro', [InvestigadorGrupoController::class, 'agregarMiembro']);
-      /*Route::delete('eliminarMiembro', [InvestigadorGrupoController::class, 'eliminarMiembro']);*/
+      Route::delete('eliminarMiembro', [InvestigadorGrupoController::class, 'eliminarMiembro']);
       Route::get('getPaises', [InvestigadorGrupoController::class, 'getPaises']);
 
       Route::post('agregarLinea', [InvestigadorGrupoController::class, 'agregarLinea']);
@@ -835,7 +835,7 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
     Route::get('searchEgresado', [InvestigadorGrupoController::class, 'searchEgresado']);
     Route::get('incluirMiembroData', [InvestigadorGrupoController::class, 'incluirMiembroData']);
     Route::post('agregarMiembro', [InvestigadorGrupoController::class, 'agregarMiembro']);
-    //Route::put('excluirMiembro', [InvestigadorGrupoController::class, 'excluirMiembro']);
+    Route::put('excluirMiembro', [InvestigadorGrupoController::class, 'excluirMiembro']);
     Route::get('visualizarMiembro', [InvestigadorGrupoController::class, 'visualizarMiembro']);
 
     Route::get('listarProyectos', [InvestigadorGrupoController::class, 'listarProyectos']);
@@ -1140,7 +1140,7 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
       Route::post('enviar', [PconfigiInvController::class, 'enviar']);
     });
 
-    Route::prefix('pro-ctie')->group(function () { 
+    Route::prefix('pro-ctie')->group(function () {
       Route::get('verificar', [ProCTIController::class, 'verificar']);
       Route::get('verificarGrupo', [ProCTIController::class, 'verificarGrupo']);
 
@@ -1158,6 +1158,7 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
       Route::post('verificarEstudianteExterno', [ProCTIController::class, 'verificarEstudianteExterno']);
       Route::get('searchEstudiante', [ProCTIController::class, 'searchEstudiante']);
       Route::get('verificarEstudiante', [ProCTIController::class, 'verificarEstudiante']);
+      Route::get('listarAdherentes', [ProCTIController::class, 'listarAdherentes']);
       Route::post('agregarIntegrante', [ProCTIController::class, 'agregarIntegrante']);
       Route::post('agregarIntegranteExterno', [ProCTIController::class, 'agregarIntegranteExterno']);
       Route::delete('eliminarIntegrante', [ProCTIController::class, 'eliminarIntegrante']);
@@ -1173,6 +1174,7 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
       Route::get('listarTiposPartidas', [ProCTIController::class, 'listarTiposPartidas']);
       Route::post('agregarPartida', [ProCTIController::class, 'agregarPartida']);
       Route::delete('eliminarPartida', [ProCTIController::class, 'eliminarPartida']);
+      Route::get('validarPresupuesto', [ProCTIController::class, 'validarPresupuesto']);
 
       Route::put('enviarProyecto', [ProCTIController::class, 'enviarProyecto']);
       Route::get('reportePDF', [ProCTIController::class, 'reportePDF']);
@@ -1181,7 +1183,6 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
       Route::get('getOcde', [ProCTIController::class, 'getOcde']);
       Route::get('getOds', [ProCTIController::class, 'getOds']);
     });
-
   });
 
   //  Informes
@@ -1306,12 +1307,5 @@ Route::prefix('facultad')->middleware('checkRole:Usuario_facultad')->group(funct
 
   Route::prefix('reportes')->group(function () {
     Route::post('excel', [FacultadListadoController::class, 'excel']);
-  });
-});
-
-Route::prefix('secretaria')->middleware('checkRole:Usuario_secretaria')->group(function () {
-  Route::prefix('constancias')->group(function () {
-    Route::get('listado', [ConstanciasController::class, 'listado']);
-    Route::post('cargarDocumento', [ConstanciasController::class, 'cargarDocumento']);
   });
 });

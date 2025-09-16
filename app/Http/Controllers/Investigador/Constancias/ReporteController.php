@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Investigador\Constancias;
 
 use App\Http\Controllers\S3Controller;
-use App\Mail\Secretaria\Constancias\ConstanciaFirmada;
+use App\Mail\Investigador\Constancias\ConstanciaFirmada;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;

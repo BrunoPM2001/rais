@@ -2,13 +2,11 @@
 
 namespace App\Http\Controllers\Investigador\Actividades;
 
-use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use App\Http\Controllers\S3Controller;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
-use App\Http\Controllers\S3Controller;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class EquipamientoCientificoController extends S3Controller {
 
@@ -47,73 +45,42 @@ class EquipamientoCientificoController extends S3Controller {
     return $proyectos;
   }
 
-    public function formatoDj(Request $request) {
-    $proyectoId = $request->query('proyectoId');
+  public function formatoDj(Request $request) {
 
-    $proyecto = DB::table('view_declaracion_jurada AS dj')
+    $proyecto = DB::table('view_declaracion_jurada AS a')
       ->select(
-        'dj.tipo_proyecto',
-        'dj.periodo',
-        'dj.responsable',
-        'dj.facultad',
-        'dj.codigo_docente',
-        'dj.dni',
-        'dj.categoria',
-        'dj.clase',
-        'dj.grupo_nombre_corto',
-        'dj.grupo_nombre',
-        'dj.codigo_proyecto',
-        'dj.titulo_proyecto',
-        'dj.total_presupuesto',
-        'dj.subvencion_investigador'
+        'a.tipo_proyecto',
+        'a.periodo',
+        'a.responsable',
+        'a.facultad',
+        'a.codigo_docente',
+        'a.dni',
+        'a.categoria',
+        'a.clase',
+        'a.grupo_nombre_corto',
+        'a.grupo_nombre',
+        'a.codigo_proyecto',
+        'a.titulo_proyecto',
+        'a.total_presupuesto',
+        'a.subvencion_investigador'
       )
-      ->where('dj.proyecto_id', '=', $proyectoId)
+      ->where('a.proyecto_id', '=', $request->query('proyectoId'))
       ->first();
 
-    switch ($proyecto->tipo_proyecto) {
-      case 'PCONFIGI':
-        $tipo = 'DECLARACIÓN JURADA DE CUMPLIMIENTO PARA RECIBIR ASIGNACIÓN FINANCIERA AL PROYECTO DE INVESTIGACIÓN PARA GRUPOS DE INVESTIGACIÓN DE LA UNMSM';
-        break;
-      case 'PCONFIGI-INV':
-        $tipo = 'Proyectos de Innovación para  Grupos de Investigación “INNOVA SAN MARCOS❞';
-        break;
-      case 'PRO-CTIE':
-        $tipo = 'Proyectos de Ciencia, Tecnología, Innovación y Emprendimiento (PRO-CTIE) para Estudiantes de la UNMSM';
-        break;
-      case 'ECI':
-        $tipo = 'Programa de Equipamiento Científico para la Investigación de la UNMSM';
-        break;
-      case 'PSINFIPU':
-        $tipo = 'Proyectos de Publicación Académica para Grupos de Investigación';
-        break;
-      case 'PMULTI':
-        $tipo = 'Proyectos multidisciplinarios';
-      default:
-        $tipo = 'Tipo de Proyecto Desconocido';
-    }
+    $tipo = 'Programa de Equipamiento Científico para la Investigación de la UNMSM';
 
-    $pdf = Pdf::loadView(
-      'investigador.dj.eci',
-      [
-        'proyecto' => $proyecto,
-        'tipo' => $tipo,
-        'periodo' => $proyecto->periodo,
-      ]
-    );
+    $pdf = Pdf::loadView('investigador.dj.eci', [
+      'proyecto' => $proyecto,
+      'tipo' => $tipo,
+      'periodo' => $proyecto->periodo,
+    ]);
     return $pdf->stream();
   }
 
   public function uploadDocumento(Request $request) {
 
-        Log::info('Inicio de uploadDocumento', [
-        'request_data' => $request->all()
-    ]);
 
     if ($request->hasFile('file')) {
-          Log::info('Archivo recibido', [
-        'file_name' => $request->file('file')->getClientOriginalName(),
-        'file_size' => $request->file('file')->getSize(),
-      ]);
       $proyecto = DB::table('view_declaracion_jurada AS dj')
         ->select(
           'dj.tipo_proyecto',

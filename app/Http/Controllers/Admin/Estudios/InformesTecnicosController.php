@@ -822,6 +822,51 @@ class InformesTecnicosController extends S3Controller {
     return ['message' => 'success', 'detail' => 'Informe presentado'];
   }
 
+  public function updateInformeAntiguo(Request $request) {
+    $date1 = Carbon::now();
+    $date_format =  $date1->format('Ymd-His');
+
+    DB::table('Informe_tecnico_H')
+      ->where('id', '=', $request->input('id'))
+      ->update([
+        'tipo_informe' => $request->input('tipo_informe'),
+        'status' => $request->input('status'),
+        'fecha_presentacion' => $request->input('fecha_presentacion'),
+        'registro_nro_vri' => $request->input('registro_nro_vri'),
+        'registro_fecha_csi' => $request->input('registro_fecha_csi'),
+        'observaciones' => $request->input('observaciones'),
+        'observaciones_admin' => $request->input('observaciones_admin'),
+        'updated_at' => $date1
+      ]);
+
+    if ($request->hasFile('file1')) {
+      $name = $request->input('proyecto_id') . "/" . $date_format . "-" . Str::random(8) . "." . $request->file('file1')->getClientOriginalExtension();
+      $this->uploadFile($request->file('file1'), "informe-tecnico-antiguo", $name);
+
+      DB::table('File')
+        ->where('tabla_id', '=', $request->input('id'))
+        ->where('tabla', '=', 'Informe_tecnico_H')
+        ->where('recurso', '=', 'ANEXO')
+        ->update([
+          'estado' => 0,
+        ]);
+
+      DB::table('File')
+        ->insert([
+          'tabla_id' => $request->input('id'),
+          'tabla' => 'Informe_tecnico_H',
+          'bucket' => 'informe-tecnico-antiguo',
+          'key' => $name,
+          'recurso' => 'ANEXO',
+          'estado' => 20,
+          'created_at' => $date1,
+          'updated_at' => $date1
+        ]);
+    }
+
+    return ['message' => 'success', 'detail' => 'Informe guardado'];
+  }
+
   public function getDataInformeAntiguo(Request $request) {
     $detalles = DB::table('Informe_tecnico_H AS a')
       ->join('Proyecto_H AS b', 'b.id', '=', 'a.proyecto_id')

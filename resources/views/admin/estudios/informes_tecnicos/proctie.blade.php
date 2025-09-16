@@ -3,6 +3,7 @@
 @endphp
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -125,11 +126,13 @@
     .desc {
       font-size: 11px;
     }
+
     .desc p span {
       font-size: 11px !important;
     }
+
     .desc img {
-      width: 100% !important; 
+      width: 100% !important;
     }
 
     .obs {
@@ -161,44 +164,44 @@
     <br>
   </div>
   <div class="div"></div>
-  <div class="foot-1">RAIS - Registro de Actividades de Investigación de San Marcos</div>
+  <div class="foot-1">RAIS - UNMSM - {{ $proyecto->codigo_proyecto }} - {{ $detalles->id }}</div>
 
   <p class="titulo">
     <strong>
       Proyectos de ciencia, tecnología, innovación y emprendimiento {{ $proyecto->periodo }}<br><br>
-        {{ $informe }}<br>
-        Estado:
-        @switch($detalles->estado)
-          @case(1)
-            Aprobado
-          @break
-  
-          @case(2)
-            Presentado
-          @break
-  
-          @case(3)
-            Observado
-          @break
-  
-          @default
-            Sin estado
-        @endswitch
-        {{ Carbon::parse($detalles->fecha_estado)->format('d/m/Y') }}
+      {{ $informe }}<br>
+      Estado:
+      @switch($detalles->estado)
+        @case(1)
+          Aprobado
+        @break
+
+        @case(2)
+          Presentado
+        @break
+
+        @case(3)
+          Observado
+        @break
+
+        @default
+          Sin estado
+      @endswitch
+      {{ Carbon::parse($detalles->fecha_estado)->format('d/m/Y') }}
     </strong>
   </p>
   <div class="cuerpo">
 
     @if ($detalles->estado == 3)
-    <table class="obs">
-      <tbody>
-        <tr>
-          <td style="width: 12%;" valign="top"><strong>Observaciones</strong></td>
-          <td style="width: 1%;" valign="top">:</td>
-          <td style="width: 87%;" valign="top">{{ $detalles->observaciones }}</td>
-        </tr>
-      </tbody>
-    </table>
+      <table class="obs">
+        <tbody>
+          <tr>
+            <td style="width: 12%;" valign="top"><strong>Observaciones</strong></td>
+            <td style="width: 1%;" valign="top">:</td>
+            <td style="width: 87%;" valign="top">{{ $detalles->observaciones }}</td>
+          </tr>
+        </tbody>
+      </table>
     @endif
 
     <h5>I. Datos generales</h5>

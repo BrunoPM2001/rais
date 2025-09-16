@@ -37,7 +37,7 @@ class MonitoreoController extends S3Controller {
             WHEN 1 THEN 'Aprobado'
             WHEN 2 THEN 'Observado'
             WHEN 5 THEN 'Enviado'
-            WHEN 6 THEN 'Por presentar'
+            WHEN 6 THEN 'En proceso'
           ELSE 'Por presentar' END AS estado_meta")
       )
       ->where('d.id', '=', $request->attributes->get('token_decoded')->investigador_id)
@@ -86,7 +86,7 @@ class MonitoreoController extends S3Controller {
             WHEN 1 THEN 'Aprobado'
             WHEN 2 THEN 'Observado'
             WHEN 5 THEN 'Enviado'
-            WHEN 6 THEN 'Por presentar'
+            WHEN 6 THEN 'En proceso'
           ELSE 'Por presentar' END AS estado_meta"),
         'f.descripcion',
       ])

@@ -176,15 +176,15 @@
   <div class="cuerpo">
 
     @if ($detalles->estado == 3)
-    <table class="obs">
-      <tbody>
-        <tr>
-          <td style="width: 12%;" valign="top"><strong>Observaciones</strong></td>
-          <td style="width: 1%;" valign="top">:</td>
-          <td style="width: 87%;" valign="top">{{ $detalles->observaciones }}</td>
-        </tr>
-      </tbody>
-    </table>
+      <table class="obs">
+        <tbody>
+          <tr>
+            <td style="width: 12%;" valign="top"><strong>Observaciones</strong></td>
+            <td style="width: 1%;" valign="top">:</td>
+            <td style="width: 87%;" valign="top">{{ $detalles->observaciones }}</td>
+          </tr>
+        </tbody>
+      </table>
     @endif
 
     <h5>I. Datos generales:</h5>
@@ -247,13 +247,13 @@
       </tbody>
     </table>
 
-    <h5>III. Aportes:</h5>
+    <h5>Aportes:</h5>
 
     <div class="desc">
       {!! $detalles->infinal1 !!}
     </div>
 
-    <h5>IV. Publicación académica:</h5>
+    <h5>III. Publicación académica:</h5>
 
     <h6>3.1 Tipo de publicacion</h6>
     <div class="desc">

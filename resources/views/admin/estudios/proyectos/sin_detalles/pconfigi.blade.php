@@ -14,22 +14,6 @@
 </head>
 
 <body>
-  <<h5 class="section-title">Título del proyecto:</h5>
-  <div class="text">{{ $proyecto->titulo }}</div>
-
-  <h5 class="section-title">Código del proyecto:</h5>
-  <div class="text">{{ $proyecto->codigo_proyecto }}</div>
-
-    {{-- AUTORES / INTEGRANTES --}}
-  <h5 class="section-title">Autores:</h5>
-  <div class="text">
-    <ul>
-      @foreach ($integrantes as $i)
-        <li>{{ $i->nombres }} ({{ $i->condicion }})</li>
-      @endforeach
-    </ul>
-  </div>
-
   <h5>Resumen ejecutivo:</h5>
   <div style="font-size: 11px; text-align: justify;">{!! $detalles['resumen_ejecutivo'] !!}</div>
 

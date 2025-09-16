@@ -5,17 +5,9 @@ namespace App\Http\Controllers\Admin\Reportes;
 use App\Http\Controllers\Controller;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Http\Request;
 
 class DocenteController extends Controller {
-  public function reporte(Request $request, $investigador_id) {
-    $adminId = $request->attributes->get('token_decoded')->id;
-    $admin = DB::table('Usuario_admin AS admin')
-      ->join('Usuario AS ux', 'admin.id', '=', 'ux.tabla_id')
-      ->select('ux.username as nombres')
-      ->where('admin.id', '=', $adminId)
-      ->first();
-
+  public function reporte($investigador_id) {
     //  ANTIGUOS
     $proyectos_antiguos = DB::table('Proyecto_integrante_H AS a')
       ->join('Proyecto_H AS b', 'b.id', '=', 'a.proyecto_id')
@@ -58,8 +50,7 @@ class DocenteController extends Controller {
     $pdf = Pdf::loadView('admin.reportes.docentePDF', [
       'proyectos_antiguos' => $proyectos_antiguos,
       'proyectos_nuevos' => $proyectos_nuevos,
-      'investigador' => $investigador,
-      'admin' => $admin,
+      'investigador' => $investigador
     ]);
     return $pdf->stream();
   }

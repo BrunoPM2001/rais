@@ -277,7 +277,10 @@
   <h5>V. Antecedentes:</h5>
 
   <div class="desc">
-      {!! $detalles['antecedentes'] ?? '' !!}
+      {{-- {!! $detalles['antecedentes'] !!} --}}
+      @if (!empty($datos['antecedentes']))
+          {{ $datos['antecedentes'] }}
+      @endif
   </div>
 
 
@@ -296,7 +299,10 @@
   <h5>VIII. Hipótesis:</h5>
 
   <div class="desc">
-      {!! $detalles['hipotesis'] ?? '' !!}
+      {{-- {!! $detalles['hipotesis'] !!} --}}
+      @if (!empty($datos['hipotesis']))
+      {{ $datos['hipotesis'] }}
+  @endif
   </div>
 
   <h5>IX. Objetivos:</h5>

@@ -326,9 +326,9 @@ class PsinfinvController extends S3Controller {
       'estado' => true,
       'descripcion' => $descripcion,
       'palabras_clave' => $palabras_clave->palabras_clave,
-      'documentos' => [
-        'METODOLOGIA_TRABAJO' => $archivo1?->url,
-        'PROPIEDAD_INTELECTUAL' => $archivo2?->url,
+      'archivos' => [
+        'metodologia' => $archivo1?->url,
+        'propiedad' => $archivo2?->url,
       ]
     ];
   }

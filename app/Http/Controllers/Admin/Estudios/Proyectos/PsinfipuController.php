@@ -7,7 +7,6 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Database\Query\JoinClause;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 class PsinfipuController extends Controller {
   public function detalle(Request $request) {
@@ -178,11 +177,6 @@ class PsinfipuController extends Controller {
       ->where('a.id', '=', $request->query('proyecto_id'))
       ->first();
 
-    $proyecto_base_detalle = DB::table('Proyecto_descripcion')
-      ->where('proyecto_id', $request->query('proyecto_id'))
-      ->where('codigo', 'investigacion_base')
-      ->value('detalle');
-
     $detalles = DB::table('Proyecto_descripcion')
       ->select([
         'codigo',
@@ -242,7 +236,6 @@ class PsinfipuController extends Controller {
       'integrantes' => $integrantes,
       'detalles' => $detalles,
       'actividades' => $actividades,
-      'proyecto_base_detalle' => $proyecto_base_detalle, // ✅ texto libre
     ]);
     return $pdf->stream();
   }

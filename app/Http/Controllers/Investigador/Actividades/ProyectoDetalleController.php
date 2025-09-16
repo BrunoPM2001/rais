@@ -7,7 +7,6 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Database\Query\JoinClause;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 class ProyectoDetalleController extends Controller {
   public function detalleProyecto(Request $request) {
@@ -202,9 +201,6 @@ class ProyectoDetalleController extends Controller {
   }
 
   public function reporteConFin(Request $request) {
-    $id = $request->query('id');
-    Log::info("📄 [reporteConFin] Generando reporte para proyecto ID: {$id}");
-    
     $proyecto = DB::table('Proyecto AS a')
       ->leftJoin('Grupo AS b', function (JoinClause $join) {
         $join->on('a.grupo_id', '=', 'b.id')
@@ -243,23 +239,19 @@ class ProyectoDetalleController extends Controller {
           ELSE 'Sin estado'
         END AS estado")
       ])
-      ->where('a.id', '=', $id)
+      ->where('a.id', '=', $request->query('id'))
       ->first();
-
-    Log::info("[reporteConFin] Proyecto:", (array) $proyecto);
 
     $detalles = DB::table('Proyecto_descripcion')
       ->select([
         'codigo',
         'detalle'
       ])
-      ->where('proyecto_id', '=', $id)
+      ->where('proyecto_id', '=', $request->query('id'))
       ->get()
       ->mapWithKeys(function ($item) {
         return [$item->codigo => $item->detalle];
       });
-
-    Log::info("[reporteConFin] Detalles del proyecto:", $detalles->toArray());
 
     $calendario = DB::table('Proyecto_actividad')
       ->select([
@@ -267,10 +259,8 @@ class ProyectoDetalleController extends Controller {
         'fecha_inicio',
         'fecha_fin'
       ])
-      ->where('proyecto_id', '=', $id)
+      ->where('proyecto_id', '=', $request->query('id'))
       ->get();
-
-    Log::info("[reporteConFin] Actividades del proyecto:", $calendario->toArray());
 
     $integrantes = DB::table('Proyecto_integrante AS a')
       ->join('Proyecto_integrante_tipo AS b', 'b.id', '=', 'a.proyecto_integrante_tipo_id')
@@ -282,15 +272,10 @@ class ProyectoDetalleController extends Controller {
         'a.tipo_tesis',
         'a.titulo_tesis'
       ])
-      ->where('a.proyecto_id', '=', $id)
+      ->where('a.proyecto_id', '=', $request->query('id'))
       ->get();
 
-    Log::info("[reporteConFin] Integrantes:", $integrantes->toArray());
-
     $pdf = Pdf::loadView('investigador.actividades.reporte', ['proyecto' => $proyecto, 'detalles' => $detalles, 'calendario' => $calendario, 'integrantes' => $integrantes]);
-    
-    Log::info("✅ [reporteConFin] PDF generado correctamente para proyecto ID: {$id}");
-    
     return $pdf->stream();
   }
 

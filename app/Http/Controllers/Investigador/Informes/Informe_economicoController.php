@@ -254,9 +254,9 @@ class Informe_economicoController extends S3Controller {
         ->orderByDesc('created_at')
         ->get();
 
-      //  Informe de cumplimiento //CAMBIAR AQUI EL 35 Y 70 %
+      //  Informe de cumplimiento
       $informe = [];
-      if ($porcentaje < 35) {
+      if ($porcentaje < 70) {
         $informe = ['estado' => 2];
       } else {
         $informe = $this->integrantesCumplimiento($request);
@@ -468,7 +468,6 @@ class Informe_economicoController extends S3Controller {
             'monto_exterior',
             'pais_emisor',
             'tipo_moneda',
-            'tipo_documento',
             'fecha',
           ])
           ->where('id', '=', $request->query('id'))
@@ -586,7 +585,6 @@ class Informe_economicoController extends S3Controller {
             'prestador' => $request->input('prestador'),
             'descripcion_compra' => $request->input('descripcion_compra'),
             'monto_exterior' => $request->input('monto_exterior'),
-            'tipo_documento' => $request->input('tipo_documento') == "" ? null : $request->input('tipo_documento'),
             'pais_emisor' => $request->input('pais_emisor'),
             'tipo_moneda' => $request->input('tipo_moneda'),
             'ruc' => $request->input('ruc'),
@@ -627,7 +625,6 @@ class Informe_economicoController extends S3Controller {
             'numero' => $request->input('numero'),
             'numero_doc' => $request->input('numero_doc'),
             'prestador' => $request->input('prestador'),
-            'tipo_documento' => $request->input('tipo_documento'),
             'investigador_id' => $request->input('investigador_id'),
             'descripcion_compra' => $request->input('descripcion_compra'),
             'ruc' => $request->input('ruc'),
@@ -666,7 +663,6 @@ class Informe_economicoController extends S3Controller {
             'numero' => $request->input('numero'),
             'numero_doc' => $request->input('numero_doc'),
             'prestador' => $request->input('prestador'),
-            'tipo_documento' => $request->input('tipo_documento'),
             'investigador_id' => $request->input('investigador_id'),
             'descripcion_compra' => $request->input('descripcion_compra'),
             'ruc' => $request->input('ruc'),

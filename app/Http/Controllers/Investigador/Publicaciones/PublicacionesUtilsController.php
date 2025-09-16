@@ -767,10 +767,20 @@ class PublicacionesUtilsController extends S3Controller {
   }
 
   public function reporte(Request $request) {
-    $esAutor = DB::table('Publicacion_autor')
-      ->where('publicacion_id', '=', $request->query('publicacion_id'))
-      ->where('investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
-      ->count();
+
+    $esAutor = 0;
+
+    if ($request->query('tipo') == "patente") {
+      $esAutor = DB::table('Patente_autor')
+        ->where('patente_id', '=', $request->query('id'))
+        ->where('investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+        ->count();
+    } else {
+      $esAutor = DB::table('Publicacion_autor')
+        ->where('publicacion_id', '=', $request->query('id'))
+        ->where('investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+        ->count();
+    }
 
     if ($esAutor > 0) {
       switch ($request->query('tipo')) {
@@ -797,6 +807,10 @@ class PublicacionesUtilsController extends S3Controller {
           break;
         case "evento":
           $util = new EventoController();
+          return $util->reporte($request);
+          break;
+        case "patente":
+          $util = new PropiedadIntelectualController();
           return $util->reporte($request);
           break;
         default:

@@ -323,8 +323,9 @@ class GruposController extends S3Controller {
       ->join('Grupo AS b', 'b.id', '=', 'a.grupo_id')
       ->join('Linea_investigacion AS c', 'c.id', '=', 'a.linea_investigacion_id')
       ->select(
-        'a.linea_investigacion_id AS value',
-        'c.nombre AS label'
+        'a.id',
+        'c.codigo',
+        'c.nombre',
       )
       ->whereNull('a.concytec_codigo')
       ->where('a.grupo_id', '=', $request->query('grupo_id'))
@@ -1416,6 +1417,9 @@ class GruposController extends S3Controller {
       ])
       ->whereNot('condicion', 'LIKE', 'Ex%')
       ->where('a.grupo_id', '=', $request->query('id'))
+      ->orderByDesc('a.cargo')
+      ->orderByDesc('a.condicion')
+      ->orderBy('nombres')
       ->get();
 
     $lineas = DB::table('Grupo_linea AS a')

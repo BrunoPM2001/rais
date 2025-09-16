@@ -38,6 +38,7 @@ class ProyectoFEXController extends S3Controller {
       )
       ->where('b.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
       ->whereIn('a.tipo_proyecto', ['PFEX'])
+      ->whereNotIn('a.estado', [-1])
       ->orderByDesc('a.periodo')
       ->get();
 
@@ -68,6 +69,7 @@ class ProyectoFEXController extends S3Controller {
       ])
       ->where('b.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
       ->where('a.tipo', '=', 'SIN-CON')
+      ->whereNotIn('a.status', [-1])
       ->orderByDesc('a.periodo')
       ->get();
 

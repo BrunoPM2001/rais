@@ -43,12 +43,6 @@ class Usuario_investigadorController extends Controller {
   }
 
   public function searchInvestigadorBy(Request $request) {
-    $value = $request->query('query');
-
-    if (!$value || trim($value) === "") {
-        return response()->json([], 200);
-    }
-
     $investigadores = DB::table('Usuario_investigador AS a')
       ->select(
         DB::raw("CONCAT(TRIM(a.codigo), ' | ', a.doc_numero, ' | ', a.apellido1, ' ', a.apellido2, ', ', a.nombres) AS value"),
@@ -59,19 +53,12 @@ class Usuario_investigadorController extends Controller {
         'a.apellido2',
         'a.nombres',
       )
-      ->groupBy(
-        'a.id',
-        'a.codigo',
-        'a.doc_numero',
-        'a.apellido1',
-        'a.apellido2',
-        'a.nombres'
-      )
-      ->having('value', 'LIKE', '%' . $value . '%')
+      ->having('value', 'LIKE', '%' . $request->query('query') . '%')
+      ->groupBy('a.id')
       ->limit(10)
       ->get();
 
-    return response() -> json($investigadores);
+    return $investigadores;
   }
 
   public function searchConstanciaBy(Request $request) {

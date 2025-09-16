@@ -114,7 +114,7 @@
 
 <body>
   <div class="head-1">
-    <img src="{{ base_path('public/head-pdf.jpg') }}" alt="Header">
+    <img src="{{ public_path('head-pdf.jpg') }}" alt="Header">
   </div>
   <div class="head-2">
     <p class="rais">© RAIS</p>
@@ -246,7 +246,7 @@
         <tr>
           <td style="width: 24%;" valign="top"><strong>Investigación UNMSM</strong></td>
           <td style="width: 1%;" valign="top">:</td>
-          <td style="width: 75%;" valign="top">{{ $proyecto_base_detalle ?? 'No se registró investigación base' }}</td>
+          <td style="width: 75%;" valign="top">{{ $proyecto_base->titulo }}</td>
         </tr>
       </tbody>
     </table>

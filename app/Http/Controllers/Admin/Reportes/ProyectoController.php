@@ -106,7 +106,7 @@ class ProyectoController extends Controller {
         $tipo = 'Proyectos de Investigación con Financiamiento para Grupos de Investigación';
         break;
       case 'PCONFIGI-INV':
-        $tipo = 'Proyectos de Innovación para  Grupos de Investigación “INNOVA SAN MARCOS”';
+        $tipo = 'Proyectos de Innovación para  Grupos de Investigación “INNOVA SAN MARCOS';
         break;
       case 'PRO-CTIE':
         $tipo = 'Proyectos de Ciencia, Tecnología, Innovación y Emprendimiento (PRO-CTIE) para Estudiantes de la UNMSM';

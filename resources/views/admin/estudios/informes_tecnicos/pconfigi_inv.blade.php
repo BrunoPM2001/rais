@@ -111,6 +111,7 @@
     .desc {
       font-size: 10px;
     }
+
     .obs {
       background-color: #ff9a9a;
       border-radius: 2px;
@@ -140,10 +141,10 @@
     <br>
   </div>
   <div class="div"></div>
-  <div class="foot-1">RAIS - Registro de Actividades de Investigación de San Marcos</div>
+  <div class="foot-1">RAIS - UNMSM - {{ $proyecto->codigo_proyecto }} - {{ $detalles->id }}</div>
   <p class="titulo">
     <strong>
-      Proyectos de investigación para grupos de investigación
+      Proyectos de innovación para grupos de investigación
     </strong>
   </p>
 
@@ -172,17 +173,17 @@
   </p>
 
   <div class="cuerpo">
-    
+
     @if ($detalles->estado == 3)
-    <table class="obs">
-      <tbody>
-        <tr>
-          <td style="width: 12%;" valign="top"><strong>Observaciones</strong></td>
-          <td style="width: 1%;" valign="top">:</td>
-          <td style="width: 87%;" valign="top">{{ $detalles->observaciones }}</td>
-        </tr>
-      </tbody>
-    </table>
+      <table class="obs">
+        <tbody>
+          <tr>
+            <td style="width: 12%;" valign="top"><strong>Observaciones</strong></td>
+            <td style="width: 1%;" valign="top">:</td>
+            <td style="width: 87%;" valign="top">{{ $detalles->observaciones }}</td>
+          </tr>
+        </tbody>
+      </table>
     @endif
 
     <h5>I. Datos generales:</h5>

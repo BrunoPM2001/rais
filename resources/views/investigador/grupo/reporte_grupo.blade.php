@@ -211,9 +211,9 @@
     <table class="table">
       <thead>
         <tr>
+          <th style="width: 15%;">Tipo de Investigador</th>
           <th style="width: 10%;">Dni</th>
           <th style="width: 40%;">Nombres</th>
-          <th style="width: 15%;">Tipo de Investigador</th>
           <th style="width: 15%;">Vínculo UNMSM</th>
           <th style="width: 20%;">Facultad</th>
         </tr>
@@ -228,9 +228,9 @@
         @endif
         @foreach ($integrantes as $item)
           <tr>
+            <td>{{ $item->condicion }}</td>
             <td>{{ $item->doc_numero }}</td>
             <td>{{ $item->nombres }}</td>
-            <td>{{ $item->condicion }}</td>
             <td>{{ $item->tipo }}</td>
             <td>{{ $item->facultad }}</td>
           </tr>
