@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Investigador\Publicaciones;
 
 use App\Http\Controllers\S3Controller;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Database\Query\JoinClause;
 use Illuminate\Http\Request;
@@ -295,6 +296,50 @@ class PropiedadIntelectualController extends S3Controller {
       ->delete();
 
     return ['message' => 'info', 'detail' => 'Autor eliminado'];
+  }
+
+  public function reporte(Request $request) {
+    $patente = DB::table('Patente AS a')
+      ->select([
+        'a.titulo',
+        'a.nro_registro',
+        'a.tipo',
+        'a.estado',
+        'a.updated_at',
+      ])
+      ->where('a.id', '=', $request->query('id'))
+      ->first();
+
+    $entidades = DB::table('Patente_entidad')
+      ->select([
+        'id',
+        'titular'
+      ])
+      ->where('patente_id', '=', $request->query('id'))
+      ->get();
+
+    $autores = DB::table('Patente_autor AS a')
+      ->leftJoin('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
+      ->select([
+        'a.id',
+        'a.condicion',
+        DB::raw("COALESCE(CONCAT(b.apellido1, ' ', b.apellido2, ', ', b.nombres), CONCAT(a.apellido1, ' ', a.apellido2, ', ', a.nombres)) AS nombres"),
+        DB::raw("IFNULL(b.tipo, 'Externo') AS tipo"),
+        DB::raw("CASE(a.es_presentador)
+          WHEN 1 THEN 'Sí'
+          ELSE 'No'
+        END AS es_presentador")
+      ])
+      ->where('patente_id', '=', $request->query('id'))
+      ->get();
+
+    $pdf = Pdf::loadView('investigador.publicaciones.patente', [
+      'patente' => $patente,
+      'entidades' => $entidades,
+      'autores' => $autores
+    ]);
+
+    return $pdf->stream();
   }
 
   //  Verificar
