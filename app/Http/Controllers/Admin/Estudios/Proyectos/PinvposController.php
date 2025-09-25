@@ -16,7 +16,7 @@ class PinvposController extends Controller {
         $join->on('b.proyecto_id', '=', 'a.id')
           ->where('b.condicion', '=', 'Responsable');
       })
-      ->leftJoin('Proyecto_integrante_dedicado AS c', 'c.investigador_id', '=', 'b.investigador_id')
+      ->leftJoin('Usuarios_cargo AS c', 'c.investigador_id', '=', 'b.investigador_id')
       ->leftJoin('Facultad AS d', 'd.id', '=', 'c.facultad_id')
       ->select(
         'a.titulo',

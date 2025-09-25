@@ -23,6 +23,7 @@ class ProyectoController extends Controller {
     $facultad = $request->query('facultad');
     $periodo = $request->query('periodo');
     $tipo = $request->query('tipo_proyecto');
+    $ocultarPresupuesto = in_array($tipo, ['PSINFIPU', 'PSINFINV']);
 
     $proyectos = DB::table('Proyecto as a')
       ->leftJoin('Proyecto_integrante as b', 'a.id', '=', 'b.proyecto_id')
@@ -120,6 +121,9 @@ class ProyectoController extends Controller {
       case 'PMULTI':
         $tipo = 'Proyectos multidisciplinarios';
         break;
+      case 'PSINFINV':
+        $tipo = 'Proyectos de Investigación Con Recursos No Monetarios para Grupos de Investigación';
+        break;
       default:
         $tipo = 'Tipo de Proyecto Desconocido';
     }
@@ -131,6 +135,7 @@ class ProyectoController extends Controller {
       'area' => $area,
       'admin' => $admin,
       'qr' => $qrCode,
+      'ocultarPresupuesto' => $ocultarPresupuesto,
     ]);
     return $pdf->stream();
   }

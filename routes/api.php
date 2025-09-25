@@ -916,6 +916,12 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
       Route::get('reporte', [PinvposController::class, 'reporte']);
       Route::post('enviar', [PinvposController::class, 'enviar']);
 
+      Route::get('listarIntegrantes', [PinvposController::class, 'listarIntegrantes']);
+      Route::get('searchIntegrante', [PinvposController::class, 'searchIntegrante']);
+      Route::get('verificarIntegrante', [PinvposController::class, 'verificarIntegrante']);
+      Route::post('agregarIntegrante', [PinvposController::class, 'agregarIntegrante']);
+      Route::delete('eliminarIntegrante', [PinvposController::class, 'eliminarIntegrante']);
+
       Route::post('agregarActividad', [PinvposController::class, 'agregarActividad']);
       Route::put('actualizarActividad', [PinvposController::class, 'actualizarActividad']);
       Route::delete('eliminarActividad', [PinvposController::class, 'eliminarActividad']);

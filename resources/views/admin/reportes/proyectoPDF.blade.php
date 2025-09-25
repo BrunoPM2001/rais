@@ -228,7 +228,7 @@
         <td style="text-align: left; width: 70%;">
           Área: {{ $area->sigla . ' ' . $area->nombre }}
         </td>
-        <td style="text-align: right; width: 30%;">
+        <td style="text-align: right; width: 80%;">
           Facultad: {{ $area->facultad }}
         </td>
       </tr>
@@ -311,7 +311,9 @@
               <th style="width: 1%;">N°</th>
               <th style="width: 4%;">Código</th>
               <th style="width: 70%; text-align: center;">Título del proyecto</th>
+              @if (!$ocultarPresupuesto)
               <th style="width: 10%;">Presupuesto</th>
+              @endif
             </tr>
           </thead>
           <tbody>
@@ -319,7 +321,9 @@
               <td>{{ $numProyecto }}</td>
               <td>{{ $item->codigo_proyecto }}</td>
               <td style="font-style: italic;"><b>{{ mb_strtoupper($item->titulo, 'UTF-8') }}</b></td>
+              @if (!$ocultarPresupuesto)
               <td><b>S/ {{ number_format($item->presupuesto, 2, '.', ',') }}</b></td>
+              @endif
             </tr>
           </tbody>
         </table>

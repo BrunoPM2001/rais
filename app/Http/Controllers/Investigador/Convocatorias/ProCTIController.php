@@ -486,14 +486,18 @@ class ProCTIController extends S3Controller {
       $errores[] = 'Ya es participante en otro proyecto PRO-CTIE de este año.';
     }
 
-    $req2 = DB::table('Proyecto_integrante AS a')
-      ->join('Proyecto AS b', 'b.id', '=', 'a.proyecto_id')
-      ->where('a.investigador_id', '=', $request->query('investigador_id'))
-      ->where('b.estado', [1, 8, 9, 10, 11])
-      ->count();
+    $investigador_id = $request->query('investigador_id');
+    if (!empty($investigador_id)) {
+      $req2 = DB::table('Proyecto_integrante AS a')
+        ->join('Proyecto AS b', 'b.id', '=', 'a.proyecto_id')
+        ->where('a.investigador_id', '=', $request->query('investigador_id'))
+        ->where('b.estado', [1, 8, 9, 10, 11])
+        ->where('a.proyecto_integrante_tipo_id', [5, 11, 16, 18, 20, 40, 47, 59, 67, 77])
+        ->count();   
 
-    if ($req2 > 0) {
-      $errores[] = 'Ya ha participado en algún otro proyecto aprobado';
+      if ($req2 > 0) {
+        $errores[] = 'Ya ha participado en algún otro proyecto aprobado';
+      }
     }
 
     if (!empty($errores)) {

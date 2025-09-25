@@ -36,6 +36,8 @@ class ProyectosGrupoController extends S3Controller {
       ->leftJoin('Facultad AS e', 'e.id', '=', 'b.facultad_id')
       ->leftJoin('Proyecto_presupuesto AS f', 'f.proyecto_id', '=', 'a.id')
       ->leftJoin('Usuario_investigador AS g', 'g.id', '=', 'd.investigador_id')
+      ->leftJoin('Usuarios_cargo AS h', 'h.investigador_id', '=', 'd.investigador_id')
+      ->leftJoin('Facultad AS i', 'i.id', '=', 'h.facultad_id')
       ->select(
         'a.id',
         'a.tipo_proyecto',
@@ -44,7 +46,12 @@ class ProyectosGrupoController extends S3Controller {
         'a.titulo',
         DB::raw('CONCAT(g.apellido1, " " , g.apellido2, ", ", g.nombres) AS responsable'),
         'b.grupo_nombre',
-        'e.nombre AS facultad',
+        DB::raw("
+          CASE
+            WHEN a.tipo_proyecto = 'PINVPOS' THEN i.nombre
+            ELSE e.nombre
+          END AS facultad
+        "),
         DB::raw('SUM(f.monto) AS monto'),
         'a.resolucion_rectoral',
         'a.updated_at',
