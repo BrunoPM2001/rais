@@ -111,8 +111,8 @@ class PinvposController extends S3Controller {
 public function listarIntegrantes(Request $request)
 {
     $integrantes = DB::table('Proyecto_integrante AS a')
-        ->join('Usuarios_cargo AS b', 'b.investigador_id', '=', 'a.investigador_id')  // Obtener datos del investigador
-        ->leftJoin('Facultad AS c', 'c.id', '=', 'b.facultad_id')  // Obtener datos de la facultad (si existe)
+        ->join('Usuarios_cargo AS b', 'b.investigador_id', '=', 'a.investigador_id') 
+        ->leftJoin('Facultad AS c', 'c.id', '=', 'b.facultad_id') 
         ->leftJoin('Usuario_investigador AS d', 'd.id', '=', 'a.investigador_id')  // Obtener el código del investigador
         ->join('Proyecto_integrante_tipo AS e', 'e.id', '=', 'a.proyecto_integrante_tipo_id')  // Obtener el tipo de integrante
         ->select(
@@ -128,7 +128,7 @@ public function listarIntegrantes(Request $request)
             'b.email AS email3'
         )
         ->where('a.proyecto_id', '=', $request->query('proyecto_id'))
-        ->whereIn('b.cargo', ['Vicedecano de Investigacion y Posgrado', 'Vicedecano Académico', 'Director Unidad Inst Invest', 'Director UPG'])  // Agregar filtro de cargos
+        ->whereIn('b.cargo', ['Vicedecano de Investigacion y Posgrado', 'Vicedecano Académico', 'Director Unidad Inst Invest', 'Director UPG', 'Directores Centros Ins Inv'])  // Agregar filtro de cargos
         ->distinct()
         ->get();
 
@@ -153,7 +153,11 @@ public function searchIntegrante(Request $request) {
             'a.email',
         )
         ->where('a.facultad_id', '=', $facultad_id_usuario)
-        ->whereIn('a.cargo', ['Vicedecano Académico', 'Director Unidad Inst Invest', 'Director UPG'])
+        ->whereIn('a.cargo', ['Vicedecano Académico', 'Director Unidad Inst Invest', 'Director UPG', 'Directores Centros Ins Inv'])
+        ->where(function ($q) {
+          $q->where('a.cargo', '!=', 'Directores Centros Ins Inv')
+          ->orWhereNotNull('a.investigador_id');
+          })
         ->limit(10)
         ->get();
 

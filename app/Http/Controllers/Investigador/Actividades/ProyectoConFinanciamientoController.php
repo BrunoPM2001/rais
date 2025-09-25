@@ -104,7 +104,7 @@ class ProyectoConFinanciamientoController extends S3Controller {
         $tipo = 'DECLARACIÓN JURADA DE CUMPLIMIENTO PARA RECIBIR ASIGNACIÓN FINANCIERA AL PROYECTO DE INVESTIGACIÓN PARA GRUPOS DE INVESTIGACIÓN DE LA UNMSM';
         break;
       case 'PCONFIGI-INV':
-        $tipo = 'Proyectos de Innovación para  Grupos de Investigación “INNOVA SAN MARCOS';
+        $tipo = 'Proyectos de Innovación para  Grupos de Investigación "INNOVA SAN MARCOS"';
         break;
       case 'PRO-CTIE':
         $tipo = 'Proyectos de Ciencia, Tecnología, Innovación y Emprendimiento (PRO-CTIE) para Estudiantes de la UNMSM';
