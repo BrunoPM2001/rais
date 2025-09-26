@@ -116,7 +116,6 @@ class Informe_academicoController extends S3Controller {
                   END
                as estado")
         ])
-
         ->whereIn('a.estado', [1, 8])
         ->where('b.investigador_id', $request->attributes->get('token_decoded')->investigador_id);
     }, 'temp')
@@ -156,7 +155,7 @@ class Informe_academicoController extends S3Controller {
         $query->whereIn(DB::raw('COALESCE(t5.condicion, t5.proyecto_integrante_tipo_id)'), ['Responsable', 'Asesor', 7]);
       })
       ->where('t3.estado', 1)
-      ->where('t2.estado', 1)
+      ->whereIn('t2.estado', [1, 8])
       ->where('t2.periodo', '>', 2016)
       ->where('t5.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
       ->where(DB::raw("

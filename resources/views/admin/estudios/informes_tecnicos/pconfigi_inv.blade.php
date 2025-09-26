@@ -141,6 +141,7 @@
     <br>
   </div>
   <div class="div"></div>
+
   <div class="foot-1">RAIS - UNMSM - {{ $proyecto->codigo_proyecto }} - {{ $detalles->id }}</div>
   <p class="titulo">
     <strong>
