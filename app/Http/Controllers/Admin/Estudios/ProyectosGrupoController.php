@@ -646,6 +646,9 @@ class ProyectosGrupoController extends S3Controller {
       case "PCONFIGI-INV":
         $ctrl = new PconfigiInvController();
         return $ctrl->reporte($request);
+      case "PRO-CTIE":
+        $ctrl = new ProCtieController();
+        return $ctrl->reporte($request);
       default:
     }
   }
