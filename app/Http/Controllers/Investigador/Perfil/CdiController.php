@@ -46,9 +46,9 @@ class CdiController extends S3Controller {
         'a.condicion',
       ])
       ->where('a.investigador_id', '=', $investigador_id)
+      ->where('b.estado', '=', 4)
       ->whereNot('a.condicion', 'LIKE', 'Ex%')
       ->first();
-
 
     //  Proyectos (a)
     $req3A = DB::table('Proyecto AS a')
@@ -105,6 +105,21 @@ class CdiController extends S3Controller {
       ->whereIn(DB::raw("YEAR(a.fecha_publicacion)"), $lastTwoYears)
       ->get();
 
+    $req3Total = $req3A->merge($req3B)->merge($req3C);
+
+    // Inicializar un array para verificar la presencia de los años
+    $yearsFound = array_fill_keys($lastTwoYears, false);
+
+    // Recorrer el array y marcar los años encontrados
+    foreach ($req3Total as $element) {
+      if (in_array((int)$element->periodo, $lastTwoYears)) {
+        $yearsFound[(int)$element->periodo] = true;
+      }
+    }
+
+    // Verificar si se encontraron los dos años
+    $allYearsFound = !in_array(false, $yearsFound);
+
     $req4 = DB::table('Publicacion AS a')
       ->join('Publicacion_autor AS b', 'b.publicacion_id', '=', 'a.id')
       ->leftJoin('Publicacion_index AS c', 'c.publicacion_id', '=', 'a.id')
@@ -125,11 +140,19 @@ class CdiController extends S3Controller {
               ELSE '-'
             END AS filiacion_unica"),
       ])
+      ->whereNotIn('a.tipo_publicacion', ['tesis-asesoria', 'tesis'])
       ->where('b.investigador_id', '=', $investigador_id)
       ->where('a.estado', '=', 1)
       ->whereIn(DB::raw("YEAR(a.fecha_publicacion)"), $lastTwoYears)
       ->groupBy('a.id')
       ->get();
+
+    $filiacion = 0;
+    foreach ($req4 as $item) {
+      if ($item->filiacion != "Sí" || $item->filiacion_unica != "Sí") {
+        $filiacion++;
+      }
+    }
 
     $req5 = DB::table('Proyecto_integrante AS a')
       ->join('Proyecto_integrante_deuda AS b', 'b.proyecto_integrante_id', '=', 'a.id')
@@ -152,11 +175,16 @@ class CdiController extends S3Controller {
     return [
       'req1' => $req1,
       'req2' => $req2,
-      'req3' => $req3A->merge($req3B)->merge($req3C),
+      'req3' => $req3Total,
       'req4' => $req4,
       'req5' => $req5,
       'actividades_extra' => $actividades_extra,
-      'rrhh' => $rrhh
+      'rrhh' => $rrhh,
+      'req1Val' => $req1?->renacyt_nivel != "" ? true : false,
+      'req2Val' => $req2?->grupo_nombre != "" ? true : false,
+      'req3Val' => $allYearsFound,
+      'req4Val' => $filiacion == 0 && sizeof($req4),
+      'req5Val' => sizeof($req5) == 0 ? true : false,
     ];
   }
 
@@ -190,6 +218,7 @@ class CdiController extends S3Controller {
       ])
       ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
       ->where('b.id', '=', $solicitud->d2)
+      ->where('b.estado', '=', 4)
       ->whereNot('a.condicion', 'LIKE', 'Ex%')
       ->first();
 
@@ -259,7 +288,7 @@ class CdiController extends S3Controller {
         'valor' => $solicitud->d1,
       ],
       'd2' => [
-        'cumple' => $d2 != "" ? true : false,
+        'cumple' => $d2?->grupo_nombre != "" ? true : false,
         'valor' => $d2,
       ],
       'd3' => [
@@ -269,6 +298,7 @@ class CdiController extends S3Controller {
       'd4' => [
         'cumple' => $filiacion == 0 && sizeof($d4) > 0,
         'lista' => $d4,
+        'filiacion' => $filiacion,
       ],
       'd5' => [
         'cumple' => sizeof($d5) == 0 ? true : false,
@@ -705,6 +735,7 @@ class CdiController extends S3Controller {
       ->where('a.cti_vitae', '!=', '')
       ->whereNot('a.renacyt_nivel', 'LIKE', '%worows%')
       ->whereNot('a.renacyt_nivel', 'LIKE', '%Monge%')
+      ->where('a.renacyt_nivel', '!=', '-')
       ->where('a.google_scholar', '!=', '')
       ->count();
   }
