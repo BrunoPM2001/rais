@@ -141,6 +141,10 @@
     <br>
   </div>
   <div class="div"></div>
+<<<<<<< HEAD
+=======
+
+>>>>>>> 6a8a7db3aa1bfaca7dbf7462dbf2b9e71fa68a40
   <div class="foot-1">RAIS - UNMSM - {{ $proyecto->codigo_proyecto }} - {{ $detalles->id }}</div>
   <p class="titulo">
     <strong>

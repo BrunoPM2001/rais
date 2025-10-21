@@ -62,9 +62,19 @@ class ProyectoController extends Controller {
       ->where('a.facultad_id', '=', $facultad)
       ->where('a.periodo', '=', $periodo)
       ->whereIn('a.estado', [1, 8])
-      ->where(function ($query) {
-        $query->where('i.condicion', 'not like', 'Ex%')
-          ->orWhereNull('i.condicion');
+      ->where(function ($query) use ($tipo) {
+          $query->where(function ($sub) {
+              $sub->where('i.condicion', 'not like', 'Ex%')
+                  ->orWhereNull('i.condicion');
+          });
+          if ($tipo === 'PRO-CTIE') {
+              $query->orWhereIn('c.id', function ($sub2) {
+                  $sub2->select('gi2.investigador_id')
+                      ->from('Grupo_integrante as gi2')
+                      ->groupBy('gi2.investigador_id')
+                      ->havingRaw('COUNT(*) = 1 AND SUM(gi2.condicion LIKE "Ex%") = 1');
+              });
+          }
       })
       ->orderByRaw('f.grupo_nombre, 
       a.codigo_proyecto, 
@@ -85,7 +95,7 @@ class ProyectoController extends Controller {
         70, 71,
         74, 75, 76, 77, 78, 79, 80, 81,
         83, 84, 85,
-        86, 88,
+        86, 88, 87,
         92, 93, 94
       ),
       c.apellido1, c.apellido2, c.nombres')

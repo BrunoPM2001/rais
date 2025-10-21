@@ -141,7 +141,7 @@
     <br>
   </div>
   <div class="div"></div>
-  <div class="foot-1">RAIS - Registro de Actividades de Investigación de San Marcos</div>
+  <div class="foot-1">RAIS - UNMSM - {{ $proyecto->codigo_proyecto }} - {{ $detalles->id }}</div>
   <p class="titulo">
     <strong>
       Proyectos de investigación con recursos no monetarios para grupos de investigación (proyectos de publicación

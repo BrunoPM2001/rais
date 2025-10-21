@@ -14,7 +14,7 @@
   <title>Reporte</title>
   <style>
     @page {
-      margin-top: 200px;
+      margin-top: 230px;
       /* espacio reservado para el encabezado */
       margin-bottom: 80px;
       /* para el pie de página */
@@ -46,14 +46,15 @@
 
     header {
       position: fixed;
-      top: -170px;
+      top: -200px;
       left: 0;
       right: 0;
-      height: 100px;
+      height: 120px;
     }
 
     .content {
-      margin-top: 2px;
+      margin-top: 0px;
+      padding-top: 0px;
     }
 
     .header-center {

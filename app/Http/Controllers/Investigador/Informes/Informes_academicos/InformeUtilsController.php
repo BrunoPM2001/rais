@@ -179,6 +179,10 @@ class InformeUtilsController extends S3Controller {
 
   public function reporte(Request $request) {
     switch ($request->query('tipo_proyecto')) {
+      case "ECI":
+        $util = new InformeEciController();
+        return $util->reporte($request);
+        break;
       case "PCONFIGI":
         $util = new InformePconfigiController();
         return $util->reporte($request);
@@ -187,6 +191,13 @@ class InformeUtilsController extends S3Controller {
         $util = new InformePconfigiInvController();
         return $util->reporte($request);
         break;
+      case "PINTERDIS":
+        $util = new InformePinterdisController();
+        return $util->reporte($request);
+        break;
+      case "PRO-CTIE":
+        $util = new InformeProCtieController();
+        return $util->reporte($request);
       case "PSINFINV":
         $util = new InformePsinfinvController();
         return $util->reporte($request);
@@ -195,8 +206,17 @@ class InformeUtilsController extends S3Controller {
         $util = new InformePsinfipuController();
         return $util->reporte($request);
         break;
-      case "PRO-CTIE":
-        $util = new InformeProCtieController();
+      case "PTPBACHILLER":
+        $util = new InformePtpbachillerController();
+        return $util->reporte($request);
+      case "PTPDOCTO":
+        $util = new InformePtpdoctoController();
+        return $util->reporte($request);
+      case "PTPMAEST":
+        $util = new InformePtpmaestController();
+        return $util->reporte($request);
+      case "PTPGRADO":
+        $util = new InformePtpgradoController();
         return $util->reporte($request);
     }
   }

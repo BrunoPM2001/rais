@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Mail\Secretaria\Constancias;
+namespace App\Mail\Investigador\Constancias;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailables\Attachment;

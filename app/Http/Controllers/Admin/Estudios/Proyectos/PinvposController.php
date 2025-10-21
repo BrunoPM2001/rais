@@ -16,7 +16,10 @@ class PinvposController extends Controller {
         $join->on('b.proyecto_id', '=', 'a.id')
           ->where('b.condicion', '=', 'Responsable');
       })
-      ->leftJoin('Usuarios_cargo AS c', 'c.investigador_id', '=', 'b.investigador_id')
+      ->leftJoin('Usuarios_cargo AS c', function ($join) {
+        $join->on('c.investigador_id', '=', 'b.investigador_id')
+          ->where('c.cargo', '=', 'Vicedecano de Investigacion y Posgrado');
+      })
       ->leftJoin('Facultad AS d', 'd.id', '=', 'c.facultad_id')
       ->select(
         'a.titulo',
@@ -37,7 +40,7 @@ class PinvposController extends Controller {
     $integrantes = DB::table('Proyecto_integrante AS a')
       ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
       ->join('Proyecto_integrante_tipo AS c', 'c.id', '=', 'a.proyecto_integrante_tipo_id')
-      ->leftJoin('Proyecto_integrante_dedicado AS d', 'd.investigador_id', '=', 'b.id')
+      ->leftJoin('Usuarios_cargo AS d', 'd.investigador_id', '=', 'b.id')
       ->select([
         'a.id',
         'b.codigo',

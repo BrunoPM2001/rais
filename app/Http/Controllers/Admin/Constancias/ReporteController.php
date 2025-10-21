@@ -287,21 +287,29 @@ class ReporteController extends Controller {
       ->orderBy('c.categoria')
       ->get()
       ->toArray();
+    
+      $sub = DB::table('Patente AS a')
+        ->join('Patente_autor AS b', 'b.patente_id', '=', 'a.id')
+        ->where('b.investigador_id', '=', $request->query('investigador_id'))
+        ->where('b.es_presentador', 1)
+        ->groupBy('a.id', 'a.tipo')
+        ->select([
+            'a.id AS patente_id',
+            'a.tipo',
+            DB::raw('SUM(COALESCE(b.puntaje, 0)) AS puntaje_patente')
+        ]);
 
-    $patentes = DB::table('Patente AS a')
-      ->leftJoin('Patente_autor AS b', 'b.patente_id', '=', 'a.id')
-      ->leftJoin('Patente_entidad AS c', 'c.patente_id', '=', 'a.id')
-      ->select(
-        'a.tipo',
-        DB::raw('COUNT(*) AS cantidad'),
-        DB::raw('SUM(b.puntaje) AS puntaje') // Sumar los puntajes agrupados
-      )
-      ->where('b.es_presentador', 1)
-      ->where('b.investigador_id', $request->query('investigador_id'))
-      ->groupBy('a.tipo') // Agrupación solo por tipo
-      ->orderBy('a.tipo') // Ordenar por tipo
-      ->get()
-      ->toArray();
+    $patentes = DB::query()
+        ->fromSub($sub, 't')
+        ->select([
+            't.tipo',
+            DB::raw('COUNT(*) AS cantidad'),
+            DB::raw('SUM(t.puntaje_patente) AS puntaje'),
+        ])
+        ->groupBy('t.tipo')
+        ->orderBy('t.tipo')
+        ->get()
+        ->toArray();
 
     $pdf = Pdf::loadView('admin.constancias.puntajePublicacionesPDF', [
       'docente' => $docente[0],

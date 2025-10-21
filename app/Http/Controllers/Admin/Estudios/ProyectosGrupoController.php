@@ -52,7 +52,16 @@ class ProyectosGrupoController extends S3Controller {
             ELSE e.nombre
           END AS facultad
         "),
-        DB::raw('SUM(f.monto) AS monto'),
+        DB::raw("
+          CASE
+              WHEN a.tipo_proyecto = 'PINVPOS' THEN (
+                  SELECT COALESCE(SUM(f_sub.monto), 0)
+                  FROM Proyecto_presupuesto AS f_sub
+                  WHERE f_sub.proyecto_id = a.id
+              )
+              ELSE SUM(f.monto)
+          END AS monto
+        "),
         'a.resolucion_rectoral',
         'a.updated_at',
         DB::raw("CASE(a.estado)

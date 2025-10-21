@@ -108,32 +108,49 @@ class PinvposController extends S3Controller {
   }
 
 
-public function listarIntegrantes(Request $request)
-{
+  public function listarIntegrantes(Request $request)
+  {
     $integrantes = DB::table('Proyecto_integrante AS a')
-        ->join('Usuarios_cargo AS b', 'b.investigador_id', '=', 'a.investigador_id') 
-        ->leftJoin('Facultad AS c', 'c.id', '=', 'b.facultad_id') 
-        ->leftJoin('Usuario_investigador AS d', 'd.id', '=', 'a.investigador_id')  // Obtener el código del investigador
-        ->join('Proyecto_integrante_tipo AS e', 'e.id', '=', 'a.proyecto_integrante_tipo_id')  // Obtener el tipo de integrante
+        ->join('Usuarios_cargo AS b', 'b.investigador_id', '=', 'a.investigador_id')
+        ->leftJoin('Facultad AS c', 'c.id', '=', 'b.facultad_id')
+        ->leftJoin('Usuario_investigador AS d', 'd.id', '=', 'a.investigador_id')
+        ->join('Proyecto_integrante_tipo AS e', 'e.id', '=', 'a.proyecto_integrante_tipo_id')
+        ->where('a.proyecto_id', '=', $request->query('proyecto_id'))
+        ->whereIn('b.cargo', [
+            'Vicedecano de Investigacion y Posgrado',
+            'Vicedecano Académico',
+            'Director Unidad Inst Invest',
+            'Director UPG',
+            'Directores Centros Ins Inv'
+        ])
         ->select(
             'a.investigador_id AS id',
-            'e.nombre AS condicion', 
-            'b.apellido1', 
-            'b.apellido2', 
-            'b.nombres', 
-            'b.dni AS doc_numero', 
-            'd.codigo', 
-            'c.nombre AS facultad', 
+            'e.nombre AS condicion',
+            'b.apellido1',
+            'b.apellido2',
+            'b.nombres',
+            'b.dni AS doc_numero',
+            'd.codigo',
+            'c.nombre AS facultad',
             'b.cargo',
-            'b.email AS email3'
+            'b.email AS email3',
+            // Prioridad condicional solo para los dos cargos y facultad_id = 1
+            DB::raw("
+                CASE 
+                    WHEN b.cargo = 'Director UPG' AND b.facultad_id = 1 THEN 1
+                    WHEN b.cargo = 'Directores Centros Ins Inv' AND b.facultad_id = 1 THEN 2
+                    ELSE 100
+                END AS cargo_prioridad
+            ")
         )
-        ->where('a.proyecto_id', '=', $request->query('proyecto_id'))
-        ->whereIn('b.cargo', ['Vicedecano de Investigacion y Posgrado', 'Vicedecano Académico', 'Director Unidad Inst Invest', 'Director UPG', 'Directores Centros Ins Inv'])  // Agregar filtro de cargos
-        ->distinct()
-        ->get();
+        ->orderBy('a.investigador_id')
+        ->orderBy('cargo_prioridad')
+        ->get()
+        ->unique('id')
+        ->values();
 
     return $integrantes;
-}
+  }
 
 public function searchIntegrante(Request $request) {
     $facultad_id_usuario = DB::table('Usuarios_cargo')

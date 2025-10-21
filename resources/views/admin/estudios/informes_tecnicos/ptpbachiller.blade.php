@@ -141,7 +141,7 @@
     <br>
   </div>
   <div class="div"></div>
-  <div class="foot-1">RAIS - Registro de Actividades de Investigación de San Marcos</div>
+  <div class="foot-1">RAIS - UNMSM - {{ $proyecto->codigo_proyecto }} - {{ $detalles->id }}</div>
   <p class="titulo">
     <strong>
       Programa de Promoción de Trabajo de Investigación para optar el grado Académico de
@@ -176,15 +176,15 @@
   <div class="cuerpo">
 
     @if ($detalles->estado == 3)
-    <table class="obs">
-      <tbody>
-        <tr>
-          <td style="width: 12%;" valign="top"><strong>Observaciones</strong></td>
-          <td style="width: 1%;" valign="top">:</td>
-          <td style="width: 87%;" valign="top">{{ $detalles->observaciones }}</td>
-        </tr>
-      </tbody>
-    </table>
+      <table class="obs">
+        <tbody>
+          <tr>
+            <td style="width: 12%;" valign="top"><strong>Observaciones</strong></td>
+            <td style="width: 1%;" valign="top">:</td>
+            <td style="width: 87%;" valign="top">{{ $detalles->observaciones }}</td>
+          </tr>
+        </tbody>
+      </table>
     @endif
 
     <h5>I. Datos generales:</h5>
@@ -219,12 +219,12 @@
         <tr>
           <td style="width: 24%;" valign="top"><strong>Asesor</strong></td>
           <td style="width: 1%;" valign="top">:</td>
-          <td style="width: 75%;" valign="top">{{ $miembros["Responsable"] }}</td>
+          <td style="width: 75%;" valign="top">{{ $miembros['Responsable'] }}</td>
         </tr>
         <tr>
           <td style="width: 24%;" valign="top"><strong>Tesista</strong></td>
           <td style="width: 1%;" valign="top">:</td>
-          <td style="width: 75%;" valign="top">{{ $miembros["Tesista"] }}</td>
+          <td style="width: 75%;" valign="top">{{ $miembros['Tesista'] }}</td>
         </tr>
         <tr>
           <td style="width: 24%;" valign="top"><strong>Facultad</strong></td>

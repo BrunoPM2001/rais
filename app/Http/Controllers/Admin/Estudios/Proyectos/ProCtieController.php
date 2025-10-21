@@ -231,20 +231,34 @@ class ProCtieController extends Controller {
       ->join('Facultad AS f', 'f.id', '=', 'i.facultad_id')
       ->leftJoin('Grupo_integrante AS gi', 'gi.investigador_id', '=', 'i.id')
       ->select([
-        'pt.nombre AS tipo_integrante',
-        DB::raw("CONCAT(i.apellido1, ' ', i.apellido2, ' ', i.nombres) AS integrante"),
-        'f.nombre AS facultad',
-        'gi.tipo',
-        'gi.condicion AS condicion_grupo',
-        'pint.condicion AS condicion_proyecto',
-        'i.tipo'
+          'pt.nombre AS tipo_integrante',
+          DB::raw("CONCAT(i.apellido1, ' ', i.apellido2, ' ', i.nombres) AS integrante"),
+          'f.nombre AS facultad',
+          DB::raw("MAX(gi.tipo) AS tipo"),
+          DB::raw("
+            COALESCE(
+              MAX(CASE WHEN gi.condicion NOT LIKE 'Ex%' THEN gi.condicion END),
+              MAX(gi.condicion)
+            ) AS condicion_grupo
+          "),
+          'pint.condicion AS condicion_proyecto',
+          'i.tipo AS tipo_investigador'
       ])
       ->where('pint.proyecto_id', '=', $request->query('proyecto_id'))
-      ->where(function ($query) {
-        $query->where('gi.condicion', 'NOT LIKE', 'Ex%')
-          ->orWhereNull('gi.condicion');
-      })
+      ->groupBy(
+          'pt.nombre',
+          'i.apellido1', 'i.apellido2', 'i.nombres',
+          'f.nombre',
+          'pint.condicion',
+          'i.tipo'
+      )
+      ->havingRaw("
+          (COUNT(gi.investigador_id) = 1 AND SUM(gi.condicion LIKE 'Ex%') = 1)
+          OR (SUM(gi.condicion LIKE 'Ex%') < COUNT(gi.investigador_id))
+          OR (COUNT(gi.investigador_id) = 0)
+      ")
       ->get();
+
 
     $pdf = Pdf::loadView('admin.estudios.proyectos.sin_detalles.pro_ctie', [
       'proyecto' => $proyecto,
