@@ -74,6 +74,7 @@ class DocenteInvestigadorController extends S3Controller {
         'a.estado',
         DB::raw("DATE(a.fecha_constancia) AS fecha_constancia"),
         DB::raw("DATE(a.fecha_fin) AS fecha_fin"),
+        'a.fecha_envio_mail',
         'b.tipo',
         'c.nombre AS facultad',
         'b.codigo_orcid',
@@ -108,12 +109,18 @@ class DocenteInvestigadorController extends S3Controller {
           ->where('d.tabla', '=', 'Eval_docente_investigador')
           ->where('d.recurso', '=', 'CONSTANCIA_FIRMADA');
       })
+      ->leftJoin('Repo_rrhh AS e', 'e.ser_doc_id_act', '=', 'b.doc_numero')
+      ->leftJoin('Facultad AS f', 'f.id', '=', 'b.facultad_id')
       ->select([
         DB::raw("CONCAT('/minio/', d.bucket, '/', d.key) AS url"),
         'a.nombres',
         'a.estado',
         'a.doc_numero',
-        'c.ser_fech_in_unmsm AS fecha',
+        DB::raw("CASE
+          WHEN c.ser_fech_in_unmsm IS NULL THEN e.ser_fech_in_unmsm
+          ELSE c.ser_fech_in_unmsm
+        END AS fecha"),
+        'f.nombre AS facultad',
         'b.id AS investigador_id',
         'b.email3',
         'a.cti_vitae',
@@ -133,6 +140,7 @@ class DocenteInvestigadorController extends S3Controller {
         'a.d3',
         'a.d4',
         'a.d6',
+        'a.fecha_envio_mail'
       ])
       ->where('a.id', '=', $request->query('id'))
       ->first();
@@ -149,6 +157,7 @@ class DocenteInvestigadorController extends S3Controller {
       ])
       ->where('a.investigador_id', '=', $detalles->investigador_id)
       ->where('b.id', '=', $detalles->d2)
+      ->where('b.estado', '=', 4)
       ->whereNot('a.condicion', 'LIKE', 'Ex%')
       ->first();
 
@@ -191,43 +200,11 @@ class DocenteInvestigadorController extends S3Controller {
     // Verificar si se encontraron los dos años
     $allYearsFound = !in_array(false, $yearsFound);
 
-    $d4 = DB::table('Publicacion AS a')
-      ->join('Publicacion_autor AS b', 'b.publicacion_id', '=', 'a.id')
-      ->leftJoin('Publicacion_index AS c', 'c.publicacion_id', '=', 'a.id')
-      ->leftJoin('Publicacion_db_indexada AS d', 'd.id', '=', 'c.publicacion_db_indexada_id')
-      ->select([
-        'a.titulo',
-        DB::raw("CASE (a.tipo_publicacion)
-            WHEN 'articulo' THEN 'Artículo en revista'
-            WHEN 'capitulo' THEN 'Capítulo de libro'
-            WHEN 'libro' THEN 'Libro'
-            WHEN 'evento' THEN 'R. en evento científico'
-            WHEN 'ensayo' THEN 'Ensayo'
-          ELSE tipo_publicacion END AS tipo_publicacion"),
-        DB::raw("YEAR(a.fecha_publicacion) AS periodo"),
-        'a.codigo_registro',
-        DB::raw("GROUP_CONCAT(d.nombre SEPARATOR ', ') AS indexada"),
-        DB::raw("CASE(b.filiacion)
-          WHEN 1 THEN 'Sí'
-          WHEN 0 THEN 'No'
-          ELSE '-'
-        END AS filiacion"),
-        DB::raw("CASE(b.filiacion_unica)
-          WHEN 1 THEN 'Sí'
-          WHEN 0 THEN 'No'
-          ELSE '-'
-        END AS filiacion_unica"),
-      ])
-      ->where('b.investigador_id', '=', $detalles->investigador_id)
-      ->where('a.estado', '=', 1)
-      ->whereIn(DB::raw("YEAR(a.fecha_publicacion)"), $lastTwoYears)
-      ->whereNotIn('a.tipo_publicacion', ['tesis-asesoria', 'tesis'])
-      ->groupBy('a.id')
-      ->get();
+    $d4 = json_decode($detalles->d4, true);
 
     $filiacion = 0;
     foreach ($d4 as $item) {
-      if ($item->filiacion == "No" || $item->filiacion_unica == "No") {
+      if ($item["filiacion"] != "1" || $item["filiacion_unica"] != "1") {
         $filiacion++;
       }
     }
@@ -536,6 +513,7 @@ class DocenteInvestigadorController extends S3Controller {
       ])
       ->where('a.investigador_id', '=', $detalles->investigador_id)
       ->where('b.id', '=', $detalles->d2)
+      ->where('b.estado', '=', 4)
       ->whereNot('a.condicion', 'LIKE', 'Ex%')
       ->first();
 
@@ -678,6 +656,12 @@ class DocenteInvestigadorController extends S3Controller {
       ->first();
 
     $file = $this->getFile($constancia->bucket, $constancia->key);
+
+    DB::table('Eval_docente_investigador')
+      ->where('id', '=', $request->query('id'))
+      ->update([
+        'fecha_envio_mail' => Carbon::now()
+      ]);
 
     Mail::to($constancia->email)->send(new ConstanciaCdi($constancia->nombres, $file));
 
