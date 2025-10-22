@@ -59,7 +59,10 @@ class ProyectoController extends Controller {
         DB::raw("SUM(j.monto) as presupuesto"),
       ])
       ->where('a.tipo_proyecto', '=', $tipo)
-      ->where('a.facultad_id', '=', $facultad)
+      ->when($tipo === 'PRO-CTIE' && empty($facultad), function ($query) {
+        }, function ($query) use ($facultad) {
+        $query->where('a.facultad_id', '=', $facultad);
+        })
       ->where('a.periodo', '=', $periodo)
       ->whereIn('a.estado', [1, 8])
       ->where(function ($query) use ($tipo) {
@@ -121,6 +124,7 @@ class ProyectoController extends Controller {
         break;
       case 'PRO-CTIE':
         $tipo = 'Proyectos de Ciencia, Tecnología, Innovación y Emprendimiento (PRO-CTIE) para Estudiantes de la UNMSM';
+        $vista = 'admin.reportes.proctiePDF';
         break;
       case 'ECI':
         $tipo = 'Programa de Equipamiento Científico para la Investigación de la UNMSM';
@@ -138,7 +142,7 @@ class ProyectoController extends Controller {
         $tipo = 'Tipo de Proyecto Desconocido';
     }
 
-    $pdf = Pdf::loadView('admin.reportes.proyectoPDF', [
+    $pdf = Pdf::loadView( $vista ?? 'admin.reportes.proyectoPDF', [
       'lista' => $proyectos,
       'periodo' => $periodo,
       'tipo' => $tipo,

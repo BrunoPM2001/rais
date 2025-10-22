@@ -117,12 +117,17 @@ class ProyectoConFinanciamientoController extends S3Controller {
         break;
       case 'PMULTI':
         $tipo = 'Proyectos multidisciplinarios';
+        break;
+      case 'PINVPOS':
+        $tipo = 'DECLARACIÓN JUARADA DE CUMPLIMIENTO PARA RECIBIR ASIGNACIÓN FINANCIERA PARA PROGRAMA DE TALLERES DE INVESTIGACIÓN Y POSGRADO - TILI';
+        $vista = 'investigador.dj.taller';
+        break;
       default:
         $tipo = 'Tipo de Proyecto Desconocido';
     }
 
     $pdf = Pdf::loadView(
-      'investigador.dj.pconfigi',
+      $vista ?? 'investigador.dj.pconfigi',
       [
         'proyecto' => $proyecto,
         'tipo' => $tipo,
