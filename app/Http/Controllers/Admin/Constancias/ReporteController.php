@@ -280,6 +280,7 @@ class ReporteController extends Controller {
       )
       ->where('a.investigador_id', '=', $request->query('investigador_id'))
       ->where('b.validado', '=', 1)
+      ->where('b.estado', '=', 1)
       ->groupBy('b.categoria_id')
       ->groupBy('c.titulo')
       ->groupBy('c.categoria')
@@ -291,7 +292,8 @@ class ReporteController extends Controller {
       $sub = DB::table('Patente AS a')
         ->join('Patente_autor AS b', 'b.patente_id', '=', 'a.id')
         ->where('b.investigador_id', '=', $request->query('investigador_id'))
-        ->where('b.es_presentador', 1)
+        ->where('b.es_presentador','=', 1)
+        ->where('a.estado','=', 1)
         ->groupBy('a.id', 'a.tipo')
         ->select([
             'a.id AS patente_id',
@@ -395,6 +397,7 @@ class ReporteController extends Controller {
       )
       ->where('a.investigador_id', '=', $request->query('investigador_id'))
       ->where('b.validado', '=', 1)
+      ->where('b.estado', '=', 1)
       ->orderBy('c.tipo') // Ordenar por tipo de publicación
       ->orderBy('c.categoria') // Luego por categoría
       ->orderByDesc('año') // Después por año, de forma descendente
@@ -403,7 +406,17 @@ class ReporteController extends Controller {
 
     $patentes = DB::table('Patente AS a')
       ->leftJoin('Patente_autor AS b', 'b.patente_id', '=', 'a.id')
-      ->leftJoin('Patente_entidad AS c', 'c.patente_id', '=', 'a.id')
+      ->leftJoin(DB::raw('(
+          SELECT c1.*
+          FROM Patente_entidad AS c1
+          WHERE c1.id = (
+              SELECT c2.id
+              FROM Patente_entidad AS c2
+              WHERE c2.patente_id = c1.patente_id
+              ORDER BY c2.updated_at DESC
+              LIMIT 1
+          )
+        ) AS c'), 'c.patente_id', '=', 'a.id')
       ->select(
         'a.titulo',
         'a.tipo',
@@ -414,6 +427,7 @@ class ReporteController extends Controller {
       )
       ->where('b.es_presentador', '=', 1)
       ->where('b.investigador_id', '=', $request->query('investigador_id'))
+      ->where('a.estado', '=', 1)
       ->orderBy('a.tipo') // Ordenar por tipo de publicación
       ->orderByDesc('c.updated_at') // Después por año, de forma descendente
       ->orderBy('a.titulo') // Finalmente, por título de publicación

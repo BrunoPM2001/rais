@@ -308,6 +308,7 @@ class ReporteController extends S3Controller {
       )
       ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
       ->where('b.validado', '=', 1)
+      ->where('b.estado', '=', 1)
       ->groupBy('b.categoria_id')
       ->groupBy('c.titulo')
       ->groupBy('c.categoria')
@@ -318,16 +319,25 @@ class ReporteController extends S3Controller {
 
     $patentes = DB::table('Patente AS a')
       ->leftJoin('Patente_autor AS b', 'b.patente_id', '=', 'a.id')
-      ->leftJoin('Patente_entidad AS c', 'c.patente_id', '=', 'a.id')
+      ->leftJoin(DB::raw('(
+            SELECT ee.id, ee.patente_id, ee.titular, ee.updated_at
+            FROM Patente_entidad ee
+            WHERE ee.id IN (
+                SELECT MAX(e2.id)
+                FROM Patente_entidad e2
+                GROUP BY e2.patente_id
+            )
+        ) AS c'), 'c.patente_id', '=', 'a.id')
       ->select(
         'a.tipo',
-        DB::raw('COUNT(*) AS cantidad'),
-        DB::raw('SUM(b.puntaje) AS puntaje') // Sumar los puntajes agrupados
+        DB::raw('COUNT(DISTINCT a.id) AS cantidad'),
+        DB::raw('SUM(b.puntaje) AS puntaje')
       )
-      ->where('b.es_presentador', 1)
+      ->where('b.es_presentador','=', 1)
       ->where('b.investigador_id', $request->attributes->get('token_decoded')->investigador_id)
-      ->groupBy('a.tipo') // Agrupación solo por tipo
-      ->orderBy('a.tipo') // Ordenar por tipo
+      ->where('a.estado','=', 1)
+      ->groupBy('a.tipo')
+      ->orderBy('a.tipo')
       ->get()
       ->toArray();
 
@@ -452,6 +462,7 @@ class ReporteController extends S3Controller {
       )
       ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
       ->where('b.validado', '=', 1)
+      ->where('b.estado', '=', 1)
       ->orderBy('c.tipo')
       ->orderBy('c.categoria')
       ->orderByDesc('año')
@@ -460,7 +471,17 @@ class ReporteController extends S3Controller {
 
     $patentes = DB::table('Patente AS a')
       ->leftJoin('Patente_autor AS b', 'b.patente_id', '=', 'a.id')
-      ->leftJoin('Patente_entidad AS c', 'c.patente_id', '=', 'a.id')
+      ->leftJoin(DB::raw('(
+          SELECT c1.*
+          FROM Patente_entidad AS c1
+          WHERE c1.id = (
+              SELECT c2.id 
+              FROM Patente_entidad AS c2
+              WHERE c2.patente_id = c1.patente_id
+              ORDER BY c2.updated_at DESC
+              LIMIT 1
+          )
+        ) AS c'), 'c.patente_id', '=', 'a.id')
       ->select(
         'a.titulo',
         'a.tipo',
@@ -471,6 +492,7 @@ class ReporteController extends S3Controller {
       )
       ->where('b.es_presentador', '=', 1)
       ->where('b.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+      ->where('a.estado', '=', 1)
       ->orderBy('a.tipo')
       ->orderByDesc('c.updated_at')
       ->orderBy('a.titulo')
