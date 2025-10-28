@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin\Estudios;
 
 use App\Exports\Admin\MonitoreoExport;
 use App\Http\Controllers\Controller;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Database\Query\JoinClause;
 use Illuminate\Http\Request;
@@ -32,11 +33,14 @@ class MonitoreoController extends Controller {
           ->where('i.condicion', '=', 'Responsable');
       })
       ->leftJoin('Usuario_investigador AS j', 'j.id', '=', 'i.investigador_id')
+      ->leftJoin('Monitoreo_proyecto_publicacion AS k', 'k.monitoreo_proyecto_id', '=', 'h.id')
+      ->leftJoin('Facultad AS l', 'l.id', '=', 'a.facultad_id')
       ->select(
         'a.id',
         'a.codigo_proyecto',
         'a.titulo',
         'a.tipo_proyecto',
+        'l.nombre AS facultad',
         DB::raw('CONCAT(j.apellido1, " " , j.apellido2, ", ", j.nombres) AS responsable'),
         'a.periodo',
         DB::raw("CASE(h.estado)
@@ -44,8 +48,9 @@ class MonitoreoController extends Controller {
             WHEN 1 THEN 'Aprobado'
             WHEN 2 THEN 'Observado'
             WHEN 5 THEN 'Enviado'
-            WHEN 6 THEN 'En proceso'
-          ELSE 'Por presentar' END AS estado_meta")
+            WHEN 6 THEN 'Por presentar'
+          ELSE 'Por presentar' END AS estado_meta"),
+        DB::raw("COUNT(DISTINCT k.id) AS publicaciones"),
       )
       ->whereIn('c.nombre', ['Responsable', 'Asesor', 'Autor Corresponsal', 'Coordinador'])
       ->whereIn('a.estado', [1, 8, 9, 10, 11])
@@ -92,7 +97,7 @@ class MonitoreoController extends Controller {
             WHEN 1 THEN 'Aprobado'
             WHEN 2 THEN 'Observado'
             WHEN 5 THEN 'Enviado'
-            WHEN 6 THEN 'En proceso'
+            WHEN 6 THEN 'Por presentar'
           ELSE 'Por presentar' END AS estado_meta"),
         'f.descripcion',
         'f.observacion'
@@ -119,15 +124,17 @@ class MonitoreoController extends Controller {
       ->groupBy('a.tipo_publicacion', 'a.cantidad')
       ->get();
 
-    $publicaciones = DB::table('Publicacion_proyecto AS a')
-      ->join('Publicacion AS b', 'b.id', '=', 'a.publicacion_id')
-      ->select([
-        'a.id',
-        'b.id AS publicacion_id',
-        'b.titulo',
-        'b.tipo_publicacion',
-        DB::raw("YEAR(b.fecha_publicacion) AS periodo"),
-        DB::raw("CASE(b.estado)
+    $publicaciones = [];
+    if ($datos->id) {
+      $publicaciones = DB::table('Monitoreo_proyecto_publicacion AS a')
+        ->join('Publicacion AS b', 'b.id', '=', 'a.publicacion_id')
+        ->select([
+          'a.id',
+          'b.id AS publicacion_id',
+          'b.titulo',
+          'b.tipo_publicacion',
+          DB::raw("YEAR(b.fecha_publicacion) AS periodo"),
+          DB::raw("CASE(b.estado)
             WHEN -1 THEN 'Eliminado'
             WHEN 1 THEN 'Registrado'
             WHEN 2 THEN 'Observado'
@@ -136,10 +143,33 @@ class MonitoreoController extends Controller {
             WHEN 7 THEN 'Anulado'
             WHEN 8 THEN 'No registrado'
             WHEN 9 THEN 'Duplicado'
-          ELSE 'Sin estado' END AS estado"),
-      ])
-      ->where('a.proyecto_id', '=', $request->query('id'))
-      ->get();
+            ELSE 'Sin estado' END AS estado"),
+        ])
+        ->where('a.monitoreo_proyecto_id', '=', $datos->id)
+        ->get();
+    } else {
+      $publicaciones = DB::table('Publicacion_proyecto AS a')
+        ->join('Publicacion AS b', 'b.id', '=', 'a.publicacion_id')
+        ->select([
+          'a.id',
+          'b.id AS publicacion_id',
+          'b.titulo',
+          'b.tipo_publicacion',
+          DB::raw("YEAR(b.fecha_publicacion) AS periodo"),
+          DB::raw("CASE(b.estado)
+            WHEN -1 THEN 'Eliminado'
+            WHEN 1 THEN 'Registrado'
+            WHEN 2 THEN 'Observado'
+            WHEN 5 THEN 'Enviado'
+            WHEN 6 THEN 'En proceso'
+            WHEN 7 THEN 'Anulado'
+            WHEN 8 THEN 'No registrado'
+            WHEN 9 THEN 'Duplicado'
+            ELSE 'Sin estado' END AS estado"),
+        ])
+        ->where('a.proyecto_id', '=', $request->query('id'))
+        ->get();
+    }
 
     return [
       'datos' => $datos,
@@ -176,7 +206,6 @@ class MonitoreoController extends Controller {
       ->where('b.investigador_id', '=', $proyecto->investigador_id)
       ->where('a.tipo_publicacion', '=', $request->query('tipo_publicacion'))
       ->having('periodo', '>=', $proyecto->periodo)
-      ->having('periodo', '<=', $proyecto->periodo + 1)
       ->orderByDesc('a.updated_at')
       ->groupBy('a.id')
       ->get();
@@ -422,5 +451,98 @@ class MonitoreoController extends Controller {
       ]);
 
     return ['message' => 'info', 'detail' => 'Monitoreo observado'];
+  }
+
+  public function reporte(Request $request) {
+    $datos = DB::table('Proyecto AS a')
+      ->join('Proyecto_integrante AS b', 'b.proyecto_id', '=', 'a.id')
+      ->join('Proyecto_integrante_tipo AS c', function (JoinClause $join) {
+        $join->on('c.id', '=', 'b.proyecto_integrante_tipo_id')
+          ->whereIn('c.nombre', ['Responsable', 'Asesor', 'Autor Corresponsal', 'Coordinador']);
+      })
+      ->join('Usuario_investigador AS d', 'd.id', '=', 'b.investigador_id')
+      ->leftJoin('Facultad AS e', 'e.id', '=', 'a.facultad_id')
+      ->leftJoin('Monitoreo_proyecto AS f', 'f.proyecto_id', '=', 'a.id')
+      ->select([
+        'a.titulo',
+        'a.tipo_proyecto',
+        'a.codigo_proyecto',
+        DB::raw("CONCAT(d.apellido1, ' ', d.apellido2, ', ', d.nombres) AS responsable"),
+        DB::raw("CASE(a.estado)
+            WHEN -1 THEN 'Eliminado'
+            WHEN 0 THEN 'No aprobado'
+            WHEN 1 THEN 'Aprobado'
+            WHEN 2 THEN 'Observado'
+            WHEN 3 THEN 'En evaluacion'
+            WHEN 5 THEN 'Enviado'
+            WHEN 6 THEN 'En proceso'
+            WHEN 7 THEN 'Anulado'
+            WHEN 8 THEN 'Sustentado'
+            WHEN 9 THEN 'En ejecución'
+            WHEN 10 THEN 'Ejecutado'
+            WHEN 11 THEN 'Concluído'
+          ELSE 'Sin estado' END AS estado"),
+        'a.periodo',
+        'e.nombre AS facultad',
+        DB::raw("CASE(f.estado)
+            WHEN 0 THEN 'No aprobado'
+            WHEN 1 THEN 'Aprobado'
+            WHEN 2 THEN 'Observado'
+            WHEN 5 THEN 'Enviado'
+            WHEN 6 THEN 'En proceso'
+          ELSE 'Por presentar' END AS estado_meta"),
+        'f.descripcion',
+        'f.updated_at',
+      ])
+      ->where('a.id', '=', $request->query('id'))
+      ->first();
+
+    $metas = DB::table('Meta_publicacion AS a')
+      ->join('Meta_tipo_proyecto AS b', 'b.id', '=', 'a.meta_tipo_proyecto_id')
+      ->join('Meta_periodo AS c', 'c.id', '=', 'b.meta_periodo_id')
+      ->leftJoin('Publicacion AS d', 'd.tipo_publicacion', '=', 'a.tipo_publicacion')
+      ->leftJoin('Publicacion_proyecto AS e', function ($join) use ($request) {
+        $join->on('e.publicacion_id', '=', 'd.id')
+          ->where('e.proyecto_id', '=', $request->query('id'));
+      })
+      ->select([
+        'a.tipo_publicacion',
+        'a.cantidad AS requerido',
+        DB::raw('COUNT(e.id) AS completado')
+      ])
+      ->where('c.periodo', '=', $datos->periodo)
+      ->where('b.tipo_proyecto', '=', $datos->tipo_proyecto)
+      ->where('a.estado', '=', 1)
+      ->groupBy('a.tipo_publicacion', 'a.cantidad')
+      ->get();
+
+    $publicaciones = DB::table('Publicacion_proyecto AS a')
+      ->join('Publicacion AS b', 'b.id', '=', 'a.publicacion_id')
+      ->select([
+        'b.id',
+        'b.titulo',
+        'b.tipo_publicacion',
+        DB::raw("YEAR(b.fecha_publicacion) AS periodo"),
+        DB::raw("CASE(b.estado)
+            WHEN -1 THEN 'Eliminado'
+            WHEN 1 THEN 'Registrado'
+            WHEN 2 THEN 'Observado'
+            WHEN 5 THEN 'Enviado'
+            WHEN 6 THEN 'En proceso'
+            WHEN 7 THEN 'Anulado'
+            WHEN 8 THEN 'No registrado'
+            WHEN 9 THEN 'Duplicado'
+          ELSE 'Sin estado' END AS estado"),
+      ])
+      ->where('a.proyecto_id', '=', $request->query('id'))
+      ->get();
+
+    $pdf = Pdf::loadView('investigador.informes.monitoreo.reporte', [
+      'datos' => $datos,
+      'metas' => $metas,
+      'publicaciones' => $publicaciones
+    ]);
+
+    return $pdf->stream();
   }
 }

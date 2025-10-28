@@ -281,6 +281,7 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
       Route::get('detalles', [MonitoreoController::class, 'detalles']);
       Route::get('verObs', [MonitoreoController::class, 'verObs']);
       Route::put('observar', [MonitoreoController::class, 'observar']);
+      Route::get('reporte', [MonitoreoController::class, 'reporte']);
 
       Route::put('guardar', [MonitoreoController::class, 'guardar']);
 
