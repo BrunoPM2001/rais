@@ -296,7 +296,7 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
       Route::put('editarMeta', [MonitoreoController::class, 'editarMeta']);
       Route::delete('eliminarMeta', [MonitoreoController::class, 'eliminarMeta']);
 
-      Route::get('excel', [MonitoreoController::class, 'excel']);
+      Route::post('excel', [MonitoreoController::class, 'excel']);
     });
 
     //  Deudas proyecto

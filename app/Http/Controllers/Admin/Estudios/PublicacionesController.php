@@ -758,7 +758,7 @@ class PublicacionesController extends S3Controller {
 
     $export = new FromDataExport($data);
 
-    return Excel::download($export, 'proyectos.xlsx');
+    return Excel::download($export, 'publicaciones.xlsx');
   }
 
   public function excelComplete(Request $request) {

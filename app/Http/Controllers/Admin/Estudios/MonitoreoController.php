@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin\Estudios;
 
+use App\Exports\Admin\FromDataExport;
 use App\Exports\Admin\MonitoreoExport;
 use App\Http\Controllers\Controller;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -378,11 +379,11 @@ class MonitoreoController extends Controller {
 
   public function excel(Request $request) {
 
-    $filters = $request->all();
+    $data = $request->all();
 
-    $export = new MonitoreoExport($filters);
+    $export = new FromDataExport($data);
 
-    return Excel::download($export, 'monitero.xlsx');
+    return Excel::download($export, 'monitoreo.xlsx');
   }
 
   public function guardar(Request $request) {
