@@ -281,6 +281,7 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
       Route::get('detalles', [MonitoreoController::class, 'detalles']);
       Route::get('verObs', [MonitoreoController::class, 'verObs']);
       Route::put('observar', [MonitoreoController::class, 'observar']);
+      Route::get('reporte', [MonitoreoController::class, 'reporte']);
 
       Route::put('guardar', [MonitoreoController::class, 'guardar']);
 
@@ -295,7 +296,7 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
       Route::put('editarMeta', [MonitoreoController::class, 'editarMeta']);
       Route::delete('eliminarMeta', [MonitoreoController::class, 'eliminarMeta']);
 
-      Route::get('excel', [MonitoreoController::class, 'excel']);
+      Route::post('excel', [MonitoreoController::class, 'excel']);
     });
 
     //  Deudas proyecto

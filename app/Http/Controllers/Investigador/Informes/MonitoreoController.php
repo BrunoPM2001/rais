@@ -37,8 +37,9 @@ class MonitoreoController extends S3Controller {
             WHEN 1 THEN 'Aprobado'
             WHEN 2 THEN 'Observado'
             WHEN 5 THEN 'Enviado'
-            WHEN 6 THEN 'En proceso'
-          ELSE 'Por presentar' END AS estado_meta")
+            WHEN 6 THEN 'Por presentar'
+          ELSE 'Por presentar' END AS estado_meta"),
+        'h.id AS monitoreo_idd'
       )
       ->where('d.id', '=', $request->attributes->get('token_decoded')->investigador_id)
       ->whereIn('c.nombre', ['Responsable', 'Asesor', 'Autor Corresponsal', 'Coordinador'])
@@ -86,7 +87,7 @@ class MonitoreoController extends S3Controller {
             WHEN 1 THEN 'Aprobado'
             WHEN 2 THEN 'Observado'
             WHEN 5 THEN 'Enviado'
-            WHEN 6 THEN 'En proceso'
+            WHEN 6 THEN 'Por presentar'
           ELSE 'Por presentar' END AS estado_meta"),
         'f.descripcion',
       ])
@@ -171,7 +172,6 @@ class MonitoreoController extends S3Controller {
       ->where('b.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
       ->where('a.tipo_publicacion', '=', $request->query('tipo_publicacion'))
       ->having('periodo', '>=', $periodo->periodo)
-      ->having('periodo', '<=', $periodo->periodo + 1)
       ->orderByDesc('a.updated_at')
       ->groupBy('a.id')
       ->get();
@@ -224,33 +224,70 @@ class MonitoreoController extends S3Controller {
   public function remitir(Request $request) {
     $now = Carbon::now();
 
-    $id = DB::table('Monitoreo_proyecto')
-      ->insertGetId([
-        'proyecto_id' => $request->input('proyecto_id'),
-        'descripcion' => $request->input('descripcion'),
-        'fecha_envio' => $now,
-        'estado' => 5,
-        'created_at' => $now,
-        'updated_at' => $now
-      ]);
-
-    DB::table('Publicacion_proyecto')
+    $monitoreo = DB::table('Monitoreo_proyecto')
       ->select([
-        'publicacion_id'
+        'id'
       ])
       ->where('proyecto_id', '=', $request->input('proyecto_id'))
-      ->where('estado', '=', 1)
-      ->get()
-      ->map(function ($item) use ($id, $now) {
-        DB::table('Monitoreo_proyecto_publicacion')
-          ->insert([
-            'monitoreo_proyecto_id' => $id,
-            'publicacion_id' => $item->publicacion_id,
-            'created_at' => $now,
-            'updated_at' => $now,
-          ]);
-      });
+      ->first();
 
+    if ($monitoreo) {
+
+      DB::table('Monitoreo_proyecto')
+        ->where('id', '=', $monitoreo->id)
+        ->update([
+          'estado' => 5
+        ]);
+
+      DB::table('Monitoreo_proyecto_publicacion')
+        ->where('monitoreo_proyecto_id', '=', $monitoreo->id)
+        ->delete();
+
+      DB::table('Publicacion_proyecto')
+        ->select([
+          'publicacion_id'
+        ])
+        ->where('proyecto_id', '=', $request->input('proyecto_id'))
+        ->where('estado', '=', 1)
+        ->get()
+        ->map(function ($item) use ($monitoreo, $now) {
+          DB::table('Monitoreo_proyecto_publicacion')
+            ->insert([
+              'monitoreo_proyecto_id' => $monitoreo->id,
+              'publicacion_id' => $item->publicacion_id,
+              'created_at' => $now,
+              'updated_at' => $now,
+            ]);
+        });
+    } else {
+
+      $id = DB::table('Monitoreo_proyecto')
+        ->insertGetId([
+          'proyecto_id' => $request->input('proyecto_id'),
+          'descripcion' => $request->input('descripcion'),
+          'fecha_envio' => $now,
+          'estado' => 5,
+          'created_at' => $now,
+          'updated_at' => $now
+        ]);
+
+      DB::table('Publicacion_proyecto')
+        ->select([
+          'publicacion_id'
+        ])
+        ->where('proyecto_id', '=', $request->input('proyecto_id'))
+        ->where('estado', '=', 1)
+        ->get()
+        ->map(function ($item) use ($id, $now) {
+          DB::table('Monitoreo_proyecto_publicacion')
+            ->insert([
+              'monitoreo_proyecto_id' => $id,
+              'publicacion_id' => $item->publicacion_id,
+              'created_at' => $now,
+              'updated_at' => $now,
+            ]);
+        });
+    }
     return ['message' => 'info', 'detail' => 'Monitoreo enviado'];
   }
 
