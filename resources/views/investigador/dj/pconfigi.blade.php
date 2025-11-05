@@ -324,12 +324,16 @@
         <td>DNI N°: <strong>{{ $proyecto->dni }}</strong></td>
         <td>Clase: <strong>{{ $proyecto->clase }}</strong></td>
       </tr>
+      @if ($proyecto->tipo_proyecto !== 'PRO-CTIE')
       <tr>
         <td colspan="2">Grupo de investigación: <strong>{{ $proyecto->grupo_nombre }}</strong></td>
       </tr>
+      @endif
       <tr>
         <td colspan="2">
-          En mi calidad de responsable del proyecto de investigación titulado:<br />
+          En mi calidad de 
+          {{ $proyecto->tipo_proyecto === 'PRO-CTIE' ? 'asesor' : 'responsable' }}
+           del proyecto de investigación titulado:<br />
           <strong>{{ $proyecto->titulo_proyecto }}</strong>
         </td>
       </tr>

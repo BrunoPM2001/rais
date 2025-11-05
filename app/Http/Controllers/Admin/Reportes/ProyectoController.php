@@ -164,6 +164,9 @@ class ProyectoController extends Controller {
       case 'PSINFINV':
         $tipo = 'Proyectos de Investigación Con Recursos No Monetarios para Grupos de Investigación';
         break;
+      case 'FEX':
+        $tipo = 'Proyectos con Financiamiento Externo para Grupos de Investigación';
+        break;
       default:
         $tipo = 'Tipo de Proyecto Desconocido';
     }

@@ -477,4 +477,69 @@ class ReporteController extends Controller {
     ]);
     return $pdf->stream();
   }
+
+  public function getConstanciaGrupoInvestigacionH(Request $request) {
+    $grupo = DB::table('Usuario_investigador AS a')
+      ->join('Grupo_integrante AS b', 'b.investigador_id', '=', 'a.id')
+      ->join('Grupo AS c', 'c.id', '=', 'b.grupo_id')
+      ->join('Facultad AS d', 'd.id', '=', 'a.facultad_id')
+      ->select(
+        DB::raw('CONCAT(a.apellido1, " ", a.apellido2, " ", a.nombres) AS nombre'),
+        'd.nombre AS facultad',
+        'a.apellido1',
+        'a.apellido2',
+        'a.nombres',
+        'a.doc_numero',
+        'a.tipo',
+        'b.cargo',
+        'b.condicion',
+        'c.grupo_nombre_corto',
+        'c.grupo_nombre',
+        'c.resolucion_rectoral',
+        'c.resolucion_creacion_fecha'
+      )
+      ->where('a.id', '=', $request->query('investigador_id'))
+      ->where('c.estado', '=', 4)
+      ->where('b.condicion', 'not like', 'Ex %') // Excluir los que comienzan con "Ex "
+      ->get()
+      ->toArray();
+
+    $grupoH = DB::table('Grupo_integrante as a')
+      ->join('Grupo as b', 'a.grupo_id', '=', 'b.id')
+      ->join('Usuario_investigador as c', 'a.investigador_id', '=', 'c.id')
+      ->join('Facultad as d', 'b.facultad_id', '=', 'd.id')
+      ->select(
+        DB::raw("CONCAT(c.apellido1, ' ', c.apellido2, ', ', c.nombres) as nombre"),
+        'd.nombre as facultad',
+        'c.apellido1',
+        'c.apellido2',
+        'c.nombres',
+        'c.doc_numero',
+        'c.tipo',
+        DB::raw("
+          CASE 
+            WHEN a.cargo IS NOT NULL AND a.cargo != '' 
+              THEN TRIM(REPLACE(a.cargo, 'Ex ', ''))
+            ELSE TRIM(REPLACE(a.condicion, 'Ex ', ''))
+          END AS rol_final
+        "),
+        'a.condicion',
+        'b.grupo_nombre_corto',
+        'b.grupo_nombre',
+        'b.resolucion_rectoral',
+        DB::raw('DATE(a.created_at) as fecha_inicio'),
+        'a.fecha_exclusion as fecha_fin'
+      )
+      ->where('a.investigador_id', $request->query('investigador_id'))
+      ->where('a.condicion', 'like', 'Ex %') // solo condiciones que empiecen con "Ex "
+      ->get()
+      ->toArray();
+
+    $pdf = Pdf::loadView('admin.constancias.grupoInvestigacionH', [
+      'grupo' => $grupo,
+      'grupoH' => $grupoH,
+      'username' => $request->attributes->get('token_decoded')->username
+    ]);
+    return $pdf->stream();
+  }
 }

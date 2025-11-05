@@ -495,6 +495,7 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
     Route::get('getConstanciaNoDeuda', [ReporteController::class, 'getConstanciaNoDeuda']);
     Route::get('getConstanciaTesisAsesoria', [ReporteController::class, 'getConstanciaTesisAsesoria']);
     Route::get('getConstanciaCapituloLibro', [ReporteController::class, 'getConstanciaCapituloLibro']);
+    Route::get('getConstanciaGrupoInvestigacionH', [ReporteController::class, 'getConstanciaGrupoInvestigacionH']);
   });
 
   //  Facultad
