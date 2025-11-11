@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 class DeudaProyectosController extends Controller {
   public function listadoIntegrantes(Request $request) {
@@ -134,86 +133,88 @@ class DeudaProyectosController extends Controller {
     switch ($tipoProyecto) {
       case 'PCONFIGI':
         $opciones = [
-          'value' => 'Informe académico',
+          ['value' => 'Informe académico'],
         ];
         break;
 
       case 'PCONFIGI-INV':
         $opciones = [
-          'value' => 'Informe académico',
+          ['value' => 'Informe académico'],
         ];
         break;
 
       case 'PSINFINV':
         $opciones = [
-          'value' => 'Informe académico',
+          ['value' => 'Informe académico'],
         ];
         break;
 
       case 'PSINFIPU':
         $opciones = [
-          'value' => 'Resultados de la publicación',
+          ['value' => 'Resultados de la publicación'],
         ];
         break;
 
       case 'PTPGRADO':
         $opciones = [
-          'value' => 'Informe académico de avance',
-          'value' => 'Informe académico final',
+          ['value' => 'Informe académico de avance'],
+          ['value' => 'Informe académico final'],
         ];
         break;
 
       case 'PTPMAEST':
         $opciones = [
-          'value' => 'Informe académico de avance',
-          'value' => 'Informe académico final',
+          ['value' => 'Informe académico de avance'],
+          ['value' => 'Informe académico final'],
         ];
         break;
 
       case 'PTPDOCTO':
         $opciones = [
-          'value' => 'Informe académico de avance',
-          'value' => 'Segundo informe académico de avance',
-          'value' => 'Informe académico final',
+          ['value' => 'Informe académico de avance'],
+          ['value' => 'Segundo informe académico de avance'],
+          ['value' => 'Informe académico final'],
         ];
         break;
 
       case 'PEVENTO':
         $opciones = [
-          'value' => 'Informe académico',
+          ['value' => 'Informe académico'],
         ];
         break;
 
       case 'PINVPOS':
         $opciones = [
-          'value' => 'Informe académico',
+          ['value' => 'Informe académico'],
         ];
         break;
 
       case 'PTPBACHILLER':
         $opciones = [
-          'value' => 'Informe académico final',
+          ['value' => 'Informe académico final'],
         ];
         break;
 
       case 'PMULTI':
         $opciones = [
-          'value' => 'Informe académico',
+          ['value' => 'Informe académico'],
         ];
         break;
 
       case 'PINTERDIS':
         $opciones = [
-          'value' => 'Informe académico',
+          ['value' => 'Informe académico'],
         ];
         break;
 
       default:
-        return [];
+        $opciones = [
+          ['value' => 'Informe académico'],
+        ];
         break;
     }
 
-    return array($opciones);
+    return $opciones;
   }
   public function getResponsableProyecto($tipoProyecto) {
     $tipoIntegrante = [];
@@ -296,9 +297,9 @@ class DeudaProyectosController extends Controller {
   }
 
   public function asignarDeuda(Request $request) {
-    Log::info("Sample");
 
-    $proyectoId = $request->input('proyecto_id');
+    $partes = explode('_', $request->input('proyecto_id'));
+    $proyectoId = end($partes);
     $tipoProyecto = $request->input('tipo_proyecto');
     $deudaEconomica = $request->input('deuda_economica')['value'];
     $deudaAcademica = $request->input('deuda_academica')['value'];
