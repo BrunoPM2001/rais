@@ -327,11 +327,13 @@
           <td style="width: 1%;" valign="top">:</td>
           <td style="width: 75%;" valign="top">S/ 5,350</td>
         </tr>
+        {{-- 
         <tr>
           <td style="width: 24%;"><strong>Subvención económica VRIP</strong></td>
           <td style="width: 1%;">:</td>
           <td style="width: 75%;">S/ {{ number_format($monto_coefinanciamiento, 2) }}</td>
         </tr>
+        --}}
         <tr>
           <td style="width: 24%;"><strong>Documento RD de cofinanciamiento</strong></td>
           <td style="width: 1%;">:</td>

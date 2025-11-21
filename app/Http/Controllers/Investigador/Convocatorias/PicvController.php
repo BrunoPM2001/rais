@@ -37,7 +37,7 @@ class PicvController extends S3Controller {
       ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
       ->where('a.condicion', '=', 'Responsable')
       ->where('b.tipo_proyecto', '=', 'PICV')
-      ->where('b.periodo', '=', 2025)
+      ->where('b.periodo', '=', 2026)
       ->get();
 
     return $listado;
@@ -105,13 +105,13 @@ class PicvController extends S3Controller {
       ->join('Proyecto AS b', 'b.id', '=', 'a.proyecto_id')
       ->where('a.condicion', '=', 'Responsable')
       ->where('b.tipo_proyecto', '=', 'PICV')
-      ->where('b.periodo', '=', 2025)
+      ->where('b.periodo', '=', 2026)
       // ->where('b.estado', '!=', 6)
       ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
       ->count();
 
     $proyectoActual > 0 && $errores[] = [
-      'message' => "Actualmente, cuenta con una propuesta de proyecto PICV 2025 en proceso como Asesor, por lo que no es posible registrar nuevos proyectos en esta categoría.",
+      'message' => "Actualmente, cuenta con una propuesta de proyecto PICV 2026 en proceso como Asesor, por lo que no es posible registrar nuevos proyectos en esta categoría.",
       'isHtml' => false
     ];
 
@@ -130,7 +130,7 @@ class PicvController extends S3Controller {
           ->where('c.condicion', '=', 'Titular');
       })
       ->where('a.tipo_proyecto', '=', 'PICV')
-      ->where('a.periodo', '=', 2025)
+      ->where('a.periodo', '=', 2026)
       ->where('c.grupo_id', '=', $grupo_id->grupo_id)
       ->count();
 
@@ -163,7 +163,7 @@ class PicvController extends S3Controller {
       ])
       ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
       ->where('b.tipo_proyecto', '=', 'PICV')
-      ->where('b.periodo', '=', '2025')
+      ->where('b.periodo', '=', '2026')
       ->first();
 
     if ($proyecto != null) {
@@ -352,7 +352,7 @@ class PicvController extends S3Controller {
           'tipo_proyecto' => 'PICV',
           'fecha_inscripcion' => Carbon::now(),
           'localizacion' => $request->input('localizacion')["value"],
-          'periodo' => 2025,
+          'periodo' => 2026,
           'convocatoria' => 1,
           'step' => 2,
           'estado' => 6,
@@ -589,7 +589,7 @@ class PicvController extends S3Controller {
       ->leftJoin('Proyecto_integrante as pi', 'p.id', '=', 'pi.proyecto_id')
       ->join('Usuario_investigador AS c', 'c.id', '=', 'pi.investigador_id')
       ->where('c.codigo', '=', $request->query('codigo'))
-      ->where('p.periodo', '=', 2025)
+      ->where('p.periodo', '=', 2026)
       ->where('p.tipo_proyecto', '=', 'PICV')
       ->count();
 
@@ -597,7 +597,7 @@ class PicvController extends S3Controller {
       $tesistaProyecto = 0;
     } else {
       $tesistaProyecto = DB::table('Proyecto_integrante as a')
-        ->join('Proyecto as b', 'a.proyecto_id', '=', 'a.id')
+        ->join('Proyecto as b', 'a.proyecto_id', '=', 'b.id')
         ->join('Proyecto_integrante_tipo as c', 'a.proyecto_integrante_tipo_id', '=', 'c.id')
         ->where('b.estado', '=', '1')
         ->where('a.investigador_id', '=', $request->query('investigador_id'))
@@ -981,7 +981,7 @@ class PicvController extends S3Controller {
       ->where('a.proyecto_id', '=', $request->query('proyecto_id'))
       ->get();
 
-    $monto_disponible = 25000;
+    $monto_disponible = 5000;
     foreach ($partidas as $partida) {
       $monto_disponible = $monto_disponible - $partida->monto;
     }
@@ -1057,6 +1057,38 @@ class PicvController extends S3Controller {
       ]);
 
     return ['message' => 'info', 'detail' => 'Proyecto enviado para evaluación'];
+  }
+
+  public function validarPresupuesto(Request $request) {
+    $alerta = [];
+
+    $partidas = DB::table('Proyecto_presupuesto AS a')
+      ->join('Partida_proyecto AS b', function (JoinClause $join) {
+        $join->on('b.partida_id', '=', 'a.partida_id')
+          ->where('b.tipo_proyecto', '=', 'PICV');
+      })
+      ->leftJoin('Partida_proyecto_grupo AS c', 'c.partida_proyecto_id', '=', 'b.id')
+      ->leftJoin('Partida_grupo AS d', 'd.id', '=', 'c.partida_grupo_id')
+      ->select([
+        'd.nombre',
+        'd.monto_max',
+        DB::raw("SUM(a.monto) AS total")
+      ])
+      ->where('a.proyecto_id', '=', $request->query('id'))
+      ->groupBy('d.id')
+      ->get();
+
+    foreach ($partidas as $item) {
+      if ($item->monto_max < $item->total && $item->nombre != null) {
+        $alerta[] = $item->nombre . ": " . $item->monto_max;
+      }
+    };
+
+    if (sizeof($alerta) == 0) {
+      return ['message' => 'info', 'detail' => 'Su proyecto respeta los límites de la directiva'];
+    } else {
+      return ['message' => 'warning', 'detail' => 'El presupuesto presenta excesos en la(s) siguiente(s) categoría(s). ' . implode(',', $alerta) . '; para mayor detalle revisar la directiva correspondiente.', $alerta];
+    }
   }
 
   public function reporte(Request $request) {

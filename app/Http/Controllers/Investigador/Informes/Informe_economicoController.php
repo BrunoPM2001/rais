@@ -1083,7 +1083,7 @@ class Informe_economicoController extends S3Controller {
       ])
       ->where('a.geco_proyecto_id', '=', $request->query('id'))
       ->where('c.tipo', '=', 'Bienes')
-      ->whereIn('a.estado', [1,6])
+      ->where('a.estado', '=', 1)
       ->get();
 
     $servicios = DB::table('Geco_documento AS a')
@@ -1099,7 +1099,7 @@ class Informe_economicoController extends S3Controller {
       ])
       ->where('a.geco_proyecto_id', '=', $request->query('id'))
       ->where('c.tipo', '=', 'Servicios')
-      ->whereIn('a.estado', [1,6])
+      ->where('a.estado', '=', 1)
       ->get();
 
     $pdf = Pdf::loadView(

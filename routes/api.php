@@ -1066,6 +1066,7 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
       Route::get('listarTiposPartidas', [PicvController::class, 'listarTiposPartidas']);
       Route::post('agregarPartida', [PicvController::class, 'agregarPartida']);
       Route::delete('eliminarPartida', [PicvController::class, 'eliminarPartida']);
+      Route::get('validarPresupuesto', [PicvController::class, 'validarPresupuesto']);
 
       Route::put('enviarProyecto', [PicvController::class, 'enviarProyecto']);
       Route::get('reporte', [PicvController::class, 'reporte']);

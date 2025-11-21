@@ -180,7 +180,7 @@
 
   <table class="cuerpo-table">
     <tr class="title">
-      <td><b>Constancia de Grupos de Investigación de la<br>Universidad Nacional Mayor de San Marcos</b></td>
+      <td><b>Constancia de Grupos de Investigación</td>
     </tr>
   </table>
 
@@ -240,7 +240,7 @@
 
   <table class="table-texto3">
     <tr>
-      <td>Ha registrado participación en el(los) siguiente(s) Grupo(s) de Investigación:</td>
+      <td>Historial de participación:</td>
     </tr>
   </table>
 
