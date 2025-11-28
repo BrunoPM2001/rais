@@ -106,7 +106,7 @@ class PicvController extends S3Controller {
       ->where('a.condicion', '=', 'Responsable')
       ->where('b.tipo_proyecto', '=', 'PICV')
       ->where('b.periodo', '=', 2026)
-      // ->where('b.estado', '!=', 6)
+      ->where('b.estado', '!=', -1)
       ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
       ->count();
 
@@ -140,6 +140,41 @@ class PicvController extends S3Controller {
     ];
 
     return ['estado' => empty($errores), 'errores' => $errores];
+  }
+
+  public function eliminarProyecto(Request $request)
+  {
+    $proyecto_id = $request->input('proyecto_id');
+
+    // Verificar que el usuario sea responsable del proyecto
+    $esResponsable = DB::table('Proyecto_integrante')
+        ->where('proyecto_id', '=', $proyecto_id)
+        ->where('investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+        ->where('condicion', '=', 'Responsable')
+        ->count();
+
+    if ($esResponsable == 0) {
+        return ['message' => 'error', 'detail' => 'No autorizado para eliminar'];
+    }
+
+    // Cambiar el estado a eliminado
+    DB::table('Proyecto')
+        ->where('id', '=', $proyecto_id)
+        ->update([
+            'estado' => -1, // Eliminado
+            'updated_at' => now()
+        ]);
+
+    DB::table('Proyecto_integrante')
+        ->where('proyecto_id', '=', $proyecto_id)
+        ->where('condicion', '!=', 'Responsable')
+        ->delete();
+
+    DB::table('Proyecto_presupuesto')
+        ->where('proyecto_id', '=', $proyecto_id)
+        ->delete();
+
+    return ['message' => 'success', 'detail' => 'Proyecto eliminado correctamente'];
   }
 
   public function verificar(Request $request) {
@@ -569,8 +604,7 @@ class PicvController extends S3Controller {
       )
       ->where(function ($query) {
         $query->where('a.año_ciclo_estudio', '>=', 3)
-          ->orWhereNull('a.año_ciclo_estudio')
-          ->orWhere('a.año_ciclo_estudio', '=', '');
+          ->orWhereNull('a.año_ciclo_estudio');
       })
       ->where('a.programa', 'LIKE', 'E.P.%')
       ->whereIn('a.permanencia', ['Activo', 'Reserva de Matricula'])

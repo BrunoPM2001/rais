@@ -1039,6 +1039,7 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
 
       Route::get('listado', [PicvController::class, 'listado']);
       Route::get('validarDatos', [PicvController::class, 'validarDatos']);
+      Route::delete('eliminarProyecto', [PicvController::class, 'eliminarProyecto']);
 
       Route::get('verificar', [PicvController::class, 'verificar']);
       Route::get('datosPaso1', [PicvController::class, 'datosPaso1']);
