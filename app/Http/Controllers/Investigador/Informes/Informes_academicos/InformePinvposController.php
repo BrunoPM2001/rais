@@ -6,6 +6,9 @@ use App\Http\Controllers\S3Controller;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Database\Query\JoinClause;
 
 class InformePinvposController extends S3Controller {
   public function getData(Request $request) {
@@ -145,6 +148,12 @@ class InformePinvposController extends S3Controller {
     $proyecto_id = $request->input('proyecto_id');
     $date1 = Carbon::now();
 
+    if ($request->hasFile('file1')) {
+      $name = $request->input('proyecto_id') . "/" . $date1->format('Ymd-His') . "-" . Str::random(8) . "." . $request->file('file1')->getClientOriginalExtension();
+      $this->uploadFile($request->file('file1'), "proyecto-doc", $name);
+      $this->updateFile($proyecto_id, $date1, $name, "anexo1");
+    }
+
     return ['message' => 'success', 'detail' => 'Informe guardado correctamente'];
   }
 
@@ -210,7 +219,7 @@ class InformePinvposController extends S3Controller {
     DB::table('Proyecto_doc')
       ->where('proyecto_id', '=', $proyecto_id)
       ->where('categoria', '=', $categoria)
-      ->where('nombre', '=', 'Anexos proyecto ECI')
+      ->where('nombre', '=', 'Anexo Proyecto PINVPOS')
       ->update([
         'estado' => 0
       ]);
@@ -220,10 +229,65 @@ class InformePinvposController extends S3Controller {
         'proyecto_id' => $proyecto_id,
         'categoria' => $categoria,
         'tipo' => 21,
-        'nombre' => 'Anexos proyecto ECI',
+        'nombre' => 'Anexo Proyecto PINVPOS',
         'comentario' => $date,
         'archivo' => $name,
         'estado' => 1
       ]);
+  }
+
+    public function reporte(Request $request) {
+    $detalles = DB::table('Informe_tecnico AS a')
+      ->join('Proyecto AS b', 'b.id', '=', 'a.proyecto_id')
+      ->select([
+        'b.id AS proyecto_id',
+        'b.codigo_proyecto',
+        'b.tipo_proyecto',
+        DB::raw("COALESCE(a.fecha_registro_csi, a.fecha_envio) AS fecha_estado"),
+        'a.*',
+      ])
+      ->where('a.id', '=', $request->query('informe_tecnico_id'))
+      ->first();
+
+    $proyecto = DB::table('Proyecto AS a')
+      ->leftJoin('Facultad AS b', 'b.id', '=', 'a.facultad_id')
+      ->leftJoin('Grupo AS c', 'c.id', '=', 'a.grupo_id')
+      ->leftJoin('Proyecto_integrante AS d', function (JoinClause $join) {
+        $join->on('d.proyecto_id', '=', 'a.id')
+          ->where('d.condicion', '=', 'Responsable');
+      })
+      ->leftJoin('Usuario_investigador AS e', 'e.id', '=', 'd.investigador_id')
+      ->select([
+        'a.titulo',
+        'a.codigo_proyecto',
+        'b.nombre AS facultad',
+        'c.grupo_nombre',
+        DB::raw("CONCAT(e.apellido1, ' ', e.apellido2, ', ', e.nombres) AS responsable"),
+        'a.resolucion_rectoral',
+      ])
+      ->where('a.id', '=', $detalles->proyecto_id)
+      ->first();
+
+    $archivos = DB::table('Proyecto_doc')
+      ->select([
+        'categoria',
+        DB::raw("CONCAT('/minio/proyecto-doc/', archivo) AS url")
+      ])
+      ->where('proyecto_id', '=', $detalles->proyecto_id)
+      ->where('nombre', '=', 'Anexo Proyecto PINVPOS')
+      ->where('estado', '=', 1)
+      ->get()
+      ->mapWithKeys(function ($item) {
+        return [$item->categoria => $item->url];
+      });
+
+    $pdf = Pdf::loadView('admin.estudios.informes_tecnicos.eci', [
+      'proyecto' => $proyecto,
+      'archivos' => $archivos,
+      'detalles' => $detalles,
+      'informe' => $request->query('tipo_informe')
+    ]);
+
+    return $pdf->stream();
   }
 }

@@ -59,7 +59,7 @@ class ProyectoController extends Controller {
         DB::raw("SUM(j.monto) as presupuesto"),
       ])
       ->where('a.tipo_proyecto', '=', $tipo)
-      ->when($tipo === 'PRO-CTIE' && empty($facultad), function ($query) {
+      ->when(in_array($tipo, ['PRO-CTIE', 'PICV']) && empty($facultad), function ($query) {
         }, function ($query) use ($facultad) {
         $query->where('a.facultad_id', '=', $facultad);
         })
@@ -79,28 +79,13 @@ class ProyectoController extends Controller {
               });
           }
       })
-      ->when($tipo === 'PRO-CTIE', function ($query) {
+      ->when(in_array($tipo, ['PRO-CTIE', 'PICV']), function ($query) {
           $query->orderByRaw('
           CAST(SUBSTRING(a.codigo_proyecto, 6, 2) AS UNSIGNED), 
           a.codigo_proyecto,
           FIELD(b.proyecto_integrante_tipo_id,
-              1, 2, 3, 5, 6, 4, 31, 32, 33, 35,
-              7, 8, 9, 11, 12, 10, 42, 50, 51, 52, 55,
-              13, 14, 53, 54,
-              15, 16,
-              17, 18,
-              19, 20,
-              21, 22, 23, 24, 26, 25, 27,
-              28, 29,
-              30, 34,
-              36, 37, 38, 40, 41, 39,
-              44, 45, 46, 47, 48, 49, 90, 91,
-              56, 57, 58, 59, 60, 61, 94, 62, 63, 64, 65, 82,
-              66, 67, 68, 69,
-              70, 71,
-              74, 75, 76, 77, 78, 79, 80, 81,
-              83, 84, 85,
               86, 88, 87,
+              92, 93
             ),
             c.apellido1, c.apellido2, c.nombres');
         }, function ($query) {
@@ -166,6 +151,10 @@ class ProyectoController extends Controller {
         break;
       case 'FEX':
         $tipo = 'Proyectos con Financiamiento Externo para Grupos de Investigación';
+        break;
+      case 'PICV':
+        $tipo = 'Programa para la Inducción en Investigación Científica, en el Verano (PICV)';
+        $vista = 'admin.reportes.proctiePDF';
         break;
       default:
         $tipo = 'Tipo de Proyecto Desconocido';
