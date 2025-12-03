@@ -48,7 +48,7 @@ class InformePinvposController extends S3Controller {
         DB::raw("CONCAT('/minio/proyecto-doc/', archivo) AS url")
       ])
       ->where('proyecto_id', '=', $request->get('proyecto_id'))
-      ->where('nombre', '=', 'Anexos proyecto ECI')
+      ->where('nombre', '=', 'Anexo Proyecto PINVPOS')
       ->where('estado', '=', 1)
       ->get()
       ->mapWithKeys(function ($item) {
@@ -147,6 +147,12 @@ class InformePinvposController extends S3Controller {
 
     $proyecto_id = $request->input('proyecto_id');
     $date1 = Carbon::now();
+
+    if ($request->hasFile('file2')) {
+      $name = $request->input('proyecto_id') . "/" . $date1->format('Ymd-His') . "-" . Str::random(8) . "." . $request->file('file2')->getClientOriginalExtension();
+      $this->uploadFile($request->file('file2'), "proyecto-doc", $name);
+      $this->updateFile($proyecto_id, $date1, $name, "asistencia");
+    }
 
     if ($request->hasFile('file1')) {
       $name = $request->input('proyecto_id') . "/" . $date1->format('Ymd-His') . "-" . Str::random(8) . "." . $request->file('file1')->getClientOriginalExtension();

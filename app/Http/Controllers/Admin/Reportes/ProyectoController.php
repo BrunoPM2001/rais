@@ -70,7 +70,7 @@ class ProyectoController extends Controller {
               $sub->where('i.condicion', 'not like', 'Ex%')
                   ->orWhereNull('i.condicion');
           });
-          if ($tipo === 'PRO-CTIE') {
+          if (in_array($tipo, ['PRO-CTIE', 'PICV'])) {
               $query->orWhereIn('c.id', function ($sub2) {
                   $sub2->select('gi2.investigador_id')
                       ->from('Grupo_integrante as gi2')

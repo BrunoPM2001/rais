@@ -681,12 +681,12 @@ class ProCTIController extends S3Controller {
             'apellido2' => $sumData->apellido_materno,
             'doc_tipo' => 'DNI',
             'doc_numero' => $sumData->dni,
-            'tipo' => 'Estudiante',
+            'tipo' => 'Estudiante pregrado',
             'sexo' => $sumData->sexo,
             'email3' => $sumData->correo_electronico,
             'created_at' => Carbon::now(),
             'updated_at' => Carbon::now(),
-            'tipo_investigador' => 'Estudiante'
+            'tipo_investigador' => 'Estudiante pregrado'
           ]);
       }
 
