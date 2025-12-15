@@ -414,7 +414,7 @@ class PicvController extends S3Controller {
           'proyecto_id' => $id,
           'investigador_id' => $request->attributes->get('token_decoded')->investigador_id,
           'condicion' => 'Responsable',
-          'proyecto_integrante_tipo_id' => 86,
+          'proyecto_integrante_tipo_id' => 92,
           'created_at' => Carbon::now(),
           'updated_at' => Carbon::now(),
         ]);
@@ -713,7 +713,7 @@ class PicvController extends S3Controller {
           'proyecto_id' => $request->input('proyecto_id'),
           'investigador_id' => $id_investigador,
           'condicion' => 'Colaborador',
-          'proyecto_integrante_tipo_id' => 88,
+          'proyecto_integrante_tipo_id' => 93,
           'created_at' => $date,
           'updated_at' => $date
         ]);
@@ -773,7 +773,7 @@ class PicvController extends S3Controller {
           'proyecto_id' => $request->input('proyecto_id'),
           'investigador_id' => $id_investigador,
           'condicion' => 'Colaborador',
-          'proyecto_integrante_tipo_id' => 88,
+          'proyecto_integrante_tipo_id' => 93,
           'created_at' => $date,
           'updated_at' => $date
         ]);
