@@ -52,6 +52,10 @@ class UtilInformeAdminController extends Controller {
         $util = new PinterdisController();
         return $util->reporte($request);
         break;
+      case "PINVPOS":
+        $util = new PinvposController();
+        return $util->reporte($request);
+        break;
     }
   }
 }

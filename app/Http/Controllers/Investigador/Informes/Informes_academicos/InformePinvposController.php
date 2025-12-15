@@ -242,7 +242,7 @@ class InformePinvposController extends S3Controller {
       ]);
   }
 
-    public function reporte(Request $request) {
+  public function reporte(Request $request) {
     $detalles = DB::table('Informe_tecnico AS a')
       ->join('Proyecto AS b', 'b.id', '=', 'a.proyecto_id')
       ->select([
@@ -287,7 +287,7 @@ class InformePinvposController extends S3Controller {
         return [$item->categoria => $item->url];
       });
 
-    $pdf = Pdf::loadView('admin.estudios.informes_tecnicos.eci', [
+    $pdf = Pdf::loadView('admin.estudios.informes_tecnicos.pinvpos', [
       'proyecto' => $proyecto,
       'archivos' => $archivos,
       'detalles' => $detalles,

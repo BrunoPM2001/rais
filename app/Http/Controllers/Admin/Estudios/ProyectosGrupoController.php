@@ -26,6 +26,7 @@ use Maatwebsite\Excel\Facades\Excel;
 class ProyectosGrupoController extends S3Controller {
 
   public function listado($periodo) {
+    $uit = 5350;
     $proyectos = DB::table('Proyecto AS a')
       ->leftJoin('Grupo AS b', 'b.id', '=', 'a.grupo_id')
       ->leftJoin('Linea_investigacion AS c', 'c.id', '=', 'a.linea_investigacion_id')
@@ -54,10 +55,15 @@ class ProyectosGrupoController extends S3Controller {
         "),
         DB::raw("
           CASE
+              WHEN a.tipo_proyecto = 'PINVPOS' AND a.periodo >= 2025 THEN (
+                SELECT COALESCE(SUM(f_sub.monto), 0) + ({$uit} * 0.5)
+                FROM Proyecto_presupuesto AS f_sub
+                WHERE f_sub.proyecto_id = a.id
+              )
               WHEN a.tipo_proyecto = 'PINVPOS' THEN (
-                  SELECT COALESCE(SUM(f_sub.monto), 0)
-                  FROM Proyecto_presupuesto AS f_sub
-                  WHERE f_sub.proyecto_id = a.id
+                SELECT COALESCE(SUM(f_sub.monto), 0)
+                FROM Proyecto_presupuesto AS f_sub
+                WHERE f_sub.proyecto_id = a.id
               )
               ELSE SUM(f.monto)
           END AS monto

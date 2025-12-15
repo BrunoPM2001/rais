@@ -24,6 +24,11 @@ class ProyectoController extends Controller {
     $periodo = $request->query('periodo');
     $tipo = $request->query('tipo_proyecto');
     $ocultarPresupuesto = in_array($tipo, ['PSINFIPU', 'PSINFINV']);
+    $UIT = 5350;
+    $subvencionVrip = 0;
+    if ($tipo === 'PINVPOS' && (int) $periodo >= 2025) {
+      $subvencionVrip = $UIT * 0.5; // 2675
+    }
 
     $proyectos = DB::table('Proyecto as a')
       ->leftJoin('Proyecto_integrante as b', 'a.id', '=', 'b.proyecto_id')
@@ -70,12 +75,12 @@ class ProyectoController extends Controller {
               $sub->where('i.condicion', 'not like', 'Ex%')
                   ->orWhereNull('i.condicion');
           });
-          if (in_array($tipo, ['PRO-CTIE', 'PICV'])) {
+          if (in_array($tipo, ['PRO-CTIE', 'PICV', 'PINVPOS'])) {
               $query->orWhereIn('c.id', function ($sub2) {
                   $sub2->select('gi2.investigador_id')
                       ->from('Grupo_integrante as gi2')
                       ->groupBy('gi2.investigador_id')
-                      ->havingRaw('COUNT(*) = 1 AND SUM(gi2.condicion LIKE "Ex%") = 1');
+                      ->havingRaw('SUM(gi2.condicion LIKE "Ex%") = COUNT(*)');
               });
           }
       })
@@ -115,6 +120,13 @@ class ProyectoController extends Controller {
         })
       ->groupBy('b.id')
       ->get();
+
+    if ($tipo === 'PINVPOS' && (int) $periodo >= 2025 && $subvencionVrip > 0) {
+      $proyectos->transform(function ($p) use ($subvencionVrip) {
+        $p->presupuesto = (float) ($p->presupuesto ?? 0) + $subvencionVrip;
+        return $p;
+      });
+    }
 
     $area = DB::table('Facultad AS fx')
       ->leftJoin('Area as ax', 'ax.id', '=', 'fx.area_id')
@@ -156,6 +168,9 @@ class ProyectoController extends Controller {
         $tipo = 'Programa para la Inducción en Investigación Científica, en el Verano (PICV)';
         $vista = 'admin.reportes.proctiePDF';
         break;
+      case 'PINVPOS':
+        $tipo = 'Programa de Talleres de Investigación y Posgrado';
+        break;
       default:
         $tipo = 'Tipo de Proyecto Desconocido';
     }
@@ -168,6 +183,7 @@ class ProyectoController extends Controller {
       'admin' => $admin,
       'qr' => $qrCode,
       'ocultarPresupuesto' => $ocultarPresupuesto,
+      'subvencionVrip'    => $subvencionVrip,
     ]);
     return $pdf->stream();
   }
