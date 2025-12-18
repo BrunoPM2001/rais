@@ -772,12 +772,12 @@ class PublicacionesUtilsController extends S3Controller {
 
     if ($request->query('tipo') == "patente") {
       $esAutor = DB::table('Patente_autor')
-        ->where('patente_id', '=', $request->query('id'))
+        ->where('patente_id', '=', $request->query('publicacion_id'))
         ->where('investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
         ->count();
     } else {
       $esAutor = DB::table('Publicacion_autor')
-        ->where('publicacion_id', '=', $request->query('id'))
+        ->where('publicacion_id', '=', $request->query('publicacion_id'))
         ->where('investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
         ->count();
     }
