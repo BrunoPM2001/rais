@@ -220,6 +220,7 @@ class ProyectosGrupoController extends S3Controller {
         $miembros = $ctrl->miembros($request);
         $documentos = $ctrl->documentos($request);
         $actividades = $ctrl->actividades($request);
+        $presupuesto = $this->presupuesto($request);
 
         return [
           'detalle' => $detalle,
@@ -227,6 +228,7 @@ class ProyectosGrupoController extends S3Controller {
           'miembros' => $miembros,
           'documentos' => $documentos,
           'actividades' => $actividades,
+          'presupuesto' => $presupuesto,
         ];
 
       case "PTPMAEST":
