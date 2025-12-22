@@ -23,6 +23,7 @@ class PerfilController extends S3Controller {
         'a.telefono_casa',
         'a.codigo',
         'a.dependencia_id',
+        'a.instituto_id',
         'a.facultad_id',
         'a.email3',
 
@@ -67,6 +68,13 @@ class PerfilController extends S3Controller {
       ])
       ->get();
 
+    $institutos = DB::table('Instituto')
+      ->select([
+        'id AS value',
+        'instituto AS label'
+      ])
+      ->get();
+
     $facultades = DB::table('Facultad')
       ->select([
         'id AS value',
@@ -74,7 +82,7 @@ class PerfilController extends S3Controller {
       ])
       ->get();
 
-    return ['data' => $data, 'dependencias' => $dependencias, 'facultades' => $facultades];
+    return ['data' => $data, 'dependencias' => $dependencias, 'facultades' => $facultades, 'institutos' => $institutos];
   }
 
   public function updateData(Request $request) {
@@ -87,6 +95,7 @@ class PerfilController extends S3Controller {
         'telefono_trabajo' => $request->input('telefono_trabajo'),
         'telefono_casa' => $request->input('telefono_casa'),
         'dependencia_id' => $request->input('dependencia_id')["value"],
+        'instituto_id' => $request->input('instituto_id')["value"],
         'facultad_id' => $request->input('facultad_id')["value"],
         'scopus_id' => $request->input('scopus_id'),
         'researcher_id' => $request->input('researcher_id'),
