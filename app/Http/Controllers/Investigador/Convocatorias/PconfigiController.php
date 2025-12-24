@@ -603,7 +603,18 @@ class PconfigiController extends S3Controller {
       ->where('proyecto_id', '=', $request->query('id'))
       ->get();
 
-    return ['estado' => true, 'actividades' => $actividades];
+    $rango_fechas = DB::table('Convocatoria')
+      ->select([
+        'fecha_inicial',
+        'fecha_final'
+      ])
+      ->where('tipo', '=', 'PCONFIGI')
+      ->where('periodo', '=', 2026)
+      ->where('evento', '=', 'calendario')
+      ->where('estado', '=', 1)
+      ->first();
+
+    return ['estado' => true, 'actividades' => $actividades, 'rango' => $rango_fechas];
   }
 
   public function addActividad(Request $request) {

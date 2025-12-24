@@ -966,17 +966,6 @@ class ProCTIController extends S3Controller {
       ->where('estado', '=', 1)
       ->first();
 
-    $rango_fechas = DB::table('Convocatoria')
-      ->select([
-        'fecha_inicial',
-        'fecha_final'
-      ])
-      ->where('tipo', '=', 'PRO-CTIE')
-      ->where('periodo', '=', 2025)
-      ->where('evento', '=', 'calendario')
-      ->where('estado', '=', 1)
-      ->first();
-
     return [
       'actividades' => [
       'actividades' => $actividades,
