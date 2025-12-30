@@ -193,19 +193,19 @@
   <table class="table-texto2">
     <tr>
       <td>Apellidos :</td>
-      <td><strong>{{ $grupo[0]->apellido1 . ' ' . $grupo[0]->apellido2 }}</strong></td>
+      <td><strong>{{ $grupoH[0]->apellido1 . ' ' . $grupoH[0]->apellido2 }}</strong></td>
     </tr>
     <tr>
       <td>Nombres :</td>
-      <td><strong>{{ $grupo[0]->nombres }}</strong></td>
+      <td><strong>{{ $grupoH[0]->nombres }}</strong></td>
     </tr>
     <tr>
       <td>Facultad :</td>
-      <td><strong>{{ $grupo[0]->facultad }}</strong></td>
+      <td><strong>{{ $grupoH[0]->facultad }}</strong></td>
     </tr>
     <tr>
       <td>DNI :</td>
-      <td> <strong>{{ $grupo[0]->doc_numero }}</strong></td>
+      <td> <strong>{{ $grupoH[0]->doc_numero }}</strong></td>
     </tr>
   </table>
 
@@ -223,6 +223,7 @@
         <th>Condición</th>
         <th>Resolución<br>Rectoral</th>
         <th>Fecha Creación GI</th>
+        <th>Estado</th>
       </tr>
     </thead>
     <tbody>
@@ -230,9 +231,24 @@
         <tr>
           <td>{{ $item->grupo_nombre_corto }}</td>
           <td>{{ $item->grupo_nombre }}</td>
-          <td>{{ $item->condicion }}</td>
+          <td>{{ $item->rol_final }}</td>
           <td>{{ $item->resolucion_rectoral }}</td>
           <td>{{ $item->resolucion_creacion_fecha }}</td>
+          <td>
+            @switch($item->estado)
+                @case(-2)
+                    Disuelto
+                    @break
+                @case(4)
+                    Registrado
+                    @break
+                @case(12)
+                    Reg. observado
+                    @break
+                @default
+                    Estado desconocido
+            @endswitch
+          </td>
         </tr>
       @endforeach
     </tbody>

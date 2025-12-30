@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin\Estudios;
 
 use App\Http\Controllers\Controller;
 use Carbon\Carbon;
+use Illuminate\Database\Query\JoinClause;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -60,32 +61,37 @@ class DeudaProyectosController extends Controller {
   }
 
   public function listadoProyectos() {
-    $deudas = DB::table('view_proyectos AS a')
-      ->leftJoin('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
+    $deudas = DB::table('Proyecto AS a')
+      ->leftJoin('Proyecto_integrante AS b', function (JoinClause $join) {
+        $join->on('b.proyecto_id', '=', 'a.id')
+          ->where('b.condicion', '=', 'Responsable');
+      })
+      ->leftJoin('Facultad AS c', 'c.id', '=', 'a.facultad_id')
+      ->leftJoin('Usuario_investigador AS d', 'd.id', '=', 'b.investigador_id')
       ->select([
-        DB::raw("CONCAT(a.proyecto_origen, '_', a.proyecto_id) AS id"),
-        DB::raw("CASE
-          WHEN a.proyecto_origen COLLATE utf8mb4_unicode_ci = 'PROYECTO_BASE' THEN 'Nuevo'
-          WHEN a.proyecto_origen COLLATE utf8mb4_unicode_ci = 'PROYECTO' THEN 'Antiguo'
-        END as proyecto_origen"),
-        'a.proyecto_id',
-        'a.codigo AS codigo_proyecto',
-        'a.tipo AS tipo_proyecto',
+        DB::raw("CONCAT('PROYECTO_BASE', '_', a.id) AS id"),
+        DB::raw("'Nuevo' AS proyecto_origen"),
+        // DB::raw("CASE
+        //   WHEN a.proyecto_origen COLLATE utf8mb4_unicode_ci = 'PROYECTO_BASE' THEN 'Nuevo'
+        //   WHEN a.proyecto_origen COLLATE utf8mb4_unicode_ci = 'PROYECTO' THEN 'Antiguo'
+        // END as proyecto_origen"),
+        'a.id AS proyecto_id',
+        'a.codigo_proyecto',
+        'a.tipo_proyecto',
         'a.periodo',
-        DB::raw("CONCAT(b.apellido1, ' ', b.apellido2, ', ', b.nombres) AS responsable"),
-        'a.xtitulo AS titulo',
-        'a.facultad',
+        DB::raw("CONCAT(d.apellido1, ' ', d.apellido2, ', ', d.nombres) AS responsable"),
+        'a.titulo',
+        'c.nombre AS facultad',
         DB::raw("CASE
           WHEN (a.deuda IS NULL OR a.deuda <= 0) THEN 'NO'
           WHEN a.deuda > 0 AND a.deuda <= 3 THEN 'SI'
           WHEN a.deuda > 3 THEN 'SUBSANADA'
         END as deuda"),
-        'a.fecha_inscripcion AS created_at',
+        'a.created_at',
         'a.updated_at'
       ])
-      ->whereNotIn('a.tipo', ['PFEX', 'FEX', 'SIN-CON'])
-      ->orderBy('a.fecha_inscripcion', 'DESC')
-      ->orderBy('a.facultad', 'DESC')
+      ->whereNotIn('a.tipo_proyecto', ['PFEX', 'FEX', 'SIN-CON'])
+      ->orderBy('a.created_at', 'DESC')
       ->get();
 
     return $deudas;
@@ -331,7 +337,6 @@ class DeudaProyectosController extends Controller {
         'id'
       ])
       ->where('tipo_proyecto', '=', $tipoProyecto)
-      ->where('aplica_deuda', '=', 1)
       ->pluck('id');
 
     $integrantes = DB::table('Proyecto_integrante')

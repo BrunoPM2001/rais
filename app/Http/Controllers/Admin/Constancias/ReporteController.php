@@ -491,15 +491,19 @@ class ReporteController extends Controller {
         'a.nombres',
         'a.doc_numero',
         'a.tipo',
-        'b.cargo',
-        'b.condicion',
+        DB::raw("
+          CASE
+            WHEN b.cargo IS NOT NULL AND TRIM(b.cargo) != '' THEN b.cargo
+            ELSE b.condicion
+          END AS rol_final
+        "),
         'c.grupo_nombre_corto',
         'c.grupo_nombre',
         'c.resolucion_rectoral',
-        'c.resolucion_creacion_fecha'
+        'c.resolucion_creacion_fecha',
+        'c.estado'
       )
       ->where('a.id', '=', $request->query('investigador_id'))
-      ->where('c.estado', '=', 4)
       ->where('b.condicion', 'not like', 'Ex %') // Excluir los que comienzan con "Ex "
       ->get()
       ->toArray();
