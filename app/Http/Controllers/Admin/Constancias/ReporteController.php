@@ -535,7 +535,7 @@ class ReporteController extends Controller {
         'a.fecha_exclusion as fecha_fin'
       )
       ->where('a.investigador_id', $request->query('investigador_id'))
-      ->where('a.condicion', 'like', 'Ex %') // solo condiciones que empiecen con "Ex "
+      //->where('a.condicion', 'like', 'Ex %') // solo condiciones que empiecen con "Ex "
       ->get()
       ->toArray();
 

@@ -277,7 +277,9 @@
           <td style="width: 50%; text-align: left;">{{ $itemh->grupo_nombre }}</td>
           <td style="width: 20%;">{{ $itemh->rol_final }}</td>
           <td style="width: 15%; text-align: left;">{{ $itemh->fecha_inicio }}</td>
-          <td style="width: 15%; text-align: left;">{{ $itemh->fecha_fin }}</td>
+          <td style="width: 15%; text-align: left;">
+            {{ $itemh->fecha_fin ?? 'Actualidad' }}
+          </td>
         </tr>
       @endforeach
     </tbody>
