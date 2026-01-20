@@ -48,6 +48,32 @@ class ProCTIController extends S3Controller {
       $errores[] = "Su grupo en conjunto ya ha registro 5 proyectos, no se permiten más";
     }
 
+    $req2 = DB::table('view_deudores AS vdeuda')
+      ->where('vdeuda.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+      ->count();
+
+    if ($req2 != 0) {
+      $errores[] = "Usted tiene registradas deudas pendientes que deben ser resueltas para participar en el concurso";
+    }
+
+    $req3_1 = DB::table('Grupo_integrante')
+      ->select([
+        'grupo_id'
+      ])
+      ->where('investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+      ->whereNot('condicion', 'LIKE', 'Ex%')
+      ->first();
+
+    $req3 = DB::table('Proyecto')
+      ->where('tipo_proyecto', '=', 'PRO-CTIE')
+      ->where('periodo', '=', 2025)
+      ->where('grupo_id', '=', $req3_1->grupo_id)
+      ->count();
+
+    if ($req3 >= 5) {
+      $errores[] = "Su grupo en conjunto ya ha registro 5 proyectos, no se permiten más";
+    }
+
     $proyecto = DB::table('Proyecto_integrante AS a')
       ->join('Proyecto AS b', 'b.id', '=', 'a.proyecto_id')
       ->select([
@@ -247,6 +273,7 @@ class ProCTIController extends S3Controller {
           'fecha_inscripcion' => Carbon::now(),
           'localizacion' => $request->input('localizacion')["value"],
           'periodo' => 2025,
+          'periodo' => 2025,
           'convocatoria' => 1,
           'step' => 2,
           'estado' => 6,
@@ -425,6 +452,7 @@ class ProCTIController extends S3Controller {
         'c.tipo',
         'd.nombre AS facultad',
         'a.condicion',
+        'a.condicion',
         DB::raw("CONCAT('/minio/', e.bucket, '/', e.key) AS url")
       ])
       ->where('a.proyecto_id', '=', $request->query('proyecto_id'))
@@ -464,6 +492,7 @@ class ProCTIController extends S3Controller {
       )
       ->whereIn('a.permanencia', ['Activo', 'Reserva de Matricula'])
       ->where('a.programa', 'LIKE', 'E.P.%')
+      ->where('a.programa', 'LIKE', 'E.P.%')
       ->having('value', 'LIKE', '%' . $request->query('query') . '%')
       ->limit(10)
       ->get();
@@ -480,20 +509,25 @@ class ProCTIController extends S3Controller {
       ->where('c.codigo', '=', $request->query('codigo'))
       ->where('b.tipo_proyecto', '=', 'PRO-CTIE')
       ->where('b.periodo', '=', '2025')
+      ->where('b.periodo', '=', '2025')
       ->count();
 
     if ($req1 > 0) {
       $errores[] = 'Ya es participante en otro proyecto PRO-CTIE de este año.';
     }
 
-    $req2 = DB::table('Proyecto_integrante AS a')
-      ->join('Proyecto AS b', 'b.id', '=', 'a.proyecto_id')
-      ->where('a.investigador_id', '=', $request->query('investigador_id'))
-      ->where('b.estado', [1, 8, 9, 10, 11])
-      ->count();
+    $investigador_id = $request->query('investigador_id');
+    if (!empty($investigador_id)) {
+      $req2 = DB::table('Proyecto_integrante AS a')
+        ->join('Proyecto AS b', 'b.id', '=', 'a.proyecto_id')
+        ->where('a.investigador_id', '=', $request->query('investigador_id'))
+        ->where('b.estado', [1, 8, 9, 10, 11])
+        ->where('a.proyecto_integrante_tipo_id', [5, 11, 16, 18, 20, 40, 47, 59, 67, 77])
+        ->count();   
 
-    if ($req2 > 0) {
-      $errores[] = 'Ya ha participado en algún otro proyecto aprobado';
+      if ($req2 > 0) {
+        $errores[] = 'Ya ha participado en algún otro proyecto aprobado';
+      }
     }
 
     if (!empty($errores)) {
@@ -647,12 +681,12 @@ class ProCTIController extends S3Controller {
             'apellido2' => $sumData->apellido_materno,
             'doc_tipo' => 'DNI',
             'doc_numero' => $sumData->dni,
-            'tipo' => 'Estudiante',
+            'tipo' => 'Estudiante pregrado',
             'sexo' => $sumData->sexo,
             'email3' => $sumData->correo_electronico,
             'created_at' => Carbon::now(),
             'updated_at' => Carbon::now(),
-            'tipo_investigador' => 'Estudiante'
+            'tipo_investigador' => 'Estudiante pregrado'
           ]);
       }
 
@@ -933,7 +967,10 @@ class ProCTIController extends S3Controller {
       ->first();
 
     return [
+      'actividades' => [
       'actividades' => $actividades,
+      'rango' => $rango_fechas
+    ],
       'rango' => $rango_fechas
     ];
   }
@@ -1045,6 +1082,7 @@ class ProCTIController extends S3Controller {
     return ['message' => 'info', 'detail' => 'Partida eliminada correctamente'];
   }
 
+
   public function validarPresupuesto(Request $request) {
     $alerta = [];
 
@@ -1078,6 +1116,17 @@ class ProCTIController extends S3Controller {
   }
 
   public function enviarProyecto(Request $request) {
+    //  Verificar autorización de grupo
+    $req1 = DB::table('Proyecto')
+      ->where('id', '=', $request->input('proyecto_id'))
+      ->where('estado', '=', 6)
+      ->where('autorizacion_grupo', '=', 1)
+      ->count();
+
+    if ($req1 == 0) {
+      return ['message' => 'error', 'detail' => 'Necesita que el coordinador de su grupo autorice la propuesta de proyecto'];
+    }
+
     //  Verificar autorización de grupo
     $req1 = DB::table('Proyecto')
       ->where('id', '=', $request->input('proyecto_id'))

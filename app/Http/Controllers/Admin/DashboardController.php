@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\DB;
 class DashboardController extends Controller {
 
   public function getData() {
+    $investigadorId = request()->attributes->get('token_decoded')->investigador_id;
     //  Métricas
     $grupos = DB::table('Grupo')
       ->where('estado', '=', 4)
@@ -22,6 +23,16 @@ class DashboardController extends Controller {
     $proyectosPasados = DB::table('Proyecto_H')
       ->whereNotNull('tipo')
       ->count();
+
+    $deudas = DB::table('view_deudores AS vdeuda')
+    ->where('vdeuda.investigador_id', $investigadorId)
+    ->get();
+
+    $deudaData = [
+      'tiene' => $deudas->isNotEmpty(),
+      'cantidad' => $deudas->count(),
+    ];
+
 
     //  Publicaciones
     $countExp = [];
@@ -91,7 +102,8 @@ class DashboardController extends Controller {
         'investigadores' => $investigadores,
         'publicaciones' => $publicaciones1,
         'proyectos' => $proyectos1,
-        'proyectosPasados' => $proyectosPasados
+        'proyectosPasados' => $proyectosPasados,
+        'deudas' => $deudaData
       ],
       'publicaciones' => ['tipos' => $tipos1, 'cuenta' => $publicaciones2],
       'proyectos' => $proyectos2,

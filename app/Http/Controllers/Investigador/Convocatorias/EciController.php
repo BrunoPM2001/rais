@@ -35,7 +35,7 @@ class EciController extends S3Controller {
       ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
       ->where('a.condicion', '=', 'Responsable')
       ->where('b.tipo_proyecto', '=', 'ECI')
-      ->where('b.periodo', '=', 2025)
+      ->where('b.periodo', '=', 2026)
       ->get();
 
     return $listado;
@@ -176,7 +176,7 @@ class EciController extends S3Controller {
         ->join('Proyecto AS b', function (JoinClause $join) {
           $join->on('b.id', '=', 'a.proyecto_id')
             ->where('b.tipo_proyecto', '=', 'ECI')
-            ->where('b.periodo', '=', 2025);
+            ->where('b.periodo', '=', 2026);
         })
         ->select([
           'b.id'
@@ -193,7 +193,7 @@ class EciController extends S3Controller {
           'facultad_id' => $request->input('facultad_id'),
           'grupo_id' => $request->input('grupo_id'),
           'tipo_proyecto' => 'ECI',
-          'periodo' => 2025,
+          'periodo' => 2026,
           'step' => 2,
           'estado' => 6,
           'fecha_inscripcion' => $date,

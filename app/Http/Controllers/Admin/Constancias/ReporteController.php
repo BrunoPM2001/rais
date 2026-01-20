@@ -280,6 +280,7 @@ class ReporteController extends Controller {
       )
       ->where('a.investigador_id', '=', $request->query('investigador_id'))
       ->where('b.validado', '=', 1)
+      ->where('b.estado', '=', 1)
       ->groupBy('b.categoria_id')
       ->groupBy('c.titulo')
       ->groupBy('c.categoria')
@@ -287,21 +288,30 @@ class ReporteController extends Controller {
       ->orderBy('c.categoria')
       ->get()
       ->toArray();
+    
+      $sub = DB::table('Patente AS a')
+        ->join('Patente_autor AS b', 'b.patente_id', '=', 'a.id')
+        ->where('b.investigador_id', '=', $request->query('investigador_id'))
+        ->where('b.es_presentador','=', 1)
+        ->where('a.estado','=', 1)
+        ->groupBy('a.id', 'a.tipo')
+        ->select([
+            'a.id AS patente_id',
+            'a.tipo',
+            DB::raw('SUM(COALESCE(b.puntaje, 0)) AS puntaje_patente')
+        ]);
 
-    $patentes = DB::table('Patente AS a')
-      ->leftJoin('Patente_autor AS b', 'b.patente_id', '=', 'a.id')
-      ->leftJoin('Patente_entidad AS c', 'c.patente_id', '=', 'a.id')
-      ->select(
-        'a.tipo',
-        DB::raw('COUNT(*) AS cantidad'),
-        DB::raw('SUM(b.puntaje) AS puntaje') // Sumar los puntajes agrupados
-      )
-      ->where('b.es_presentador', 1)
-      ->where('b.investigador_id', $request->query('investigador_id'))
-      ->groupBy('a.tipo') // Agrupación solo por tipo
-      ->orderBy('a.tipo') // Ordenar por tipo
-      ->get()
-      ->toArray();
+    $patentes = DB::query()
+        ->fromSub($sub, 't')
+        ->select([
+            't.tipo',
+            DB::raw('COUNT(*) AS cantidad'),
+            DB::raw('SUM(t.puntaje_patente) AS puntaje'),
+        ])
+        ->groupBy('t.tipo')
+        ->orderBy('t.tipo')
+        ->get()
+        ->toArray();
 
     $pdf = Pdf::loadView('admin.constancias.puntajePublicacionesPDF', [
       'docente' => $docente[0],
@@ -387,6 +397,7 @@ class ReporteController extends Controller {
       )
       ->where('a.investigador_id', '=', $request->query('investigador_id'))
       ->where('b.validado', '=', 1)
+      ->where('b.estado', '=', 1)
       ->orderBy('c.tipo') // Ordenar por tipo de publicación
       ->orderBy('c.categoria') // Luego por categoría
       ->orderByDesc('año') // Después por año, de forma descendente
@@ -395,7 +406,17 @@ class ReporteController extends Controller {
 
     $patentes = DB::table('Patente AS a')
       ->leftJoin('Patente_autor AS b', 'b.patente_id', '=', 'a.id')
-      ->leftJoin('Patente_entidad AS c', 'c.patente_id', '=', 'a.id')
+      ->leftJoin(DB::raw('(
+          SELECT c1.*
+          FROM Patente_entidad AS c1
+          WHERE c1.id = (
+              SELECT c2.id
+              FROM Patente_entidad AS c2
+              WHERE c2.patente_id = c1.patente_id
+              ORDER BY c2.updated_at DESC
+              LIMIT 1
+          )
+        ) AS c'), 'c.patente_id', '=', 'a.id')
       ->select(
         'a.titulo',
         'a.tipo',
@@ -406,6 +427,7 @@ class ReporteController extends Controller {
       )
       ->where('b.es_presentador', '=', 1)
       ->where('b.investigador_id', '=', $request->query('investigador_id'))
+      ->where('a.estado', '=', 1)
       ->orderBy('a.tipo') // Ordenar por tipo de publicación
       ->orderByDesc('c.updated_at') // Después por año, de forma descendente
       ->orderBy('a.titulo') // Finalmente, por título de publicación
@@ -451,6 +473,75 @@ class ReporteController extends Controller {
 
     $pdf = Pdf::loadView('admin.constancias.grupoInvestigacionPDF', [
       'grupo' => $grupo,
+      'username' => $request->attributes->get('token_decoded')->username
+    ]);
+    return $pdf->stream();
+  }
+
+  public function getConstanciaGrupoInvestigacionH(Request $request) {
+    $grupo = DB::table('Usuario_investigador AS a')
+      ->join('Grupo_integrante AS b', 'b.investigador_id', '=', 'a.id')
+      ->join('Grupo AS c', 'c.id', '=', 'b.grupo_id')
+      ->join('Facultad AS d', 'd.id', '=', 'a.facultad_id')
+      ->select(
+        DB::raw('CONCAT(a.apellido1, " ", a.apellido2, " ", a.nombres) AS nombre'),
+        'd.nombre AS facultad',
+        'a.apellido1',
+        'a.apellido2',
+        'a.nombres',
+        'a.doc_numero',
+        'a.tipo',
+        DB::raw("
+          CASE
+            WHEN b.cargo IS NOT NULL AND TRIM(b.cargo) != '' THEN b.cargo
+            ELSE b.condicion
+          END AS rol_final
+        "),
+        'c.grupo_nombre_corto',
+        'c.grupo_nombre',
+        'c.resolucion_rectoral',
+        'c.resolucion_creacion_fecha',
+        'c.estado'
+      )
+      ->where('a.id', '=', $request->query('investigador_id'))
+      ->where('b.condicion', 'not like', 'Ex %') // Excluir los que comienzan con "Ex "
+      ->get()
+      ->toArray();
+
+    $grupoH = DB::table('Grupo_integrante as a')
+      ->join('Grupo as b', 'a.grupo_id', '=', 'b.id')
+      ->join('Usuario_investigador as c', 'a.investigador_id', '=', 'c.id')
+      ->join('Facultad as d', 'b.facultad_id', '=', 'd.id')
+      ->select(
+        DB::raw("CONCAT(c.apellido1, ' ', c.apellido2, ', ', c.nombres) as nombre"),
+        'd.nombre as facultad',
+        'c.apellido1',
+        'c.apellido2',
+        'c.nombres',
+        'c.doc_numero',
+        'c.tipo',
+        DB::raw("
+          CASE 
+            WHEN a.cargo IS NOT NULL AND a.cargo != '' 
+              THEN TRIM(REPLACE(a.cargo, 'Ex ', ''))
+            ELSE TRIM(REPLACE(a.condicion, 'Ex ', ''))
+          END AS rol_final
+        "),
+        'a.condicion',
+        'b.grupo_nombre_corto',
+        'b.grupo_nombre',
+        'b.resolucion_rectoral',
+        DB::raw('DATE(a.created_at) as fecha_inicio'),
+        'a.fecha_exclusion as fecha_fin'
+      )
+      ->where('a.investigador_id', $request->query('investigador_id'))
+      //->where('a.condicion', 'like', 'Ex %') // solo condiciones que empiecen con "Ex "
+      ->get()
+      ->toArray();
+
+    $pdf = Pdf::loadView('admin.constancias.grupoInvestigacionH', [
+      'grupo' => $grupo,
+      'grupoH' => $grupoH,
       'username' => $request->attributes->get('token_decoded')->username
     ]);
     return $pdf->stream();

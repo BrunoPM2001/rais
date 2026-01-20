@@ -29,6 +29,7 @@ class PublicacionesExport implements FromCollection, WithHeadings {
       'Editorial',
       'Evento nombre',
       'Presentador',
+      'Grupo de investigación',
       'Facultad',
       'Área',
       'Título',
@@ -47,11 +48,13 @@ class PublicacionesExport implements FromCollection, WithHeadings {
     $data = DB::table('Publicacion AS a')
       ->leftJoin('Publicacion_autor AS b', function (JoinClause $join) {
         $join->on('b.publicacion_id', '=', 'a.id')
-          ->leftJoin('Usuario_investigador AS c', 'c.id', '=', 'b.investigador_id')
-          ->leftJoin('Facultad AS d', 'd.id', '=', 'c.facultad_id')
-          ->leftJoin('Area AS e', 'e.id', '=', 'd.area_id')
           ->where('b.presentado', '=', 1);
       })
+      ->leftJoin('Usuario_investigador AS c', 'c.id', '=', 'b.investigador_id')
+      ->leftJoin('Grupo_integrante AS g', 'g.investigador_id', '=', 'c.id')
+      ->leftJoin('Grupo AS h', 'h.id', '=', 'g.grupo_id')
+      ->leftJoin('Facultad AS d', 'd.id', '=', 'c.facultad_id')
+      ->leftJoin('Area AS e', 'e.id', '=', 'd.area_id')
       ->leftJoin('Publicacion_categoria AS f', 'f.id', '=', 'a.categoria_id')
       ->select(
         'a.id',
@@ -72,6 +75,7 @@ class PublicacionesExport implements FromCollection, WithHeadings {
         'a.editorial',
         'a.evento_nombre',
         DB::raw("CONCAT(c.apellido1, ' ', c.apellido2, ', ', c.nombres) AS presentador"),
+        'h.grupo_nombre AS grupo_investigacion',
         'd.nombre AS facultad',
         'e.nombre AS area',
         'a.titulo',

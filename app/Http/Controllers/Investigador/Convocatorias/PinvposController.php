@@ -13,11 +13,11 @@ class PinvposController extends S3Controller {
   public function verificar(Request $request) {
     $errores = [];
 
-    $habilitado = DB::table('Proyecto_integrante_dedicado AS a')
+    $habilitado = DB::table('Usuarios_cargo AS a')
       ->leftJoin('Proyecto AS b', function (JoinClause $join) {
         $join->on('b.id', '=', 'a.proyecto_id')
           ->where('b.tipo_proyecto', '=', 'PINVPOS')
-          ->where('b.periodo', '=', 2024)
+          ->where('b.periodo', '=', 2025)
           ->whereNotIn('b.estado', [-1]);
       })
       ->leftJoin('Usuario_investigador AS c', 'c.id', '=', 'a.investigador_id')
@@ -39,7 +39,8 @@ class PinvposController extends S3Controller {
         'd.nombre AS facultad',
         'c.codigo',
         'c.tipo',
-        DB::raw("CONCAT('/minio/proyecto-doc/', e.archivo) AS url")
+        DB::raw("CONCAT('/minio/proyecto-doc/', e.archivo) AS url"),
+        'a.cargo'
       ])
       ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
       ->first();
@@ -49,6 +50,9 @@ class PinvposController extends S3Controller {
     } else {
       if ($habilitado?->estado == 5) {
         $errores[] = 'Ya ha enviado una propuesta de proyecto';
+      }
+      if ($habilitado?->cargo !== 'Vicedecano de Investigacion y Posgrado') {
+        $errores[] = 'No tiene el cargo necesario para acceder a esta convocatoria';
       }
     }
 
@@ -60,73 +64,233 @@ class PinvposController extends S3Controller {
   }
 
   public function verificar2(Request $request) {
-    $errores = [];
+      $errores = [];
 
-    $habilitado = DB::table('Proyecto_integrante_dedicado AS a')
-      ->leftJoin('Proyecto AS b', function (JoinClause $join) {
-        $join->on('b.id', '=', 'a.proyecto_id')
-          ->where('b.tipo_proyecto', '=', 'PINVPOS')
-          ->where('b.periodo', '=', 2024);
-      })
-      ->leftJoin('Usuario_investigador AS c', 'c.id', '=', 'a.investigador_id')
-      ->leftJoin('Facultad AS d', 'd.id', '=', 'a.facultad_id')
-      ->select([
-        'b.id AS proyecto_id',
-        'b.step',
-        'b.estado',
-        DB::raw("CONCAT(c.apellido1, ' ', c.apellido2, ' ', c.nombres) AS responsable"),
-        'c.doc_numero',
-        'c.email3',
-        'd.nombre AS facultad',
-        'c.codigo',
-        'c.tipo'
-      ])
-      ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
-      ->first();
-
-    if (!$habilitado) {
-      $errores[] = 'No tiene un proyecto creado';
-    }
-
-    if ($habilitado->estado != 6 && $habilitado->estado != null) {
-      $errores[] = 'Ya ha enviado una propuesta de proyecto';
-    }
-
-    if (!empty($errores)) {
-      return ['estado' => false, 'message' => $errores];
-    } else {
-      $miembros = DB::table('Proyecto_integrante AS a')
-        ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
-        ->join('Proyecto_integrante_dedicado AS c', 'c.investigador_id', '=', 'b.id')
-        ->join('Facultad AS d', 'd.id', '=', 'c.facultad_id')
+      // Consulta al backend
+      $habilitado = DB::table('Usuarios_cargo AS a')
+        ->leftJoin('Proyecto AS b', function (JoinClause $join) {
+          $join->on('b.id', '=', 'a.proyecto_id')
+            ->where('b.tipo_proyecto', '=', 'PINVPOS')
+            ->where('b.periodo', '=', 2025);
+        })
+        ->leftJoin('Usuario_investigador AS c', 'c.id', '=', 'a.investigador_id')
+        ->leftJoin('Facultad AS d', 'd.id', '=', 'a.facultad_id')
         ->select([
-          'a.id',
-          'a.condicion',
-          'b.apellido1',
-          'b.apellido2',
-          'b.nombres',
-          'b.doc_numero',
-          'b.codigo',
-          'b.email3',
+          'b.id AS proyecto_id',
+          'b.step',
+          'b.estado',
+          DB::raw("CONCAT(c.apellido1, ' ', c.apellido2, ' ', c.nombres) AS responsable"),
+          'c.doc_numero',
+          'c.email3',
           'd.nombre AS facultad',
-          'c.cargo'
+          'c.codigo',
+          'c.tipo'
         ])
-        ->where('a.proyecto_id', '=', $habilitado->proyecto_id)
-        ->where('c.proyecto_id', '=', $habilitado->proyecto_id)
+        ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+        ->first();
+
+      // Verificación de que la consulta devolvió resultados
+      if (!$habilitado) {
+        $errores[] = 'No tiene un proyecto creado';
+      }
+
+      if ($habilitado && $habilitado->estado != 6 && $habilitado->estado != null) {
+        $errores[] = 'Ya ha enviado una propuesta de proyecto';
+      }
+
+      // Respuesta en caso de errores
+      if (!empty($errores)) {
+        return ['estado' => false, 'message' => $errores];
+      }
+
+      // Si no hay errores, retorna estado true
+      return ['estado' => true, 'message' => 'Usuario habilitado para registrarse'];
+  }
+
+
+  public function listarIntegrantes(Request $request)
+  {
+    $integrantes = DB::table('Proyecto_integrante AS a')
+        ->join('Usuarios_cargo AS b', 'b.investigador_id', '=', 'a.investigador_id')
+        ->leftJoin('Facultad AS c', 'c.id', '=', 'b.facultad_id')
+        ->leftJoin('Usuario_investigador AS d', 'd.id', '=', 'a.investigador_id')
+        ->join('Proyecto_integrante_tipo AS e', 'e.id', '=', 'a.proyecto_integrante_tipo_id')
+        ->where('a.proyecto_id', '=', $request->query('proyecto_id'))
+        ->whereIn('b.cargo', [
+            'Vicedecano de Investigacion y Posgrado',
+            'Vicedecano Académico',
+            'Director Unidad Inst Invest',
+            'Director UPG',
+            'Directores Centros Ins Inv'
+        ])
+        ->select(
+            'a.investigador_id AS id',
+            'e.nombre AS condicion',
+            'b.apellido1',
+            'b.apellido2',
+            'b.nombres',
+            'b.dni AS doc_numero',
+            'd.codigo',
+            'c.nombre AS facultad',
+            'b.cargo',
+            'b.email AS email3',
+            // Prioridad condicional solo para los dos cargos y facultad_id = 1
+            DB::raw("
+                CASE 
+                    WHEN b.cargo = 'Director UPG' AND b.facultad_id = 1 THEN 1
+                    WHEN b.cargo = 'Directores Centros Ins Inv' AND b.facultad_id = 1 THEN 2
+                    ELSE 100
+                END AS cargo_prioridad
+            ")
+        )
+        ->orderBy('a.investigador_id')
+        ->orderBy('cargo_prioridad')
+        ->get()
+        ->unique('id')
+        ->values();
+
+    return $integrantes;
+  }
+
+public function searchIntegrante(Request $request) {
+    $facultad_id_usuario = DB::table('Usuarios_cargo')
+        ->where('investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+        ->value('facultad_id');
+
+    $miembros = DB::table('Usuarios_cargo AS a')
+        ->select(
+            DB::raw("CONCAT(a.apellido1, ' ', a.apellido2, ', ', a.nombres) AS value"),
+            DB::raw("CONCAT('DNI: ', TRIM(a.dni)) AS labelTag"),
+            'a.investigador_id AS id',
+            'a.dni',
+            'a.apellido1',
+            'a.apellido2',
+            'a.nombres',
+            'a.cargo AS description',
+            'a.email',
+        )
+        ->where('a.facultad_id', '=', $facultad_id_usuario)
+        ->whereIn('a.cargo', ['Vicedecano Académico', 'Director Unidad Inst Invest', 'Director UPG', 'Directores Centros Ins Inv'])
+        ->where(function ($q) {
+          $q->where('a.cargo', '!=', 'Directores Centros Ins Inv')
+          ->orWhereNotNull('a.investigador_id');
+          })
+        ->limit(10)
         ->get();
 
-      return ['estado' => true, 'datos' => $habilitado, 'miembros' => $miembros];
-    }
+    return $miembros; 
+}
+
+public function verificarIntegrante(Request $request) {
+  $errores = [];
+
+  $req1 = DB::table('Proyecto_integrante AS a')
+    ->join('Proyecto AS b', 'b.id', '=', 'a.proyecto_id')
+    ->join('Usuario_investigador AS c', 'c.id', '=', 'a.investigador_id')
+    ->where('c.id', '=', $request->input('investigador_id'))
+    ->where('b.tipo_proyecto', '=', 'PINVPOS')
+    ->where('b.periodo', '=', '2025')
+    ->count();
+
+  if ($req1 > 0) {
+    $errores[] = 'Ya figura en un Proyecto Taller 2025';
   }
+
+  if (!empty($errores)) {
+    return ['message' => 'error', 'detail' => $errores[0]];
+  } else {
+    return ['message' => 'success', 'detail' => 'Cumple con los requisitos para ser incluído'];
+  }
+}
+
+public function agregarIntegrante(Request $request) {
+      $date = Carbon::now();
+      $id_investigador = $request->input('investigador_id');
+      if ($id_investigador == "null") {
+        $sumData = DB::table('Usuarios_cargo')
+          ->select([
+            'nombres',
+            'apellido1',
+            'apellido2',
+            'dni',
+            'cargo',
+            'email',
+          ])
+          ->where('investigador_id', '=', $id_investigador)
+          ->first();
+
+        $id_investigador = DB::table('Usuario_investigador')
+          ->insertGetId([
+            'nombres' => $sumData->nombres,
+            'apellido1' => $sumData->apellido1,
+            'apellido2' => $sumData->apellido2,
+            'doc_numero' => $sumData->dni,
+            'email3' => $sumData->email,
+            'created_at' => Carbon::now(),
+            'updated_at' => Carbon::now(),
+          ]);
+      }
+      
+      DB::table('Proyecto_integrante')
+        ->insert([
+          'proyecto_id' => $request->input('proyecto_id'),
+          'investigador_id' => $id_investigador,
+          'proyecto_integrante_tipo_id' => 29,
+          'condicion' => 'Miembro',
+          'created_at' => $date,
+          'updated_at' => $date,
+        ]);
+        
+      DB::table('Usuarios_cargo')
+        ->where('investigador_id', '=', $id_investigador)
+        ->whereIn('cargo', ['Vicedecano Académico', 'Director Unidad Inst Invest', 'Director UPG'])
+        ->update([
+          'proyecto_id' => $request->input('proyecto_id')
+        ]);
+
+      DB::table('Proyecto')
+        ->where('id', '=', $request->input('proyecto_id'))
+        ->update([
+          'step' => 2,
+        ]);
+
+    return ['message' => 'success', 'detail' => 'Integrante agregado correctamente'];
+  }
+
+public function eliminarIntegrante(Request $request) {
+    $investigador_id = $request->query('id');
+
+    $proyecto_integrante = DB::table('Proyecto_integrante AS a')
+        ->join('Proyecto AS b', 'a.proyecto_id', '=', 'b.id')
+        ->where('a.investigador_id', '=', $investigador_id)
+        ->where('b.tipo_proyecto', '=', 'PINVPOS')
+        ->where('b.periodo', '=', 2025)
+        ->select('a.id') 
+        ->first();
+
+    if (!$proyecto_integrante) {
+        return ['message' => 'error', 'detail' => 'No se encuentra el integrante en este proyecto'];
+    }
+
+    DB::table('Proyecto_integrante')
+        ->where('id', '=', $proyecto_integrante->id)
+        ->delete();
+
+    DB::table('Usuarios_cargo')
+        ->where('investigador_id', '=', $investigador_id)
+        ->update(['proyecto_id' => null]);
+
+    return ['message' => 'success', 'detail' => 'Integrante eliminado correctamente'];
+}
 
   public function verificar3(Request $request) {
     $errores = [];
 
-    $habilitado = DB::table('Proyecto_integrante_dedicado AS a')
+    $habilitado = DB::table('Usuarios_cargo AS a')
       ->leftJoin('Proyecto AS b', function (JoinClause $join) {
         $join->on('b.id', '=', 'a.proyecto_id')
           ->where('b.tipo_proyecto', '=', 'PINVPOS')
-          ->where('b.periodo', '=', 2024);
+          ->where('b.periodo', '=', 2025);
       })
       ->leftJoin('Usuario_investigador AS c', 'c.id', '=', 'a.investigador_id')
       ->leftJoin('Facultad AS d', 'd.id', '=', 'c.facultad_id')
@@ -173,11 +337,11 @@ class PinvposController extends S3Controller {
   public function verificar4(Request $request) {
     $errores = [];
 
-    $habilitado = DB::table('Proyecto_integrante_dedicado AS a')
+    $habilitado = DB::table('Usuarios_cargo AS a')
       ->leftJoin('Proyecto AS b', function (JoinClause $join) {
         $join->on('b.id', '=', 'a.proyecto_id')
           ->where('b.tipo_proyecto', '=', 'PINVPOS')
-          ->where('b.periodo', '=', 2024);
+          ->where('b.periodo', '=', 2025);
       })
       ->leftJoin('Usuario_investigador AS c', 'c.id', '=', 'a.investigador_id')
       ->leftJoin('Facultad AS d', 'd.id', '=', 'c.facultad_id')
@@ -224,11 +388,11 @@ class PinvposController extends S3Controller {
   public function verificar5(Request $request) {
     $errores = [];
 
-    $habilitado = DB::table('Proyecto_integrante_dedicado AS a')
+    $habilitado = DB::table('Usuarios_cargo AS a')
       ->leftJoin('Proyecto AS b', function (JoinClause $join) {
         $join->on('b.id', '=', 'a.proyecto_id')
           ->where('b.tipo_proyecto', '=', 'PINVPOS')
-          ->where('b.periodo', '=', 2024);
+          ->where('b.periodo', '=', 2025);
       })
       ->leftJoin('Usuario_investigador AS c', 'c.id', '=', 'a.investigador_id')
       ->leftJoin('Facultad AS d', 'd.id', '=', 'c.facultad_id')
@@ -307,8 +471,8 @@ class PinvposController extends S3Controller {
         case 19:
         case 11:
         case 20:
-          $subvencion = 5150;
-          $monto_coefinanciamiento = 7725;
+          $subvencion = 5350;
+          $monto_coefinanciamiento = 8025;
           break;
         case 12:
         case 2:
@@ -318,26 +482,26 @@ class PinvposController extends S3Controller {
         case 17:
         case 14:
         case 6:
-          $subvencion = 5150;
-          $monto_coefinanciamiento = 10300;
+          $subvencion = 5350;
+          $monto_coefinanciamiento = 10700;
           break;
         case 13:
         case 15:
         case 7:
-          $subvencion = 5150;
-          $monto_coefinanciamiento = 12875;
+          $subvencion = 5350;
+          $monto_coefinanciamiento = 13375;
           break;
         case 5:
         case 4:
-          $subvencion = 5150;
-          $monto_coefinanciamiento = 15450;
+          $subvencion = 5350;
+          $monto_coefinanciamiento = 16050;
           break;
         case 3:
         case 8:
         case 1:
         case 10:
-          $subvencion = 5150;
-          $monto_coefinanciamiento = 18025;
+          $subvencion = 5350;
+          $monto_coefinanciamiento = 18725;
           break;
         default:
           $monto_asignado = 0;
@@ -405,7 +569,7 @@ class PinvposController extends S3Controller {
         $date = Carbon::now();
         $monto_asignado = 0;
 
-        $fac = DB::table('Proyecto_integrante_dedicado')
+        $fac = DB::table('Usuarios_cargo')
           ->select([
             'facultad_id'
           ])
@@ -416,7 +580,7 @@ class PinvposController extends S3Controller {
           case 19:
           case 11:
           case 20:
-            $monto_asignado = 28325;
+            $monto_asignado = 29425;
             break;
           case 12:
           case 2:
@@ -426,22 +590,22 @@ class PinvposController extends S3Controller {
           case 17:
           case 14:
           case 6:
-            $monto_asignado = 87550;
+            $monto_asignado = 90950;
             break;
           case 13:
           case 15:
           case 7:
-            $monto_asignado = 43775;
+            $monto_asignado = 45475;
             break;
           case 5:
           case 4:
-            $monto_asignado = 36050;
+            $monto_asignado = 37450;
             break;
           case 3:
           case 8:
           case 1:
           case 10:
-            $monto_asignado = 77250;
+            $monto_asignado = 80250;
             break;
           default:
             $monto_asignado = 0;
@@ -452,7 +616,7 @@ class PinvposController extends S3Controller {
           ->insertGetId([
             'titulo' => 'Líneas de investigación de los GI en el marco de los Objetivos de Desarrollo Sostenible (ODS)',
             'tipo_proyecto' => 'PINVPOS',
-            'periodo' => 2024,
+            'periodo' => 2025,
             'step' => 2,
             'estado' => 6,
             'monto_asignado' => $monto_asignado,
@@ -496,38 +660,12 @@ class PinvposController extends S3Controller {
             'updated_at' => $date,
           ]);
 
-        DB::table('Proyecto_integrante_dedicado')
+        DB::table('Usuarios_cargo')
           ->where('investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+          ->where('cargo', '=', 'Vicedecano de Investigacion y Posgrado')
           ->update([
             'proyecto_id' => $id
           ]);
-
-        //  Agregar al resto de integrantes
-        $miembros = DB::table('Proyecto_integrante_dedicado')
-          ->select([
-            'investigador_id'
-          ])
-          ->where('facultad_id', '=', $fac->facultad_id)
-          ->where('investigador_id', '!=', $request->attributes->get('token_decoded')->investigador_id)
-          ->get();
-
-        foreach ($miembros as $miembro) {
-          DB::table('Proyecto_integrante')
-            ->insert([
-              'proyecto_id' => $id,
-              'investigador_id' => $miembro->investigador_id,
-              'proyecto_integrante_tipo_id' => 29,
-              'condicion' => 'Miembro',
-              'created_at' => $date,
-              'updated_at' => $date,
-            ]);
-
-          DB::table('Proyecto_integrante_dedicado')
-            ->where('investigador_id', '=', $miembro->investigador_id)
-            ->update([
-              'proyecto_id' => $id
-            ]);
-        }
 
         return ['message' => 'success', 'detail' => 'Datos guardados', 'id' => $id];
       } else {
@@ -819,12 +957,23 @@ class PinvposController extends S3Controller {
       ->where('a.proyecto_id', '=', $request->query('id'))
       ->get();
 
+    $verificacion = $this->verificar5($request);
+    $monto_coefinanciamiento = 0;
+    $subvencion = 0;
+
+    if($verificacion['estado']) {
+        $monto_coefinanciamiento = $verificacion['montos']['monto_coefinanciamiento'];
+        $subvencion = $verificacion['montos']['subvencion'];
+    }
+
     $pdf = Pdf::loadView('investigador.actividades.taller', [
       'proyecto' => $proyecto,
       'miembros' => $miembros,
       'detalles' => $detalles,
       'actividades' => $actividades,
       'presupuesto' => $presupuesto,
+      'monto_coefinanciamiento' => $monto_coefinanciamiento,
+      'subvencion' => $subvencion,
     ]);
     return $pdf->stream();
   }

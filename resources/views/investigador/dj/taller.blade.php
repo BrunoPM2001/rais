@@ -324,16 +324,9 @@
         <td>DNI N°: <strong>{{ $proyecto->dni }}</strong></td>
         <td>Clase: <strong>{{ $proyecto->clase }}</strong></td>
       </tr>
-      @if ($proyecto->tipo_proyecto !== 'PRO-CTIE')
-      <tr>
-        <td colspan="2">Grupo de investigación: <strong>{{ $proyecto->grupo_nombre }}</strong></td>
-      </tr>
-      @endif
       <tr>
         <td colspan="2">
-          En mi calidad de 
-          {{ $proyecto->tipo_proyecto === 'PRO-CTIE' ? 'asesor' : 'responsable' }}
-           del proyecto de investigación titulado:<br />
+          En mi calidad de responsable del proyecto de investigación titulado:<br />
           <strong>{{ $proyecto->titulo_proyecto }}</strong>
         </td>
       </tr>
@@ -353,41 +346,40 @@
 
       <ol>
         <li>
-          El Vicerrectorado de Investigación y Posgrado (VRIP) otorga la ASIGNACIÓN FINANCIERA DE
-          INVESTIGACIÓN (AFI) 2025, de acuerdo a lo estipulado en la “Política de Financiamiento de la
-          Investigación de la Universidad Nacional Mayor de San Marcos” (R.R. N.004801-2024-R/UNMSM).
+          El Vicerrectorado de Investigación y Posgrado (VRIP) otorga la Subvención Financiera 2025, de acuerdo
+          con lo estipulado en la “Política de Financiamiento de la Investigación de la Universidad Nacional Mayor 
+          de San Marcos” (R.R. N.004801-2024-R/UNMSM y modificatorias).
         </li>
         <li>
-          Los informes económicos se presentarán de acuerdo a la Directiva para la rendición económica de los
-          fondos otorgados por la UNMSM para los proyectos de los programas de investigación del VRIP.
+          Los informes económicos se presentarán de acuerdo a la "Directiva para la rendición económica de los
+          fondos otorgados por la UNMSM para los proyectos de Programas de Investigación del Vicerrectorado
+          de Investigación y Postgrado, año 2024".
         </li>
         <li>
-          El informe económico final, debidamente sustentado en original, deberá presentarse en el plazo
-          establecido por el VRIP.
+          El informe económico final, con documentos físicos sustentatorios en original, deberá presentarse en el plazo
+          establecido en la directiva antes mencionada.
         </li>
         <li>
-          Los recursos económicos de la AFI serán utilizados exclusivamente para los fines señalados en el
-          plan de actividades y en el presupuesto aprobado por el VRIP a través del sistema RAIS. Su
-          incumplimiento conlleva a la devolución del importe total asignado por la Universidad.
+          Los recursos económicos entregados serán utilizados exclusivamente para los fines señalados en el plan de 
+          actividades y en el presupuesto aprobado por el VRIP a través del sistema RAIS. Su incumplimiento conlleva a la
+           devolución del importe asignado por la universidad.
         </li>
         <li>
-          En el caso de no rendir cuenta documentada en las fechas señaladas o, habiendo rendido, la Oficina
-          de Control Previo y Fiscalización observe algunos documentos sustentatorios que no puedan ser
-          subsanados, me comprometo a devolver el dinero recibido, más los intereses legales y otras acciones
-          que correspondan a través de la Oficina de Asesoría Legal de la Universidad Nacional Mayor de San
-          Marcos.
+          En el caso de no rendir cuenta documentada en las fechas señaladas, o habiendo rendido, la Oficina de Control Previo 
+          y Fiscalización observe alguno, algunos o todos los documentos de gastos y los cuales no pueden ser subsanados, me 
+          comprometo a devolver el dinero recibido, más los intereses legales de corresponder y me someto a otras acciones
+          que correspondan según establezca la Oficina de Asesoría Legal de la Universidad Nacional Mayor de San Marcos.
         </li>
         <li>
-          Los equipos, instrumentos y libros que se adquieran (siguiendo lo establecido en la
-          RD00366-DGA-2019: “Instructivo de manejo, control y ejecución de fondos asignados a proyectos de
-          investigación para la adquisición de bienes de capital de la Universidad Nacional Mayor de San
-          Marcos” y sus modificatorias) deberán ser entregados a la Facultad o dependencia correspondiente.
-          Culminado el proyecto, los bienes deben permanecer en las instalaciones de la facultad (Instituto de
+          Los equipos, instrumentos y libros que se adquieran (siguiendo lo establecido en la R.D. N° 00366-DGA-2019: “Instructivo 
+          de manejo, control y ejecución de fondos asignados a proyectos de investigación para la adquisición de bienes de capital 
+          de la Universidad Nacional Mayor de San Marcos” y sus modificatorias) deberán entregarse a la Facultad o dependencia 
+          correspondiente. Culminado el proyecto, los bienes deben permanecer en las instalaciones de la facultad (Instituto de
           Investigación, Unidad de Investigación, Grupos de Investigación o laboratorios).
         </li>
         <li>
-          Si devuelvo dinero a la UNMSM por más del 10% del monto asignado, no podré participar en las
-          actividades de investigación para el año 2026.
+          Si devuelvo dinero a la UNMSM por más del 10% del monto asignado, no podré participar en las actividades de investigación 
+          para el año 2026.
         </li>
       </ol>
 

@@ -26,6 +26,11 @@ class PublicacionesController extends S3Controller {
         ->leftJoin('Publicacion_autor AS b', function (JoinClause $join) {
           $join->on('b.publicacion_id', '=', 'a.id')
             ->leftJoin('Usuario_investigador AS c', 'c.id', '=', 'b.investigador_id')
+            ->leftJoin('Grupo_integrante AS g', function (JoinClause $join) {
+              $join->on('g.investigador_id', '=', 'c.id')
+                  ->where('g.condicion', 'not like', 'Ex%');
+            })
+            ->leftJoin('Grupo AS h', 'h.id', '=', 'g.grupo_id')
             ->leftJoin('Facultad AS d', 'd.id', '=', 'c.facultad_id')
             ->leftJoin('Area AS e', 'e.id', '=', 'd.area_id')
             ->where('b.presentado', '=', 1);
@@ -50,6 +55,7 @@ class PublicacionesController extends S3Controller {
           'a.editorial',
           'a.evento_nombre',
           DB::raw("CONCAT(c.apellido1, ' ', c.apellido2, ', ', c.nombres) AS presentador"),
+          'h.grupo_nombre AS grupo_investigacion',
           'd.nombre AS facultad',
           'e.nombre AS area',
           DB::raw("CASE (b.filiacion)
@@ -125,6 +131,11 @@ class PublicacionesController extends S3Controller {
             ->where('c.presentado', '=', 1);
         })
         ->leftJoin('Usuario_investigador AS d', 'd.id', '=', 'c.investigador_id')
+        ->leftJoin('Grupo_integrante AS g', function (JoinClause $join) {
+          $join->on('g.investigador_id', '=', 'd.id')
+              ->where('g.condicion', 'not like', 'Ex%');
+        })
+        ->leftJoin('Grupo AS h', 'h.id', '=', 'g.grupo_id')
         ->leftJoin('Facultad AS e', 'e.id', '=', 'd.facultad_id')
         ->leftJoin('Area AS f', 'f.id', '=', 'e.area_id')
         ->select(
@@ -147,6 +158,7 @@ class PublicacionesController extends S3Controller {
           'b.editorial',
           'b.evento_nombre',
           DB::raw("CONCAT(d.apellido1, ' ', d.apellido2, ', ', d.nombres) AS presentador"),
+          'h.grupo_nombre AS grupo_investigacion',
           'e.nombre AS facultad',
           'f.nombre AS area',
           DB::raw("CASE (a.filiacion)

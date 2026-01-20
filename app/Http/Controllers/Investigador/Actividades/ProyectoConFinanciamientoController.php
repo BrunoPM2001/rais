@@ -39,7 +39,7 @@ class ProyectoConFinanciamientoController extends S3Controller {
         DB::raw("'no' AS antiguo")
       )
       ->where('b.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
-      ->whereIn('a.tipo_proyecto', ['PCONFIGI', 'PCONFIGI-INV', 'PINTERDIS', 'PRO-CTIE'])
+      ->whereIn('a.tipo_proyecto', ['PCONFIGI', 'PCONFIGI-INV', 'PINTERDIS', 'PRO-CTIE', 'PICV'])
       ->orderByDesc('a.periodo')
       ->get();
 
@@ -104,7 +104,7 @@ class ProyectoConFinanciamientoController extends S3Controller {
         $tipo = 'DECLARACIÓN JURADA DE CUMPLIMIENTO PARA RECIBIR ASIGNACIÓN FINANCIERA AL PROYECTO DE INVESTIGACIÓN PARA GRUPOS DE INVESTIGACIÓN DE LA UNMSM';
         break;
       case 'PCONFIGI-INV':
-        $tipo = 'Proyectos de Innovación para  Grupos de Investigación “INNOVA SAN MARCOS';
+        $tipo = 'Proyectos de Innovación para  Grupos de Investigación "INNOVA SAN MARCOS"';
         break;
       case 'PRO-CTIE':
         $tipo = 'Proyectos de Ciencia, Tecnología, Innovación y Emprendimiento (PRO-CTIE) para Estudiantes de la UNMSM';
@@ -117,12 +117,17 @@ class ProyectoConFinanciamientoController extends S3Controller {
         break;
       case 'PMULTI':
         $tipo = 'Proyectos multidisciplinarios';
+        break;
+      case 'PINVPOS':
+        $tipo = 'DECLARACIÓN JUARADA DE CUMPLIMIENTO PARA RECIBIR ASIGNACIÓN FINANCIERA PARA PROGRAMA DE TALLERES DE INVESTIGACIÓN Y POSGRADO - TILI';
+        $vista = 'investigador.dj.taller';
+        break;
       default:
         $tipo = 'Tipo de Proyecto Desconocido';
     }
 
     $pdf = Pdf::loadView(
-      'investigador.dj.pconfigi',
+      $vista ?? 'investigador.dj.pconfigi',
       [
         'proyecto' => $proyecto,
         'tipo' => $tipo,

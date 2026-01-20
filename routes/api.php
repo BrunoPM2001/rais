@@ -496,6 +496,7 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
     Route::get('getConstanciaNoDeuda', [ReporteController::class, 'getConstanciaNoDeuda']);
     Route::get('getConstanciaTesisAsesoria', [ReporteController::class, 'getConstanciaTesisAsesoria']);
     Route::get('getConstanciaCapituloLibro', [ReporteController::class, 'getConstanciaCapituloLibro']);
+    Route::get('getConstanciaGrupoInvestigacionH', [ReporteController::class, 'getConstanciaGrupoInvestigacionH']);
   });
 
   //  Facultad
@@ -917,6 +918,12 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
       Route::get('reporte', [PinvposController::class, 'reporte']);
       Route::post('enviar', [PinvposController::class, 'enviar']);
 
+      Route::get('listarIntegrantes', [PinvposController::class, 'listarIntegrantes']);
+      Route::get('searchIntegrante', [PinvposController::class, 'searchIntegrante']);
+      Route::get('verificarIntegrante', [PinvposController::class, 'verificarIntegrante']);
+      Route::post('agregarIntegrante', [PinvposController::class, 'agregarIntegrante']);
+      Route::delete('eliminarIntegrante', [PinvposController::class, 'eliminarIntegrante']);
+
       Route::post('agregarActividad', [PinvposController::class, 'agregarActividad']);
       Route::put('actualizarActividad', [PinvposController::class, 'actualizarActividad']);
       Route::delete('eliminarActividad', [PinvposController::class, 'eliminarActividad']);
@@ -1032,6 +1039,7 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
 
       Route::get('listado', [PicvController::class, 'listado']);
       Route::get('validarDatos', [PicvController::class, 'validarDatos']);
+      Route::delete('eliminarProyecto', [PicvController::class, 'eliminarProyecto']);
 
       Route::get('verificar', [PicvController::class, 'verificar']);
       Route::get('datosPaso1', [PicvController::class, 'datosPaso1']);
@@ -1059,6 +1067,7 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
       Route::get('listarTiposPartidas', [PicvController::class, 'listarTiposPartidas']);
       Route::post('agregarPartida', [PicvController::class, 'agregarPartida']);
       Route::delete('eliminarPartida', [PicvController::class, 'eliminarPartida']);
+      Route::get('validarPresupuesto', [PicvController::class, 'validarPresupuesto']);
 
       Route::put('enviarProyecto', [PicvController::class, 'enviarProyecto']);
       Route::get('reporte', [PicvController::class, 'reporte']);

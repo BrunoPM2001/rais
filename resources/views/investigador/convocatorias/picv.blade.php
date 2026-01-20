@@ -421,6 +421,38 @@
             @endforeach
         </tbody>
     </table>
+    <table style="width: 100%;">
+        <tbody>
+            <tr>
+                <td colspan="100%" style="margin: 0;padding: 0;">
+                    <h5
+                        style="width: 100%; padding: 10px; background-color: #f5f5f5; border: 1px solid #ddd; border-radius: 10px; ">
+                        V. Presupuesto del Proyecto
+                    </h5>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <table class="table1">
+        <thead>
+            <tr>
+                <th>Nro</th>
+                <th>Partida</th>
+                <th>Monto </th>
+                <th>Tipo</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach ($presupuesto as $pres)
+                <tr>
+                    <td>{{ $loop->iteration }}</td>
+                    <td>{{ $pres->partida }}</td>
+                    <td>{{ $pres->monto }}</td>
+                    <td>{{ $pres->tipo }}</td>
+                </tr>
+            @endforeach
+        </tbody>
+    </table>
 
     <table style="width:100%; font-size:10px;font-style:italic;margin-top:25px; text-align:justify;">
         <tr>

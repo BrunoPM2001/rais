@@ -36,7 +36,7 @@ class PconfigiController extends S3Controller {
       ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
       ->where('a.condicion', '=', 'Responsable')
       ->where('b.tipo_proyecto', '=', 'PCONFIGI')
-      ->where('b.periodo', '=', 2025)
+      ->where('b.periodo', '=', 2026)
       ->get();
 
     return $listado;
@@ -138,13 +138,13 @@ class PconfigiController extends S3Controller {
       ->join('Proyecto AS b', 'b.id', '=', 'a.proyecto_id')
       ->where('a.condicion', '=', 'Responsable')
       ->where('b.tipo_proyecto', '=', 'PCONFIGI')
-      ->where('b.periodo', '=', 2025)
+      ->where('b.periodo', '=', 2026)
       // ->where('b.estado', '!=', 6)
       ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
       ->count();
 
     $proyectoActual > 0 && $errores[] = [
-      'message' => "Actualmente, cuenta con una propuesta de proyecto PCONFIGI 2025 en proceso como Responsable, por lo que no es posible registrar nuevos proyectos en esta categoría. No obstante, puede participar como Miembro Docente en otro proyecto del mismo tipo.",
+      'message' => "Actualmente, cuenta con una propuesta de proyecto PCONFIGI 2026 en proceso como Responsable, por lo que no es posible registrar nuevos proyectos en esta categoría. No obstante, puede participar como Miembro Docente en otro proyecto del mismo tipo.",
       'isHtml' => false
     ];
 
@@ -229,7 +229,7 @@ class PconfigiController extends S3Controller {
         ->join('Proyecto AS b', 'b.id', '=', 'a.proyecto_id')
         ->where('a.condicion', '=', 'Responsable')
         ->where('b.tipo_proyecto', '=', 'PCONFIGI')
-        ->where('b.periodo', '=', 2025)
+        ->where('b.periodo', '=', 2026)
         ->where('b.estado', '!=', 6)
         ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
         ->count();
@@ -248,7 +248,7 @@ class PconfigiController extends S3Controller {
         ->where('a.condicion', '=', 'Responsable')
         ->where('b.tipo_proyecto', '=', 'PCONFIGI')
         ->where('b.id', '=', $proyecto_id)
-        ->where('b.periodo', '=', 2025)
+        ->where('b.periodo', '=', 2026)
         ->where('b.estado', '=', 6)
         ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
         ->first();
@@ -300,7 +300,7 @@ class PconfigiController extends S3Controller {
         'b.nombre AS label'
       ])
       ->where('a.grupo_id', '=', $datos->grupo_id)
-      // ->whereNull('a.concytec_codigo')
+      ->whereNull('a.concytec_codigo')
       ->get();
 
     $ocde = DB::table('Ocde')
@@ -393,7 +393,7 @@ class PconfigiController extends S3Controller {
           'tipo_proyecto' => 'PCONFIGI',
           'step' => 2,
           'estado' => 6,
-          'periodo' => 2025,
+          'periodo' => 2026,
           'fecha_inscripcion' => $date,
           'created_at' => $date,
           'updated_at' => $date,
@@ -416,15 +416,15 @@ class PconfigiController extends S3Controller {
           'condicion' => 'Responsable',
         ]);
 
-      // DB::table('Proyecto_presupuesto')
-      //   ->insert([
-      //     'proyecto_id' => $id,
-      //     'partida_id' => 61,
-      //     'justificacion' => '',
-      //     'monto' => 0,
-      //     'created_at' => $date,
-      //     'updated_at' => $date,
-      //   ]);
+      DB::table('Proyecto_presupuesto')
+         ->insert([
+           'proyecto_id' => $id,
+           'partida_id' => 61,
+           'justificacion' => '',
+           'monto' => 8000,
+           'created_at' => $date,
+           'updated_at' => $date,
+         ]);
 
       return ['message' => 'success', 'detail' => 'Datos guardados', 'id' => $id];
     }
@@ -603,7 +603,18 @@ class PconfigiController extends S3Controller {
       ->where('proyecto_id', '=', $request->query('id'))
       ->get();
 
-    return ['estado' => true, 'actividades' => $actividades];
+    $rango_fechas = DB::table('Convocatoria')
+      ->select([
+        'fecha_inicial',
+        'fecha_final'
+      ])
+      ->where('tipo', '=', 'PCONFIGI')
+      ->where('periodo', '=', 2026)
+      ->where('evento', '=', 'calendario')
+      ->where('estado', '=', 1)
+      ->first();
+
+    return ['estado' => true, 'actividades' => $actividades, 'rango' => $rango_fechas];
   }
 
   public function addActividad(Request $request) {
@@ -929,14 +940,12 @@ class PconfigiController extends S3Controller {
     $tesista = 0;
     $colaborador = 0;
 
-
-
     $participacion = DB::table('Proyecto as a')
       ->join('Proyecto_integrante as b', 'a.id', '=', 'b.proyecto_id')
       ->where('b.investigador_id', '=', $request->input('investigador_id'))
       ->where('b.proyecto_integrante_tipo_id', '=', $tipoIntegrante)
       ->where('a.tipo_proyecto', '=', 'PCONFIGI')
-      ->where('a.periodo', '=', 2025)
+      ->where('a.periodo', '=', 2026)
       ->get();
 
     $investigadorProyecto = DB::table('Proyecto as a')
@@ -944,18 +953,20 @@ class PconfigiController extends S3Controller {
       ->where('b.investigador_id', '=', $request->input('investigador_id'))
       ->where('b.proyecto_id', '=', $request->input('id'))
       ->where('a.tipo_proyecto', '=', 'PCONFIGI')
-      ->where('a.periodo', '=', 2025)
+      ->where('a.periodo', '=', 2026)
       ->count();
+      
+    $tesistaProyecto = 0;
 
     if ($tipoIntegrante == 5) {
 
-      $tesistaProyecto = DB::table('Proyecto_integrante as a')
-        ->join('Proyecto as b', 'a.proyecto_id', '=', 'a.id')
-        ->join('Proyecto_integrante_tipo as c', 'a.proyecto_integrante_tipo_id', '=', 'c.id')
-        ->where('a.investigador_id', '=', $request->input('investigador_id'))
-        ->where('b.estado', '=', '1')
-        ->whereIn('c.id', [5, 11, 16, 18, 20, 40, 47, 59, 67, 77])
-        ->count();
+    $tesistaProyecto = DB::table('Proyecto_integrante as a')
+      ->join('Proyecto as b', 'a.proyecto_id', '=', 'b.id')
+      ->join('Proyecto_integrante_tipo as c', 'a.proyecto_integrante_tipo_id', '=', 'c.id')
+      ->where('a.investigador_id', '=', $request->input('investigador_id'))
+      ->where('b.estado', '=', '1')
+      ->whereIn('c.id', [5, 11, 16, 18, 20, 40, 47, 59, 67, 77])
+      ->count();
     }
 
     $deudas = DB::table('view_deudores AS vdeuda')
@@ -963,6 +974,10 @@ class PconfigiController extends S3Controller {
       ->where('vdeuda.investigador_id', '=', $request->input('investigador_id'))
       ->count();
 
+    $licenciaVigente = DB::table('Licencia')
+      ->where('investigador_id', $request->input('investigador_id'))
+      ->where('fecha_fin', '>=', Carbon::today())
+      ->exists();
 
     foreach ($participacion as $data) {
 
@@ -991,7 +1006,7 @@ class PconfigiController extends S3Controller {
 
     $numParticipacion = count($participacion);
 
-    if ($numParticipacion == 0 && $investigadorProyecto == 0 && $tesistaProyecto == 0 && $deudas == 0) {
+    if ($numParticipacion == 0 && $investigadorProyecto == 0 && $tesistaProyecto == 0 && $deudas == 0 && !$licenciaVigente) {
 
       if ($request->input('tipo_tesis') == null) {
         DB::table('Proyecto_integrante')
@@ -1023,6 +1038,13 @@ class PconfigiController extends S3Controller {
 
       return ['message' => 'success', 'detail' => 'Integrante añadido'];
     } else {
+      if ($licenciaVigente) {
+        return [
+          'message' => 'error',
+          'detail' => 'El integrante seleccionado cuenta con una licencia vigente, por lo que no puede ser incorporado al proyecto en este periodo.'
+        ];
+      }
+      
       if ($investigadorProyecto > 0) {
         return [
           'message' => 'error',

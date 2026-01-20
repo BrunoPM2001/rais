@@ -14,7 +14,7 @@
   <title>Reporte</title>
   <style>
     @page {
-      margin-top: 230px;
+      margin-top: 200px;
       /* espacio reservado para el encabezado */
       margin-bottom: 80px;
       /* para el pie de página */
@@ -46,15 +46,14 @@
 
     header {
       position: fixed;
-      top: -200px;
+      top: -170px;
       left: 0;
       right: 0;
-      height: 120px;
+      height: 100px;
     }
 
     .content {
-      margin-top: 0px;
-      padding-top: 0px;
+      margin-top: 2px;
     }
 
     .header-center {
@@ -224,16 +223,6 @@
         <td><b>{{ $tipo }} <br>Año {{ $periodo }}</b></td>
       </tr>
     </table>
-    <table class="table-texto" style="width: 100%; font-size:12px; margin-bottom: 0px;">
-      <tr>
-        <td style="text-align: left; width: 70%;">
-          Área: {{ $area->sigla . ' ' . $area->nombre }}
-        </td>
-        <td style="text-align: right; width: 80%;">
-          Facultad: {{ $area->facultad }}
-        </td>
-      </tr>
-    </table>
     <div style="border-top: 1px solid black; margin: 0px 0;"></div>
   </header>
 
@@ -271,24 +260,6 @@
         @if ($currentGroup != null)
           <div style="border-top: 1px solid black; margin: 0px 0;"></div>
         @endif
-
-        {{-- Nombre del grupo (solo se imprime cuando cambia de grupo) --}}
-        <table
-          style="
-                        width: 100%;
-                        margin:0 5px 0 0;
-                        background-color: #e0e0e0;
-                        border: 1px solid #ccc;
-                        padding: 0px;
-                        font-size:10px;
-                        border-collapse: collapse;">
-          <tr>
-            <td style="padding: 5px;">
-              Nombre del grupo:
-              <strong>{{ $item->grupo_nombre . ' (' . mb_strtoupper($item->grupo_nombre_corto, 'UTF-8') . ')' }}</strong>
-            </td>
-          </tr>
-        </table>
 
         @php
           $currentGroup = $item->grupo_id; // Actualizamos el grupo actual
@@ -336,11 +307,10 @@
         <table class="table-encabezado" style="font-size: 9px; padding-left:75px;">
           <thead>
             <tr>
-              <th style="width: 22%;">Condición</th>
+              <th style="width: 25%;">Condición</th>
               <th style="width: 45%;">Apellidos y nombres</th>
               <th style="width: 24%;">Tipo</th>
               <th style="width: 30%;">Facultad</th>
-              <th style="width: 18%;">Condición en GI</th>
             </tr>
           </thead>
           <tbody>
@@ -367,7 +337,6 @@
         <td style="font-size:8px;">{{ mb_strtoupper($item->nombres, 'UTF-8') }}</td>
         <td style="font-size:8px;">{{ $item->tipo_investigador }}</td>
         <td>{{ $item->facultad_miembro }}</td>
-        <td>{{ $item->condicion_gi }}</td>
       </tr>
 
       {{-- Actualizamos variables para siguiente iteración --}}

@@ -26,6 +26,7 @@ use Maatwebsite\Excel\Facades\Excel;
 class ProyectosGrupoController extends S3Controller {
 
   public function listado($periodo) {
+    $uit = 5350;
     $proyectos = DB::table('Proyecto AS a')
       ->leftJoin('Grupo AS b', 'b.id', '=', 'a.grupo_id')
       ->leftJoin('Linea_investigacion AS c', 'c.id', '=', 'a.linea_investigacion_id')
@@ -36,6 +37,8 @@ class ProyectosGrupoController extends S3Controller {
       ->leftJoin('Facultad AS e', 'e.id', '=', 'b.facultad_id')
       ->leftJoin('Proyecto_presupuesto AS f', 'f.proyecto_id', '=', 'a.id')
       ->leftJoin('Usuario_investigador AS g', 'g.id', '=', 'd.investigador_id')
+      ->leftJoin('Usuarios_cargo AS h', 'h.investigador_id', '=', 'd.investigador_id')
+      ->leftJoin('Facultad AS i', 'i.id', '=', 'h.facultad_id')
       ->select(
         'a.id',
         'a.tipo_proyecto',
@@ -44,8 +47,27 @@ class ProyectosGrupoController extends S3Controller {
         'a.titulo',
         DB::raw('CONCAT(g.apellido1, " " , g.apellido2, ", ", g.nombres) AS responsable'),
         'b.grupo_nombre',
-        'e.nombre AS facultad',
-        DB::raw('SUM(f.monto) AS monto'),
+        DB::raw("
+          CASE
+            WHEN a.tipo_proyecto = 'PINVPOS' THEN i.nombre
+            ELSE e.nombre
+          END AS facultad
+        "),
+        DB::raw("
+          CASE
+              WHEN a.tipo_proyecto = 'PINVPOS' AND a.periodo >= 2025 THEN (
+                SELECT COALESCE(SUM(f_sub.monto), 0) + ({$uit} * 0.5)
+                FROM Proyecto_presupuesto AS f_sub
+                WHERE f_sub.proyecto_id = a.id
+              )
+              WHEN a.tipo_proyecto = 'PINVPOS' THEN (
+                SELECT COALESCE(SUM(f_sub.monto), 0)
+                FROM Proyecto_presupuesto AS f_sub
+                WHERE f_sub.proyecto_id = a.id
+              )
+              ELSE SUM(f.monto)
+          END AS monto
+        "),
         'a.resolucion_rectoral',
         'a.updated_at',
         DB::raw("CASE(a.estado)
@@ -198,6 +220,7 @@ class ProyectosGrupoController extends S3Controller {
         $miembros = $ctrl->miembros($request);
         $documentos = $ctrl->documentos($request);
         $actividades = $ctrl->actividades($request);
+        $presupuesto = $this->presupuesto($request);
 
         return [
           'detalle' => $detalle,
@@ -205,6 +228,7 @@ class ProyectosGrupoController extends S3Controller {
           'miembros' => $miembros,
           'documentos' => $documentos,
           'actividades' => $actividades,
+          'presupuesto' => $presupuesto,
         ];
 
       case "PTPMAEST":
@@ -638,6 +662,9 @@ class ProyectosGrupoController extends S3Controller {
         return $ctrl->reporte($request);
       case "PCONFIGI-INV":
         $ctrl = new PconfigiInvController();
+        return $ctrl->reporte($request);
+      case "PRO-CTIE":
+        $ctrl = new ProCtieController();
         return $ctrl->reporte($request);
       default:
     }

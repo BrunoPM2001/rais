@@ -23,6 +23,12 @@ class ProyectoController extends Controller {
     $facultad = $request->query('facultad');
     $periodo = $request->query('periodo');
     $tipo = $request->query('tipo_proyecto');
+    $ocultarPresupuesto = in_array($tipo, ['PSINFIPU', 'PSINFINV']);
+    $UIT = 5350;
+    $subvencionVrip = 0;
+    if ($tipo === 'PINVPOS' && (int) $periodo >= 2025) {
+      $subvencionVrip = $UIT * 0.5; // 2675
+    }
 
     $proyectos = DB::table('Proyecto as a')
       ->leftJoin('Proyecto_integrante as b', 'a.id', '=', 'b.proyecto_id')
@@ -58,38 +64,69 @@ class ProyectoController extends Controller {
         DB::raw("SUM(j.monto) as presupuesto"),
       ])
       ->where('a.tipo_proyecto', '=', $tipo)
-      ->where('a.facultad_id', '=', $facultad)
+      ->when(in_array($tipo, ['PRO-CTIE', 'PICV']) && empty($facultad), function ($query) {
+        }, function ($query) use ($facultad) {
+        $query->where('a.facultad_id', '=', $facultad);
+        })
       ->where('a.periodo', '=', $periodo)
       ->whereIn('a.estado', [1, 8])
-      ->where(function ($query) {
-        $query->where('i.condicion', 'not like', 'Ex%')
-          ->orWhereNull('i.condicion');
+      ->where(function ($query) use ($tipo) {
+          $query->where(function ($sub) {
+              $sub->where('i.condicion', 'not like', 'Ex%')
+                  ->orWhereNull('i.condicion');
+          });
+          if (in_array($tipo, ['PRO-CTIE', 'PICV', 'PINVPOS'])) {
+              $query->orWhereIn('c.id', function ($sub2) {
+                  $sub2->select('gi2.investigador_id')
+                      ->from('Grupo_integrante as gi2')
+                      ->groupBy('gi2.investigador_id')
+                      ->havingRaw('SUM(gi2.condicion LIKE "Ex%") = COUNT(*)');
+              });
+          }
       })
-      ->orderByRaw('f.grupo_nombre, 
-      a.codigo_proyecto, 
-      FIELD(b.proyecto_integrante_tipo_id,
-        1, 2, 3, 5, 6, 4, 31, 32, 33, 35,
-        7, 8, 9, 11, 12, 10, 42, 50, 51, 52, 55,
-        13, 14, 53, 54,
-        15, 16,
-        17, 18,
-        19, 20,
-        21, 22, 23, 24, 26, 25, 27,
-        28, 29,
-        30, 34,
-        36, 37, 38, 40, 41, 39,
-        44, 45, 46, 47, 48, 49, 90, 91,
-        56, 57, 58, 59, 60, 61, 94, 62, 63, 64, 65, 82,
-        66, 67, 68, 69,
-        70, 71,
-        74, 75, 76, 77, 78, 79, 80, 81,
-        83, 84, 85,
-        86, 88,
-        92, 93, 94
-      ),
-      c.apellido1, c.apellido2, c.nombres')
+      ->when(in_array($tipo, ['PRO-CTIE', 'PICV']), function ($query) {
+          $query->orderByRaw('
+          CAST(SUBSTRING(a.codigo_proyecto, 6, 2) AS UNSIGNED), 
+          a.codigo_proyecto,
+          FIELD(b.proyecto_integrante_tipo_id,
+              86, 88, 87,
+              92, 93
+            ),
+            c.apellido1, c.apellido2, c.nombres');
+        }, function ($query) {
+          $query->orderByRaw('f.grupo_nombre, 
+            a.codigo_proyecto, 
+            FIELD(b.proyecto_integrante_tipo_id,
+              1, 2, 3, 5, 6, 4, 31, 32, 33, 35,
+              7, 8, 9, 11, 12, 10, 42, 50, 51, 52, 55,
+              13, 14, 53, 54,
+              15, 16,
+              17, 18,
+              19, 20,
+              21, 22, 23, 24, 26, 25, 27,
+              28, 29,
+              30, 34,
+              36, 37, 38, 40, 41, 39,
+              44, 45, 46, 47, 48, 49, 90, 91,
+              56, 57, 58, 59, 60, 61, 94, 62, 63, 64, 65, 82,
+              66, 67, 68, 69,
+              70, 71,
+              74, 75, 76, 77, 78, 79, 80, 81,
+              83, 84, 85,
+              86, 88, 87,
+              92, 93, 94
+            ),
+            c.apellido1, c.apellido2, c.nombres');
+        })
       ->groupBy('b.id')
       ->get();
+
+    if ($tipo === 'PINVPOS' && (int) $periodo >= 2025 && $subvencionVrip > 0) {
+      $proyectos->transform(function ($p) use ($subvencionVrip) {
+        $p->presupuesto = (float) ($p->presupuesto ?? 0) + $subvencionVrip;
+        return $p;
+      });
+    }
 
     $area = DB::table('Facultad AS fx')
       ->leftJoin('Area as ax', 'ax.id', '=', 'fx.area_id')
@@ -110,6 +147,7 @@ class ProyectoController extends Controller {
         break;
       case 'PRO-CTIE':
         $tipo = 'Proyectos de Ciencia, Tecnología, Innovación y Emprendimiento (PRO-CTIE) para Estudiantes de la UNMSM';
+        $vista = 'admin.reportes.proctiePDF';
         break;
       case 'ECI':
         $tipo = 'Programa de Equipamiento Científico para la Investigación de la UNMSM';
@@ -120,17 +158,32 @@ class ProyectoController extends Controller {
       case 'PMULTI':
         $tipo = 'Proyectos multidisciplinarios';
         break;
+      case 'PSINFINV':
+        $tipo = 'Proyectos de Investigación Con Recursos No Monetarios para Grupos de Investigación';
+        break;
+      case 'FEX':
+        $tipo = 'Proyectos con Financiamiento Externo para Grupos de Investigación';
+        break;
+      case 'PICV':
+        $tipo = 'Programa para la Inducción en Investigación Científica, en el Verano (PICV)';
+        $vista = 'admin.reportes.proctiePDF';
+        break;
+      case 'PINVPOS':
+        $tipo = 'Programa de Talleres de Investigación y Posgrado';
+        break;
       default:
         $tipo = 'Tipo de Proyecto Desconocido';
     }
 
-    $pdf = Pdf::loadView('admin.reportes.proyectoPDF', [
+    $pdf = Pdf::loadView( $vista ?? 'admin.reportes.proyectoPDF', [
       'lista' => $proyectos,
       'periodo' => $periodo,
       'tipo' => $tipo,
       'area' => $area,
       'admin' => $admin,
       'qr' => $qrCode,
+      'ocultarPresupuesto' => $ocultarPresupuesto,
+      'subvencionVrip'    => $subvencionVrip,
     ]);
     return $pdf->stream();
   }

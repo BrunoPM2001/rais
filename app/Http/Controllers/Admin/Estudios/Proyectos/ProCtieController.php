@@ -46,6 +46,7 @@ class ProCtieController extends Controller {
         'a.observaciones_admin',
         'f.linea AS ocde',
         'a.localizacion',
+        'a.periodo',
         DB::raw("CONCAT('/minio/proyecto-doc/', g.archivo) AS url1"),
         DB::raw("CONCAT('/minio/proyecto-doc/', h.archivo) AS url2"),
         DB::raw("CONCAT('/admin/estudios/proyectos_grupos/detalle/', LOWER(i.detalle)) AS url3")
@@ -147,6 +148,10 @@ class ProCtieController extends Controller {
   public function reporte(Request $request) {
 
     $proyecto = DB::table('Proyecto_integrante AS pint')
+        ->leftJoin('Proyecto_descripcion AS b', function (JoinClause $join) {
+          $join->on('pint.proyecto_id', '=', 'b.proyecto_id')
+            ->where('codigo', '=', 'tipo_investigacion');
+        })
       ->join('Proyecto AS p', 'p.id', '=', 'pint.proyecto_id')
       ->join('Grupo AS g', 'g.id', '=', 'p.grupo_id')
       ->join('Facultad AS f', 'f.id', '=', 'g.facultad_id')
@@ -156,11 +161,14 @@ class ProCtieController extends Controller {
       ->join('Ods AS o', 'o.id', '=', 'lo.ods_id')
       ->join('Ocde AS oc', 'oc.id', '=', 'lo.ods_id')
       ->select([
+        'p.periodo',
         'p.titulo',
+        'f.nombre AS facultad',
         'g.grupo_nombre',
         'f.nombre AS facultad_nombre',
-        'a.nombre AS area_nombre',
+        'a.nombre AS area',
         'p.codigo_proyecto',
+        'p.palabras_clave',
         'p.titulo',
         'l.nombre AS linea_nombre',
         'o.objetivo',
@@ -192,7 +200,10 @@ class ProCtieController extends Controller {
         'detalle'
       ])
       ->where('proyecto_id', '=', $request->query('proyecto_id'))
-      ->get();
+      ->get()
+      ->mapWithKeys(function ($item) {
+        return [$item->codigo => $item->detalle];
+      });
 
     $actividades = DB::table('Proyecto_actividad')
       ->select([
@@ -220,27 +231,42 @@ class ProCtieController extends Controller {
       ->join('Facultad AS f', 'f.id', '=', 'i.facultad_id')
       ->leftJoin('Grupo_integrante AS gi', 'gi.investigador_id', '=', 'i.id')
       ->select([
-        'pt.nombre AS tipo_integrante',
-        DB::raw("CONCAT(i.apellido1, ' ', i.apellido2, ' ', i.nombres) AS integrante"),
-        'f.nombre AS facultad',
-        'gi.tipo',
-        'gi.condicion'
+          'pt.nombre AS tipo_integrante',
+          DB::raw("CONCAT(i.apellido1, ' ', i.apellido2, ' ', i.nombres) AS integrante"),
+          'f.nombre AS facultad',
+          DB::raw("MAX(gi.tipo) AS tipo"),
+          DB::raw("
+            COALESCE(
+              MAX(CASE WHEN gi.condicion NOT LIKE 'Ex%' THEN gi.condicion END),
+              MAX(gi.condicion)
+            ) AS condicion_grupo
+          "),
+          'pint.condicion AS condicion_proyecto',
+          'i.tipo AS tipo_investigador'
       ])
       ->where('pint.proyecto_id', '=', $request->query('proyecto_id'))
-      ->where(function ($query) {
-        $query->where('gi.condicion', 'NOT LIKE', 'Ex%')
-          ->orWhereNull('gi.condicion');
-      })
+      ->groupBy(
+          'pt.nombre',
+          'i.apellido1', 'i.apellido2', 'i.nombres',
+          'f.nombre',
+          'pint.condicion',
+          'i.tipo'
+      )
+      ->havingRaw("
+          (COUNT(gi.investigador_id) = 1 AND SUM(gi.condicion LIKE 'Ex%') = 1)
+          OR (SUM(gi.condicion LIKE 'Ex%') < COUNT(gi.investigador_id))
+          OR (COUNT(gi.investigador_id) = 0)
+      ")
       ->get();
 
-    $pdf = Pdf::loadView('admin.estudios.proyectos.sin_detalles.pconf                                                                                                                                                                                                                                                                                                                                                                                                                                                       igi_inv', [
+
+    $pdf = Pdf::loadView('admin.estudios.proyectos.sin_detalles.pro_ctie', [
       'proyecto' => $proyecto,
       'descripcion' => $descripcion,
       'actividades' => $actividades,
       'presupuesto' => $presupuesto,
-      'integrantes' => $integrantes
+      'integrantes' => $integrantes,
     ]);
-
     return $pdf->stream();
   }
 }
