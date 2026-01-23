@@ -116,6 +116,15 @@ class EventoController extends Controller {
           'clave' => $palabra["label"]
         ]);
       }
+
+      DB::table('Publicacion_descripcion')
+        ->updateOrInsert([
+          'publicacion_id' => $publicacion_id,
+          'codigo' => 'tipo_evento'
+        ], [
+          'detalle' => $request->input('tipo_evento')["value"],
+        ]);
+
       return ['message' => 'success', 'detail' => 'Datos de la publicación registrados', 'publicacion_id' => $publicacion_id];
     } else {
       $publicacion_id = $request->input('publicacion_id');
@@ -159,6 +168,15 @@ class EventoController extends Controller {
           'clave' => $palabra["label"]
         ]);
       }
+
+      DB::table('Publicacion_descripcion')
+        ->updateOrInsert([
+          'publicacion_id' => $publicacion_id,
+          'codigo' => 'tipo_evento'
+        ], [
+          'detalle' => $request->input('tipo_evento')["value"],
+        ]);
+
       return ['message' => 'success', 'detail' => 'Datos de la publicación actualizados'];
     }
   }
@@ -205,8 +223,20 @@ class EventoController extends Controller {
       $utils = new PublicacionesUtilsController();
       $paises = $utils->getPaises();
 
+      $detalles = DB::table('Publicacion_descripcion')
+        ->select([
+          'codigo',
+          'detalle'
+        ])
+        ->where('publicacion_id', '=', $request->query('publicacion_id'))
+        ->get()
+        ->mapWithKeys(function ($item) {
+          return [$item->codigo => $item->detalle];
+        });
+
       return [
         'data' => $publicacion,
+        'detalles' => $detalles,
         'palabras_clave' => $palabras_clave,
         'paises' => $paises
       ];

@@ -57,12 +57,24 @@ class ArticulosController extends S3Controller {
       ->where('a.publicacion_id', '=', $request->query('id'))
       ->get();
 
+    $detalles = DB::table('Publicacion_descripcion')
+      ->select([
+        'codigo',
+        'detalle'
+      ])
+      ->where('publicacion_id', '=', $request->query('id'))
+      ->get()
+      ->mapWithKeys(function ($item) {
+        return [$item->codigo => $item->detalle];
+      });
+
     $utils =  new PublicacionesUtilsController();
     $revistas = $utils->listadoRevistasIndexadas();
     $wos = $utils->listadoWos();
 
     return [
       'data' => $publicacion,
+      'detalles' => $detalles,
       'palabras_clave' => $palabras_clave,
       'indexada' => $indexada,
       'indexada_wos' => $indexada_wos,

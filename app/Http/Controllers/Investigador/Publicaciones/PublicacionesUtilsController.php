@@ -838,7 +838,11 @@ class PublicacionesUtilsController extends S3Controller {
         'nombre AS label',
       ])
       ->where('estado', '!=', 0)
-      ->get();
+      ->get()
+      ->map(function ($item) {
+        $item->value = (string) $item->value;
+        return $item;
+      });
 
     return $revistas;
   }
