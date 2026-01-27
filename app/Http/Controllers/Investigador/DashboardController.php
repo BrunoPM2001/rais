@@ -13,6 +13,13 @@ class DashboardController extends Controller {
 
   public function getData(Request $request) {
     $now = Carbon::now()->toDateString();
+    // Deudas
+    $deudasVigentes = DB::table('Proyecto_integrante AS a')
+      ->join('Proyecto_integrante_deuda AS b', 'b.proyecto_integrante_id', '=', 'a.id')
+      ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+      ->whereIn('b.tipo', [1, 2, 3])
+      ->whereNull('b.fecha_sub')
+      ->count();
 
     //  Detalles
     $orcid = new OrcidController();
@@ -139,6 +146,7 @@ class DashboardController extends Controller {
         'publicaciones' => $publicaciones,
         'puntaje' => $puntaje,
         'puntaje_pasado' => $puntaje_pasado,
+        'deudas_vigentes' => $deudasVigentes,
       ],
       'tipos_publicaciones' => $tipos1,
       'tipos_proyectos' => $tipos2,

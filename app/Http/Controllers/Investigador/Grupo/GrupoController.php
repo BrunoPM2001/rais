@@ -1388,10 +1388,19 @@ class GrupoController extends S3Controller {
   }
 
   public function autorizarProyecto(Request $request) {
+    $esResponsable = DB::table('Grupo_integrante')
+    ->where('investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+    ->where('cargo', '=', 'Coordinador')
+    ->exists();
+
+  if (!$esResponsable) {
+    return ['message' => 'error', 'detail'  => 'Solo el Coordinador del Grupo puede autorizar esta acción'];
+  }
     DB::table('Proyecto')
       ->where('id', '=', $request->input('id'))
       ->update([
-        'autorizacion_grupo' => $request->input('autorizacion_grupo')
+        'autorizacion_grupo' => $request->input('autorizacion_grupo'),
+        'updated_at' => now()
       ]);
 
     return ['message' => 'info', 'detail' => 'Cambios guardados correctamente'];

@@ -27,6 +27,7 @@ class DeudaProyectosController extends Controller {
           'e.tipo AS licencia',
           'f.categoria AS tipo_deuda',
           'f.detalle AS comentario',
+          'f.informe AS detalle',
           'f.fecha_deuda',
           'f.fecha_sub'
         )
