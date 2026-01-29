@@ -29,6 +29,7 @@ use App\Http\Controllers\Admin\Facultad\AsignacionEvaluadorController;
 use App\Http\Controllers\Admin\Facultad\ConvocatoriasController as FacultadConvocatoriasController;
 use App\Http\Controllers\Admin\Facultad\GestionEvaluadoresController;
 use App\Http\Controllers\Admin\Facultad\ProyectosEvaluadosController;
+use App\Http\Controllers\Admin\Facultad\GestionUsuariosFacultadController;
 use App\Http\Controllers\Admin\Reportes\ConsolidadoGeneralController;
 use App\Http\Controllers\Admin\Reportes\DocenteController;
 use App\Http\Controllers\Admin\Reportes\EstudioController;
@@ -506,6 +507,12 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
       Route::get('getConvocatorias', [FacultadConvocatoriasController::class, 'getConvocatorias']);
       Route::get('getDetalleConvocatoria/{periodo}/{tipo_proyecto}', [FacultadConvocatoriasController::class, 'getDetalleConvocatoria']);
       Route::get('getEvaluadoresConvocatoria/{id}', [FacultadConvocatoriasController::class, 'getEvaluadoresConvocatoria']);
+    });
+
+    // ´Gestión Usuarios Facultad
+    Route::prefix('gestionUFacultad')->group(function () {
+      Route::get('listado', [GestionUsuariosFacultadController::class, 'listado']);
+      Route::post('crearUsuarioFacultad', [GestionUsuariosFacultadController::class, 'crearUsuarioFacultad']);
     });
 
     //  Gestión de evaluadores
