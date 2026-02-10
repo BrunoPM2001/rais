@@ -665,6 +665,14 @@ class DeudaProyectosController extends Controller {
         ->first();
     }
 
+    if (!$deuda) {
+      return response()->json([
+        'deuda' => null,
+        'deuda_academica' => 'Sin deuda',
+        'deuda_economica' => 'Sin deuda'
+      ]);
+    }
+
     if ($deuda->tipo == 1) {
       $deudaAcademica = 'Deuda Académica';
       $deudaEconomica = 'Sin deuda';
@@ -685,19 +693,26 @@ class DeudaProyectosController extends Controller {
   public function getResponsable($tipoProyecto, $proyectoId) {
     $integrantes = DB::table('Proyecto_integrante as pint')
       ->join('Proyecto_integrante_deuda as pind', 'pind.proyecto_integrante_id', '=', 'pint.id')
-      ->select('*')
+      ->select(
+        'pint.*',
+        'pind.tipo as tipo_deuda',
+      )
       ->where('pint.proyecto_id', $proyectoId)
       ->get();
+    
+    if ($integrantes->isEmpty()) {
+      return 0;
+    }
 
     $responsable = $this->getResponsableProyecto($tipoProyecto);
 
     foreach ($integrantes as $integrante) {
 
       if (in_array($integrante->proyecto_integrante_tipo_id, $responsable)) {
-
-        return $integrante->tipo;
+        return $integrante->tipo_deuda;
       }
     }
+    return 0;
   }
   public function getTipoDeuda(Request $request) {
     $proyectoId = $request->query('proyecto_id');
@@ -726,6 +741,13 @@ class DeudaProyectosController extends Controller {
     $tipoDeuda = $this->getResponsable($tipoProyecto, $proyectoId);
     $responsable = $this->getResponsableProyecto($tipoProyecto);
     $rolesAcademicos = $this->getRolesAcademicos($tipoProyecto);
+
+    if ($tipoDeuda === 0) {
+      return response()->json([
+        'message' => 'warning',
+        'detail' => 'Este proyecto no tiene deuda registrada para subsanar'
+      ], 400);
+    }
 
     $integrantes = DB::table('Proyecto_integrante as pint')
       ->join('Proyecto_integrante_deuda as pind', 'pind.proyecto_integrante_id', '=', 'pint.id')

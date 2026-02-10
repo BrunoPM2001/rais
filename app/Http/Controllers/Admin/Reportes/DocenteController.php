@@ -26,12 +26,13 @@ class DocenteController extends Controller {
     //  Nuevos
     $proyectos_nuevos = DB::table('Proyecto_integrante AS a')
       ->join('Proyecto AS b', 'b.id', '=', 'a.proyecto_id')
+      ->join('Proyecto_integrante_tipo AS c', 'c.id', '=', 'a.proyecto_integrante_tipo_id')
       ->select(
         'b.codigo_proyecto',
         'b.titulo',
         'b.periodo',
         'b.tipo_proyecto',
-        'a.condicion'
+        'c.nombre as condicion'
       )
       ->where('a.investigador_id', '=', $investigador_id)
       ->orderBy('b.periodo', 'desc')

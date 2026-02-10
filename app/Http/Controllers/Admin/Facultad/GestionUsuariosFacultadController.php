@@ -26,13 +26,19 @@ class GestionUsuariosFacultadController extends Controller {
   }
 
   public function searchInvestigador(Request $request) {
-    $investigadores = DB::table('Usuario_investigador')
+    $investigadores = DB::table('Usuario_investigador AS a')
+      ->join('Facultad as b', 'b.id', '=', 'a.facultad_id')
       ->select(
-        DB::raw("CONCAT(codigo, ' | ', doc_numero, ' | ', apellido1, ' ', apellido2, ' ', nombres) AS value"),
-        'id',
-        DB::raw("CONCAT(apellido1, ' ', apellido2) AS apellidos"),
-        'nombres',
+        DB::raw("CONCAT(a.codigo, ' | ', a.doc_numero, ' | ', a.apellido1, ' ', a.apellido2, ' ', a.nombres) AS value"),
+        'a.id',
+        'a.codigo',
+        'a.apellido1',
+        'a.apellido2',
+        'a.nombres',
         DB::raw("'UNMSM' AS institucion"),
+        'a.facultad_id',
+        DB::raw('b.nombre AS facultad'),
+        'a.sexo',
       )
       ->where('tipo', 'LIKE', 'DOCENTE%')
       ->having('value', 'LIKE', '%' . $request->query('query') . '%')
@@ -42,48 +48,38 @@ class GestionUsuariosFacultadController extends Controller {
     return $investigadores;
   }
 
-  public function crearUsuarioFacultad(Request $request) {
-    $id = 0;
-    $cuenta = 0;
+  public function crearUsuarioFacultad(Request $request) 
+  {
+    $existe = DB::table('Usuario_facultad')
+        ->where('investigador_id', '=', $request->input('investigador_id'))
+        ->exists();
 
-    if ($request->input('investigador_id') != null) {
-      $cuenta = DB::table('Usuario_facultad')
-        ->where('usuario_investigador_id', '=', $request->input('investigador_id'))
-        ->count();
+    if ($existe) {
+      return ['message' => 'error','detail'  => 'Este usuario ya está registrado'];
     }
-
-    if ($cuenta == 0) {
-      if ($request->input('investigador_id') == null) {
-        $id = DB::table('Usuario_facultad')
-          ->insertGetId([
-            'tipo' => 'Externo',
-            'apellidos' => $request->input('apellidos'),
-            'nombres' => $request->input('nombres'),
-            'institucion' => $request->input('institucion'),
-          ]);
-      } else {
-        $id = DB::table('Usuario_facultad')
-          ->insertGetId([
-            'tipo' => 'Interno',
-            'usuario_investigador_id' => $request->input('investigador_id'),
-            'apellidos' => $request->input('apellidos'),
-            'nombres' => $request->input('nombres'),
-            'institucion' => $request->input('institucion'),
-          ]);
-      }
-
-      DB::table('Usuario')
-        ->insert([
-          'username' => $request->input('username'),
-          'password' => bcrypt($request->password),
-          'tabla' => 'Usuario_facultad',
-          'tabla_id' => $id,
-          'estado' => 1
+    $now = now();
+    $id = DB::table('Usuario_facultad')
+        ->insertGetId([
+            'investigador_id'   => $request->input('investigador_id'),
+            'facultad_id'       => $request->input('facultad_id'),
+            'codigo_trabajador' => $request->input('codigo'),
+            'apellido1'         => $request->input('apellido1'),
+            'apellido2'         => $request->input('apellido2'),
+            'nombres'           => $request->input('nombres'),
+            'sexo'              => $request->input('sexo'),
+            'created_at'        => $now,
+            'updated_at'        => $now,
         ]);
+      
+    DB::table('Usuario')
+      ->insert([
+        'username' => $request->input('username'),
+        'password' => bcrypt($request->password),
+        'tabla' => 'Usuario_facultad',
+        'tabla_id' => $id,
+        'estado' => 1
+      ]);
 
-      return ['message' => 'success', 'detail' => 'Evaluador registrado correctamente'];
-    } else {
-      return ['message' => 'error', 'detail' => 'Este investigador ya está registrado como evaluador'];
-    }
+  return ['message' => 'success', 'detail' => 'Usuario registrado correctamente'];
   }
 }

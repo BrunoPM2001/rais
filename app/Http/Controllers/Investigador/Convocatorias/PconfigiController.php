@@ -1006,7 +1006,9 @@ class PconfigiController extends S3Controller {
 
     $numParticipacion = count($participacion);
 
-    if ($numParticipacion == 0 && $investigadorProyecto == 0 && $tesistaProyecto == 0 && $deudas == 0 && !$licenciaVigente) {
+    if ((($tipoIntegrante == 3 && $miembroDocente < 2) 
+      || (!in_array($tipoIntegrante, [3,4,6]) && $numParticipacion == 0) 
+      || in_array($tipoIntegrante, [4,6])) && $investigadorProyecto == 0 && $tesistaProyecto == 0 && $deudas == 0 && !$licenciaVigente) {
 
       if ($request->input('tipo_tesis') == null) {
         DB::table('Proyecto_integrante')
@@ -1075,27 +1077,17 @@ class PconfigiController extends S3Controller {
           'message' => 'error',
           'detail' => 'El integrante seleccionado ya es Co-rresponsable de un proyecto. Por favor, elija a otro integrante.'
         ];
-      } elseif ($miembroDocente > 0) {
+      } elseif ($miembroDocente >= 2) {
         return [
           'message' => 'error',
-          'detail' => 'El integrante seleccionado ya es Miembro docente de un proyectos. Por favor, elija a otro integrante.'
-        ];
-      } elseif ($colaboradorExterno > 0) {
-        return [
-          'message' => 'error',
-          'detail' => 'El integrante seleccionado ya es Colaborador Externo de un proyecto. Por favor, elija a otro integrante.'
+          'detail' => 'El integrante seleccionado ya alcanzo el máximo permitido como Miembro docente (2 projectos). Por favor, elija a otro integrante.'
         ];
       } elseif ($tesista > 0) {
         return [
           'message' => 'error',
           'detail' => 'El integrante seleccionado ya es Tesista de un proyecto. Por favor, elija a otro integrante.'
         ];
-      } elseif ($colaborador > 0) {
-        return [
-          'message' => 'error',
-          'detail' => 'El integrante seleccionado ya es Colaborador de un proyecto. Por favor, elija a otro integrante.'
-        ];
-      }
+      } 
     }
   }
 

@@ -479,6 +479,7 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
 
     Route::get('proyecto', [ProyectoController::class, 'reporte']);
     Route::get('docente/{investigador_id}', [DocenteController::class, 'reporte']);
+    Route::get('searchInvestigadorBy', [Usuario_investigadorController::class, 'searchInvestigadorBy']);
     Route::get('consolidadoGeneral/{periodo}', [ConsolidadoGeneralController::class, 'reporte']);
     Route::get('presupuesto/{facultad_id}/{periodo}', [PresupuestoController::class, 'reporte']);
 
@@ -512,6 +513,7 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
     // ´Gestión Usuarios Facultad
     Route::prefix('gestionUFacultad')->group(function () {
       Route::get('listado', [GestionUsuariosFacultadController::class, 'listado']);
+      Route::get('searchInvestigador', [GestionUsuariosFacultadController::class, 'searchInvestigador']);
       Route::post('crearUsuarioFacultad', [GestionUsuariosFacultadController::class, 'crearUsuarioFacultad']);
     });
 
@@ -1281,6 +1283,7 @@ Route::prefix('facultad')->middleware('checkRole:Usuario_facultad')->group(funct
 
     Route::prefix('investigadores')->group(function () {
       Route::get('listado', [FacultadListadoController::class, 'ListadoInvestigadores']);
+      Route::get('listadoEstudiantes', [FacultadListadoController::class, 'ListadoInvestigadoresEstudiantes']);
       Route::get('excelInvestigadores', [FacultadListadoController::class, 'excelInvestigadores']);
       Route::get('pdfInvestigadores', [FacultadListadoController::class, 'pdfInvestigadores']);
     });
@@ -1292,6 +1295,7 @@ Route::prefix('facultad')->middleware('checkRole:Usuario_facultad')->group(funct
 
     Route::prefix('proyectos')->group(function () {
       Route::get('listado', [FacultadListadoController::class, 'ListadoProyectos']);
+      Route::get('listadoIntegrantes', [FacultadListadoController::class, 'listadoIntegrantes']);
     });
 
     Route::prefix('proyectos_gi')->group(function () {

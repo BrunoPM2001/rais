@@ -781,6 +781,9 @@ class GrupoController extends S3Controller {
     $miembros = $request->query('estado') == 1 ? $miembros->whereNot('a.condicion', 'LIKE', 'Ex%') : $miembros->where('a.condicion', 'LIKE', 'Ex%');
 
     $miembros = $miembros->groupBy('a.id')
+      ->orderByDesc('a.cargo')
+      ->orderByDesc('a.condicion')
+      ->orderBy('nombres')
       ->get();
 
     return ['data' => $miembros];

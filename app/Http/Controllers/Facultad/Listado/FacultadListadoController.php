@@ -372,6 +372,84 @@ class FacultadListadoController extends Controller {
       )
 
       ->where('t1.facultad_id', $facultadId)
+      ->where('t1.tipo', 'not like', 'Estudiante%') 
+      ->where('t1.tipo', 'not like', 'Egresado%')
+      ->where('t1.tipo', 'not like', 'Sin categoria%')
+      ->where('t1.tipo', 'not like', '%externo%')
+      ->where('t1.doc_numero', '!=', '')
+
+      // Agrupación para evitar un único resultado
+      ->groupBy('t1.id', 't2.nombre')
+
+      // Ordenar por apellido y nombres
+      ->orderBy('t1.apellido1')
+      ->orderBy('t1.apellido2')
+      ->orderBy('t1.nombres')
+
+      ->get();
+
+    return $investigadores;
+  }
+
+  public function ListadoInvestigadoresEstudiantes (Request $request) {
+    $fechaInicio = date('Y') - 7;
+    $fechaFin = date('Y') - 1;
+    $facultadId = $this->facultadId($request);
+
+    $investigadores = DB::table('Usuario_investigador as t1')
+      ->select([
+        't1.id',
+        't1.apellido1 as apellido_paterno',
+        't1.apellido2 as apellido_materno',
+        't1.nombres',
+        't1.doc_tipo as tipo_documento',
+        't1.doc_numero',
+        't1.codigo',
+        't1.tipo',
+        't1.fecha_nac as fecha_nacimiento',
+        't1.sexo',
+        't1.renacyt',
+        't1.renacyt_nivel',
+        't1.codigo_orcid',
+        DB::raw('CONCAT(t1.apellido1," ",t1.apellido2, " ", t1.nombres ) as docente'),
+        DB::raw('IF(YEAR(t1.fecha_nac) > 0, (YEAR(CURDATE()) - YEAR(t1.fecha_nac)), NULL) as edad'),
+        DB::raw('COALESCE(SUM(pub.puntaje), 0) + COALESCE(SUM(pat.puntaje), 0) as puntaje_total'),
+        't2.nombre as facultad'
+      ])
+      ->leftJoin('Facultad as t2', 't1.facultad_id', '=', 't2.id')
+
+      // Subconsulta para calcular el puntaje de publicaciones
+      ->leftJoinSub(
+        DB::table('Publicacion_autor as pautor')
+          ->select('pautor.investigador_id', DB::raw('SUM(pautor.puntaje) as puntaje'))
+          ->join('Publicacion as pb', 'pautor.publicacion_id', '=', 'pb.id')
+          ->where('pb.validado', 1)
+          ->whereBetween(DB::raw('YEAR(pb.fecha_publicacion)'), [$fechaInicio, $fechaFin])
+          ->groupBy('pautor.investigador_id'),
+        'pub',
+        'pub.investigador_id',
+        '=',
+        't1.id'
+      )
+
+      // Subconsulta para calcular el puntaje de patentes
+      ->leftJoinSub(
+        DB::table('Patente_autor as pautor')
+          ->select('pautor.investigador_id', DB::raw('SUM(pautor.puntaje) as puntaje'))
+          ->join('Patente as pt', 'pautor.patente_id', '=', 'pt.id')
+          ->whereBetween(DB::raw('YEAR(pt.created_at)'), [$fechaInicio, $fechaFin])
+          ->groupBy('pautor.investigador_id'),
+        'pat',
+        'pat.investigador_id',
+        '=',
+        't1.id'
+      )
+
+      ->where('t1.facultad_id', $facultadId)
+      ->where(function ($q) {
+          $q->where('t1.tipo', 'like', 'Estudiante%')
+            ->orWhere('t1.tipo', 'like', 'Egresado%');
+      })
       ->where('t1.tipo', 'not like', 'Sin categoria%')
       ->where('t1.tipo', 'not like', '%externo%')
       ->where('t1.doc_numero', '!=', '')
@@ -501,6 +579,14 @@ class FacultadListadoController extends Controller {
         'a.codigo_proyecto',
         'a.titulo',
         'a.periodo',
+        DB::raw("
+          CASE
+            WHEN a.deuda IS NULL OR a.deuda = 0 THEN 'NO'
+            WHEN a.deuda BETWEEN 1 AND 3 THEN 'SI'
+            WHEN a.deuda > 3 THEN 'SUBSANADO'
+            ELSE 'NO'
+          END AS deuda
+        "),
         'a.resolucion_rectoral',
         DB::raw("CONCAT(c.apellido1, ' ', c.apellido2, ', ', c.nombres) AS responsable"),
         'a.fecha_inscripcion',
@@ -532,6 +618,7 @@ class FacultadListadoController extends Controller {
         'a.codigo AS codigo_proyecto',
         'a.titulo',
         'a.periodo',
+        DB::raw("'NO' AS deuda"),
         'a.resolucion AS resolucion_rectoral',
         DB::raw("CONCAT(c.apellido1, ' ', c.apellido2, ', ', c.nombres) AS responsable"),
         DB::raw("DATE(a.fecha_inscripcion) AS fecha_inscripcion"),
@@ -550,10 +637,43 @@ class FacultadListadoController extends Controller {
         ELSE 'Sin estado' END AS estado"),
       ])
       ->where('a.facultad_id', '=', $facultadId)
-      ->union($proyectos_nuevos)
+      ->union($proyectos_nuevos);
+      
+      $orden = DB::query()
+      ->fromSub($proyectos, 'p')
+      ->orderByDesc('periodo') 
       ->get();
 
-    return $proyectos;
+    return $orden;
+  }
+
+  public function listadoIntegrantes(Request $request) {
+    $id = $request->query('id');
+    $integrantes = DB::table('Proyecto_integrante AS a')
+      ->join('Proyecto_integrante_tipo AS b', 'b.id', '=', 'a.proyecto_integrante_tipo_id')
+      ->join('Usuario_investigador AS c', 'c.id', '=', 'a.investigador_id')
+      ->leftJoin('Licencia AS d', 'd.investigador_id', '=', 'c.id')
+      ->leftJoin('Licencia_tipo AS e', 'e.id', '=', 'd.licencia_tipo_id')
+      ->leftJoin('Proyecto_integrante_deuda AS f', 'f.proyecto_integrante_id', '=', 'a.id')
+      ->select(
+        'a.id',
+        'c.doc_numero',
+        'c.apellido1',
+        'c.apellido2',
+        'c.nombres',
+        'b.nombre AS condicion',
+        'e.tipo AS licencia',
+        'f.categoria AS tipo_deuda',
+        'f.detalle AS comentario',
+        'f.informe AS detalle',
+        'f.fecha_deuda',
+        'f.fecha_sub'
+      )
+      ->where('a.proyecto_id','=', $id)
+      ->orderBy('b.id', 'asc')
+      ->get();
+
+      return $integrantes;
   }
 
   public function ListadoProyectosGI(Request $request) {
@@ -644,6 +764,7 @@ class FacultadListadoController extends Controller {
       ->where('a.tipo_proyecto', '=', 'PFEX')
       ->where('a.facultad_id', $facultadId)
       ->where('a.estado', '!=', -1)
+      ->orderByDesc('a.periodo')
       ->get();
 
     return $proyectos;
@@ -696,6 +817,7 @@ class FacultadListadoController extends Controller {
       ])
       ->join('Facultad as t2', 't1.facultad_id', '=', 't2.id')
       ->where('t2.id', $facultadId)
+      ->where('t1.estado', '=', '4')
       ->orderByDesc('t1.created_at')
       ->get();
 
@@ -786,6 +908,12 @@ class FacultadListadoController extends Controller {
 
   public function ListadoPublicaciones(Request $request) {
     $facultadId = $this->facultadId($request);
+    $tipo = $request->query('tipo');
+
+    if ($tipo && !is_array($tipo)) {
+      $tipo = [$tipo];
+    }
+
     $publicaciones = DB::table('Publicacion AS t1')
       ->select([
         't1.*',
@@ -814,18 +942,24 @@ class FacultadListadoController extends Controller {
       ->leftJoin('Usuario_investigador AS t3', 't3.id', '=', 't2.investigador_id')
       ->where('t3.facultad_id', $facultadId)
       ->where('t1.estado', '!=', '-1')
-      ->whereNotIn('t1.id', function ($subquery) {
-        $subquery->select('t4.id')
-          ->from('Publicacion AS t4')
-          ->where('t4.tipo_publicacion', 'tesis-asesoria')
-          ->where('t4.source', 'cybertesis')
-          ->where('t4.estado', '!=', 1);
-      })
       ->groupBy('t1.id')
-      ->orderByDesc('t1.fecha_inscripcion')
-      ->get();
+      ->orderByDesc('t1.fecha_inscripcion');
+    
+    if ($tipo) {
+        $publicaciones->whereIn('t1.tipo_publicacion', $tipo);
+    }
 
-    return $publicaciones;
+    if (!$tipo || !in_array('tesis-asesoria', $tipo)) {
+    $publicaciones->whereNotIn('t1.id', function ($subquery) {
+        $subquery->select('t4.id')
+            ->from('Publicacion AS t4')
+            ->where('t4.tipo_publicacion', 'tesis-asesoria')
+            ->where('t4.source', 'cybertesis')
+            ->where('t4.estado', '!=', 1);
+      });
+    }
+
+    return $publicaciones->get();
   }
 
   public function ListadoInformes(Request $request) {
@@ -878,10 +1012,14 @@ class FacultadListadoController extends Controller {
       ->where('a.status', '>', 0)
       ->where('a.facultad_id', '=', $facultadId)
       ->groupBy('a.id')
-      ->union($proyectos_nuevos)
+      ->union($proyectos_nuevos);
+
+    $ordenados = DB::query()
+      ->fromSub($proyectos, 'p')
+      ->orderByDesc('periodo')
       ->get();
 
-    return $proyectos;
+    return $ordenados;
   }
 
   public function ListadoDeudas(Request $request) {
@@ -902,6 +1040,7 @@ class FacultadListadoController extends Controller {
       )  // Selecciona todos los campos de la tabla
       ->join('Usuario_investigador as t2', 't1.investigador_id', '=', 't2.id')  // Usa el método 'join' en lugar de 'innerJoin'
       ->where('t2.facultad_id', $facultadId)  // Filtra por facultad
+      ->orderByDesc('t1.periodo')
       ->get();  // Ejecuta la consulta y obtiene los resultados
 
     return $deudas;
