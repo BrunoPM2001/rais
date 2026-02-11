@@ -136,7 +136,7 @@ class InvestigadoresController extends Controller {
     $grupos = DB::table('Grupo_integrante AS a')
       ->join('Grupo AS b', 'b.id', '=', 'a.grupo_id')
       ->select([
-        'a.id',
+        'b.id',
         'b.grupo_nombre AS nombre',
         'b.grupo_categoria AS categoria',
         'a.condicion',

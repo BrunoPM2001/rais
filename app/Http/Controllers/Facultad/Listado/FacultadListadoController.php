@@ -817,7 +817,7 @@ class FacultadListadoController extends Controller {
       ])
       ->join('Facultad as t2', 't1.facultad_id', '=', 't2.id')
       ->where('t2.id', $facultadId)
-      ->where('t1.estado', '=', '4')
+      //->where('t1.estado', '=', '4')
       ->orderByDesc('t1.created_at')
       ->get();
 
