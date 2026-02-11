@@ -76,6 +76,7 @@ use App\Http\Controllers\Investigador\Perfil\PerfilController;
 use App\Http\Controllers\Investigador\Publicaciones\LibrosController;
 use App\Http\Controllers\Investigador\Publicaciones\PropiedadIntelectualController;
 use App\Http\Controllers\Investigador\Publicaciones\PublicacionesUtilsController;
+use App\Http\Controllers\Investigador\Publicaciones\RevistasController as PublicacionesRevistasController;
 use App\Http\Controllers\Investigador\Publicaciones\TesisAsesoriaController;
 use App\Http\Controllers\Investigador\Publicaciones\TesisPropiasController;
 use Illuminate\Support\Facades\Route;
@@ -292,8 +293,10 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
       Route::get('listadoMetas', [MonitoreoController::class, 'listadoMetas']);
       Route::post('agregarPeriodo', [MonitoreoController::class, 'agregarPeriodo']);
       Route::post('agregarProyecto', [MonitoreoController::class, 'agregarProyecto']);
+
+      Route::post('editarMeta', [MonitoreoController::class, 'editarMeta']);
+
       Route::post('agregarMeta', [MonitoreoController::class, 'agregarMeta']);
-      Route::put('editarMeta', [MonitoreoController::class, 'editarMeta']);
       Route::delete('eliminarMeta', [MonitoreoController::class, 'eliminarMeta']);
 
       Route::post('excel', [MonitoreoController::class, 'excel']);
@@ -382,6 +385,8 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
 
       Route::get('listadoDBwos', [RevistasController::class, 'listadoDBwos']);
       Route::put('updateDBwos', [RevistasController::class, 'updateDBwos']);
+
+      Route::get('listadoRevistaEditores', [RevistasController::class, 'listadoRevistaEditores']);
     });
 
     //  Laboratorio
@@ -747,6 +752,11 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
 
       Route::get('verificar4', [PropiedadIntelectualController::class, 'verificar4']);
       Route::post('registrar4', [PropiedadIntelectualController::class, 'registrar4']);
+    });
+
+    Route::prefix('revistas')->group(function () {
+      Route::get('listado', [PublicacionesRevistasController::class, 'listado']);
+      Route::post('registrar', [PublicacionesRevistasController::class, 'registrar']);
     });
 
     //  Utils

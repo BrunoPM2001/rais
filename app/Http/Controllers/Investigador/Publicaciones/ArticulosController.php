@@ -100,6 +100,8 @@ class ArticulosController extends S3Controller {
           'investigador_id' => $request->attributes->get('token_decoded')->investigador_id,
           'tipo' => 'interno',
           'categoria' => 'Autor',
+          'filiacion' => $request->input('filiacion')["value"],
+          'filiacion_unica' => $request->input('filiacion_unica')["value"],
           'presentado' => 1,
           'estado' => 1,
           'created_at' => Carbon::now(),
