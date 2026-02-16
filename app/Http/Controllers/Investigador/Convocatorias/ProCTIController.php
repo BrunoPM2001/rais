@@ -1168,22 +1168,40 @@ class ProCTIController extends S3Controller {
         'l.nombre AS linea_nombre',
         'o.objetivo',
         'oc.linea',
-        'p.localizacion'
+        'p.palabras_clave',
+        'p.periodo',
+        'p.localizacion',
+        DB::raw("CASE(p.estado)
+          WHEN -1 THEN 'Eliminado'
+          WHEN 0 THEN 'No aprobado'
+          WHEN 1 THEN 'Aprobado'
+          WHEN 3 THEN 'En evaluación'
+          WHEN 5 THEN 'Enviado'
+          WHEN 6 THEN 'En proceso'
+          WHEN 7 THEN 'Anulado'
+          WHEN 8 THEN 'Sustentado'
+          WHEN 9 THEN 'En ejecucion'
+          WHEN 10 THEN 'Ejecutado'
+          WHEN 11 THEN 'Concluido'
+          ELSE 'Sin estado'
+        END AS estado"),
+        'p.updated_at'
       ])
       ->where('pint.condicion', '=', 'Responsable')
       ->where('pint.proyecto_id', '=', $request->query('proyecto_id'))
       ->first();
 
     //  Descripcion
-    $descripcion = DB::table('Proyecto AS p')
-      ->join('Proyecto_descripcion AS pd', 'p.id', '=', 'pd.proyecto_id')
+    $descripcion = DB::table('Proyecto_descripcion')
       ->select([
-        'p.id',
-        'pd.codigo',
-        'pd.detalle'
+        'codigo',
+        'detalle'
       ])
-      ->where('p.id', '=', $request->query('proyecto_id'))
-      ->get();
+      ->where('proyecto_id', '=', $request->query('proyecto_id'))
+      ->get()
+      ->mapWithKeys(function ($item) {
+        return [$item->codigo => $item->detalle];
+      });
 
     //  Actividades
     $actividades = DB::table('Proyecto AS p')
@@ -1228,15 +1246,13 @@ class ProCTIController extends S3Controller {
       })
       ->get();
 
-    $pdf = Pdf::loadView('investigador.convocatorias.reportePDF', [
+    $pdf = Pdf::loadView('investigador.convocatorias.proctie', [
       'proyecto' => $proyecto,
       'descripcion' => $descripcion,
       'actividades' => $actividades,
       'presupuesto' => $presupuesto,
       'integrantes' => $integrantes
     ]);
-
-    $pdf->setPaper('A4', 'landscape');
     return $pdf->stream();
   }
 }

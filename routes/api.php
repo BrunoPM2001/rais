@@ -851,6 +851,7 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
 
     Route::get('listarProyectos', [InvestigadorGrupoController::class, 'listarProyectos']);
     Route::put('autorizarProyecto', [InvestigadorGrupoController::class, 'autorizarProyecto']);
+    Route::get('reporteProyecto', [InvestigadorGrupoController::class, 'reporte']);
 
     Route::get('reporteGrupo', [InvestigadorGrupoController::class, 'reporteGrupo']);
   });

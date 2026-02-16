@@ -8,6 +8,10 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use App\Http\Controllers\Investigador\Convocatorias\PconfigiController;
+use App\Http\Controllers\Investigador\Convocatorias\PinvposController;
+use App\Http\Controllers\Investigador\Convocatorias\EciController;
+use App\Http\Controllers\Investigador\Convocatorias\ProCTIController;
 
 class GrupoController extends S3Controller {
   //  Grupos
@@ -1388,6 +1392,33 @@ class GrupoController extends S3Controller {
       ->get();
 
     return $proyectos;
+  }
+
+  public function reporte(Request $request)
+  {
+
+    $request->merge([
+      'proyecto_id' => $request->query('id')
+    ]);
+
+    $tipo = $request->query('tipo_proyecto');
+
+    switch ($tipo) {
+      case 'PCONFIGI':
+          return app(PconfigiController::class)->reporte($request);
+
+      case 'PINVPOS':
+          return app(PinvposController::class)->reporte($request);
+
+      case 'PRO-CTIE':
+          return app(ProCTIController::class)->reportePDF($request);
+
+      default:
+          return response()->json([
+              'estado' => false,
+              'message' => 'Tipo de proyecto no válido'
+          ], 400);
+    }
   }
 
   public function autorizarProyecto(Request $request) {

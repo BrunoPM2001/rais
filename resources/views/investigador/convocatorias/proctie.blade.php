@@ -207,8 +207,8 @@
     </table>
     <table class="cuerpo-table">
         <tr class="title">
-            <td><b>Programa de Proyectos de Investigación para Grupos de <br>
-                    Investigación (PCONFIGI) {{ $proyecto->periodo }} </b>
+            <td><b>Proyectos de Ciencia, Tecnología, Innovación y
+                    Emprendimiento (PRO-CTIE) {{ $proyecto->periodo }} </b>
             </td>
 
         </tr>
@@ -240,47 +240,15 @@
             </tr>
             <tr>
                 <td><strong>Facultad</strong></td>
-                <td>{{ $proyecto->facultad }}</td>
+                <td>{{ $proyecto->facultad_nombre }}</td>
             </tr>
             <tr>
                 <td><strong>Área académica</strong></td>
-                <td>{{ $proyecto->area }}</td>
-            </tr>
-            <tr>
-                <td><strong>Tipo de investigación</strong></td>
-                <td>
-                    @switch($detalles["tipo_investigacion"] ?? "")
-                        @case('basica')
-                            Básica (aumento del conocimiento existente sobre el tema)
-                        @break
-
-                        @case('aplicada')
-                            Aplicada (utilización del conocimiento existente para mejorar algo)
-                        @break
-
-                        @case('exploratoria')
-                            Exploratoria (examinar un problema poco estudiado o no analizado antes)
-                        @break
-
-                        @case('experimental')
-                            Experimental (explicar el contenido del problema o fenómeno que se investiga)
-                        @break
-
-                        @case('teorica')
-                            Teórica (estudios filosóficos, jurídicos, culturales)
-                        @break
-
-                        @case('otro')
-                            Otros
-                        @break
-
-                        @default
-                    @endswitch
-                </td>
+                <td>{{ $proyecto->area_nombre }}</td>
             </tr>
             <tr>
                 <td><strong>Línea OCDE</strong></td>
-                <td>{{ $proyecto->ocde }}</td>
+                <td>{{ $proyecto->linea }}</td>
             </tr>
         </tbody>
     </table>
@@ -310,7 +278,11 @@
             </tr>
             <tr>
                 <td><strong>Línea de investigación :</strong></td>
-                <td>{{ $proyecto->linea }}</td>
+                <td>{{ $proyecto->linea_nombre }}</td>
+            </tr>
+            <tr>
+                <td><strong>Objetivo de Desarrollo Sostenible (ODS) :</strong></td>
+                <td>{{ $proyecto->objetivo }}</td>
             </tr>
             <tr>
                 <td><strong>Localización : </strong></td>
@@ -331,7 +303,7 @@
         </tbody>
     </table>
     <h5>Resumen ejecutivo:</h5>
-    <div style="font-size: 11px; text-align: justify;">{!! $detalles['resumen_ejecutivo'] !!}</div>
+    <div style="font-size: 11px; text-align: justify;">{!! $descripcion['resumen_ejecutivo'] !!}</div>
 
     <h5>Palabras clave:</h5>
     <div style="font-size: 11px; text-align: justify;">
@@ -340,37 +312,37 @@
 
     <h5>Antecedentes:</h5>
     <div style="font-size: 11px; text-align: justify;">
-        {!! $detalles['antecedentes'] !!}
+        {!! $descripcion['antecedentes'] !!}
     </div>
 
     <h5>Justificación:</h5>
     <div style="font-size: 11px; text-align: justify;">
-        {!! $detalles['justificacion'] !!}
+        {!! $descripcion['justificacion'] !!}
     </div>
 
     <h5>Contribución e impacto:</h5>
     <div style="font-size: 11px; text-align: justify;">
-        {!! $detalles['contribucion_impacto'] !!}
+        {!! $descripcion['contribucion_impacto'] !!}
     </div>
 
     <h5>Hipótesis:</h5>
     <div style="font-size: 11px; text-align: justify;">
-        {!! $detalles['hipotesis'] !!}
+        {!! $descripcion['hipotesis'] !!}
     </div>
 
     <h5>Objetivos:</h5>
     <div style="font-size: 11px; text-align: justify;">
-        {!! $detalles['objetivos'] !!}
+        {!! $descripcion['objetivos'] !!}
     </div>
 
     <h5>Metodología de trabajo:</h5>
     <div style="font-size: 11px; text-align: justify;">
-        {!! $detalles['metodologia_trabajo'] !!}
+        {!! $descripcion['metodologia_trabajo'] !!}
     </div>
 
     <h5>Referencias bibliográficas:</h5>
     <div style="font-size: 11px; text-align: justify;">
-        {!! $detalles['referencias_bibliograficas'] !!}
+        {!! $descripcion['referencias_bibliograficas'] !!}
     </div>
     <table style="width: 100%;">
         <tbody>
@@ -394,19 +366,19 @@
             </tr>
         </thead>
         <tbody>
-            @if (sizeof($calendario) == 0)
+            @if (sizeof($actividades) == 0)
                 <tr>
                     <td colspan="4" align="center">
                         No hay actividades registradas
                     </td>
                 </tr>
             @endif
-            @foreach ($calendario as $item)
+            @foreach ($actividades as $act)
                 <tr>
                     <td style="text-align: center">{{ $loop->iteration }}</td>
-                    <td>{{ $item->actividad }}</td>
-                    <td>{{ $item->fecha_inicio }}</td>
-                    <td>{{ $item->fecha_fin }}</td>
+                    <td>{{ $act->actividad }}</td>
+                    <td>{{ $act->fecha_inicio }}</td>
+                    <td>{{ $act->fecha_fin }}</td>
                 </tr>
             @endforeach
         </tbody>
@@ -428,7 +400,6 @@
             <tr>
                 <th>Nro</th>
                 <th>Partida</th>
-                <th>Justificación</th>
                 <th>Tipo</th>
                 <th>Monto S/.</th>
             </tr>
@@ -438,18 +409,10 @@
                 <tr>
                     <td>{{ $loop->iteration }}</td>
                     <td>{{ $pres->partida }}</td>
-                    <td>{{ $pres->justificacion }}</td>
                     <td>{{ $pres->tipo }}</td>
                     <td>{{ $pres->monto }}</td>
                 </tr>
-                @php
-                    $total += $pres->monto;
-                @endphp
             @endforeach
-            <tr>
-                <td colspan="4">Total</td>
-                <td>{{ $total }}</td>
-            </tr>
         </tbody>
     </table>
     <table style="width: 100%;">
@@ -467,21 +430,21 @@
     <table class="table1">
         <thead>
             <tr>
+                <th>Nro</th>
                 <th style="width: 10%;">Condición</th>
                 <th style="width: 25%;">Apellidos y nombres</th>
                 <th style="width: 20%;">Tipo</th>
-                <th style="width: 20%;">Tipo de tesis</th>
-                <th style="width: 25%;">Título de la tesis</th>
+                <th style="width: 20%;">Facultad</th>
             </tr>
         </thead>
         <tbody>
             @foreach ($integrantes as $item)
                 <tr>
+                    <td>{{ $loop->iteration }}</td>
                     <td>{{ $item->condicion }}</td>
-                    <td>{{ $item->nombres }}</td>
+                    <td>{{ $item->integrante }}</td>
                     <td>{{ $item->tipo }}</td>
-                    <td>{{ $item->tipo_tesis }}</td>
-                    <td>{{ $item->titulo_tesis }}</td>
+                    <td>{{ $item->facultad }}</td>
                 </tr>
             @endforeach
         </tbody>
