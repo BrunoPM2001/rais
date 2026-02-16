@@ -61,8 +61,21 @@ class DeudaProyectosController extends Controller {
     }
   }
 
-  public function listadoProyectos() {
+  public function listadoProyectos(Request $request) {
+    $investigadorId = $request->query('investigador_id');
+
+    $investigadores = DB::table('Proyecto_integrante as pi')
+      ->join('Usuario_investigador as ui', 'ui.id', '=', 'pi.investigador_id')
+      ->select(
+        'pi.proyecto_id',
+        DB::raw("JSON_ARRAYAGG(CONCAT(ui.apellido1, ' ', ui.apellido2, ', ', ui.nombres)) as investigadores")
+      )
+      ->groupBy('pi.proyecto_id');
+
     $deudas = DB::table('Proyecto AS a')
+      ->leftJoinSub($investigadores, 'inv', function($join){
+        $join->on('inv.proyecto_id', '=', 'a.id');
+      })
       ->leftJoin('Proyecto_integrante AS b', function (JoinClause $join) {
         $join->on('b.proyecto_id', '=', 'a.id')
           ->where('b.condicion', '=', 'Responsable');
@@ -83,6 +96,7 @@ class DeudaProyectosController extends Controller {
         DB::raw("CONCAT(d.apellido1, ' ', d.apellido2, ', ', d.nombres) AS responsable"),
         'a.titulo',
         'c.nombre AS facultad',
+        'inv.investigadores',
         DB::raw("CASE
           WHEN (a.deuda IS NULL OR a.deuda <= 0) THEN 'NO'
           WHEN a.deuda > 0 AND a.deuda <= 3 THEN 'SI'
@@ -91,9 +105,27 @@ class DeudaProyectosController extends Controller {
         'a.created_at',
         'a.updated_at'
       ])
-      ->whereNotIn('a.tipo_proyecto', ['PFEX', 'FEX', 'SIN-CON'])
-      ->orderBy('a.created_at', 'DESC')
-      ->get();
+      ->whereNotIn('a.tipo_proyecto', ['PFEX', 'FEX', 'SIN-CON']);
+
+      if ($investigadorId) {
+        $deudas->whereExists(function ($query) use ($investigadorId) {
+        $query->select(DB::raw(1))
+          ->from('Proyecto_integrante as pi')
+          ->whereColumn('pi.proyecto_id', 'a.id')
+          ->where('pi.investigador_id', $investigadorId);
+        });
+      }
+
+    $deudas = $deudas
+    ->orderBy('a.created_at', 'DESC')
+    ->get();
+
+    $deudas = $deudas->map(function ($proyecto) {
+      $proyecto->investigadores = $proyecto->investigadores
+        ? json_decode($proyecto->investigadores)
+        : [];
+      return $proyecto;
+    });
 
     return $deudas;
   }
