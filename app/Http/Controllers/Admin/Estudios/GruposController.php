@@ -141,6 +141,7 @@ class GruposController extends S3Controller {
         'a.presentacion',
         'a.objetivos',
         'a.servicios',
+        'a.redes',
         DB::raw("CONCAT('/minio/grupo-infraestructura-sgestion/', a.infraestructura_sgestion) AS url"),
         'a.infraestructura_ambientes'
       )
@@ -176,6 +177,7 @@ class GruposController extends S3Controller {
           'presentacion' => $request->input('presentacion'),
           'objetivos' => $request->input('objetivos'),
           'servicios' => $request->input('servicios'),
+          'redes' => $request->input('redes'),
           'updated_at' => Carbon::now()
         ]);
     } else {
@@ -200,6 +202,7 @@ class GruposController extends S3Controller {
           'presentacion' => $request->input('presentacion'),
           'objetivos' => $request->input('objetivos'),
           'servicios' => $request->input('servicios'),
+          'redes' => $request->input('redes'),
           'updated_at' => Carbon::now()
         ]);
     }

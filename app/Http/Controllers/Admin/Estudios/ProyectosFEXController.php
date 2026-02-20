@@ -538,7 +538,7 @@ class ProyectosFEXController extends S3Controller {
         'b.telefono_trabajo',
         'b.telefono_movil',
       )
-      ->whereIn('a.permanencia', ['Activo', 'Reserva de Matricula'])
+      ->whereIn('a.permanencia', ['Activo', 'Reserva de Matricula', 'Egresado'])
       ->having('value', 'LIKE', '%' . $request->query('query') . '%')
       ->groupBy('a.codigo_alumno')
       ->limit(10)

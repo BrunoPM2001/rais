@@ -337,9 +337,14 @@ class GrupoController extends S3Controller {
         'presentacion',
         'objetivos',
         'servicios',
+        'facultad_id',
+        'redes',
       ])
       ->where('id', '=', $request->query('id'))
       ->first();
+    if ($datos) {
+      $datos->redes = $datos->redes ? json_decode($datos->redes, true) : [];
+    }
 
     $lineas = DB::table('Grupo_linea AS a')
       ->join('Linea_investigacion AS b', 'b.id', '=', 'a.linea_investigacion_id')
@@ -352,6 +357,8 @@ class GrupoController extends S3Controller {
       ->get();
 
     $listado = DB::table('Linea_investigacion')
+      ->where('estado', "=", 1)
+      ->where('facultad_id', "=", $datos->facultad_id)
       ->select([
         'id AS value',
         DB::raw("CONCAT(codigo, ' - ', nombre) AS label")
@@ -373,6 +380,7 @@ class GrupoController extends S3Controller {
         'presentacion' => $request->input('presentacion'),
         'objetivos' => $request->input('objetivos'),
         'servicios' => $request->input('servicios'),
+        'redes' => json_encode($request->input('redes')),
         'step' => 5,
         'updated_at' => Carbon::now()
       ]);
@@ -749,6 +757,7 @@ class GrupoController extends S3Controller {
         'a.presentacion',
         'a.objetivos',
         'a.servicios',
+        'a.redes',
       )
       ->where('a.id', '=', $request->query('id'))
       ->first();

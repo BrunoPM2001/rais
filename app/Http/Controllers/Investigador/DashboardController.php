@@ -138,7 +138,8 @@ class DashboardController extends Controller {
     return [
       'detalles' => [
         'orcid' => $isOrcidValid,
-        'publicacionesProceso' => $publicacionesEnProceso
+        'publicacionesProceso' => $publicacionesEnProceso,
+        'convocatorias' => $convocatorias
       ],
       'metricas' => [
         'grupos' => $grupos,

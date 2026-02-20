@@ -53,7 +53,7 @@ class DashboardController extends Controller {
         'tipo_proyecto AS title',
         DB::raw('COUNT(*) AS value')
       )
-      ->where('periodo', '=', 2025)
+      ->where('periodo', '=', 2026)
       ->whereNotNull('periodo')
       ->whereNotNull('tipo_proyecto')
       ->groupBy('tipo_proyecto')

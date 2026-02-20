@@ -974,10 +974,10 @@ class PconfigiController extends S3Controller {
       ->where('vdeuda.investigador_id', '=', $request->input('investigador_id'))
       ->count();
 
-    $licenciaVigente = DB::table('Licencia')
-      ->where('investigador_id', $request->input('investigador_id'))
-      ->where('fecha_fin', '>=', Carbon::today())
-      ->exists();
+    //$licenciaVigente = DB::table('Licencia')
+    //  ->where('investigador_id', $request->input('investigador_id'))
+    //  ->where('fecha_fin', '>=', Carbon::today())
+    //  ->exists();
 
     foreach ($participacion as $data) {
 
@@ -1008,7 +1008,9 @@ class PconfigiController extends S3Controller {
 
     if ((($tipoIntegrante == 3 && $miembroDocente < 2) 
       || (!in_array($tipoIntegrante, [3,4,6]) && $numParticipacion == 0) 
-      || in_array($tipoIntegrante, [4,6])) && $investigadorProyecto == 0 && $tesistaProyecto == 0 && $deudas == 0 && !$licenciaVigente) {
+      || in_array($tipoIntegrante, [4,6])) && $investigadorProyecto == 0 && $tesistaProyecto == 0 && $deudas == 0 
+      //&& !$licenciaVigente
+      ) {
 
       if ($request->input('tipo_tesis') == null) {
         DB::table('Proyecto_integrante')
@@ -1040,12 +1042,12 @@ class PconfigiController extends S3Controller {
 
       return ['message' => 'success', 'detail' => 'Integrante añadido'];
     } else {
-      if ($licenciaVigente) {
-        return [
-          'message' => 'error',
-          'detail' => 'El integrante seleccionado cuenta con una licencia vigente, por lo que no puede ser incorporado al proyecto en este periodo.'
-        ];
-      }
+      //if ($licenciaVigente) {
+      //  return [
+      //    'message' => 'error',
+      //    'detail' => 'El integrante seleccionado cuenta con una licencia vigente, por lo que no puede ser incorporado al proyecto en este periodo.'
+      //  ];
+      //}
       
       if ($investigadorProyecto > 0) {
         return [
