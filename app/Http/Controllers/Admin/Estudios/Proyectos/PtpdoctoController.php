@@ -16,6 +16,7 @@ class PtpdoctoController extends Controller {
       ->leftJoin('Facultad_programa AS d', 'd.id', '=', 'a.programa_id')
       ->leftJoin('Geco_proyecto AS e', 'e.proyecto_id', '=', 'a.id')
       ->leftJoin('Grupo AS f', 'f.id', '=', 'a.grupo_id')
+      ->leftJoin('Ocde AS g', 'g.id', '=', 'a.ocde_id')
       ->select(
         'a.tipo_proyecto',
         'a.estado',
@@ -25,6 +26,7 @@ class PtpdoctoController extends Controller {
         DB::raw("IFNULL(a.resolucion_fecha, '') AS resolucion_fecha"),
         'b.nombre AS facultad',
         'c.nombre AS linea',
+        'g.linea AS ocde',
         'a.localizacion',
         'f.grupo_nombre',
         'd.programa',

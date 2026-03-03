@@ -332,6 +332,7 @@ class GruposController extends S3Controller {
       )
       ->whereNull('a.concytec_codigo')
       ->where('a.grupo_id', '=', $request->query('grupo_id'))
+      ->where('c.estado', '=', 1)
       ->get();
 
     return $lineas;

@@ -13,7 +13,6 @@ class TesisPropiasController extends Controller {
   public function listado(Request $request) {
     $publicaciones = DB::table('Publicacion AS a')
       ->leftJoin('Publicacion_autor AS b', 'b.publicacion_id', '=', 'a.id')
-      ->leftJoin('Publicacion_revista AS c', 'c.issn', '=', 'a.issn')
       ->select(
         'a.id',
         'a.titulo',
@@ -43,7 +42,7 @@ class TesisPropiasController extends Controller {
       ->where('a.estado', '>', 0)
       ->where('b.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
       ->whereIn('a.tipo_publicacion', ['ensayo', 'tesis'])
-      ->whereNot('b.categoria', '=', '%asesor%')
+      ->whereNot('b.categoria', '=', 'Asesor')
       ->orderByDesc('a.updated_at')
       ->groupBy('a.id')
       ->get();

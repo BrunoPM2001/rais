@@ -11,15 +11,29 @@ use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller {
 
+  private function contarDeudasVigentes($investigadorId)
+  {
+    $nuevos = DB::table('Proyecto_integrante AS a')
+        ->join('Proyecto_integrante_deuda AS b', 'b.proyecto_integrante_id', '=', 'a.id')
+        ->where('a.investigador_id', $investigadorId)
+        ->whereIn('b.tipo', [1,2,3])
+        ->whereNull('b.fecha_sub')
+        ->count();
+
+    $antiguos = DB::table('Proyecto_integrante_H AS a')
+        ->join('Proyecto_integrante_deuda AS b', 'b.proyecto_integrante_h_id', '=', 'a.id')
+        ->where('a.investigador_id', $investigadorId)
+        ->whereIn('b.tipo', [1,2,3])
+        ->whereNull('b.fecha_sub')
+        ->count();
+
+    return $nuevos + $antiguos;
+  }
+
   public function getData(Request $request) {
     $now = Carbon::now()->toDateString();
     // Deudas
-    $deudasVigentes = DB::table('Proyecto_integrante AS a')
-      ->join('Proyecto_integrante_deuda AS b', 'b.proyecto_integrante_id', '=', 'a.id')
-      ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
-      ->whereIn('b.tipo', [1, 2, 3])
-      ->whereNull('b.fecha_sub')
-      ->count();
+    $deudasVigentes = $this->contarDeudasVigentes($request->attributes->get('token_decoded')->investigador_id);
 
     //  Detalles
     $orcid = new OrcidController();

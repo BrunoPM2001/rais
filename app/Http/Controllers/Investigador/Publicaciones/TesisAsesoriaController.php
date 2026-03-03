@@ -42,7 +42,13 @@ class TesisAsesoriaController extends Controller {
       )
       ->where('a.estado', '>', 0)
       ->where('b.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
-      ->whereIn('a.tipo_publicacion', ['tesis-asesoria'])
+      ->where(function ($query) {
+        $query->where('a.tipo_publicacion', '=', 'tesis-asesoria')
+          ->orWhere(function ($q) {
+            $q->where('a.tipo_publicacion', '=', 'tesis')
+              ->where('b.categoria', '=', 'Asesor');
+          });
+        })
       ->where(function ($query) {
         $query->whereNotIn('a.tipo_doc', ['Trabajo de suficiencia profesional', 'Trabajo académico'])
           ->orWhereNull('a.tipo_doc');

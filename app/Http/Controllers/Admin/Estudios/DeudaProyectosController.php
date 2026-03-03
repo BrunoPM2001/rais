@@ -1,7 +1,6 @@
 <?php
 
 namespace App\Http\Controllers\Admin\Estudios;
-
 use App\Http\Controllers\Controller;
 use Carbon\Carbon;
 use Illuminate\Database\Query\JoinClause;
@@ -33,7 +32,6 @@ class DeudaProyectosController extends Controller {
         )
         ->where('a.proyecto_id', '=', $request->query('id'))
         ->get();
-
       return $integrantes;
     } else {
       $integrantes = DB::table('Proyecto_integrante_H AS a')
@@ -56,14 +54,12 @@ class DeudaProyectosController extends Controller {
         )
         ->where('a.proyecto_id', '=', $request->query('id'))
         ->get();
-
       return $integrantes;
     }
   }
 
   public function listadoProyectos(Request $request) {
     $investigadorId = $request->query('investigador_id');
-
     $investigadores = DB::table('Proyecto_integrante as pi')
       ->join('Usuario_investigador as ui', 'ui.id', '=', 'pi.investigador_id')
       ->select(
@@ -77,35 +73,28 @@ class DeudaProyectosController extends Controller {
       ->select(
           'pi.proyecto_id',
           DB::raw("
-              MAX(
-                  CASE
-                      WHEN pd.tipo IN (1,2,3) THEN 1
-                      WHEN pd.tipo BETWEEN 4 AND 8 THEN 2
-                      ELSE 0
-                  END
-              ) as estado_deuda
+            MAX(
+              CASE
+                WHEN pd.tipo IN (1,2,3) THEN 1
+                WHEN pd.tipo BETWEEN 4 AND 8 THEN 2
+                ELSE 0
+              END
+            ) as estado_deuda
           ")
       )
       ->groupBy('pi.proyecto_id');
 
-
     $deudas = DB::table('Proyecto AS a')
       ->leftJoinSub($investigadores, 'inv', function($join){
-        $join->on('inv.proyecto_id', '=', 'a.id');
-      })
+        $join->on('inv.proyecto_id', '=', 'a.id');})
       ->leftJoin('Proyecto_integrante AS b', function (JoinClause $join) {
         $join->on('b.proyecto_id', '=', 'a.id')
-          ->where('b.condicion', '=', 'Responsable');
-      })
+          ->where('b.condicion', '=', 'Responsable');})
       ->leftJoin('Facultad AS c', 'c.id', '=', 'a.facultad_id')
       ->leftJoin('Usuario_investigador AS d', 'd.id', '=', 'b.investigador_id')
       ->select([
         DB::raw("CONCAT('PROYECTO_BASE', '_', a.id) AS id"),
         DB::raw("'Nuevo' AS proyecto_origen"),
-        // DB::raw("CASE
-        //   WHEN a.proyecto_origen COLLATE utf8mb4_unicode_ci = 'PROYECTO_BASE' THEN 'Nuevo'
-        //   WHEN a.proyecto_origen COLLATE utf8mb4_unicode_ci = 'PROYECTO' THEN 'Antiguo'
-        // END as proyecto_origen"),
         'a.id AS proyecto_id',
         'a.codigo_proyecto',
         'a.tipo_proyecto',
@@ -122,7 +111,7 @@ class DeudaProyectosController extends Controller {
         'a.created_at',
         'a.updated_at'
       ])
-      ->whereNotIn('a.tipo_proyecto', ['PFEX', 'FEX', 'SIN-CON']);
+      ->whereNotIn('a.tipo_proyecto', ['PFEX', 'FEX']);
 
       if ($investigadorId) {
         $deudas->whereExists(function ($query) use ($investigadorId) {
@@ -133,21 +122,17 @@ class DeudaProyectosController extends Controller {
         });
       }
   
-    // ============================
     // PROYECTOS ANTIGUOS
-    // ============================
     $deudaAntiguos = DB::table('Proyecto_H AS a')
       ->whereNotNull('a.codigo')
       ->whereRaw("TRIM(a.codigo) <> ''")
       ->leftJoin('Proyecto_integrante_H AS b', function ($join) {
         $join->on('b.proyecto_id', '=', 'a.id')
-          ->where('b.condicion', '=', ['Responsable', 'Asesor']);
-      })
+          ->where('b.condicion', '=', ['Responsable', 'Asesor']);})
       ->leftJoin('Facultad AS c', 'c.id', '=', 'a.facultad_id')
       ->leftJoin('Usuario_investigador AS d', 'd.id', '=', 'b.investigador_id')
       ->leftJoinSub($estadoDeudaAntiguos, 'ed', function ($join) {
-        $join->on('ed.proyecto_id', '=', 'a.id');
-      })
+        $join->on('ed.proyecto_id', '=', 'a.id');})
       ->select([
         DB::raw("CONCAT('PROYECTO_H_', a.id) AS id"),
         DB::raw("'Antiguo' AS proyecto_origen"),
@@ -198,8 +183,7 @@ class DeudaProyectosController extends Controller {
       ->leftJoin('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
       ->select(
         'a.proyecto_id',
-        DB::raw('CONCAT(b.apellido1, " " , b.apellido2, ", ", b.nombres) AS responsable')
-      )
+        DB::raw('CONCAT(b.apellido1, " " , b.apellido2, ", ", b.nombres) AS responsable'))
       ->where('condicion', '=', 'Responsable');
 
     $lista = DB::table('Proyecto AS a')
@@ -222,97 +206,41 @@ class DeudaProyectosController extends Controller {
           ->orWhereNull('a.deuda');
       })
       ->where('a.estado', '=', 1)
+      ->whereNotIn('a.tipo_proyecto', ['PFEX', 'FEX'])
       ->get();
 
     return $lista;
   }
 
   public function listadoDeudaAcademica(Request $request) {
-
     $opciones = [];
     $tipoProyecto = $request->query('tipo_proyecto');
 
     switch ($tipoProyecto) {
       case 'PCONFIGI':
-        $opciones = [
-          ['value' => 'Informe académico'],
-        ];
-        break;
-
       case 'PCONFIGI-INV':
-        $opciones = [
-          ['value' => 'Informe académico'],
-        ];
-        break;
-
       case 'PSINFINV':
-        $opciones = [
-          ['value' => 'Informe académico'],
-        ];
-        break;
-
-      case 'PSINFIPU':
-        $opciones = [
-          ['value' => 'Resultados de la publicación'],
-        ];
-        break;
-
-      case 'PTPGRADO':
-        $opciones = [
-          ['value' => 'Informe académico de avance'],
-          ['value' => 'Informe académico final'],
-        ];
-        break;
-
-      case 'PTPMAEST':
-        $opciones = [
-          ['value' => 'Informe académico de avance'],
-          ['value' => 'Informe académico final'],
-        ];
-        break;
-
-      case 'PTPDOCTO':
-        $opciones = [
-          ['value' => 'Informe académico de avance'],
-          ['value' => 'Segundo informe académico de avance'],
-          ['value' => 'Informe académico final'],
-        ];
-        break;
-
       case 'PEVENTO':
-        $opciones = [
-          ['value' => 'Informe académico'],
-        ];
-        break;
-
       case 'PINVPOS':
-        $opciones = [
-          ['value' => 'Informe académico'],
-        ];
-        break;
-
-      case 'PTPBACHILLER':
-        $opciones = [
-          ['value' => 'Informe académico final'],
-        ];
-        break;
-
       case 'PMULTI':
-        $opciones = [
-          ['value' => 'Informe académico'],
-        ];
-        break;
-
       case 'PINTERDIS':
-        $opciones = [
-          ['value' => 'Informe académico'],
-        ];
+        $opciones = [['value' => 'Informe académico'],];
         break;
-
+      case 'PSINFIPU':
+        $opciones = [['value' => 'Resultados de la publicación'],];
+        break;
+      case 'PTPGRADO':
+      case 'PTPMAEST':
+        $opciones = [['value' => 'Informe académico de avance'],['value' => 'Informe académico final'],];
+        break;
+      case 'PTPDOCTO':
+        $opciones = [['value' => 'Informe académico de avance'],['value' => 'Segundo informe académico de avance'],['value' => 'Informe académico final'],];
+        break;
+      case 'PTPBACHILLER':
+        $opciones = [['value' => 'Informe académico final'],];
+        break;
       default:
-        $opciones = [
-          ['value' => 'Informe académico'],
-        ];
+        $opciones = [['value' => 'Informe académico'],];
         break;
     }
 
@@ -325,71 +253,54 @@ class DeudaProyectosController extends Controller {
       case 'PCONFIGI':
         $tipoIntegrante = [1];
         break;
-
       case 'PCONFIGI-INV':
         $tipoIntegrante = [36];
         break;
-
       case 'PSINFINV':
         $tipoIntegrante = [7];
         break;
-
       case 'PSINFIPU':
         $tipoIntegrante = [13];
         break;
-
       case 'PTPGRADO':
         $tipoIntegrante = [15];
         break;
-
       case 'PTPMAEST':
         $tipoIntegrante = [17];
         break;
-
       case 'PTPDOCTO':
         $tipoIntegrante = [19];
         break;
-
       case 'PEVENTO':
         $tipoIntegrante = [21];
         break;
-
       case 'PINVPOS':
         $tipoIntegrante = [28];
         break;
-
       case 'PTPBACHILLER':
         $tipoIntegrante = [66];
         break;
-
       case 'PMULTI':
         $tipoIntegrante = [56];
         break;
-
       case 'PINTERDIS':
         $tipoIntegrante = [74];
         break;
-
       case 'PRO-CTIE':
         $tipoIntegrante = [86];
         break;
-
       case 'ECI':
         $tipoIntegrante = [30];
         break;
-
       case 'PFEX':
         $tipoIntegrante = [44];
         break;
-
       case 'RFPLU':
         $tipoIntegrante = [70];
         break;
-
       case 'SPINOFF':
         $tipoIntegrante = [83];
         break;
-
       default:
         $tipoIntegrante = [];
         break;
@@ -457,49 +368,192 @@ class DeudaProyectosController extends Controller {
     }
   }
 
-  private function getCondicionesHistorico($tipoProyecto) {
-    switch ($tipoProyecto) {
-    case 'Taller':
-    case 'Publicacion':
-      return ['Responsable', 'Miembro Comite'];
-    
-    case 'SIN-CON':
-      return ['Responsable', 'Colaborador Docente', 'Miembro Docente'];
-    
-    case 'CON-CON':
-      return ['Responsable', 'Co Responsable', 'Colaborador Docente'];
+  private function aplicarDeudaAProyecto(int $proyectoId, string $tipoProyecto, array $form) 
+  {
+    $deudaEconomica = $form['deuda_economica']['value'] ?? "Sin deuda";
+    $deudaAcademica = $form['deuda_academica']['value'] ?? "Sin deuda";
+    $deudaFecha = $form['fecha_deuda'] ?? null;
+    $deudaDetalle = $form['detalle_deuda'] ?? null;
+    $deudaComentario = $form['comentario_deuda'] ?? null;
 
-    case 'SIN-SIN':
-    case 'PIBA':
-    case 'MULTI':
-      return ['Responsable', 'Co Responsable', 'Miembro Docente', 'Colaborador Docente'];
-
-    case 'Tesis':
-      return ['Asesor', 'Tesista'];
-    
-    case 'Grupo':
-      return ['Asesor'];
-    
-    default:
-      return ['Responsable', 'Asesor'];
+    // No se registran deudas
+    if ($deudaEconomica == "Sin deuda" && $deudaAcademica == "Sin deuda") {
+      return ['ok' => false, 'message' => 'warning', 'detail' => 'No ha escogido ningún tipo de deuda'];
     }
+
+    $categoria = "";
+    $tipoDeuda = 0;
+    if ($deudaAcademica != "Sin deuda" && $deudaEconomica == "Sin deuda") {
+      $tipoDeuda = 1;
+      $categoria = 'Deuda Académica';
+    } else if ($deudaAcademica == "Sin deuda" && $deudaEconomica != "Sin deuda") {
+      $tipoDeuda = 2;
+      $categoria = 'Deuda Económica';
+    } else if ($deudaAcademica != "Sin deuda" && $deudaEconomica != "Sin deuda") {
+      $tipoDeuda = 3;
+      $categoria = 'Deuda Académica y Económica';
+    }
+
+    $tipoIntegrante = DB::table('Proyecto_integrante_tipo')
+      ->where('tipo_proyecto', '=', $tipoProyecto)
+      ->pluck('id');
+
+    $integrantes = DB::table('Proyecto_integrante')
+      ->where('proyecto_id', $proyectoId)
+      ->whereIn('proyecto_integrante_tipo_id', $tipoIntegrante)
+      ->get();
+
+    if ($integrantes->count() == 0) {
+      return ['ok' => false, 'message' => 'warning', 'detail' => 'No hay integrantes a los que se les pueda asignar deuda'];
+    }
+
+    DB::table('Proyecto')
+      ->where('id', '=', $proyectoId)
+      ->update([
+        'deuda' => 1,
+        'updated_at' => Carbon::now()
+      ]);
+
+    $rolesAcademicos = $this->getRolesAcademicos($tipoProyecto);
+    $responsable = $this->getResponsableProyecto($tipoProyecto);
+
+    foreach ($integrantes as $integrante) {
+      $integranteDeuda = DB::table('Proyecto_integrante_deuda')
+        ->where('proyecto_integrante_id', $integrante->id)
+        ->first();
+
+      if (!$integranteDeuda) {
+        if ($tipoDeuda == 1) {
+          if (in_array($integrante->proyecto_integrante_tipo_id, $rolesAcademicos)) {
+            DB::table('Proyecto_integrante_deuda')->insert([
+              'proyecto_integrante_id' => $integrante->id,
+              'tipo' => 1,
+              'categoria' => 'Deuda Académica',
+              'informe' => $deudaDetalle,
+              'detalle' => $deudaComentario,
+              'fecha_deuda' => $deudaFecha,
+              'created_at' => Carbon::now(),
+              'updated_at' => Carbon::now()
+            ]);
+          }
+        } else if ($tipoDeuda == 2) {
+          if (in_array($integrante->proyecto_integrante_tipo_id, $responsable)) {
+            DB::table('Proyecto_integrante_deuda')->insert([
+              'proyecto_integrante_id' => $integrante->id,
+              'tipo' => 2,
+              'categoria' => $categoria,
+              'informe' => $deudaDetalle,
+              'detalle' => $deudaComentario,
+              'fecha_deuda' => $deudaFecha,
+              'created_at' => Carbon::now(),
+              'updated_at' => Carbon::now()
+            ]);
+          }
+        } else if ($tipoDeuda == 3) {
+          if (in_array($integrante->proyecto_integrante_tipo_id, $responsable)) {
+            DB::table('Proyecto_integrante_deuda')->insert([
+              'proyecto_integrante_id' => $integrante->id,
+              'tipo' => 3,
+              'categoria' => 'Deuda Académica y Económica',
+              'informe' => $deudaDetalle,
+              'detalle' => $deudaComentario,
+              'fecha_deuda' => $deudaFecha,
+              'created_at' => Carbon::now(),
+              'updated_at' => Carbon::now()
+            ]);
+          } else if (in_array($integrante->proyecto_integrante_tipo_id, $rolesAcademicos)) {
+            DB::table('Proyecto_integrante_deuda')->insert([
+              'proyecto_integrante_id' => $integrante->id,
+              'tipo' => 1,
+              'categoria' => 'Deuda Académica',
+              'informe' => $deudaDetalle,
+              'detalle' => $deudaComentario,
+              'fecha_deuda' => $deudaFecha,
+              'created_at' => Carbon::now(),
+              'updated_at' => Carbon::now()
+            ]);
+          }
+        }
+
+      } else {
+        if ($tipoDeuda == 1) {
+          if (in_array($integrante->proyecto_integrante_tipo_id, $rolesAcademicos)) {
+            DB::table('Proyecto_integrante_deuda')
+              ->where('proyecto_integrante_id', $integrante->id)
+              ->update([
+                'tipo' => 1,
+                'categoria' => $categoria,
+                'informe' => $deudaDetalle ?: $integranteDeuda->informe,
+                'detalle' => $deudaComentario ?: $integranteDeuda->detalle,
+                'fecha_deuda' => $deudaFecha,
+                'updated_at' => Carbon::now()
+              ]);
+          }
+        } else if ($tipoDeuda == 2) {
+          if (in_array($integrante->proyecto_integrante_tipo_id, $responsable)) {
+            DB::table('Proyecto_integrante_deuda')
+              ->where('proyecto_integrante_id', $integrante->id)
+              ->update([
+                'tipo' => 2,
+                'categoria' => $categoria,
+                'informe' => $deudaDetalle ?: $integranteDeuda->informe,
+                'detalle' => $deudaComentario ?: $integranteDeuda->detalle,
+                'fecha_deuda' => $deudaFecha,
+                'updated_at' => Carbon::now()
+              ]);
+          } else {
+            DB::table('Proyecto_integrante_deuda')
+              ->where('proyecto_integrante_id', $integrante->id)
+              ->delete();
+          }
+        } else if ($tipoDeuda == 3) {
+          if (in_array($integrante->proyecto_integrante_tipo_id, $responsable)) {
+            DB::table('Proyecto_integrante_deuda')
+              ->where('proyecto_integrante_id', $integrante->id)
+              ->update([
+                'tipo' => 3,
+                'categoria' => 'Deuda Académica y Económica',
+                'informe' => $deudaDetalle ?: $integranteDeuda->informe,
+                'detalle' => $deudaComentario ?: $integranteDeuda->detalle,
+                'fecha_deuda' => $deudaFecha,
+                'updated_at' => Carbon::now()
+              ]);
+          } else if (in_array($integrante->proyecto_integrante_tipo_id, $rolesAcademicos)) {
+            DB::table('Proyecto_integrante_deuda')
+              ->where('proyecto_integrante_id', $integrante->id)
+              ->update([
+                'tipo' => 1,
+                'categoria' => 'Deuda Académica',
+                'informe' => $deudaDetalle ?: $integranteDeuda->informe,
+                'detalle' => $deudaComentario ?: $integranteDeuda->detalle,
+                'fecha_deuda' => $deudaFecha,
+                'updated_at' => Carbon::now()
+              ]);
+          }
+        }
+      }
+    }
+
+    return ['ok' => true];
   }
 
-
-
   public function asignarDeuda(Request $request) {
-
     $partes = explode('_', $request->input('proyecto_id'));
     $proyectoId = end($partes);
     $tipoProyecto = $request->input('tipo_proyecto');
-    $deudaEconomica = $request->input('deuda_economica')['value'];
-    $deudaAcademica = $request->input('deuda_academica')['value'];
+    $deudaEconomica = $request->input('deuda_economica')['value'] ?? "Sin deuda";
+    $deudaAcademica = $request->input('deuda_academica')['value'] ?? "Sin deuda";
     $deudaFecha = $request->input('fecha_deuda');
     $deudaDetalle = $request->input('detalle_deuda');
     $deudaComentario = $request->input('comentario_deuda');
     $tipoIntegrante = [];
     $categoria = "";
     $tipoDeuda = 0;
+
+    $resultado = $this->aplicarDeudaAProyecto($proyectoId, $tipoProyecto, $request->all());
+    if (!$resultado['ok']) {
+      return ['message' => $resultado['message'], 'detail' => $resultado['detail']];
+    }
 
     //  No se registran deudas
     if ($deudaEconomica == "Sin deuda" && $deudaAcademica == "Sin deuda") {
@@ -666,6 +720,80 @@ class DeudaProyectosController extends Controller {
     return ['message' => 'success', 'detail' => 'Se asigno deuda a todos los miembros correspondientes exitosamente'];
   }
 
+  public function asignarMasivo(Request $request)
+  {
+    // Validación mínima
+    $request->validate([
+      'ids' => 'required|array|min:1',
+      'ids.*' => 'integer|exists:Proyecto,id',
+    ]);
+
+    $ids = $request->ids;
+
+    $proyectos = DB::table('Proyecto')
+        ->select('id', 'tipo_proyecto', 'periodo', 'deuda', 'estado')
+        ->whereIn('id', $ids)
+        ->where(function ($q) {
+          $q->orWhere('deuda', '<', 1)
+            ->orWhere('deuda', '=', 2)
+            ->orWhere('deuda', '=', 8)
+            ->orWhereNull('deuda');
+        })
+        ->where('estado', 1)
+        ->whereNotIn('tipo_proyecto', ['PFEX', 'FEX'])
+        ->get();
+      if ($proyectos->isEmpty()) {
+        return response()->json([
+        'message' => 'warning',
+        'detail' => 'No hay proyectos válidos para asignar deuda'
+      ], 200);
+    }
+
+    $tipos = $proyectos->pluck('tipo_proyecto')->unique();
+      if ($tipos->count() > 1) {
+        return response()->json([
+          'message' => 'error',
+          'detail' => 'Los proyectos seleccionados tienen diferentes tipos de proyecto'
+      ], 422);
+    }
+
+    $periodos = $proyectos->pluck('periodo')->unique();
+      if ($periodos->count() > 1) {
+        return response()->json([
+        'message' => 'error',
+        'detail' => 'Los proyectos seleccionados pertenecen a diferentes periodos'
+      ], 422);
+    }
+
+    // ---- Aplicar filtros (PropertyFilter tokens) ----
+    // Cloudscape manda: filtros.tokens = [{propertyKey, operator, value}, ...]
+    DB::beginTransaction();
+    $okCount = 0;
+    $failCount = 0;
+
+    foreach ($proyectos as $p) {
+        $r = $this->aplicarDeudaAProyecto(
+            (int)$p->id,
+            $p->tipo_proyecto,
+            $request->all()
+        );
+
+        if ($r['ok']) {
+            $okCount++;
+        } else {
+            $failCount++;
+        }
+    }
+
+    DB::commit();
+
+      return response()->json([
+          'message' => 'success',
+          'detail' => "Asignación masiva completada. OK: {$okCount} | Fallidos: {$failCount}",
+          'total' => $proyectos->count()
+      ], 200);
+  }
+
   public function proyectoDeuda(Request $request) {
     $proyectoId = $request->query('proyecto_id');
     $proyectoOrigen = $request->query('proyecto_origen');
@@ -781,7 +909,6 @@ class DeudaProyectosController extends Controller {
         ->whereIn('pint.proyecto_integrante_tipo_id', $tipoIntegrante)
         ->first();
     } else if ($proyectoOrigen == 'Antiguo') {
-      //$condiciones = $this->getCondicionesHistorico($tipoProyecto);
       $deuda = DB::table('Proyecto_integrante_H as pint')
         ->join('Proyecto_integrante_deuda as pind', 'pind.proyecto_integrante_h_id', '=', 'pint.id')
         ->select('pind.*', 'pint.condicion')

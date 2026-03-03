@@ -81,6 +81,7 @@ use App\Http\Controllers\Investigador\Publicaciones\TesisAsesoriaController;
 use App\Http\Controllers\Investigador\Publicaciones\TesisPropiasController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\SessionController;
+use App\Http\Controllers\OAI\OaiController;
 
 /*
 |--------------------------------------------------------------------------
@@ -92,7 +93,7 @@ use App\Http\Controllers\SessionController;
 | be assigned to the "api" middleware group. Make something great!
 |
 */
-
+Route::get('oai', [OaiController::class, 'handle']);
 Route::post('login', [SessionController::class, 'login']);
 
 //  Admin
@@ -310,6 +311,7 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
       Route::get('proyectoDeuda', [DeudaProyectosController::class, 'proyectoDeuda']);
       Route::post('subsanarDeuda', [DeudaProyectosController::class, 'subsanarDeuda']);
       Route::get('getTipoDeuda', [DeudaProyectosController::class, 'getTipoDeuda']);
+      Route::post('asignarMasivo', [DeudaProyectosController::class, 'asignarMasivo']);
     });
 
     //  Gestión de publicaciones

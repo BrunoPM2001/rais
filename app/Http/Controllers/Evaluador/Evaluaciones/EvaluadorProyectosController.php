@@ -282,11 +282,74 @@ class EvaluadorProyectosController extends S3Controller {
       ->orderBy('d.orden')
       ->get();
 
-    foreach ($criterios as $item) {
-      if ($item->nivel == 1) {
-        $total = $total + $item->puntaje;
+      $sumNivel2 = 0;
+      $sumNivel1 = 0;
+      $totalGeneral = 0;
+      $currentNivel3 = null;
+
+      foreach ($criterios as $item) {
+
+          // ===== NIVEL 3: inicia bloque de subcriterios =====
+          if ($item->nivel == 3) {
+
+              // Si había un nivel 3 anterior sin cerrar
+              if ($currentNivel3 !== null) {
+                  // Nivel 3 solo es suma de nivel 2
+                  $currentNivel3->puntaje = $sumNivel2;
+              }
+
+              $currentNivel3 = $item;
+              $sumNivel2 = 0;
+              continue;
+          }
+
+          // ===== NIVEL 2: subcriterios =====
+          if ($item->nivel == 2) {
+              $sumNivel2 += $item->puntaje;
+          }
+
+          // ===== NIVEL 1: puntaje directo del bloque =====
+          if ($item->nivel == 1) {
+              $sumNivel1 += $item->puntaje;
+          }
+
+          // ===== NIVEL 4: subtotal del bloque =====
+          if ($item->nivel == 4) {
+
+              // 1) Nivel 3 = suma de nivel 2
+              if ($currentNivel3 !== null) {
+                  $currentNivel3->puntaje = $sumNivel2;
+              }
+
+              // 2) Nivel 4 = nivel3 + nivel1
+              $subtotalBloque = $sumNivel2 + $sumNivel1;
+              $item->puntaje = $subtotalBloque;
+
+              $totalGeneral += $subtotalBloque;
+
+              // Reset bloque
+              $sumNivel2 = 0;
+              $sumNivel1 = 0;
+              $currentNivel3 = null;
+          }
+
+          // ===== NIVEL 5: TOTAL =====
+          if ($item->nivel == 5) {
+
+              // Si el último bloque no tuvo nivel 4
+              if ($currentNivel3 !== null) {
+
+                  // Nivel 3 = suma de nivel 2
+                  $currentNivel3->puntaje = $sumNivel2;
+
+                  // Si había nivel 1 en ese bloque
+                  $subtotalBloque = $sumNivel2 + $sumNivel1;
+                  $totalGeneral += $subtotalBloque;
+              }
+
+              $item->puntaje = $totalGeneral;
+          }
       }
-    }
 
     $extra = DB::table('Proyecto_evaluacion AS a')
       ->join('Usuario_evaluador AS b', 'a.evaluador_id', '=', 'b.id')

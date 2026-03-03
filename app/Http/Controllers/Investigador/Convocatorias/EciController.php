@@ -585,7 +585,7 @@ class EciController extends S3Controller {
         DB::raw("CONCAT(e.apellido1, ' ', e.apellido2, ', ', e.nombres) AS responsable"),
         'c.nombre AS area',
         'b.nombre AS facultad',
-        'c.sigla AS categoria',
+        'a.grupo_categoria AS categoria',
       ])
       ->where('a.id', '=', $proyecto->grupo_id)
       ->first();

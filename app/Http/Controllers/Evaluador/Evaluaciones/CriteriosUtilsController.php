@@ -8,8 +8,27 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class CriteriosUtilsController extends Controller {
-  public function puntajeTesistas(Request $request) {
+  private function getEvaluacionOpcionId($proyectoId, $orden) {
+    $proyecto = DB::table('Proyecto')
+      ->select('tipo_proyecto', 'periodo')
+      ->where('id', $proyectoId)
+      ->first();
 
+    if (!$proyecto) {
+      return null;
+    }
+
+    $evaluacion = DB::table('Evaluacion_opcion')
+      ->select('id')
+      ->where('tipo', $proyecto->tipo_proyecto)
+      ->where('periodo', $proyecto->periodo)
+      ->where('orden', $orden)
+      ->first();
+
+    return $evaluacion ? $evaluacion->id : null;
+  }
+
+  public function puntajeTesistas(Request $request) {
     $proyecto = DB::table('Proyecto as p')
       ->select('p.tipo_proyecto', 'p.periodo')
       ->where('p.id', $request->query('proyecto_id'))
@@ -370,13 +389,14 @@ class CriteriosUtilsController extends Controller {
       }
     }
     $puntajeDocente = $puntajeDocente >= 9 ? 9 : $puntajeDocente;
+    $evaluacionId = $this->getEvaluacionOpcionId($proyectoId, 14);
 
     // Actualizar puntaje
     DB::table('Evaluacion_proyecto')
       ->updateOrInsert([
         'proyecto_id' => $request->query('proyecto_id'),
         'evaluador_id' => $request->attributes->get('token_decoded')->evaluador_id,
-        'evaluacion_opcion_id' => 1218
+        'evaluacion_opcion_id' => $evaluacionId
       ], [
         'puntaje' => $puntajeDocente
       ]);
@@ -412,13 +432,14 @@ class CriteriosUtilsController extends Controller {
     $puntajeIntegrantes = ($totalPuntaje * 0.1) / count($integrantes);
 
     $total = $puntajeIntegrantes >= 10 ? 10 : $puntajeIntegrantes;
+    $evaluacionId = $this->getEvaluacionOpcionId($proyectoId, 15);
 
     // Actualizar puntaje
     DB::table('Evaluacion_proyecto')
       ->updateOrInsert([
         'proyecto_id' => $request->query('proyecto_id'),
         'evaluador_id' => $request->attributes->get('token_decoded')->evaluador_id,
-        'evaluacion_opcion_id' => 1219
+        'evaluacion_opcion_id' => $evaluacionId
       ], [
         'puntaje' => $total,
       ]);
@@ -457,13 +478,14 @@ class CriteriosUtilsController extends Controller {
     }
 
     $total = $puntajeCat >= 6 ? 6 : $puntajeCat;
+    $evaluacionId = $this->getEvaluacionOpcionId($proyectoId, 16);
 
     // Actualizar puntaje
     DB::table('Evaluacion_proyecto')
       ->updateOrInsert([
         'proyecto_id' => $request->query('proyecto_id'),
         'evaluador_id' => $request->attributes->get('token_decoded')->evaluador_id,
-        'evaluacion_opcion_id' => 1220
+        'evaluacion_opcion_id' => $evaluacionId
       ], [
         'puntaje' => $total
       ]);
@@ -500,14 +522,14 @@ class CriteriosUtilsController extends Controller {
         $puntajeDocente += 0;
       }
     }
-
     $puntajeDocente = $puntajeDocente >= 5 ? 5 : $puntajeDocente;
+    $evaluacionId = $this->getEvaluacionOpcionId($proyectoId, 17);
 
     DB::table('Evaluacion_proyecto')
       ->updateOrInsert([
         'proyecto_id' => $request->query('proyecto_id'),
         'evaluador_id' => $request->attributes->get('token_decoded')->evaluador_id,
-        'evaluacion_opcion_id' => 1221
+        'evaluacion_opcion_id' => $evaluacionId
       ], [
         'puntaje' => $puntajeDocente
       ]);
