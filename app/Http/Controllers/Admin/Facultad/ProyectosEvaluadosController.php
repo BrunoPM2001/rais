@@ -38,6 +38,7 @@ class ProyectosEvaluadosController extends Controller {
           ->on('f.evaluador_id', '=', 'b.id')
           ->whereNotNull('f.evaluacion_opcion_id');
       })
+      ->leftJoin('Linea_investigacion AS g', 'g.id', '=', 'c.linea_investigacion_id')
       ->select([
         'a.id',
         'a.evaluador_id',
@@ -46,6 +47,7 @@ class ProyectosEvaluadosController extends Controller {
         'c.tipo_proyecto',
         'c.titulo',
         'd.nombre AS facultad',
+        'g.nombre AS linea_investigacion',
         'c.periodo',
         DB::raw("COUNT(DISTINCT e.id) AS criterios"),
         DB::raw("COUNT(DISTINCT f.id) AS criterios_evaluados"),

@@ -104,6 +104,10 @@
       padding: 5px 3px 6px 3px;
     }
 
+    .tableFirma td {
+      font-size: 11px;
+    }
+
     .cuerpo>p {
       font-size: 11px;
     }
@@ -194,14 +198,24 @@
 
     <p><strong>Para aprobar este proyecto se necesita como mínimo 50 puntos</strong></p>
 
-    <h6>Comentario</h5>
-      <p style="text-align: justify;">{{ $extra->comentario }}</p>
-      <p class="extra-firma">
-        <strong>Firma:</strong> ______________________
-      </p>
-      <p class="extra-firma2">
-        <strong>Fecha:</strong> ______________________
-      </p>
+    <h6>Comentario</h6>
+    <p style="text-align: justify;">{{ $extra->comentario }}</p>
+    <table class="tableFirma" style="width:100%; margin-top:30px;">
+      <tr>
+        <!-- Columna izquierda -->
+        <td style="width:60%; vertical-align:top; padding-right:20px;">
+          <p style="text-align:justify;">
+            <strong>Titulo:</strong> {{ $extra->titulo }}
+          </p>
+        </td>
+        <td>
+          <p><strong>Evaluador:</strong>{{ $extra->evaluador }}</p>
+          <br><br><br>
+          <p><strong>Firma:</strong>______________________</p>
+          <p><strong>Fecha:</strong>______________________</p>
+        </td>
+      </tr>
+    </table>
   </div>
 
   <script type="text/php">
