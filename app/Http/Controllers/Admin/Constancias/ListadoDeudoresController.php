@@ -37,9 +37,20 @@ class ListadoDeudoresController extends Controller {
         'a.categoria',
       ])
       ->whereBetween('a.tipo', [1, 3])
-      ->whereNotIn('g.id', [6, 7])
-      ->groupBy('a.id')
-      ->orderByDesc('d.periodo');
+      ->where(function ($query) {
+        $query->whereNull('g.id')
+          ->orWhere(function ($q) {
+          $q->where('g.id', '!=', 7)
+            ->where(function ($sub) {
+            $sub->whereNotIn('g.id', [6, 4])
+              ->orWhere(function ($s) {
+              $s->whereIn('g.id', [6, 4])
+                ->whereDate('f.fecha_fin', '>', now());
+            });
+          });
+        });
+      })
+      ->groupBy('a.id');
 
     $deudasB = DB::table('Proyecto_integrante_deuda AS a')
       ->join('Proyecto_integrante_H AS b', 'b.id', '=', 'a.proyecto_integrante_h_id')
@@ -67,10 +78,22 @@ class ListadoDeudoresController extends Controller {
         'a.categoria',
       ])
       ->whereBetween('a.tipo', [1, 3])
-      ->whereNotIn('g.id', [6, 7])
+      ->where(function ($query) {
+        $query->whereNull('g.id')
+          ->orWhere(function ($q) {
+          $q->where('g.id', '!=', 7)
+            ->where(function ($sub) {
+            $sub->whereNotIn('g.id', [6, 4])
+              ->orWhere(function ($s) {
+              $s->whereIn('g.id', [6, 4])
+                ->whereDate('f.fecha_fin', '>', now());
+            });
+          });
+        });
+      })
       ->groupBy('a.id')
-      ->orderByDesc('d.periodo')
       ->union($deudasA)
+      ->orderByDesc('id')
       ->get();
 
     return $deudasB;
