@@ -104,10 +104,6 @@
       padding: 5px 3px 6px 3px;
     }
 
-    .tableFirma td {
-      font-size: 11px;
-    }
-
     .cuerpo>p {
       font-size: 11px;
     }
@@ -149,14 +145,7 @@
     </p>
   </div>
   <div class="div"></div>
-
-  <div class="foot-1">
-    <div style="border-top: 1px solid black; margin: 1px 0;"></div>
-    <strong>
-      RAIS - UNMSM -
-      {{ $extra->proyecto_id . ' - ' . $extra->id . ' - ' . $extra->evaluador_id }}
-    </strong>
-  </div>
+  <div class="foot-1">RAIS - Registro de Actividades de Investigación de San Marcos</div>
 
   <p class="titulo"><strong>Ficha de evaluación - {{ $extra->tipo_proyecto }} 2026</strong></p>
   <div class="cuerpo">
@@ -168,9 +157,9 @@
           <td style="width: 79%;" valign="top">{{ $extra->titulo }}</td>
         </tr>
         <tr>
-          <td style="width: 20%;" valign="top"><strong>Evaluador</strong></td>
+          <td style="width: 20%;" valign="top"><strong>Responsable</strong></td>
           <td style="width: 1%;" valign="top">:</td>
-          <td style="width: 79%;" valign="top">{{ $extra->evaluador }}</td>
+          <td style="width: 79%;" valign="top">{{ $extra->responsable }}</td>
         </tr>
       </tbody>
     </table>
@@ -179,8 +168,8 @@
       <thead>
         <tr>
           <th style="width: 40%;" align="left" valign="top">Criterio de evaluación</th>
-          <th style="width: 10%;" align="center" valign="top">Puntaje Máximo</th>
-          <th style="width: 10%;" align="center" valign="top">Puntaje Obtenido</th>
+          <th style="width: 10%;" align="left" valign="top">Puntaje Máximo</th>
+          <th style="width: 10%;" align="left" valign="top">Puntaje Obtenido</th>
           <th style="width: 40%;" align="left" valign="top">Comentario</th>
         </tr>
       </thead>
@@ -198,24 +187,10 @@
 
     <p><strong>Para aprobar este proyecto se necesita como mínimo 50 puntos</strong></p>
 
-    <h6>Comentario</h6>
-    <p style="text-align: justify;">{{ $extra->comentario }}</p>
-    <table class="tableFirma" style="width:100%; margin-top:30px;">
-      <tr>
-        <!-- Columna izquierda -->
-        <td style="width:60%; vertical-align:top; padding-right:20px;">
-          <p style="text-align:justify;">
-            <strong>Titulo:</strong> {{ $extra->titulo }}
-          </p>
-        </td>
-        <td>
-          <p><strong>Evaluador:</strong>{{ $extra->evaluador }}</p>
-          <br><br><br>
-          <p><strong>Firma:</strong>______________________</p>
-          <p><strong>Fecha:</strong>______________________</p>
-        </td>
-      </tr>
-    </table>
+    <h6>Comentario</h5>
+
+      <p>{{ $extra->comentario }}</p>
+
   </div>
 
   <script type="text/php">

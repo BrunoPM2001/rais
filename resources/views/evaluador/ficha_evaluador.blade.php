@@ -104,6 +104,10 @@
       padding: 5px 3px 6px 3px;
     }
 
+    .tableFirma td {
+      font-size: 11px;
+    }
+
     .cuerpo>p {
       font-size: 11px;
     }
@@ -145,9 +149,16 @@
     </p>
   </div>
   <div class="div"></div>
-  <div class="foot-1">RAIS - Registro de Actividades de Investigación de San Marcos</div>
 
-  <p class="titulo"><strong>Ficha de evaluación 2025 - {{ $extra->tipo_proyecto }}</strong></p>
+  <div class="foot-1">
+    <div style="border-top: 1px solid black; margin: 1px 0;"></div>
+    <strong>
+      RAIS - UNMSM -
+      {{ $extra->proyecto_id . ' - ' . $extra->id . ' - ' . $extra->evaluador_id }}
+    </strong>
+  </div>
+
+  <p class="titulo"><strong>Ficha de evaluación - {{ $extra->tipo_proyecto }} 2026</strong></p>
   <div class="cuerpo">
     <table class="tableData">
       <tbody>
@@ -157,7 +168,7 @@
           <td style="width: 79%;" valign="top">{{ $extra->titulo }}</td>
         </tr>
         <tr>
-          <td style="width: 20%;" valign="top"><strong>Nombre del evaluador</strong></td>
+          <td style="width: 20%;" valign="top"><strong>Evaluador</strong></td>
           <td style="width: 1%;" valign="top">:</td>
           <td style="width: 79%;" valign="top">{{ $extra->evaluador }}</td>
         </tr>
@@ -168,8 +179,8 @@
       <thead>
         <tr>
           <th style="width: 40%;" align="left" valign="top">Criterio de evaluación</th>
-          <th style="width: 10%;" align="left" valign="top">Puntaje Máximo</th>
-          <th style="width: 10%;" align="left" valign="top">Puntaje Obtenido</th>
+          <th style="width: 10%;" align="center" valign="top">Puntaje Máximo</th>
+          <th style="width: 10%;" align="center" valign="top">Puntaje Obtenido</th>
           <th style="width: 40%;" align="left" valign="top">Comentario</th>
         </tr>
       </thead>
@@ -182,27 +193,28 @@
             <td valign="top">{{ $item->comentario }}</td>
           </tr>
         @endforeach
-        <tr>
-          <td valign="top">TOTAL</td>
-          <td class="row-center" valign="top">100</td>
-          <td class="row-center" valign="top">{{ $total }}</td>
-          <td valign="top"></td>
-        </tr>
       </tbody>
     </table>
 
     <p><strong>Para aprobar este proyecto se necesita como mínimo 50 puntos</strong></p>
 
-    <h6>Comentario</h5>
-
-      <p>{{ $extra->comentario }}</p>
-
-      <p class="extra-firma">
-        <strong>Firma:</strong> ______________________
-      </p>
-      <p class="extra-firma2">
-        <strong>Fecha:</strong> ______________________
-      </p>
+    <h6>Comentario</h6>
+    <p style="text-align: justify;">{{ $extra->comentario }}</p>
+    <table class="tableFirma" style="width:100%; margin-top:30px;">
+      <tr>
+        <td style="width:60%; vertical-align:top; padding-right:20px;">
+          <p style="text-align:justify;">
+            <strong>Titulo:</strong> {{ $extra->titulo }}
+          </p>
+        </td>
+        <td>
+          <p><strong>Evaluador:</strong>{{ $extra->evaluador }}</p>
+          <br><br><br>
+          <p><strong>Firma:</strong>______________________</p>
+          <p><strong>Fecha:</strong>______________________</p>
+        </td>
+      </tr>
+    </table>
   </div>
 
   <script type="text/php">

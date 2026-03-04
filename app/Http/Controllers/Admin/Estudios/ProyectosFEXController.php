@@ -56,11 +56,11 @@ class ProyectosFEXController extends S3Controller {
         'res.responsable',
         'b.nombre AS facultad',
         'moneda.detalle AS moneda',
-        'a.aporte_no_unmsm',
-        'a.aporte_unmsm',
-        'a.financiamiento_fuente_externa',
-        'a.entidad_asociada',
-        'a.monto_asignado',
+        DB::raw("FORMAT(a.aporte_no_unmsm, 2, 'en_US') AS aporte_no_unmsm"),
+        DB::raw("FORMAT(a.aporte_unmsm, 2, 'en_US') AS aporte_unmsm"),
+        DB::raw("FORMAT(a.financiamiento_fuente_externa, 2, 'en_US') AS financiamiento_fuente_externa"),
+        DB::raw("FORMAT(a.entidad_asociada, 2, 'en_US') AS entidad_asociada"),
+        DB::raw("FORMAT(a.monto_asignado, 2, 'en_US') AS monto_asignado"),
         DB::raw("CASE
           WHEN f.detalle = 'OTROS' THEN g.detalle
           ELSE f.detalle

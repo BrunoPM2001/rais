@@ -80,8 +80,14 @@ class ProyectoDetalleController extends Controller {
         $participantes = DB::table('Proyecto_integrante AS a')
           ->leftJoin('Proyecto_integrante_tipo AS b', 'b.id', '=', 'a.proyecto_integrante_tipo_id')
           ->leftJoin('Usuario_investigador AS c', 'c.id', '=', 'a.investigador_id')
+          ->leftJoin('Proyecto AS d', 'd.id', '=', 'a.proyecto_id')
           ->select([
-            'b.nombre AS condicion',
+            DB::raw("
+              CASE 
+                WHEN d.tipo_proyecto = 'PFEX' THEN a.responsabilidad
+                ELSE b.nombre
+              END AS condicion
+            "),
             'c.codigo',
             DB::raw("CONCAT(c.apellido1, ' ', c.apellido2, ', ', c.nombres) AS nombres")
           ])

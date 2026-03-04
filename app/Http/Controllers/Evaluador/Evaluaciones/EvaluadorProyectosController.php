@@ -370,7 +370,7 @@ class EvaluadorProyectosController extends S3Controller {
       ->where('a.evaluador_id', '=', $request->attributes->get('token_decoded')->evaluador_id)
       ->first();
 
-    $pdf = Pdf::loadView('evaluador.ficha', ['evaluacion' => $criterios, 'extra' => $extra, 'total' => $total]);
+    $pdf = Pdf::loadView('evaluador.ficha_evaluador', ['evaluacion' => $criterios, 'extra' => $extra, 'total' => $total]);
     return $pdf->stream();
   }
 

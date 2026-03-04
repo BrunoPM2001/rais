@@ -97,11 +97,68 @@ class ProyectosEvaluadosController extends Controller {
       ->orderBy('d.orden')
       ->get();
 
+    $sumNivel2 = 0;
+    $sumNivel1 = 0;
+    $totalGeneral = 0;
+    $currentNivel3 = null;
+
     foreach ($criterios as $item) {
-      if ($item->nivel == 1) {
-        $total = $total + $item->puntaje;
-      }
+
+        // ===== NIVEL 3 =====
+        if ($item->nivel == 3) {
+
+            if ($currentNivel3 !== null) {
+                $currentNivel3->puntaje = $sumNivel2;
+            }
+
+            $currentNivel3 = $item;
+            $sumNivel2 = 0;
+            continue;
+        }
+
+        // ===== NIVEL 2 =====
+        if ($item->nivel == 2) {
+            $sumNivel2 += $item->puntaje;
+        }
+
+        // ===== NIVEL 1 =====
+        if ($item->nivel == 1) {
+            $sumNivel1 += $item->puntaje;
+        }
+
+        // ===== NIVEL 4 =====
+        if ($item->nivel == 4) {
+
+            if ($currentNivel3 !== null) {
+                $currentNivel3->puntaje = $sumNivel2;
+            }
+
+            $subtotalBloque = $sumNivel2 + $sumNivel1;
+            $item->puntaje = $subtotalBloque;
+
+            $totalGeneral += $subtotalBloque;
+
+            $sumNivel2 = 0;
+            $sumNivel1 = 0;
+            $currentNivel3 = null;
+        }
+
+        // ===== NIVEL 5 =====
+        if ($item->nivel == 5) {
+
+            if ($currentNivel3 !== null) {
+
+                $currentNivel3->puntaje = $sumNivel2;
+
+                $subtotalBloque = $sumNivel2 + $sumNivel1;
+                $totalGeneral += $subtotalBloque;
+            }
+
+            $item->puntaje = $totalGeneral;
+        }
     }
+
+    $total = $totalGeneral;
 
     $extra = DB::table('Proyecto_evaluacion AS a')
       ->join('Usuario_evaluador AS b', 'a.evaluador_id', '=', 'b.id')

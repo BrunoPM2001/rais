@@ -12,13 +12,13 @@ class ProyectoFEXController extends S3Controller {
   public function listado(Request $request) {
     $proyectos = DB::table('Proyecto AS a')
       ->leftJoin('Proyecto_integrante AS b', 'b.proyecto_id', '=', 'a.id')
-      ->leftJoin('Proyecto_integrante_tipo AS c', 'b.proyecto_integrante_tipo_id', '=', 'c.id')
+      //->leftJoin('Proyecto_integrante_tipo AS c', 'b.proyecto_integrante_tipo_id', '=', 'c.id')
       ->select(
         'a.id',
         'a.codigo_proyecto',
         'a.titulo',
         'a.tipo_proyecto',
-        'c.nombre AS condicion',
+        'b.responsabilidad AS condicion',
         DB::raw("CASE(a.estado)
           WHEN -1 THEN 'Eliminado'
           WHEN 0 THEN 'No aprobado'
