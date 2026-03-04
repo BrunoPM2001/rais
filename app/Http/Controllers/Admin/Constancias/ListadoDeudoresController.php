@@ -45,7 +45,7 @@ class ListadoDeudoresController extends Controller {
             $sub->whereNotIn('g.id', [6, 4])
               ->orWhere(function ($s) {
               $s->whereIn('g.id', [6, 4])
-                ->whereDate('f.fecha_fin', '>', now());
+                ->whereDate('f.fecha_fin', '<', now());
             });
           });
         });
@@ -86,7 +86,7 @@ class ListadoDeudoresController extends Controller {
             $sub->whereNotIn('g.id', [6, 4])
               ->orWhere(function ($s) {
               $s->whereIn('g.id', [6, 4])
-                ->whereDate('f.fecha_fin', '>', now());
+                ->whereDate('f.fecha_fin', '<', now());
             });
           });
         });
