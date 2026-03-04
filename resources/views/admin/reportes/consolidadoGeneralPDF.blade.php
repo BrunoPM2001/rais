@@ -151,7 +151,7 @@
     </p>
     <br>
     <p class="user">
-      ichajaya
+      <span>{{ $username }}</span>
     </p>
   </div>
   <div class="div"></div>

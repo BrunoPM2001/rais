@@ -5,10 +5,11 @@ namespace App\Http\Controllers\Admin\Reportes;
 use App\Http\Controllers\Controller;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Http\Request;
 
 class ConsolidadoGeneralController extends Controller {
 
-  public function reporte($periodo) {
+  public function reporte(Request $request, $periodo) {
     //  Listado de proyectos
     $tipos = DB::table('Proyecto AS a')
       ->select(
@@ -43,7 +44,8 @@ class ConsolidadoGeneralController extends Controller {
     $pdf = Pdf::loadView('admin.reportes.consolidadoGeneralPDF', [
       'proyectos' => $proyectos,
       'tipos' => $tipos,
-      'periodo' => $periodo
+      'periodo' => $periodo,
+      'username' => $request->attributes->get('token_decoded')->username
     ]);
     $pdf->setPaper('A4', 'landscape');
     return $pdf->stream();
