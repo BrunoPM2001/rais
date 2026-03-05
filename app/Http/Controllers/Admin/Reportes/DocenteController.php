@@ -19,6 +19,7 @@ class DocenteController extends Controller {
         'a.condicion'
       )
       ->where('a.investigador_id', '=', $investigador_id)
+      ->where('b.status', '=', 1)
       ->orderBy('b.periodo', 'desc')
       ->orderBy('b.codigo', 'desc')
       ->get();
@@ -35,6 +36,7 @@ class DocenteController extends Controller {
         'c.nombre as condicion'
       )
       ->where('a.investigador_id', '=', $investigador_id)
+      ->where('b.estado', '=', 1)
       ->orderBy('b.periodo', 'desc')
       ->orderBy('b.codigo_proyecto', 'desc')
       ->get();

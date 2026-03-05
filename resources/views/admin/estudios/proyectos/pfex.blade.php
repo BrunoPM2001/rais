@@ -62,6 +62,7 @@
       text-align: left;
       font-size: 11px;
       font-style: oblique;
+      width: 100%;
     }
 
     .div {
@@ -145,7 +146,7 @@
     <br>
   </div>
   <div class="div"></div>
-  <div class="foot-1">RAIS - Registro de Actividades de Investigación de San Marcos</div>
+  <div class="foot-1"><hr>RAIS - Registro de Actividades de Investigación de San Marcos</div>
   <p class="titulo">
     <strong>
       PROYECTO FEX {{ $proyecto->periodo }}

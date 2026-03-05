@@ -605,10 +605,14 @@ class ProyectosFEXController extends S3Controller {
   public function getEditDocente(Request $request) {
     $docente = DB::table('Proyecto_integrante AS a')
       ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
+      ->leftJoin('Facultad AS c', 'c.id', '=', 'b.facultad_id')
+      ->leftJoin('Dependencia AS d', 'd.id', '=', 'b.dependencia_id')
       ->select([
         'a.investigador_id',
         'a.proyecto_integrante_tipo_id',
         'a.responsabilidad',
+        'c.nombre as facultad',
+        'd.dependencia',
         'b.codigo',
         'b.apellido1',
         'b.apellido2',
@@ -715,8 +719,10 @@ class ProyectosFEXController extends S3Controller {
   public function getEditEstudiante(Request $request) {
     $estudiante = DB::table('Proyecto_integrante AS a')
       ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
+      ->leftJoin('Facultad AS c', 'c.id', '=', 'b.facultad_id')
       ->select([
         'a.investigador_id',
+        'c.nombre as facultad',
         'b.codigo',
         'b.apellido1',
         'b.apellido2',
