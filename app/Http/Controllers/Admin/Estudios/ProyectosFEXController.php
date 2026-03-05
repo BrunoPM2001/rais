@@ -226,8 +226,8 @@ class ProyectosFEXController extends S3Controller {
           ELSE 'No'
         END AS responsable"),
         DB::raw("CASE
-          WHEN a.condicion = 'Responsable' THEN d.nombre
-          ELSE ''
+          WHEN a.proyecto_integrante_tipo_id = 90 THEN 'Externo'
+          ELSE d.nombre
         END AS facultad")
       ])
       ->where('a.proyecto_id', '=', $request->query('id'))
