@@ -65,31 +65,34 @@ class PmultiController extends S3Controller {
       ->get()
       ->groupBy('grupo_id')
       ->map(function ($items) use ($coordinadores) {
+
+        $grupoId = $items->first()->grupo_id;
         $grupoNombre = $items->first()->grupo_nombre_corto;
         $grupoCategoria = $items->first()->grupo_categoria;
 
-        // Filtrar los investigadores del grupo que están en el JSON
-        $autorizaciones = collect($items)->map(function ($item) use ($coordinadores) {
-          return $coordinadores->get($item->investigador_id);
-        })->filter(); // quita nulls (los que no están en el json)
+        $coordsGrupo = DB::table('Grupo_integrante')
+            ->where('grupo_id', $grupoId)
+            ->where('cargo', 'Coordinador')
+            ->pluck('investigador_id');
 
-        //  En caso no haya autorización
+        $autorizaciones = collect($coordsGrupo)->map(function ($coord) use ($coordinadores) {
+            return $coordinadores->get($coord);
+        })->filter();
+
         $estado = 'NO';
 
-        //  En caso no haya nadie del grupo en el json
         if ($autorizaciones->isEmpty()) {
-          $estado = '...';
+            $estado = '...';
         }
 
-        //  En caso haya autorización
         if ($autorizaciones->contains(fn($a) => $a->autorizado == 1)) {
-          $estado = 'SÍ';
+            $estado = 'SÍ';
         }
 
         return [
-          'grupo_nombre_corto' => $grupoNombre,
-          'grupo_categoria' => $grupoCategoria,
-          'autorizado' => $estado,
+            'grupo_nombre_corto' => $grupoNombre,
+            'grupo_categoria' => $grupoCategoria,
+            'autorizado' => $estado,
         ];
       })
       ->values();

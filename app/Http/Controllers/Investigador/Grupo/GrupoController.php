@@ -1396,7 +1396,16 @@ class GrupoController extends S3Controller {
       ])
       ->where('a.grupo_id', '=', $request->query('id'))
       ->whereNot('a.condicion', 'LIKE', 'Ex%')
-      ->whereIn('d.nombre', ['Responsable', 'Coordinador', 'Asesor'])
+      ->where(function ($q) {
+      $q->where(function ($q2) {
+      $q2->where('e.tipo_proyecto', '!=', 'PMULTI')
+        ->whereIn('d.nombre', ['Responsable','Coordinador','Asesor']);
+        })
+      ->orWhere(function ($q2) {
+      $q2->where('e.tipo_proyecto', '=', 'PMULTI')
+        ->whereIn('d.nombre', ['Responsable','Coordinador','Asesor','Miembro Docente','Co Responsable']);
+        });
+      })
       ->orderByDesc('e.created_at')
       ->get();
 
@@ -1447,5 +1456,114 @@ class GrupoController extends S3Controller {
       ]);
 
     return ['message' => 'info', 'detail' => 'Cambios guardados correctamente'];
+  }
+
+  public function autorizarPmulti(Request $request)
+  {
+    $proyecto_id = $request->input('id');
+    $investigador_id = $request->attributes->get('token_decoded')->investigador_id;
+
+    $esResponsable = DB::table('Grupo_integrante')
+        ->where('investigador_id', $investigador_id)
+        ->where('cargo', 'Coordinador')
+        ->exists();
+
+    if (!$esResponsable) {
+        return [
+            'message' => 'error',
+            'detail' => 'Solo el Coordinador del Grupo puede autorizar esta acción'
+        ];
+    }
+
+    $json = DB::table('Proyecto_descripcion')
+        ->where('proyecto_id', $proyecto_id)
+        ->where('codigo', 'autorizacion_grupo')
+        ->value('detalle');
+
+    $autorizaciones = json_decode($json, true) ?? [];
+
+    foreach ($autorizaciones as &$item) {
+        if ($item['investigador_id'] == $investigador_id) {
+            $item['autorizado'] = $request->input('autorizacion_grupo') ? 1 : 0;
+        }
+    }
+
+    DB::table('Proyecto_descripcion')
+        ->where('proyecto_id', $proyecto_id)
+        ->where('codigo', 'autorizacion_grupo')
+        ->update([
+            'detalle' => json_encode($autorizaciones)
+        ]);
+
+    return [
+        'message' => 'info',
+        'detail' => 'Autorización registrada correctamente'
+    ];
+  }
+
+  public function obtenerGruposPmulti(Request $request)
+  {
+    $proyecto_id = $request->input('id');
+
+    $json = DB::table('Proyecto_descripcion')
+        ->where('proyecto_id', $proyecto_id)
+        ->where('codigo', 'autorizacion_grupo')
+        ->value('detalle');
+
+    $autorizaciones = json_decode($json, true) ?? [];
+
+    $coordinadores = collect($autorizaciones)->keyBy('investigador_id');
+
+    $grupos = DB::table('Proyecto_integrante AS a')
+        ->leftJoin('Grupo AS b', 'b.id', '=', 'a.grupo_id')
+        ->select([
+            'b.id AS grupo_id',
+            'b.grupo_categoria',
+            DB::raw("UPPER(b.grupo_nombre_corto) AS grupo_nombre_corto"),
+            'a.investigador_id',
+        ])
+        ->where('a.proyecto_id', $proyecto_id)
+        ->whereNotNull('a.grupo_id')
+        ->get()
+        ->groupBy('grupo_id')
+        ->map(function ($items) use ($coordinadores) {
+
+            $grupoId = $items->first()->grupo_id;
+            $grupoNombre = $items->first()->grupo_nombre_corto;
+            $grupoCategoria = $items->first()->grupo_categoria;
+
+            // obtener coordinadores reales del grupo
+            $coordsGrupo = DB::table('Grupo_integrante')
+                ->where('grupo_id', $grupoId)
+                ->where('cargo', 'Coordinador')
+                ->pluck('investigador_id');
+
+            $autorizaciones = collect($coordsGrupo)->map(function ($coord) use ($coordinadores) {
+                return $coordinadores->get($coord);
+            })->filter();
+
+            $estado = 'NO';
+
+            if ($autorizaciones->isEmpty()) {
+                $estado = '...';
+            }
+
+            if ($autorizaciones->contains(fn($a) => $a['autorizado'] == 1)) {
+                $estado = 'SÍ';
+            }
+
+            return [
+                'grupo_nombre_corto' => $grupoNombre,
+                'grupo_categoria' => $grupoCategoria,
+                'autorizado' => $estado,
+            ];
+        })
+        ->values();
+      $miAutorizacion = collect($autorizaciones)
+          ->firstWhere('investigador_id', $request->attributes->get('token_decoded')->investigador_id);
+    return [
+        'grupos' => $grupos,
+        'mi_autorizacion' => $miAutorizacion['autorizado'] ?? 0
+    ];
   }
 }

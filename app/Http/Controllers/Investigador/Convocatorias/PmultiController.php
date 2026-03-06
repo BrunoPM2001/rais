@@ -925,6 +925,48 @@ class PmultiController extends S3Controller {
         'step' => 4,
       ]);
 
+    $grupos = DB::table('Proyecto_integrante')
+      ->where('proyecto_id', $request->input('id'))
+      ->whereNotNull('grupo_id')
+      ->pluck('grupo_id')
+      ->unique();
+
+    $coordinadores = DB::table('Grupo_integrante')
+      ->whereIn('grupo_id', $grupos)
+      ->where('cargo', 'Coordinador')
+      ->pluck('investigador_id')
+      ->unique();
+
+    $registro = DB::table('Proyecto_descripcion')
+      ->where('proyecto_id', $request->input('id'))
+      ->where('codigo', 'autorizacion_grupo')
+      ->first();
+
+    $actual = $registro ? json_decode($registro->detalle, true) : [];
+
+    $actual_indexado = collect($actual)->keyBy('investigador_id');
+
+    $nuevo = [];
+
+    foreach ($coordinadores as $coord) {
+
+      $nuevo[] = [
+        'investigador_id' => $coord,
+        'autorizado' => $actual_indexado[$coord]['autorizado'] ?? 0
+      ];
+
+    }
+
+    DB::table('Proyecto_descripcion')->updateOrInsert(
+      [
+        'proyecto_id' => $request->input('id'),
+        'codigo' => 'autorizacion_grupo'
+      ],
+      [
+        'detalle' => json_encode($nuevo)
+      ]
+    );
+
     return ['message' => 'success', 'detail' => 'Datos guardados'];
   }
 
@@ -1338,14 +1380,29 @@ class PmultiController extends S3Controller {
 
   public function enviar(Request $request) {
     //  Verificar autorización de grupo
-    $req1 = DB::table('Proyecto')
-      ->where('id', '=', $request->input('id'))
-      ->where('estado', '=', 6)
-      ->where('autorizacion_grupo', '=', 1)
-      ->count();
 
-    if ($req1 == 0) {
-      return ['message' => 'error', 'detail' => 'Necesita que el coordinador de su grupo autorice la propuesta de proyecto'];
+    $json = DB::table('Proyecto_descripcion')
+      ->where('proyecto_id', $request->input('id'))
+      ->where('codigo', 'autorizacion_grupo')
+      ->value('detalle');
+
+    $autorizaciones = json_decode($json, true) ?? [];
+
+    $todos_autorizados = collect($autorizaciones)->every(function ($item) {
+      return $item['autorizado'] == 1;
+    });
+
+    DB::table('Proyecto')
+    ->where('id', $request->input('id'))
+    ->update([
+      'autorizacion_grupo' => $todos_autorizados ? 1 : 0
+    ]);
+
+    if (!$todos_autorizados) {
+      return [
+        'message' => 'error',
+        'detail' => 'Necesita que todos los coordinadores autoricen la propuesta de proyecto'
+      ];
     }
 
     $count = DB::table('Proyecto')

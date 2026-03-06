@@ -43,12 +43,13 @@ class EciController extends Controller {
 
   public function especificaciones(Request $request) {
     $especificaciones = DB::table('Proyecto_descripcion')
-      ->select(
-        'detalle'
-      )
+      ->select('codigo','detalle')
       ->where('proyecto_id', '=', $request->query('proyecto_id'))
-      ->where('codigo', '=', 'desc_equipo')
-      ->first();
+      ->whereIn('codigo', ['desc_equipo','nombre_equipo'])
+      ->get();
+
+    $nombre_equipo = $especificaciones->where('codigo','nombre_equipo')->first();
+    $desc_equipo = $especificaciones->where('codigo','desc_equipo')->first();
 
     $archivos = DB::table('Proyecto_doc')
       ->select([
@@ -67,8 +68,8 @@ class EciController extends Controller {
 
     return [
       'equipo' => [
-        'nombre' => 'nombre',
-        'descripcion' => $especificaciones->detalle ?? ""
+        'nombre' => $nombre_equipo->detalle ?? "",
+        'descripcion' => $desc_equipo->detalle ?? ""
       ],
       'archivos' => $archivos
     ];
