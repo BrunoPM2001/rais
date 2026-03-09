@@ -54,9 +54,11 @@
       position: fixed;
       bottom: -15px;
       left: 0px;
+      widows: 100%;
       text-align: left;
       font-size: 11px;
       font-style: oblique;
+      border-top: 1px solid #000;
     }
 
     .div {

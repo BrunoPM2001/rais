@@ -54,9 +54,11 @@
       position: fixed;
       bottom: -15px;
       left: 0px;
+      width: 100%;
       text-align: left;
       font-size: 11px;
       font-style: oblique;
+      border-top: 1px solid #000;
     }
 
     .div {
@@ -141,10 +143,6 @@
     <br>
   </div>
   <div class="div"></div>
-<<<<<<< HEAD
-=======
-
->>>>>>> 6a8a7db3aa1bfaca7dbf7462dbf2b9e71fa68a40
   <div class="foot-1">RAIS - UNMSM - {{ $proyecto->codigo_proyecto }} - {{ $detalles->id }}</div>
   <p class="titulo">
     <strong>

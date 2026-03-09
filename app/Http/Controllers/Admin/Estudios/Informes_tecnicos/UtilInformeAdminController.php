@@ -56,6 +56,10 @@ class UtilInformeAdminController extends Controller {
         $util = new PinvposController();
         return $util->reporte($request);
         break;
+      case "PMULTI":
+        $util = new PmultiController();
+        return $util->reporte($request);
+        break;
     }
   }
 }

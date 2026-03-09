@@ -54,9 +54,11 @@
       position: fixed;
       bottom: -15px;
       left: 0px;
+      width: 100%;
       text-align: left;
       font-size: 11px;
       font-style: oblique;
+      border-top: 1px solid #000;
     }
 
     .div {
@@ -310,7 +312,7 @@
 
     <h6>3.10 Anexos</h6>
     <div class="desc">
-      Informe:
+      Anexo:
       @if (isset($archivos['informe-PCONFIGI-INFORME']))
         Sí
       @else
@@ -319,7 +321,7 @@
     </div>
 
     <div class="desc">
-      Formulario:
+      Reporte de viabilidad:
       @if (isset($archivos['viabilidad']))
         Sí
       @else

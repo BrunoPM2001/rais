@@ -8,7 +8,7 @@ use Illuminate\Database\Query\JoinClause;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
-class PinvposController extends Controller {
+class PmultiController extends Controller {
   public function reporte(Request $request) {
     $detalles = DB::table('Informe_tecnico AS a')
       ->join('Proyecto AS b', 'b.id', '=', 'a.proyecto_id')
@@ -25,35 +25,29 @@ class PinvposController extends Controller {
     $proyecto = DB::table('Proyecto AS a')
       ->leftJoin('Facultad AS b', 'b.id', '=', 'a.facultad_id')
       ->leftJoin('Grupo AS c', 'c.id', '=', 'a.grupo_id')
-      ->leftJoin('Proyecto_integrante AS d', function (JoinClause $join) {
-        $join->on('d.proyecto_id', '=', 'a.id')
-          ->where('d.condicion', '=', 'Responsable');
+      ->leftJoin('Linea_investigacion AS d', 'd.id', '=', 'a.linea_investigacion_id')
+      ->leftJoin('Proyecto_descripcion AS e', function (JoinClause $join) {
+        $join->on('e.proyecto_id', '=', 'a.id')
+          ->where('e.codigo', '=', 'tipo_investigacion');
       })
-      ->leftJoin('Usuario_investigador AS e', 'e.id', '=', 'd.investigador_id')
+      ->leftJoin('Proyecto_presupuesto AS f', 'f.proyecto_id', '=', 'a.id')
       ->select([
         'a.titulo',
         'a.codigo_proyecto',
-        'b.nombre AS facultad',
-        'c.grupo_nombre',
-        DB::raw("CONCAT(e.apellido1, ' ', e.apellido2, ', ', e.nombres) AS responsable"),
+        'a.tipo_proyecto',
         'a.resolucion_rectoral',
+        'a.periodo',
+        'c.grupo_nombre',
+        'a.localizacion',
+        'b.nombre AS facultad',
+        'd.nombre AS linea',
+        'e.detalle AS tipo_investigacion',
+        DB::raw("SUM(f.monto) AS monto")
       ])
       ->where('a.id', '=', $detalles->proyecto_id)
+      ->groupBy('a.id')
       ->first();
 
-    $archivos = DB::table('Proyecto_doc')
-      ->select([
-        'categoria',
-        DB::raw("CONCAT('/minio/proyecto-doc/', archivo) AS url")
-      ])
-      ->where('proyecto_id', '=', $detalles->proyecto_id)
-      ->where('nombre', '=', 'Anexo Proyecto PINVPOS')
-      ->where('estado', '=', 1)
-      ->get()
-      ->mapWithKeys(function ($item) {
-        return [$item->categoria => $item->url];
-      });
-    
     $miembros = DB::table('Proyecto_integrante AS a')
       ->leftJoin('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
       ->join('Proyecto_integrante_tipo AS c', 'c.id', '=', 'a.proyecto_integrante_tipo_id')
@@ -66,11 +60,23 @@ class PinvposController extends Controller {
       ->where('a.proyecto_id', '=', $detalles->proyecto_id)
       ->get();
 
-    $pdf = Pdf::loadView('admin.estudios.informes_tecnicos.pinvpos', [
+    $archivos = DB::table('Proyecto_doc')
+      ->select([
+        'categoria',
+        DB::raw("CONCAT('/minio/proyecto-doc/', archivo) AS url")
+      ])
+      ->where('proyecto_id', '=', $detalles->proyecto_id)
+      ->where('estado', '=', 1)
+      ->get()
+      ->mapWithKeys(function ($item) {
+        return [$item->categoria => $item->url];
+      });
+
+    $pdf = Pdf::loadView('admin.estudios.informes_tecnicos.pmulti', [
       'proyecto' => $proyecto,
+      'miembros' => $miembros,
       'archivos' => $archivos,
       'detalles' => $detalles,
-      'miembros' => $miembros,
       'informe' => $request->query('tipo_informe')
     ]);
 

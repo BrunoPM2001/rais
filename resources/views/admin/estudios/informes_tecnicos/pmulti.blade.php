@@ -54,7 +54,7 @@
       position: fixed;
       bottom: -15px;
       left: 0px;
-      widows: 100%;
+      width: 100%;
       text-align: left;
       font-size: 11px;
       font-style: oblique;
@@ -74,15 +74,9 @@
       text-align: center;
     }
 
-    .tableData {
-      width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 30px;
-    }
-
-    .tableData>tbody td {
-      font-size: 11px;
-      padding: 5px 3px 6px 3px;
+    .subtitulo {
+      font-size: 14px;
+      text-align: center;
     }
 
     .table {
@@ -90,13 +84,6 @@
       border-collapse: collapse;
       border: 1.5px solid #000;
       margin-bottom: 30px;
-    }
-
-    .firmas {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 10px;
-      margin-top: 120px;
     }
 
     .table>thead th {
@@ -112,29 +99,19 @@
       padding: 5px 3px 6px 3px;
     }
 
-    .row-left {
-      text-align: left;
+    .tableData {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 30px;
     }
 
-    .row-right {
-      text-align: right;
-      padding-right: 10px;
-    }
-
-    .cuerpo>p {
+    .tableData>tbody td {
       font-size: 11px;
+      padding: 5px 3px 6px 3px;
     }
 
     .desc {
-      font-size: 11px;
-    }
-
-    .desc p span {
-      font-size: 11px !important;
-    }
-
-    .desc img {
-      width: 100% !important;
+      font-size: 10px;
     }
 
     .obs {
@@ -167,10 +144,14 @@
   </div>
   <div class="div"></div>
   <div class="foot-1">RAIS - UNMSM - {{ $proyecto->codigo_proyecto }} - {{ $detalles->id }}</div>
-
   <p class="titulo">
     <strong>
-      Proyectos de ciencia, tecnología, innovación y emprendimiento {{ $proyecto->periodo }}<br><br>
+      Proyecto de Investigación Multidisciplinario
+    </strong>
+  </p>
+
+  <p class="subtitulo">
+    <strong>
       {{ $informe }}<br>
       Estado:
       @switch($detalles->estado)
@@ -192,6 +173,7 @@
       {{ Carbon::parse($detalles->fecha_estado)->format('d/m/Y') }}
     </strong>
   </p>
+
   <div class="cuerpo">
 
     @if ($detalles->estado == 3)
@@ -206,67 +188,67 @@
       </table>
     @endif
 
-    <h5>I. Datos generales</h5>
+    <h5>I. Datos generales:</h5>
 
     <table class="tableData">
       <tbody>
         <tr>
-          <td style="width: 16%;" valign="top"><strong>1.1 Título</strong></td>
+          <td style="width: 24%;" valign="top"><strong>Título</strong></td>
           <td style="width: 1%;" valign="top">:</td>
-          <td style="width: 83%;" valign="top">{{ $proyecto->titulo }}</td>
+          <td style="width: 75%;" valign="top">{{ $proyecto->titulo }}</td>
         </tr>
         <tr>
-          <td style="width: 16%;"><strong>1.2 Código</strong></td>
-          <td style="width: 1%;">:</td>
-          <td style="width: 83%;">{{ $proyecto->codigo_proyecto }}</td>
+          <td style="width: 24%;" valign="top"><strong>Código</strong></td>
+          <td style="width: 1%;" valign="top">:</td>
+          <td style="width: 75%;" valign="top">{{ $proyecto->codigo_proyecto }}</td>
         </tr>
         <tr>
-          <td style="width: 16%;"><strong>1.3 Resolución</strong></td>
-          <td style="width: 1%;">:</td>
-          <td style="width: 83%;">{{ $proyecto->resolucion_rectoral }}</td>
+          <td style="width: 24%;" valign="top"><strong>Resolución </strong></td>
+          <td style="width: 1%;" valign="top">:</td>
+          <td style="width: 75%;" valign="top">{{ $proyecto->resolucion_rectoral }}</td>
         </tr>
         <tr>
-          <td style="width: 16%;"><strong>1.4 Año</strong></td>
-          <td style="width: 1%;">:</td>
-          <td style="width: 83%;">{{ $proyecto->periodo }}</td>
+          <td style="width: 24%;" valign="top"><strong>Año</strong></td>
+          <td style="width: 1%;" valign="top">:</td>
+          <td style="width: 75%;" valign="top">{{ $proyecto->periodo }}</td>
         </tr>
         <tr>
-          <td style="width: 16%;"><strong>1.5 Grupo</strong></td>
-          <td style="width: 1%;">:</td>
-          <td style="width: 83%;">{{ $proyecto->grupo_nombre }}</td>
+          <td style="width: 24%;" valign="top"><strong>Grupo</strong></td>
+          <td style="width: 1%;" valign="top">:</td>
+          <td style="width: 75%;" valign="top">{{ $proyecto->grupo_nombre }}</td>
         </tr>
         <tr>
-          <td style="width: 16%;"><strong>1.6 Instituto/Centro/Unidad investigación</strong></td>
-          <td style="width: 1%;">:</td>
-          <td style="width: 83%;">{{ $proyecto->localizacion }}</td>
+          <td style="width: 24%;" valign="top"><strong>Localización</strong></td>
+          <td style="width: 1%;" valign="top">:</td>
+          <td style="width: 75%;" valign="top">{{ $proyecto->localizacion }}</td>
         </tr>
         <tr>
-          <td style="width: 16%;"><strong>1.7 Facultad</strong></td>
-          <td style="width: 1%;">:</td>
-          <td style="width: 83%;">{{ $proyecto->facultad }}</td>
+          <td style="width: 24%;" valign="top"><strong>Facultad</strong></td>
+          <td style="width: 1%;" valign="top">:</td>
+          <td style="width: 75%;" valign="top">{{ $proyecto->facultad }}</td>
         </tr>
         <tr>
-          <td style="width: 16%;"><strong>1.8 Línea de investigación</strong></td>
-          <td style="width: 1%;">:</td>
-          <td style="width: 83%;">{{ $proyecto->linea }}</td>
+          <td style="width: 24%;" valign="top"><strong>Línea de investigación</strong></td>
+          <td style="width: 1%;" valign="top">:</td>
+          <td style="width: 75%;" valign="top">{{ $proyecto->linea }}</td>
         </tr>
         <tr>
-          <td style="width: 16%;"><strong>1.9 Tipo de investigacion</strong></td>
-          <td style="width: 1%;">:</td>
-          <td style="width: 83%;">{{ $proyecto->tipo_investigacion }}</td>
+          <td style="width: 24%;" valign="top"><strong>Monto financiado</strong></td>
+          <td style="width: 1%;" valign="top">:</td>
+          <td style="width: 75%;" valign="top">{{ $proyecto->monto }}</td>
         </tr>
       </tbody>
     </table>
 
-    <h5>II. Miembros del equipo de investigación</h5>
+    <h5>II. Miembros del equipo de investigación:</h5>
 
     <table class="table">
       <thead>
         <tr>
-          <th style="width: 20%;">Código</th>
-          <th style="width: 40%;">Nombres</th>
-          <th style="width: 20%;">Condición</th>
-          <th style="width: 20%;">Tipo</th>
+          <th>Código</th>
+          <th>Apellidos y Nombres </th>
+          <th>Condición</th>
+          <th>Tipo</th>
         </tr>
       </thead>
       <tbody>
@@ -281,65 +263,71 @@
       </tbody>
     </table>
 
-    <h5>III. Contenido del informe</h5>
+    <h5>III. Contenido del informe:</h5>
 
-    <h5>3.1 Resumen</h5>
+    <h6>3.1 Resumen</h6>
     <div class="desc">
       {!! $detalles->resumen_ejecutivo !!}
     </div>
 
-    <h5>3.2 Palabras clave</h5>
+    <h6>3.2 Palabras clave</h6>
     <div class="desc">
       {!! $detalles->palabras_clave !!}
     </div>
 
-    <h5>3.3 Introducción</h5>
+    <h6>3.3 Introduccción</h6>
     <div class="desc">
       {!! $detalles->infinal1 !!}
     </div>
 
-    <h5>3.4 Metodología</h5>
+    <h6>3.4 Metodologías</h6>
     <div class="desc">
       {!! $detalles->infinal2 !!}
     </div>
 
-    <h5>3.5 Resultados (capítulos, títulos, subtítulos, tablas, gráficos según corresponda)</h5>
+    <h6>3.5 Resultados</h6>
     <div class="desc">
       {!! $detalles->infinal3 !!}
     </div>
 
-    <h5>3.6 Discusión</h5>
+    <h6>3.6 Discusión</h6>
     <div class="desc">
       {!! $detalles->infinal4 !!}
     </div>
 
-    <h5>3.7 Conclusiones</h5>
+    <h6>3.7 Conclusiones</h6>
     <div class="desc">
       {!! $detalles->infinal5 !!}
     </div>
 
-    <h5>3.8 Recomendaciones</h5>
+    <h6>3.8 Recomendaciones</h6>
     <div class="desc">
       {!! $detalles->infinal6 !!}
     </div>
 
-    <h5>3.9 Referencias bibliográficas</h5>
+    <h6>3.9 Referencias bibliográficas</h6>
     <div class="desc">
       {!! $detalles->infinal7 !!}
     </div>
 
-    <h5>3.10 Anexos</h5>
+    <h6>3.10 Anexos</h6>
     <div class="desc">
-      {!! $detalles->infinal8 !!}
+      Anexo:
+      @if (isset($archivos['informe-PMULTI-INFORME']))
+        Sí
+      @else
+        No
+      @endif
     </div>
 
-    <h5>IV. Impacto</h5>
-    <h5>4.1 Aplicación práctica e impacto</h5>
+    <h5>IV. Impacto:</h5>
+
+    <h6>4.1 Aplicación práctica e impacto</h6>
     <div class="desc">
       {!! $detalles->infinal9 !!}
     </div>
 
-    <h5>4.2 Publicación</h5>
+    <h6>4.2 Publicación</h6>
     <div class="desc">
       {!! $detalles->infinal10 !!}
     </div>

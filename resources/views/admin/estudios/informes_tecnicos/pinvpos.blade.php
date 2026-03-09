@@ -53,9 +53,11 @@
       position: fixed;
       bottom: -15px;
       left: 0px;
+      width: 100%
       text-align: left;
       font-size: 11px;
       font-style: oblique;
+      border-top: 1px solid #000;
     }
 
     .div {
@@ -130,6 +132,20 @@
     .desc img {
       width: 100% !important; 
     }
+
+    .obs {
+      background-color: #ff9a9a;
+      border-radius: 2px;
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 30px;
+      padding: 2px 4px;
+    }
+
+    .obs>tbody td {
+      font-size: 11px;
+      padding: 5px 3px 6px 3px;
+    }
   </style>
 </head>
 
@@ -150,7 +166,7 @@
 
   <p class="titulo">
     <strong>
-      Talleres de Actualización de las Líneas de Investigación {{ $detalles->periodo ?? '' }}<br><br>
+      Talleres de investigación y posgrado {{ $detalles->periodo ?? '' }}<br><br>
       {{ $informe }}<br>
       Estado: 
       @switch($detalles->estado)
@@ -176,6 +192,18 @@
   </p>
   <div class="cuerpo">
 
+    @if ($detalles->estado == 3)
+      <table class="obs">
+        <tbody>
+          <tr>
+            <td style="width: 12%;" valign="top"><strong>Observaciones</strong></td>
+            <td style="width: 1%;" valign="top">:</td>
+            <td style="width: 87%;" valign="top">{{ $detalles->observaciones }}</td>
+          </tr>
+        </tbody>
+      </table>
+    @endif
+
     <h5>I. Datos generales</h5>
 
     <table class="tableData">
@@ -196,14 +224,27 @@
           <td style="width: 83%;">{{ $proyecto->facultad }}</td>
         </tr>
         <tr>
-          <td style="width: 16%;" valign="top"><strong>1.4 Coordinador</strong></td>
+          <td style="width: 16%;" valign="top"><strong>1.4 Comité organizador</strong></td>
           <td style="width: 1%;" valign="top">:</td>
-          <td style="width: 83%;" valign="top">{{ $proyecto->responsable }}</td>
+          <td style="width: 83%;" valign="top">
+            @if(isset($miembros) && count($miembros) > 0)
+              @foreach($miembros as $m)
+                {{ $m->condicion }} - {{ $m->nombres }}<br>
+              @endforeach
+            @else
+              Sin miembros registrados
+            @endif
+          </td>
         </tr>
         <tr>
           <td style="width: 16%;"><strong>1.5 Resolución</strong></td>
           <td style="width: 1%;">:</td>
           <td style="width: 83%;">{{ $proyecto->resolucion_rectoral }}</td>
+        </tr>
+        <tr>
+          <td style="width: 16%;"><strong>1.6 Fecha del evento</strong></td>
+          <td style="width: 1%;">:</td>
+          <td style="width: 83%;">{{ $detalles->fecha_evento }}</td>
         </tr>
       </tbody>
     </table>

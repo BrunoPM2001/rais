@@ -15,7 +15,7 @@
   <title>Reporte</title>
   <style>
     @page {
-      margin-top: 200px;
+      margin-top: 250px;
       /* espacio reservado para el encabezado */
       margin-bottom: 95px;
       /* para el pie de página */
@@ -47,10 +47,10 @@
 
     header {
       position: fixed;
-      top: -170px;
+      top: -210px;
       left: 0;
       right: 0;
-      height: 100px;
+     /* height: 100px;*/
     }
 
     .content {
@@ -188,6 +188,13 @@
       line-height: 1.2;
       /* Reduce la altura de línea */
     }
+
+    .detalle-comentario {
+      font-size: 12px;
+      margin-bottom: 5px;
+      line-height: 1.3;
+      text-align: right;
+    }
   </style>
 </head>
 
@@ -215,6 +222,11 @@
         <td><b>GRUPO DE INVESTIGACIÓN <br>Año - {{ date('Y') }}</b></td>
       </tr>
     </table>
+    @if (!empty($detalle))
+    <div class="detalle-comentario">
+      {{ $detalle }}
+    </div>
+    @endif
     <table class="table-texto" style="width: 100%; font-size:12px; margin-bottom: 0px;">
       <tr>
         <td style="text-align: left; width: 45%;">
@@ -247,25 +259,6 @@
       </tr>
     </table>
   </div>
-
-  <div class="content">
-    @if (!empty($detalle))
-      <div
-        style="
-      max-width: 100%;
-      margin: 8px 0;
-      background-color: #f9f9f9;
-      border: 1px solid #ccc;
-      padding: 5px;
-      font-size: 12px;
-      border-radius: 6px;
-      white-space: pre-wrap; /* 👈 Forzar salto en palabras largas */
-      word-break: break-all;  /* 👈 Funciona en dompdf */
-    ">
-        {{ $detalle }}
-      </div>
-    @endif
-
 
     @foreach ($lista as $item)
       @if ($grupoActual != $item->grupo_nombre)
