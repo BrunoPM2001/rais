@@ -896,6 +896,7 @@ class InformesTecnicosController extends S3Controller {
     $detalles = DB::table('Informe_tecnico_H AS a')
       ->join('Proyecto_H AS b', 'b.id', '=', 'a.proyecto_id')
       ->select([
+        'b.resolucion',
         'a.proyecto_id',
         'a.*',
       ])
@@ -926,10 +927,29 @@ class InformesTecnicosController extends S3Controller {
       ])
       ->where('a.id', '=', $detalles->proyecto_id)
       ->first();
+    
+
+    $file = DB::table('File')
+      ->select([
+        DB::raw("CONCAT('/minio/informe-tecnico-antiguo/', `key`) AS url"),
+        'created_at'
+      ])
+      ->where('tabla_id', '=', $request->query('id'))
+      ->where('tabla', '=', 'Informe_tecnico_H')
+      ->where('estado', '=', 20)
+      ->first();
+
+    $archivos = $file ? [
+      'informe-tecnico-antiguo' => [
+        'url' => $file->url,
+        'fecha' => $file->created_at
+      ]
+    ] : [];
 
     return [
       'detalles' => $detalles,
-      'proyecto' => $proyecto
+      'proyecto' => $proyecto,
+      'archivos' => $archivos
     ];
   }
 }
