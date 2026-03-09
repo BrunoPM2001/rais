@@ -164,18 +164,59 @@ class InformePinvposController extends S3Controller {
   }
 
   public function presentar(Request $request) {
-    $count1 = DB::table('Informe_tecnico')
+    $informe = DB::table('Informe_tecnico')
       ->where('proyecto_id', '=', $request->input('proyecto_id'))
-      ->whereNotNull('objetivos_taller')
-      ->whereNotNull('fecha_evento')
-      ->whereNotNull('propuestas_taller')
-      ->whereNotNull('conclusion_taller')
-      ->whereNotNull('recomendacion_taller')
-      ->whereNotNull('asistencia_taller')
-      ->count();
+      ->first();
 
-    if ($count1 == 0) {
-      return ['message' => 'error', 'detail' => 'Necesita completar todos los campos'];
+    $campos = [
+      'objetivos_taller' => 'Objetivos',
+      'fecha_evento' => 'Fecha del evento',
+      'propuestas_taller' => 'Programa del taller',
+      'conclusion_taller' => 'Conclusiones',
+      'recomendacion_taller' => 'Recomendaciones',
+      'asistencia_taller' => 'Asistencia',
+    ];
+
+    $faltantes = [];
+
+    foreach ($campos as $campo => $nombre) {
+      if (empty($informe->$campo)) {
+        $faltantes[] = $nombre;
+      }
+    }
+
+    $anexosObligatorios = ['anexo1'];
+
+    $faltantesArchivos = [];
+
+    foreach ($anexosObligatorios as $anexo) {
+
+      $existe = DB::table('Proyecto_doc')
+        ->where('proyecto_id', '=', $request->input('proyecto_id'))
+        ->where('categoria', '=', $anexo)
+        ->where('nombre', '=', 'Anexo Proyecto PINVPOS')
+        ->where('estado', '=', 1)
+        ->exists();
+
+      if (!$existe) {
+        $faltantesArchivos[] = $anexo;
+      }
+    }
+
+    $nombres = [
+      'anexo1' => 'Anexos',
+    ];
+
+    foreach ($faltantesArchivos as $f) {
+      $faltantes[] = $nombres[$f];
+    }
+
+    if (count($faltantes) > 0) {
+      return [
+        'message' => 'error',
+        'detail' => 'Faltan completar los siguientes apartados',
+        'faltantes' => $faltantes
+      ];
     }
 
     $inf = DB::table('Informe_tecnico')

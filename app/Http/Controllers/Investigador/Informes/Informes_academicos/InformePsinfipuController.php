@@ -166,14 +166,55 @@ class InformePsinfipuController extends S3Controller {
   }
 
   public function presentar(Request $request) {
-    $count1 = DB::table('Informe_tecnico')
+    $informe = DB::table('Informe_tecnico')
       ->where('proyecto_id', '=', $request->input('proyecto_id'))
-      ->whereNotNull('resumen_ejecutivo')
-      ->whereNotNull('infinal1')
-      ->count();
+      ->first();
 
-    if ($count1 == 0) {
-      return ['message' => 'error', 'detail' => 'Necesita completar los campos de: Resumen, proceso de instalación, funcionamiento, gestión de uso, aplicación práctica e impacto, e impacto de uso.'];
+    $campos = [
+      'infinal1' => 'Aportes',
+      'resumen_ejecutivo' => 'Impacto',
+    ];
+
+    $faltantes = [];
+
+    foreach ($campos as $campo => $nombre) {
+      if (empty($informe->$campo)) {
+        $faltantes[] = $nombre;
+      }
+    }
+
+    $anexosObligatorios = ['informe-PSINFIPU-RESULTADOS'];
+
+    $faltantesArchivos = [];
+
+    foreach ($anexosObligatorios as $anexo) {
+
+      $existe = DB::table('Proyecto_doc')
+        ->where('proyecto_id', '=', $request->input('proyecto_id'))
+        ->where('categoria', '=', $anexo)
+        ->where('nombre', '=', 'Archivos de informe')
+        ->where('estado', '=', 1)
+        ->exists();
+
+      if (!$existe) {
+        $faltantesArchivos[] = $anexo;
+      }
+    }
+
+    $nombres = [
+      'informe-PSINFIPU-RESULTADOS' => 'Anexos',
+    ];
+
+    foreach ($faltantesArchivos as $f) {
+      $faltantes[] = $nombres[$f];
+    }
+
+    if (count($faltantes) > 0) {
+      return [
+        'message' => 'error',
+        'detail' => 'Faltan completar los siguientes apartados',
+        'faltantes' => $faltantes
+      ];
     }
 
     $count2 = DB::table('Proyecto_doc')

@@ -196,18 +196,62 @@ class InformeEciController extends S3Controller {
   }
 
   public function presentar(Request $request) {
-    $count1 = DB::table('Informe_tecnico')
+    $informe = DB::table('Informe_tecnico')
       ->where('proyecto_id', '=', $request->input('proyecto_id'))
-      ->whereNotNull('resumen_ejecutivo')
-      ->whereNotNull('infinal1')
-      ->whereNotNull('infinal2')
-      ->whereNotNull('infinal3')
-      ->whereNotNull('infinal4')
-      ->whereNotNull('infinal5')
-      ->count();
+      ->first();
 
-    if ($count1 == 0) {
-      return ['message' => 'error', 'detail' => 'Necesita completar los campos de: Resumen, proceso de instalación, funcionamiento, gestión de uso, aplicación práctica e impacto, e impacto de uso.'];
+    $campos = [
+      'resumen_ejecutivo' => 'Resumen ejecutivo',
+      'infinal1' => 'Proceso de instalación',
+      'infinal2' => 'Funcionamiento',
+      'infinal3' => 'Gestión de uso',
+      'infinal4' => 'Aplicación práctica e impacto',
+      'infinal5' => 'Impacto - uso',
+    ];
+
+    $faltantes = [];
+
+    foreach ($campos as $campo => $nombre) {
+      if (empty($informe->$campo)) {
+        $faltantes[] = $nombre;
+      }
+    }
+
+    $anexosObligatorios = ['anexo1', 'anexo2', 'anexo3', 'anexo4'];
+
+    $faltantesArchivos = [];
+
+    foreach ($anexosObligatorios as $anexo) {
+
+      $existe = DB::table('Proyecto_doc')
+        ->where('proyecto_id', '=', $request->input('proyecto_id'))
+        ->where('categoria', '=', $anexo)
+        ->where('nombre', '=', 'Anexos proyecto ECI')
+        ->where('estado', '=', 1)
+        ->exists();
+
+      if (!$existe) {
+        $faltantesArchivos[] = $anexo;
+      }
+    }
+
+    $nombres = [
+      'anexo1' => 'Documento de conformidad firmada por el coordinador del GI',
+      'anexo2' => 'Imágenes del equipo/gabinete instalado',
+      'anexo3' => 'Imágenes de equipos complementarios',
+      'anexo4' => 'Formato de control del uso del equipo'
+    ];
+
+    foreach ($faltantesArchivos as $f) {
+      $faltantes[] = $nombres[$f];
+    }
+
+    if (count($faltantes) > 0) {
+      return [
+        'message' => 'error',
+        'detail' => 'Faltan completar los siguientes apartados',
+        'faltantes' => $faltantes
+      ];
     }
 
     $count2 = DB::table('Proyecto_doc')

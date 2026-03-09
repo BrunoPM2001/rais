@@ -194,18 +194,38 @@ class InformePsinfinvController extends S3Controller {
   }
 
   public function presentar(Request $request) {
-    $count1 = DB::table('Informe_tecnico')
+    $informe = DB::table('Informe_tecnico')
       ->where('proyecto_id', '=', $request->input('proyecto_id'))
-      ->whereNotNull('resumen_ejecutivo')
-      ->whereNotNull('infinal1')
-      ->whereNotNull('infinal2')
-      ->whereNotNull('infinal3')
-      ->whereNotNull('infinal4')
-      ->whereNotNull('infinal5')
-      ->count();
+      ->first();
 
-    if ($count1 == 0) {
-      return ['message' => 'error', 'detail' => 'Necesita completar los campos de: Resumen, proceso de instalación, funcionamiento, gestión de uso, aplicación práctica e impacto, e impacto de uso.'];
+    $campos = [
+      'resumen_ejecutivo' => 'Resumen ejecutivo',
+      'palabras_clave' => 'Palabras clave',
+      'infinal1' => 'Introducción',
+      'infinal2' => 'Metodologías',
+      'infinal3' => 'Resultados',
+      'infinal4' => 'Discusión',
+      'infinal5' => 'Conclusiones',
+      'infinal6' => 'Recomendaciones',
+      'infinal7' => 'Referencias bibliográficas',
+      'infinal9' => 'Aplicación práctica e impacto',
+      'infinal10' => 'Publicación'
+    ];
+
+    $faltantes = [];
+
+    foreach ($campos as $campo => $nombre) {
+      if (empty($informe->$campo)) {
+        $faltantes[] = $nombre;
+      }
+    }
+
+    if (count($faltantes) > 0) {
+      return [
+        'message' => 'error',
+        'detail' => 'Faltan completar los siguientes apartados',
+        'faltantes' => $faltantes
+      ];
     }
 
     $count2 = DB::table('Proyecto_doc')
