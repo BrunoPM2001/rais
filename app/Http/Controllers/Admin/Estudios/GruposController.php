@@ -1377,6 +1377,7 @@ class GruposController extends S3Controller {
       ->select([
         'grupo_nombre',
         'grupo_nombre_corto',
+        'grupo_categoria',
         'telefono',
         'anexo',
         'oficina',

@@ -174,6 +174,11 @@
           <td style="width: 75%;">{{ $grupo->grupo_nombre_corto }}</td>
         </tr>
         <tr>
+          <td style="width: 24%;"><strong>Categoria</strong></td>
+          <td style="width: 1%;">:</td>
+          <td style="width: 75%;">{{ $grupo->grupo_categoria }}</td>
+        </tr>
+        <tr>
           <td style="width: 24%;"><strong>Teléfono</strong></td>
           <td style="width: 1%;">:</td>
           <td style="width: 75%;">{{ $grupo->telefono }}</td>

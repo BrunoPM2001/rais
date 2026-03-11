@@ -14,6 +14,8 @@ use App\Http\Controllers\Admin\Estudios\Proyectos\PmultiController;
 use App\Http\Controllers\Admin\Estudios\Proyectos\PtpmaestController;
 use App\Http\Controllers\Admin\Estudios\Proyectos\ProCtieController;
 use App\Http\Controllers\Admin\Estudios\Proyectos\PtpdoctoController;
+use App\Http\Controllers\Admin\Estudios\Proyectos\PtpgradoController;
+use App\Http\Controllers\Admin\Estudios\Proyectos\PtpbachillerController;
 use App\Http\Controllers\S3Controller;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
@@ -228,6 +230,46 @@ class ProyectosGrupoController extends S3Controller {
           'documentos' => $documentos,
           'actividades' => $actividades,
           'presupuesto' => $presupuesto,
+        ];
+
+      case "PTPGRADO":
+        $ctrl = new PtpgradoController();
+        $detalle = $ctrl->detalle($request);
+        $descripcion = $ctrl->descripcion($request);
+        $miembros = $ctrl->miembros($request);
+        $documentos = $ctrl->documentos($request);
+        $presupuesto = $this->presupuesto($request);
+        $actividades = $ctrl->actividades($request);
+        $responsableTesista = $ctrl->responsableTesista($request);
+
+        return [
+          'detalle' => $detalle,
+          'descripcion' => $descripcion,
+          'miembros' => $miembros,
+          'documentos' => $documentos,
+          'actividades' => $actividades,
+          'presupuesto' => $presupuesto,
+          'responsableTesista' => $responsableTesista,
+        ];
+
+      case "PTPBACHILLER":
+        $ctrl = new PtpbachillerController();
+        $detalle = $ctrl->detalle($request);
+        $descripcion = $ctrl->descripcion($request);
+        $miembros = $ctrl->miembros($request);
+        $documentos = $ctrl->documentos($request);
+        $presupuesto = $this->presupuesto($request);
+        $actividades = $ctrl->actividades($request);
+        $responsableTesista = $ctrl->responsableTesista($request);
+
+        return [
+          'detalle' => $detalle,
+          'descripcion' => $descripcion,
+          'miembros' => $miembros,
+          'documentos' => $documentos,
+          'actividades' => $actividades,
+          'presupuesto' => $presupuesto,
+          'responsableTesista' => $responsableTesista,
         ];
 
       case "PTPMAEST":
@@ -674,6 +716,15 @@ class ProyectosGrupoController extends S3Controller {
         return $ctrl->reporte($request);
       case "PTPMAEST":
         $ctrl = new PtpmaestController();
+        return $ctrl->reporte($request);
+      case "PTPDOCTO":
+        $ctrl = new PtpdoctoController();
+        return $ctrl->reporte($request);
+      case "PTPGRADO":
+        $ctrl = new PtpgradoController();
+        return $ctrl->reporte($request);
+      case "PTPBACHILLER":
+        $ctrl = new PtpbachillerController();
         return $ctrl->reporte($request);
       case "ECI":
         $ctrl = new EciController();
