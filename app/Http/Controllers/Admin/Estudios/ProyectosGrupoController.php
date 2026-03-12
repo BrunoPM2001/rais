@@ -257,19 +257,17 @@ class ProyectosGrupoController extends S3Controller {
         $detalle = $ctrl->detalle($request);
         $descripcion = $ctrl->descripcion($request);
         $miembros = $ctrl->miembros($request);
-        $documentos = $ctrl->documentos($request);
         $presupuesto = $this->presupuesto($request);
         $actividades = $ctrl->actividades($request);
-        $responsableTesista = $ctrl->responsableTesista($request);
+        $responsable = $ctrl->responsable($request);
 
         return [
           'detalle' => $detalle,
           'descripcion' => $descripcion,
           'miembros' => $miembros,
-          'documentos' => $documentos,
           'actividades' => $actividades,
           'presupuesto' => $presupuesto,
-          'responsableTesista' => $responsableTesista,
+          'responsable' => $responsable,
         ];
 
       case "PTPMAEST":
