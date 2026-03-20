@@ -55,6 +55,7 @@ class PublicacionesController extends S3Controller {
           'a.editorial',
           'a.evento_nombre',
           DB::raw("CONCAT(c.apellido1, ' ', c.apellido2, ', ', c.nombres) AS presentador"),
+          'c.docente_categoria',
           'h.grupo_nombre AS grupo_investigacion',
           'd.nombre AS facultad',
           'e.nombre AS area',

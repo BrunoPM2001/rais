@@ -442,6 +442,7 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
     Route::prefix('sum')->group(function () {
       Route::get('listadoLocal', [GestionSUMController::class, 'listadoLocal']);
       Route::get('listadoSum', [GestionSUMController::class, 'listadoSum']);
+      Route::post('sync-total', [GestionSUMController::class, 'syncTotal']);
     });
   });
 
@@ -1333,5 +1334,6 @@ Route::prefix('facultad')->middleware('checkRole:Usuario_facultad')->group(funct
 
   Route::prefix('reportes')->group(function () {
     Route::post('excel', [FacultadListadoController::class, 'excel']);
+    Route::post('proyectos', [FacultadListadoController::class, 'proyectosExcel']);
   });
 });

@@ -35,7 +35,7 @@ class PconfigiInvController extends S3Controller {
       ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
       ->where('a.condicion', '=', 'Responsable')
       ->where('b.tipo_proyecto', '=', 'PCONFIGI-INV')
-      ->where('b.periodo', '=', 2025)
+      ->where('b.periodo', '=', 2026)
       ->get();
 
     return $listado;
@@ -266,7 +266,7 @@ class PconfigiInvController extends S3Controller {
           'tipo_proyecto' => 'PCONFIGI-INV',
           'step' => 2,
           'estado' => 6,
-          'periodo' => 2025,
+          'periodo' => 2026,
           'fecha_inscripcion' => $date,
           'created_at' => $date,
           'updated_at' => $date,
@@ -519,6 +519,37 @@ class PconfigiInvController extends S3Controller {
       ->get();
 
     return ['estado' => true, 'actividades' => $actividades];
+  }
+
+  public function listarActividades(Request $request) {
+    $actividades = DB::table('Proyecto_actividad')
+      ->select([
+        'id',
+        'actividad',
+        'fecha_inicio',
+        'fecha_fin',
+      ])
+      ->where('proyecto_id', '=', $request->query('proyecto_id'))
+      ->get();
+
+    $rango_fechas = DB::table('Convocatoria')
+      ->select([
+        'fecha_inicial',
+        'fecha_final'
+      ])
+      ->where('tipo', '=', 'PCONFIGI-INV')
+      ->where('periodo', '=', 2026)
+      ->where('evento', '=', 'calendario')
+      ->where('estado', '=', 1)
+      ->first();
+
+    return [
+      'actividades' => [
+      'actividades' => $actividades,
+      'rango' => $rango_fechas
+    ],
+      'rango' => $rango_fechas
+    ];
   }
 
   public function addActividad(Request $request) {

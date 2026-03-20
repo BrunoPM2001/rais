@@ -6,6 +6,7 @@ use App\Exports\Admin\FromDataExport;
 use App\Exports\Facultad\DeudasExport;
 use App\Exports\Facultad\PublicacionesExport;
 use App\Exports\Facultad\DocenteInvestigadorExport;
+use App\Exports\Facultad\ProyectosExport;
 use App\Exports\Facultad\GrupoIntegrantesExport;
 use App\Exports\Facultad\InvestigadoresExport;
 use App\Http\Controllers\Controller;
@@ -305,6 +306,21 @@ class FacultadListadoController extends Controller {
       'tipos' => $tipoProyecto,
       'cuenta' => $cuenta
     ];
+  }
+
+  public function proyectosExcel(Request $request) {
+    $filters = $request->filters ?? [];
+    $export = new ProyectosExport($filters);
+    $total = $export->query()->count();
+
+    if ($total > 15000) {
+      return ['message' => 'info', 'detail' => "La cantidad de registros ($total) supera el límite permitido (15000). Añada más filtros."];
+    }
+
+    return Excel::download(
+        $export,
+        'proyectos.xlsx'
+    );
   }
 
   public function totalDeudores($facultadId = null) {
