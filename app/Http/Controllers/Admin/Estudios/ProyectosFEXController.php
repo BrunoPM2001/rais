@@ -215,6 +215,7 @@ class ProyectosFEXController extends S3Controller {
       ->select([
         'a.id',
         'c.nombre AS tipo',
+        'b.tipo AS usuario_tipo',
         DB::raw("CASE
           WHEN a.responsabilidad IN ('', 'null') OR a.responsabilidad IS NULL THEN c.nombre
           ELSE a.responsabilidad
@@ -226,7 +227,7 @@ class ProyectosFEXController extends S3Controller {
           ELSE 'No'
         END AS responsable"),
         DB::raw("CASE
-          WHEN a.proyecto_integrante_tipo_id = 90 THEN 'Externo'
+          WHEN a.proyecto_integrante_tipo_id = 90 OR b.tipo = 'Externo' THEN 'Externo'
           ELSE d.nombre
         END AS facultad")
       ])
