@@ -151,6 +151,7 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
       Route::post('excel', [GruposController::class, 'excel']);
 
       Route::put('updateDetalle', [GruposController::class, 'updateDetalle']);
+      Route::get('listadoFacultades', [GruposController::class, 'listadoFacultades']);
       Route::put('aprobarSolicitud', [GruposController::class, 'aprobarSolicitud']);
       Route::put('disolverGrupo', [GruposController::class, 'disolverGrupo']);
 

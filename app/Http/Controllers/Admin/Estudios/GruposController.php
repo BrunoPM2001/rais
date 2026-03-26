@@ -130,6 +130,7 @@ class GruposController extends S3Controller {
         'a.observaciones_admin',
         'coordinador.nombre AS coordinador',
         'a.estado',
+        'b.id as facultad_id',
         'b.nombre AS facultad',
         'a.telefono',
         'a.anexo',
@@ -153,6 +154,13 @@ class GruposController extends S3Controller {
     return $detalle;
   }
 
+  public function listadoFacultades() {
+    return DB::table('Facultad')
+        ->select('id', 'nombre')
+        ->orderBy('id', 'asc')
+        ->get();
+  }
+
   public function updateDetalle(Request $request) {
     if ($request->input('tipo') == 'grupo') {
       $count = DB::table('Grupo')
@@ -168,6 +176,7 @@ class GruposController extends S3Controller {
           'observaciones_admin' => $request->input('observaciones_admin'),
           'estado' => $request->input('estado')["value"],
           'grupo_categoria' => $request->input('grupo_categoria')["value"],
+          'facultad_id' => $request->input('facultad_id')["value"],
           'telefono' => $request->input('telefono'),
           'anexo' => $request->input('anexo'),
           'oficina' => $request->input('oficina'),
