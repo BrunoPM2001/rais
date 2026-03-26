@@ -121,6 +121,23 @@ class PmultiController extends S3Controller {
 
     $req4 == 0 && $errores[] = "Necesita tener CTI Vitae, orcid registrado y google scholar para participar";
 
+    $grupoId = DB::table('Grupo_integrante')
+      ->where('investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+      ->where('condicion', 'not like', 'Ex%')
+      ->value('grupo_id');
+
+    if ($grupoId) {
+      $req5 = DB::table('Proyecto AS a')
+      ->join('Proyecto_integrante AS b', 'b.proyecto_id', '=', 'a.id')
+      ->where('a.estado', '=', 1)
+      ->where('a.tipo_proyecto', '=', 'PMULTI')
+      ->whereIn('a.periodo', [2024, 2025])
+      ->where('b.grupo_id', '=', $grupoId)
+      ->count();
+
+      $req5 != 0 && $errores[] = "No podrán participar los docentes que han sido ganadores PMULTI en los años 2024 y 2025";
+    }
+
     if (!empty($errores)) {
       return ['estado' => false, 'errores' => $errores];
     } else {
@@ -313,6 +330,16 @@ class PmultiController extends S3Controller {
           'condicion' => 'Responsable',
         ]);
 
+      DB::table('Proyecto_presupuesto')
+         ->insert([
+           'proyecto_id' => $id,
+           'partida_id' => 61,
+           'justificacion' => '',
+           'monto' => 20000,
+           'created_at' => $date,
+           'updated_at' => $date,
+         ]);
+
       return ['message' => 'success', 'detail' => 'Datos guardados', 'id' => $id];
     }
   }
@@ -461,6 +488,19 @@ class PmultiController extends S3Controller {
     return ['estado' => true, 'integrantes' => $integrantes];
   }
 
+  private function excluirGruposGanadores($query)
+  {
+      return $query->whereNotExists(function ($sub) {
+          $sub->select(DB::raw(1))
+              ->from('Proyecto as p')
+              ->join('Proyecto_integrante as pi', 'pi.proyecto_id', '=', 'p.id')
+              ->whereColumn('pi.grupo_id', 'a.grupo_id')
+              ->where('p.estado', 1)
+              ->where('p.tipo_proyecto', 'PMULTI')
+              ->whereIn('p.periodo', [2024, 2025]);
+      });
+  }
+
   public function listadoCorresponsables(Request $request) {
 
     $listado = DB::table('Grupo_integrante AS a')
@@ -483,6 +523,15 @@ class PmultiController extends S3Controller {
       )
       ->having('value', 'LIKE', '%' . $request->query('query') . '%')
       ->where('a.condicion', '=', 'Titular')
+      ->whereNotExists(function ($query) {
+        $query->select(DB::raw(1))
+          ->from('Proyecto as p')
+          ->join('Proyecto_integrante as pi', 'pi.proyecto_id', '=', 'p.id')
+          ->whereColumn('pi.grupo_id', 'a.grupo_id')
+          ->where('p.estado', 1)
+          ->where('p.tipo_proyecto', 'PMULTI')
+          ->whereIn('p.periodo', [2024, 2025]);
+      })
       ->groupBy('b.id')
       ->limit(10)
       ->get()
@@ -515,6 +564,15 @@ class PmultiController extends S3Controller {
       )
       ->having('value', 'LIKE', '%' . $request->query('query') . '%')
       ->where('a.condicion', '=', 'Titular')
+      ->whereNotExists(function ($query) {
+        $query->select(DB::raw(1))
+          ->from('Proyecto as p')
+          ->join('Proyecto_integrante as pi', 'pi.proyecto_id', '=', 'p.id')
+          ->whereColumn('pi.grupo_id', 'a.grupo_id')
+          ->where('p.estado', 1)
+          ->where('p.tipo_proyecto', 'PMULTI')
+          ->whereIn('p.periodo', [2024, 2025]);
+      })
       ->groupBy('b.id')
       ->limit(10)
       ->get()
@@ -572,6 +630,15 @@ class PmultiController extends S3Controller {
       ->where('a.condicion', '=', 'Adherente')
       ->where('b.tipo', 'LIKE', 'Estudiante%')
       ->whereIn('a.grupo_id', $grupos)
+      ->whereNotExists(function ($query) {
+        $query->select(DB::raw(1))
+          ->from('Proyecto as p')
+          ->join('Proyecto_integrante as pi', 'pi.proyecto_id', '=', 'p.id')
+          ->whereColumn('pi.grupo_id', 'a.grupo_id')
+          ->where('p.estado', 1)
+          ->where('p.tipo_proyecto', 'PMULTI')
+          ->whereIn('p.periodo', [2024, 2025]);
+      })
       ->groupBy('b.id')
       ->limit(10)
       ->get()
@@ -616,6 +683,15 @@ class PmultiController extends S3Controller {
       ->where('a.condicion', '=', 'Adherente')
       ->where('b.tipo', 'LIKE', 'Externo%')
       ->whereIn('a.grupo_id', $grupos)
+      ->whereNotExists(function ($query) {
+        $query->select(DB::raw(1))
+          ->from('Proyecto as p')
+          ->join('Proyecto_integrante as pi', 'pi.proyecto_id', '=', 'p.id')
+          ->whereColumn('pi.grupo_id', 'a.grupo_id')
+          ->where('p.estado', 1)
+          ->where('p.tipo_proyecto', 'PMULTI')
+          ->whereIn('p.periodo', [2024, 2025]);
+      })
       ->groupBy('b.id')
       ->limit(10)
       ->get()

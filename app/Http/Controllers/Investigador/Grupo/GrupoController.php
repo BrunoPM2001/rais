@@ -12,6 +12,7 @@ use App\Http\Controllers\Investigador\Convocatorias\PconfigiController;
 use App\Http\Controllers\Investigador\Convocatorias\PinvposController;
 use App\Http\Controllers\Investigador\Convocatorias\EciController;
 use App\Http\Controllers\Investigador\Convocatorias\ProCTIController;
+use App\Http\Controllers\Investigador\Convocatorias\PmultiController;
 
 class GrupoController extends S3Controller {
   //  Grupos
@@ -1425,13 +1426,13 @@ class GrupoController extends S3Controller {
 
     switch ($tipo) {
       case 'PCONFIGI':
-          return app(PconfigiController::class)->reporte($request);
-
+        return app(PconfigiController::class)->reporte($request);
       case 'PINVPOS':
-          return app(PinvposController::class)->reporte($request);
-
+        return app(PinvposController::class)->reporte($request);
       case 'PRO-CTIE':
-          return app(ProCTIController::class)->reportePDF($request);
+        return app(ProCTIController::class)->reportePDF($request);
+      case 'ECI':
+        return app(EciController::class)->reporte($request);
 
       default:
           return response()->json([
@@ -1517,55 +1518,55 @@ class GrupoController extends S3Controller {
     $coordinadores = collect($autorizaciones)->keyBy('investigador_id');
 
     $grupos = DB::table('Proyecto_integrante AS a')
-        ->leftJoin('Grupo AS b', 'b.id', '=', 'a.grupo_id')
-        ->select([
-            'b.id AS grupo_id',
-            'b.grupo_categoria',
-            DB::raw("UPPER(b.grupo_nombre_corto) AS grupo_nombre_corto"),
-            'a.investigador_id',
-        ])
-        ->where('a.proyecto_id', $proyecto_id)
-        ->whereNotNull('a.grupo_id')
-        ->get()
-        ->groupBy('grupo_id')
-        ->map(function ($items) use ($coordinadores) {
+      ->leftJoin('Grupo AS b', 'b.id', '=', 'a.grupo_id')
+      ->select([
+          'b.id AS grupo_id',
+          'b.grupo_categoria',
+          DB::raw("UPPER(b.grupo_nombre_corto) AS grupo_nombre_corto"),
+          'a.investigador_id',
+      ])
+      ->where('a.proyecto_id', $proyecto_id)
+      ->whereNotNull('a.grupo_id')
+      ->get()
+      ->groupBy('grupo_id')
+      ->map(function ($items) use ($coordinadores) {
 
-            $grupoId = $items->first()->grupo_id;
-            $grupoNombre = $items->first()->grupo_nombre_corto;
-            $grupoCategoria = $items->first()->grupo_categoria;
+        $grupoId = $items->first()->grupo_id;
+        $grupoNombre = $items->first()->grupo_nombre_corto;
+        $grupoCategoria = $items->first()->grupo_categoria;
 
-            // obtener coordinadores reales del grupo
-            $coordsGrupo = DB::table('Grupo_integrante')
-                ->where('grupo_id', $grupoId)
-                ->where('cargo', 'Coordinador')
-                ->pluck('investigador_id');
+        // obtener coordinadores reales del grupo
+        $coordsGrupo = DB::table('Grupo_integrante')
+            ->where('grupo_id', $grupoId)
+            ->where('cargo', 'Coordinador')
+            ->pluck('investigador_id');
 
-            $autorizaciones = collect($coordsGrupo)->map(function ($coord) use ($coordinadores) {
-                return $coordinadores->get($coord);
-            })->filter();
+        $autorizaciones = collect($coordsGrupo)->map(function ($coord) use ($coordinadores) {
+            return $coordinadores->get($coord);
+        })->filter();
 
-            $estado = 'NO';
+        $estado = 'NO';
 
-            if ($autorizaciones->isEmpty()) {
-                $estado = '...';
-            }
+        if ($autorizaciones->isEmpty()) {
+            $estado = '...';
+        }
 
-            if ($autorizaciones->contains(fn($a) => $a['autorizado'] == 1)) {
-                $estado = 'SÍ';
-            }
+        if ($autorizaciones->contains(fn($a) => $a['autorizado'] == 1)) {
+            $estado = 'SÍ';
+        }
 
-            return [
-                'grupo_nombre_corto' => $grupoNombre,
-                'grupo_categoria' => $grupoCategoria,
-                'autorizado' => $estado,
-            ];
-        })
-        ->values();
-      $miAutorizacion = collect($autorizaciones)
-          ->firstWhere('investigador_id', $request->attributes->get('token_decoded')->investigador_id);
+        return [
+            'grupo_nombre_corto' => $grupoNombre,
+            'grupo_categoria' => $grupoCategoria,
+            'autorizado' => $estado,
+        ];
+      })
+      ->values();
+    $miAutorizacion = collect($autorizaciones)
+        ->firstWhere('investigador_id', $request->attributes->get('token_decoded')->investigador_id);
     return [
-        'grupos' => $grupos,
-        'mi_autorizacion' => $miAutorizacion['autorizado'] ?? 0
+      'grupos' => $grupos,
+      'mi_autorizacion' => $miAutorizacion['autorizado'] ?? 0
     ];
   }
 }

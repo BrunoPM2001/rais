@@ -38,6 +38,7 @@ use App\Http\Controllers\Admin\Reportes\PresupuestoController;
 use App\Http\Controllers\Admin\Reportes\ProyectoController;
 use App\Http\Controllers\Evaluador\Evaluaciones\EvaluadorProyectosController;
 use App\Http\Controllers\Facultad\Listado\FacultadListadoController;
+use App\Http\Controllers\Facultad\Listado\FacultadProyectosController;
 use App\Http\Controllers\Investigador\Actividades\AsesoriaTesisPosController;
 use App\Http\Controllers\Investigador\Actividades\AsesoriaTesisPreController;
 use App\Http\Controllers\Investigador\Actividades\ComiteEditorialController;
@@ -1300,8 +1301,9 @@ Route::prefix('facultad')->middleware('checkRole:Usuario_facultad')->group(funct
     });
 
     Route::prefix('proyectos')->group(function () {
-      Route::get('listado', [FacultadListadoController::class, 'ListadoProyectos']);
-      Route::get('listadoIntegrantes', [FacultadListadoController::class, 'listadoIntegrantes']);
+      Route::get('listado', [FacultadProyectosController::class, 'ListadoProyectos']);
+      Route::get('listadoIntegrantes', [FacultadProyectosController::class, 'listadoIntegrantes']);
+      Route::get('reporteProyecto', [FacultadProyectosController::class, 'reporte']);
     });
 
     Route::prefix('proyectos_gi')->group(function () {
@@ -1309,7 +1311,7 @@ Route::prefix('facultad')->middleware('checkRole:Usuario_facultad')->group(funct
     });
 
     Route::prefix('proyectos_fex')->group(function () {
-      Route::get('listado', [FacultadListadoController::class, 'ListadoProyectosFEX']);
+      Route::get('listado', [FacultadProyectosController::class, 'ListadoProyectosFEX']);
     });
 
     Route::prefix('grupos')->group(function () {
