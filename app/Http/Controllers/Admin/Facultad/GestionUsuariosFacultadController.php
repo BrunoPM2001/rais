@@ -15,11 +15,14 @@ class GestionUsuariosFacultadController extends Controller {
         'b.id',
         'b.codigo_trabajador',
         DB::raw("CONCAT(b.apellido1, ' ', b.apellido2) AS apellidos"),
+        'b.apellido1',
+        'b.apellido2',
         'b.nombres',
         'c.nombre AS facultad',
         'a.username'
       ])
       ->where('a.tabla', '=', 'Usuario_facultad')
+      ->orderBy('id', 'asc')
       ->get();
 
     return $usuarios;
@@ -81,5 +84,49 @@ class GestionUsuariosFacultadController extends Controller {
       ]);
 
   return ['message' => 'success', 'detail' => 'Usuario registrado correctamente'];
+  }
+
+  public function updateUsuarioFacultad(Request $request) {
+    DB::beginTransaction();
+
+    try {
+        // 🔹 actualizar tabla Usuario_facultad
+        DB::table('Usuario_facultad')
+            ->where('id', $request->input('id'))
+            ->update([
+                'facultad_id'       => $request->input('facultad_id'),
+                'codigo_trabajador' => $request->input('codigo'),
+                'apellido1'         => $request->input('apellido1'),
+                'apellido2'         => $request->input('apellido2'),
+                'nombres'           => $request->input('nombres'),
+                'sexo'              => $request->input('sexo'),
+                'updated_at'        => now(),
+            ]);
+
+        // 🔹 actualizar usuario (username y password)
+        DB::table('Usuario')
+            ->where('tabla', 'Usuario_facultad')
+            ->where('tabla_id', $request->input('id'))
+            ->update([
+                'username' => $request->input('username'),
+                'password' => $request->input('password')
+                    ? bcrypt($request->input('password'))
+                    : DB::raw('password'), // 👈 no cambiar si está vacío
+            ]);
+
+        DB::commit();
+
+        return [
+            'message' => 'success',
+            'detail'  => 'Usuario actualizado correctamente'
+        ];
+    } catch (\Exception $e) {
+        DB::rollBack();
+
+        return [
+            'message' => 'error',
+            'detail'  => 'Error al actualizar usuario'
+        ];
+    }
   }
 }

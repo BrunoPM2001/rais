@@ -520,6 +520,7 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
       Route::get('listado', [GestionUsuariosFacultadController::class, 'listado']);
       Route::get('searchInvestigador', [GestionUsuariosFacultadController::class, 'searchInvestigador']);
       Route::post('crearUsuarioFacultad', [GestionUsuariosFacultadController::class, 'crearUsuarioFacultad']);
+      Route::put('updateUsuarioFacultad', [GestionUsuariosFacultadController::class, 'updateUsuarioFacultad']);
     });
 
     //  Gestión de evaluadores

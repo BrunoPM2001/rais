@@ -17,15 +17,17 @@ class EvaluadorProyectosController extends S3Controller {
       ->leftJoin('Usuario_evaluador as b', 'b.id', '=', 'a.evaluador_id')
       ->leftJoin('Proyecto as c', 'c.id', '=', 'a.proyecto_id')
       ->leftJoin('Facultad as d', 'd.id', '=', 'c.facultad_id')
-      ->leftJoin('Evaluacion_opcion as e', function (JoinClause $join) {
-        $join->on('e.tipo', '=', 'c.tipo_proyecto')
-          ->on('e.periodo', '=', 'c.periodo');
+
+      ->leftJoin('Evaluacion_opcion as e_all', function (JoinClause $join) {
+        $join->on('e_all.tipo', '=', 'c.tipo_proyecto')
+            ->on('e_all.periodo', '=', 'c.periodo');
       })
       ->leftJoin('Evaluacion_proyecto as f', function (JoinClause $join) {
         $join->on('f.proyecto_id', '=', 'c.id')
           ->whereNotNull('f.evaluacion_opcion_id')
           ->whereColumn('f.evaluador_id', '=', 'a.evaluador_id');
       })
+      ->leftJoin('Evaluacion_opcion as e', 'e.id', '=', 'f.evaluacion_opcion_id')
       ->join('Convocatoria as g', function (JoinClause $join) use ($date) {
         $join->on('g.tipo', '=', 'c.tipo_proyecto')
           ->on('g.periodo', '=', 'c.periodo')
@@ -39,13 +41,13 @@ class EvaluadorProyectosController extends S3Controller {
         'c.titulo',
         'd.nombre as facultad',
         'c.periodo',
-        DB::raw("COUNT(DISTINCT e.id) as criterios"),
-        DB::raw("COUNT(DISTINCT CASE WHEN f.evaluador_id = a.evaluador_id THEN f.id END) as criterios_evaluados"),
+        DB::raw("COUNT(DISTINCT e_all.id) as criterios"),
+        DB::raw("COUNT(DISTINCT CASE WHEN f.evaluador_id = a.evaluador_id AND e.editable = 1 THEN f.id END) as criterios_evaluados"),
         DB::raw("CASE WHEN MAX(f.cerrado) = 1 THEN 'Sí' ELSE 'No' END as evaluado"),
         DB::raw("CASE WHEN a.ficha IS NOT NULL THEN 'Sí' ELSE 'No' END as ficha")
       ])
       ->where('a.evaluador_id', '=', $request->attributes->get('token_decoded')->evaluador_id)
-      ->where('e.nivel', '=', 1)
+      ->where('e_all.editable', '=', 1)
       ->groupBy('c.id')
       ->get();
 
@@ -55,7 +57,6 @@ class EvaluadorProyectosController extends S3Controller {
   public function criteriosEvaluacion(Request $request) {
     //  Calculo de criterios
     $this->criteriosAutomaticos($request);
-    $total = 0;
     $criterios = DB::table('Proyecto_evaluacion AS a')
       ->leftJoin('Usuario_evaluador AS b', 'b.id', '=', 'a.evaluador_id')
       ->leftJoin('Proyecto AS c', 'c.id', '=', 'a.proyecto_id')
@@ -83,10 +84,56 @@ class EvaluadorProyectosController extends S3Controller {
       ->orderBy('d.orden')
       ->get();
 
-    foreach ($criterios as $item) {
-      if ($item->nivel == 1) {
-        $total = $total + $item->puntaje;
-      }
+      $sumNivel2 = 0;
+      $sumNivel1 = 0;
+      $totalGeneral = 0;
+      $currentNivel3 = null;
+
+      foreach ($criterios as $item) {
+
+        if ($item->nivel == 3) {
+            if ($currentNivel3 !== null) {
+                $currentNivel3->puntaje = $sumNivel2;
+            }
+            $currentNivel3 = $item;
+            $sumNivel2 = 0;
+            continue;
+        }
+
+        if ($item->nivel == 2) {
+            $sumNivel2 += $item->puntaje;
+        }
+
+        if ($item->nivel == 1) {
+            $sumNivel1 += $item->puntaje;
+        }
+
+        if ($item->nivel == 4) {
+            if ($currentNivel3 !== null) {
+                $currentNivel3->puntaje = $sumNivel2;
+            }
+
+            $subtotal = $sumNivel2 + $sumNivel1;
+            $item->puntaje = $subtotal;
+
+            $totalGeneral += $subtotal;
+
+            $sumNivel2 = 0;
+            $sumNivel1 = 0;
+            $currentNivel3 = null;
+        }
+
+        if ($item->nivel == 5) {
+
+            if ($currentNivel3 !== null) {
+                $currentNivel3->puntaje = $sumNivel2;
+
+                $subtotal = $sumNivel2 + $sumNivel1;
+                $totalGeneral += $subtotal;
+            }
+
+            $item->puntaje = $totalGeneral;
+        }
     }
 
     $estado = DB::table('Evaluacion_proyecto')
@@ -104,7 +151,7 @@ class EvaluadorProyectosController extends S3Controller {
       ->where('evaluador_id', '=', $request->attributes->get('token_decoded')->evaluador_id)
       ->first();
 
-    return ['criterios' => $criterios, 'comentario' => $comentario, 'cerrado' => $estado > 0 ? true : false, 'total' => $total];
+    return ['criterios' => $criterios, 'comentario' => $comentario, 'cerrado' => $estado > 0 ? true : false, 'total' => $totalGeneral];
   }
 
   public function updateItem(Request $request) {
@@ -254,6 +301,28 @@ class EvaluadorProyectosController extends S3Controller {
     return ['message' => 'success', 'detail' => 'Evaluación finalizada con éxito'];
   }
 
+  /**
+ * ======================================
+ * JERARQUÍA DE NIVELES EN EVALUACIÓN
+ * ======================================
+ *
+ * El cálculo depende del orden (d.orden) y del nivel de cada item:
+ *
+ * Nivel 2 → Subcriterios (se acumulan)
+ * Nivel 3 → Agrupa nivel 2
+ * Nivel 1 → Puntaje directo (se acumula aparte)
+ * Nivel 4 → Subtotal = (nivel 2 + nivel 1)
+ * Nivel 5 → Total general (suma de nivel 4)
+ *
+ * RELACIÓN:
+ * Nivel 2 → Nivel 3 → Nivel 4 → Nivel 5
+ *           + Nivel 1 ─────────┘
+ *
+ * IMPORTANTE:
+ * - El procesamiento es secuencial.
+ * - El orden define los bloques.
+ */
+
   public function fichaEvaluacion(Request $request) {
     $total = 0;
 
@@ -370,7 +439,7 @@ class EvaluadorProyectosController extends S3Controller {
       ->where('a.evaluador_id', '=', $request->attributes->get('token_decoded')->evaluador_id)
       ->first();
 
-    $pdf = Pdf::loadView('evaluador.ficha_evaluador', ['evaluacion' => $criterios, 'extra' => $extra, 'total' => $total]);
+    $pdf = Pdf::loadView('evaluador.ficha_evaluador', ['evaluacion' => $criterios, 'extra' => $extra, 'total' => $totalGeneral]);
     return $pdf->stream();
   }
 

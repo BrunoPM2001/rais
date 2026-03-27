@@ -38,6 +38,7 @@ class ProyectosEvaluadosController extends Controller {
           ->on('f.evaluador_id', '=', 'b.id')
           ->whereNotNull('f.evaluacion_opcion_id');
       })
+      ->leftJoin('Evaluacion_opcion AS e_eval', 'e_eval.id', '=', 'f.evaluacion_opcion_id')
       ->leftJoin('Linea_investigacion AS g', 'g.id', '=', 'c.linea_investigacion_id')
       ->select([
         'a.id',
@@ -50,7 +51,7 @@ class ProyectosEvaluadosController extends Controller {
         'g.nombre AS linea_investigacion',
         'c.periodo',
         DB::raw("COUNT(DISTINCT e.id) AS criterios"),
-        DB::raw("COUNT(DISTINCT f.id) AS criterios_evaluados"),
+        DB::raw("COUNT(DISTINCT CASE WHEN e_eval.editable = 1 THEN f.id END) AS criterios_evaluados"),
         DB::raw("CASE
           WHEN f.cerrado = 1 THEN 'Sí'
           ELSE 'No'
@@ -61,7 +62,7 @@ class ProyectosEvaluadosController extends Controller {
         END as ficha"),
         DB::raw("CONCAT('/minio/proyecto-evaluacion/', a.ficha) AS url")
       ])
-      ->where('e.nivel', '=', 1)
+      ->where('e.editable', '=', 1)
       ->where('c.periodo', '=', $request->query('periodo'))
       ->where('c.tipo_proyecto', '=', $request->query('tipo_proyecto'))
       ->groupBy('a.id')
