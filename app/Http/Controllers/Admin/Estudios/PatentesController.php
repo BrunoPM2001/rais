@@ -167,9 +167,21 @@ class PatentesController extends S3Controller {
               'dni',
               'sexo',
               'correo_electronico',
+              'programa',
+              'permanencia',
             ])
             ->where('id', '=', $request->input('sum_id'))
             ->first();
+
+          $tipoPersona = $sumData->permanencia == 'Egresado'
+              ? 'Egresado'
+              : 'Estudiante';
+
+          $nivel = str_starts_with($sumData->programa, 'E.P.')
+              ? 'pregrado'
+              : 'posgrado';
+
+          $tipoFinal = $tipoPersona . ' ' . $nivel;
 
           $id_investigador = DB::table('Usuario_investigador')
             ->insertGetId([
@@ -182,10 +194,12 @@ class PatentesController extends S3Controller {
               'doc_numero' => $sumData->dni,
               'sexo' => $sumData->sexo,
               'email3' => $sumData->correo_electronico,
+              'tipo_investigador_programa' => $sumData->programa,
+              'tipo_investigador_estado' => $sumData->permanencia,
               'created_at' => Carbon::now(),
               'updated_at' => Carbon::now(),
               'tipo_investigador' => 'Estudiante',
-              'tipo' => 'Estudiante'
+              'tipo' => $tipoFinal
             ]);
         }
 

@@ -668,6 +668,8 @@ class ProCTIController extends S3Controller {
             'dni',
             'sexo',
             'correo_electronico',
+            'programa',
+            'permanencia',
           ])
           ->where('id', '=', $request->input('sum_id'))
           ->first();
@@ -686,7 +688,7 @@ class ProCTIController extends S3Controller {
             'email3' => $sumData->correo_electronico,
             'created_at' => Carbon::now(),
             'updated_at' => Carbon::now(),
-            'tipo_investigador' => 'Estudiante pregrado'
+            'tipo_investigador' => 'Estudiante'
           ]);
       }
 

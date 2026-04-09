@@ -121,22 +121,29 @@ class PmultiController extends S3Controller {
 
     $req4 == 0 && $errores[] = "Necesita tener CTI Vitae, orcid registrado y google scholar para participar";
 
-    $grupoId = DB::table('Grupo_integrante')
-      ->where('investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
-      ->where('condicion', 'not like', 'Ex%')
-      ->value('grupo_id');
-
-    if ($grupoId) {
-      $req5 = DB::table('Proyecto AS a')
+    $req5 = DB::table('Proyecto AS a')
       ->join('Proyecto_integrante AS b', 'b.proyecto_id', '=', 'a.id')
       ->where('a.estado', '=', 1)
       ->where('a.tipo_proyecto', '=', 'PMULTI')
-      ->whereIn('a.periodo', [2024, 2025])
-      ->where('b.grupo_id', '=', $grupoId)
+      ->where('a.periodo', '=', 2025)
+      ->where('b.proyecto_integrante_tipo_id', '=', 56)
+      ->where('b.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
       ->count();
 
-      $req5 != 0 && $errores[] = "No podrán participar los docentes que han sido ganadores PMULTI en los años 2024 y 2025";
-    }
+    $req5 != 0 && $errores[] = "No podrán participar los docentes que han sido ganadores PMULTI en el año 2025";
+
+    $req6 = DB::table('Usuario_investigador AS a')
+      ->leftJoin('Eval_docente_investigador AS c', function ($join) {
+        $join->on('c.investigador_id', '=', 'a.id')
+            ->where('c.estado', '=', 'Vigente');
+      })
+      ->where('a.id', '=', $request->attributes->get('token_decoded')->investigador_id)
+      ->whereNotNull('a.renacyt')
+      ->where('a.renacyt', '!=', '')
+      ->whereNotNull('c.id') // tiene CDI vigente
+      ->count();
+
+    $req6 == 0 && $errores[] = "Necesita tener RENACYT y CDI vigente para participar";
 
     if (!empty($errores)) {
       return ['estado' => false, 'errores' => $errores];
@@ -488,19 +495,6 @@ class PmultiController extends S3Controller {
     return ['estado' => true, 'integrantes' => $integrantes];
   }
 
-  private function excluirGruposGanadores($query)
-  {
-      return $query->whereNotExists(function ($sub) {
-          $sub->select(DB::raw(1))
-              ->from('Proyecto as p')
-              ->join('Proyecto_integrante as pi', 'pi.proyecto_id', '=', 'p.id')
-              ->whereColumn('pi.grupo_id', 'a.grupo_id')
-              ->where('p.estado', 1)
-              ->where('p.tipo_proyecto', 'PMULTI')
-              ->whereIn('p.periodo', [2024, 2025]);
-      });
-  }
-
   public function listadoCorresponsables(Request $request) {
 
     $listado = DB::table('Grupo_integrante AS a')
@@ -527,10 +521,11 @@ class PmultiController extends S3Controller {
         $query->select(DB::raw(1))
           ->from('Proyecto as p')
           ->join('Proyecto_integrante as pi', 'pi.proyecto_id', '=', 'p.id')
-          ->whereColumn('pi.grupo_id', 'a.grupo_id')
+          ->whereColumn('pi.investigador_id', '=', 'a.investigador_id')
           ->where('p.estado', 1)
           ->where('p.tipo_proyecto', 'PMULTI')
-          ->whereIn('p.periodo', [2024, 2025]);
+          ->where('p.periodo', '=', 2025)
+          ->where('pi.proyecto_integrante_tipo_id', '=', 57);
       })
       ->groupBy('b.id')
       ->limit(10)
@@ -568,10 +563,11 @@ class PmultiController extends S3Controller {
         $query->select(DB::raw(1))
           ->from('Proyecto as p')
           ->join('Proyecto_integrante as pi', 'pi.proyecto_id', '=', 'p.id')
-          ->whereColumn('pi.grupo_id', 'a.grupo_id')
+          ->whereColumn('pi.investigador_id', 'a.investigador_id')
           ->where('p.estado', 1)
           ->where('p.tipo_proyecto', 'PMULTI')
-          ->whereIn('p.periodo', [2024, 2025]);
+          ->where('p.periodo', '=', 2025)
+          ->where('pi.proyecto_integrante_tipo_id', '=', 58);
       })
       ->groupBy('b.id')
       ->limit(10)
@@ -606,10 +602,10 @@ class PmultiController extends S3Controller {
           ->where('h.nombre', '=', 'Tesista');
       })
       ->leftJoin('Proyecto AS i', 'i.id', '=', 'g.proyecto_id') // Se mantiene el join sin condiciones adicionales
-      ->where(function ($query) {
-        $query->where('i.estado', 1)
-          ->orWhereNull('i.id'); // Permitir registros sin proyecto
-      })
+      //->where(function ($query) {
+      //  $query->where('i.estado', 1)
+      //    ->orWhereNull('i.id'); // Permitir registros sin proyecto
+      //})
       ->select(
         DB::raw("CONCAT(b.doc_numero, ' | ', b.apellido1, ' ', b.apellido2, ', ', b.nombres) AS value"),
         'b.tipo',
@@ -628,16 +624,20 @@ class PmultiController extends S3Controller {
       )
       ->having('value', 'LIKE', '%' . $request->query('query') . '%')
       ->where('a.condicion', '=', 'Adherente')
-      ->where('b.tipo', 'LIKE', 'Estudiante%')
+      ->where(function ($query) {
+        $query->where('b.tipo', 'LIKE', 'Estudiante%')
+              ->orWhere('b.tipo', 'LIKE', 'Egresado%');
+      })
       ->whereIn('a.grupo_id', $grupos)
       ->whereNotExists(function ($query) {
         $query->select(DB::raw(1))
           ->from('Proyecto as p')
           ->join('Proyecto_integrante as pi', 'pi.proyecto_id', '=', 'p.id')
-          ->whereColumn('pi.grupo_id', 'a.grupo_id')
+          ->whereColumn('pi.investigador_id', 'a.investigador_id')
           ->where('p.estado', 1)
           ->where('p.tipo_proyecto', 'PMULTI')
-          ->whereIn('p.periodo', [2024, 2025]);
+          ->where('p.periodo', '=', 2025)
+          ->where('pi.proyecto_integrante_tipo_id', '=', 59);
       })
       ->groupBy('b.id')
       ->limit(10)
@@ -687,10 +687,11 @@ class PmultiController extends S3Controller {
         $query->select(DB::raw(1))
           ->from('Proyecto as p')
           ->join('Proyecto_integrante as pi', 'pi.proyecto_id', '=', 'p.id')
-          ->whereColumn('pi.grupo_id', 'a.grupo_id')
+          ->whereColumn('pi.investigador_id', 'a.investigador_id')
           ->where('p.estado', 1)
           ->where('p.tipo_proyecto', 'PMULTI')
-          ->whereIn('p.periodo', [2024, 2025]);
+          ->where('p.periodo', '=', 2025)
+          ->where('pi.proyecto_integrante_tipo_id', '=', 60);
       })
       ->groupBy('b.id')
       ->limit(10)

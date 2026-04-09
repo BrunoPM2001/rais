@@ -554,9 +554,21 @@ class PublicacionesUtilsController extends S3Controller {
               'dni',
               'sexo',
               'correo_electronico',
+              'programa',
+              'permanencia',
             ])
             ->where('id', '=', $request->input('sum_id'))
             ->first();
+          
+          $tipoPersona = $sumData->permanencia == 'Egresado'
+              ? 'Egresado'
+              : 'Estudiante';
+
+          $nivel = str_starts_with($sumData->programa, 'E.P.')
+              ? 'pregrado'
+              : 'posgrado';
+
+          $tipoFinal = $tipoPersona . ' ' . $nivel;
 
           $id_investigador = DB::table('Usuario_investigador')
             ->insertGetId([
@@ -572,7 +584,7 @@ class PublicacionesUtilsController extends S3Controller {
               'created_at' => Carbon::now(),
               'updated_at' => Carbon::now(),
               'tipo_investigador' => 'Estudiante',
-              'tipo' => 'Estudiante'
+              'tipo' => $tipoFinal
             ]);
         }
 

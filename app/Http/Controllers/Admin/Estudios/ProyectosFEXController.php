@@ -91,6 +91,7 @@ class ProyectosFEXController extends S3Controller {
       )
       ->where('a.tipo_proyecto', '=', 'PFEX')
       ->groupBy('a.id')
+      ->orderBy('a.id', 'desc')
       ->get();
 
     return $proyectos;

@@ -37,6 +37,8 @@ class ReporteController extends Controller {
       ->orWhereRaw('LOWER(a.tipo) LIKE ?', ['docente%'])
       ->orWhereRaw('LOWER(a.tipo_investigador) LIKE ?', ['estudiante%'])
       ->orWhereRaw('LOWER(a.tipo) LIKE ?', ['estudiante%'])
+      ->orWhereRaw('LOWER(a.tipo_investigador) LIKE ?', ['egresado%'])
+      ->orWhereRaw('LOWER(a.tipo) LIKE ?', ['egresado%'])
       ->orWhereRaw('LOWER(a.tipo_investigador) LIKE ?', ['externo%'])
       ->orWhereRaw('LOWER(a.tipo) LIKE ?', ['externo%'])
       ->having('value', 'LIKE', '%' . $request->query('query') . '%')

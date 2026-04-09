@@ -71,7 +71,7 @@ class InformesTecnicosController extends S3Controller {
             ELSE 'No tiene informe'
           END AS estado")
         )
-        ->where('a.estado', '=', 1)
+        ->whereIn('a.estado', [1, 8])
         ->where('a.tipo_proyecto', '!=', 'PFEX')
         ->groupBy('a.id')
         ->get();
@@ -98,9 +98,6 @@ class InformesTecnicosController extends S3Controller {
           'b.categoria'
         ])
         ->groupBy('a.proyecto_id');
-
-
-
 
       $proyectos = DB::table('Proyecto_H AS a')
         ->leftJoin('Informe_tecnico_H AS b', 'b.proyecto_id', '=', 'a.id')

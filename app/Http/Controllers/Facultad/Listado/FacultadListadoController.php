@@ -581,34 +581,6 @@ class FacultadListadoController extends Controller {
     return Excel::download($export, 'docentes.xlsx');
   }
 
-  public function ListadoProyectosGI(Request $request) {
-    $facultadId = $this->facultadId($request);
-
-    $proyectos = DB::table('view_proyecto_grupo')
-      ->select([
-        '*',
-        DB::raw("CASE(estado)
-            WHEN -1 THEN 'Eliminado'
-            WHEN 0 THEN 'No aprobado'
-            WHEN 1 THEN 'Aprobado'
-            WHEN 3 THEN 'En evaluacion'
-            WHEN 5 THEN 'Enviado'
-            WHEN 6 THEN 'En proceso'
-            WHEN 7 THEN 'Anulado'
-            WHEN 8 THEN 'Sustentado'
-            WHEN 9 THEN 'En ejecución'
-            WHEN 10 THEN 'Ejecutado'
-            WHEN 11 THEN 'Concluído'
-          ELSE 'Sin estado' END AS estado"),
-
-      ])
-      ->where('proyecto_facultad_id', $facultadId)
-      ->where('estado', '!=', -1)
-      ->get();
-
-    return $proyectos;
-  }
-
   public function ListadoGrupos(Request $request) {
     $facultadId = $this->facultadId($request);
 
@@ -668,6 +640,7 @@ class FacultadListadoController extends Controller {
       ->select([
         'grupo_nombre',
         'grupo_nombre_corto',
+        'grupo_categoria',
         'telefono',
         'anexo',
         'oficina',

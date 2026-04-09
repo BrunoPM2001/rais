@@ -987,6 +987,8 @@ class GrupoController extends S3Controller {
                 'dni',
                 'sexo',
                 'correo_electronico',
+                'programa',
+                'permanencia',
               ])
               ->where('id', '=', $request->input('sum_id'))
               ->first();
@@ -1003,6 +1005,8 @@ class GrupoController extends S3Controller {
                 'sexo' => $sumData->sexo,
                 'email3' => $sumData->correo_electronico,
                 'tipo' => $request->input('tipo'),
+                'tipo_investigador_programa' => $sumData->programa,
+                'tipo_investigador_estado' => $sumData->permanencia,
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now(),
                 'tipo_investigador' => 'Estudiante'
@@ -1187,8 +1191,8 @@ class GrupoController extends S3Controller {
         'a.facultad',
         'a.programa',
         DB::raw("CASE
-          WHEN a.programa LIKE 'E.P.%' THEN 'Estudiante pregrado'
-          ELSE 'Estudiante posgrado'
+          WHEN a.programa LIKE 'E.P.%' THEN 'Egresado pregrado'
+          ELSE 'Egresado posgrado'
         END AS tipo"),
         'a.permanencia',
         'a.ultimo_periodo_matriculado'

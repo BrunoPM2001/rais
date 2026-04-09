@@ -13,12 +13,14 @@ class GestionUsuariosFacultadController extends Controller {
       ->join('Facultad AS c', 'c.id', '=', 'b.facultad_id')
       ->select([
         'b.id',
-        'b.codigo_trabajador',
+        'b.codigo_trabajador as codigo',
         DB::raw("CONCAT(b.apellido1, ' ', b.apellido2) AS apellidos"),
         'b.apellido1',
         'b.apellido2',
         'b.nombres',
+        'b.correo',
         'c.nombre AS facultad',
+        'b.facultad_id',
         'a.username'
       ])
       ->where('a.tabla', '=', 'Usuario_facultad')
@@ -70,6 +72,7 @@ class GestionUsuariosFacultadController extends Controller {
             'apellido2'         => $request->input('apellido2'),
             'nombres'           => $request->input('nombres'),
             'sexo'              => $request->input('sexo'),
+            'correo'            => $request->input('correo'),
             'created_at'        => $now,
             'updated_at'        => $now,
         ]);
@@ -87,46 +90,47 @@ class GestionUsuariosFacultadController extends Controller {
   }
 
   public function updateUsuarioFacultad(Request $request) {
-    DB::beginTransaction();
+      DB::beginTransaction();
 
-    try {
-        // 🔹 actualizar tabla Usuario_facultad
-        DB::table('Usuario_facultad')
-            ->where('id', $request->input('id'))
-            ->update([
-                'facultad_id'       => $request->input('facultad_id'),
-                'codigo_trabajador' => $request->input('codigo'),
-                'apellido1'         => $request->input('apellido1'),
-                'apellido2'         => $request->input('apellido2'),
-                'nombres'           => $request->input('nombres'),
-                'sexo'              => $request->input('sexo'),
-                'updated_at'        => now(),
-            ]);
+      $existe = DB::table('Usuario')
+          ->where('username', $request->input('username'))
+          ->where('tabla', 'Usuario_facultad')
+          ->where('tabla_id', '!=', $request->input('id'))
+          ->exists();
 
-        // 🔹 actualizar usuario (username y password)
-        DB::table('Usuario')
-            ->where('tabla', 'Usuario_facultad')
-            ->where('tabla_id', $request->input('id'))
-            ->update([
-                'username' => $request->input('username'),
-                'password' => $request->input('password')
-                    ? bcrypt($request->input('password'))
-                    : DB::raw('password'), // 👈 no cambiar si está vacío
-            ]);
+      if ($existe) {
+          return [
+              'message' => 'error',
+              'detail'  => 'El username ya existe'
+          ];
+      }
 
-        DB::commit();
+      DB::table('Usuario_facultad')
+          ->where('id', $request->input('id'))
+          ->update([
+              'investigador_id'   => $request->input('investigador_id'),
+              'facultad_id'       => $request->input('facultad_id'),
+              'codigo_trabajador' => $request->input('codigo'),
+              'apellido1'         => $request->input('apellido1'),
+              'apellido2'         => $request->input('apellido2'),
+              'nombres'           => $request->input('nombres'),
+              'sexo'              => $request->input('sexo'),
+              'correo'            => $request->input('correo'),
+              'updated_at'        => now(),
+          ]);
 
-        return [
-            'message' => 'success',
-            'detail'  => 'Usuario actualizado correctamente'
-        ];
-    } catch (\Exception $e) {
-        DB::rollBack();
+      DB::table('Usuario')
+          ->where('tabla', 'Usuario_facultad')
+          ->where('tabla_id', $request->input('id'))
+          ->update([
+              'username' => $request->input('username'),
+              'password' => $request->filled('password')
+                  ? bcrypt($request->input('password'))
+                  : DB::raw('password'),
+          ]);
 
-        return [
-            'message' => 'error',
-            'detail'  => 'Error al actualizar usuario'
-        ];
-    }
+      DB::commit();
+
+      return ['message' => 'success', 'detail'  => 'Usuario actualizado correctamente'];
   }
 }

@@ -11,6 +11,11 @@ use App\Http\Controllers\Investigador\Convocatorias\PconfigiController;
 use App\Http\Controllers\Investigador\Convocatorias\PinvposController;
 use App\Http\Controllers\Investigador\Convocatorias\EciController;
 use App\Http\Controllers\Investigador\Convocatorias\ProCTIController;
+use App\Http\Controllers\Investigador\Convocatorias\PconfigiInvController;
+use App\Http\Controllers\Investigador\Convocatorias\PicvController;
+use App\Http\Controllers\Investigador\Convocatorias\PmultiController;
+use App\Http\Controllers\Investigador\Convocatorias\PsinfinvController;
+use App\Http\Controllers\Investigador\Convocatorias\PsinfipuController;
 use Maatwebsite\Excel\Facades\Excel;
 
 class FacultadProyectosController extends Controller {
@@ -249,6 +254,16 @@ public function listadoIntegrantes(Request $request)
         return app(ProCTIController::class)->reportePDF($request);
       case 'ECI':
         return app(EciController::class)->reporte($request);
+      case 'PCONFIGI-INV':
+        return app(PconfigiInvController::class)->reporte($request);
+      case 'PICV':
+        return app(PicvController::class)->reporte($request);
+      case 'PMULTI':
+        return app(PmultiController::class)->reporte($request);
+      case 'PSINFINV':
+        return app(PsinfinvController::class)->reporte($request);
+      case 'PSINFIPU':
+        return app(PsinfipuController::class)->reporte($request);
 
       default:
           return response()->json([
