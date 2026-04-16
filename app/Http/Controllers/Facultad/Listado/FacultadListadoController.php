@@ -707,12 +707,80 @@ class FacultadListadoController extends Controller {
       ])
       ->where('a.grupo_id', '=', $request->query('id'))
       ->get();
+    $titulares = DB::table('Grupo_integrante AS a')
+      ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
+      ->select(
+        'b.id',
+        DB::raw("CONCAT(b.apellido1, ' ', b.apellido2, ', ', b.nombres) AS nombre")
+      )
+      ->where('a.grupo_id', '=', $request->query('id'))
+      ->where('a.condicion', '=', 'Titular')
+      ->where('a.condicion', 'NOT LIKE', 'Ex%')
+      ->get();
+
+    $dataTitulares = [];
+
+    foreach ($titulares as $inv) {
+
+    $proyectos_nuevos = DB::table('Proyecto_integrante AS c')
+      ->join('Proyecto AS d', 'd.id', '=', 'c.proyecto_id')
+      ->select([
+        'd.id AS proyecto_id',
+        'd.codigo_proyecto',
+        'd.titulo',
+        'd.periodo',
+        'd.tipo_proyecto',
+      ])
+      ->where('c.investigador_id', '=', $inv->id)
+      ->whereIn('d.estado', [1, 8])
+      ->get();
+
+    $proyectos_h = DB::table('Proyecto_integrante_H AS c')
+      ->join('Proyecto_H AS d', 'd.id', '=', 'c.proyecto_id')
+      ->select([
+        'd.id AS proyecto_id',
+        'd.codigo as codigo_proyecto',
+        'd.titulo',
+        'd.periodo',
+        DB::raw("d.tipo AS tipo_proyecto"),
+      ])
+      ->where('c.investigador_id', '=', $inv->id)
+      ->where('d.status', '=', 1)
+      ->get();
+
+    $proyectos = $proyectos_nuevos
+      ->merge($proyectos_h)
+      ->sortByDesc('periodo')
+      ->values();
+
+    $publicaciones = DB::table('Publicacion_autor AS b')
+    ->join('Publicacion AS c', 'c.id', '=', 'b.publicacion_id')
+    ->join('Publicacion_categoria AS d', 'd.id', '=', 'c.categoria_id')
+    ->select(
+      'c.id',
+      'c.titulo',
+      'c.codigo_registro',
+      'c.fecha_publicacion',
+      'd.tipo'
+    )
+    ->where('b.investigador_id', '=', $inv->id)
+    ->where('c.estado', '=', 1)
+    ->orderBy('c.fecha_publicacion', 'desc')
+    ->get();
+
+    $dataTitulares[] = [
+      'nombre' => $inv->nombre,
+      'proyectos' => $proyectos,
+      'publicaciones' => $publicaciones
+    ];
+  }
 
     $pdf = Pdf::loadView('investigador.grupo.reporte_grupo', [
       'grupo' => $grupo,
       'integrantes' => $integrantes,
       'lineas' => $lineas,
       'laboratorios' => $laboratorios,
+      'dataTitulares' => $dataTitulares
     ]);
 
     return $pdf->stream();

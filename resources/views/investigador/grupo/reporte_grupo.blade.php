@@ -299,7 +299,7 @@
       {{ $grupo->anexo }}
     </div>
 
-    <h5>XI. Equipamiento de laboratorio/ gabinete:</h5>
+    <h5>IX. Equipamiento de laboratorio/ gabinete:</h5>
 
     <table class="table">
       <thead>
@@ -327,5 +327,76 @@
       </tbody>
     </table>
 
+    <h5>X. Historial Proyectos:</h5>
+    @foreach ($dataTitulares as $inv)
+
+      <p><strong>{{ $inv['nombre'] }}</strong></p>
+
+      <table class="table">
+        <thead>
+          <tr>
+            <th style="width: 60%;">Título</th>
+            <th>Codigo</th>
+            <th>Periodo</th>
+            <th>Tipo</th>
+          </tr>
+        </thead>
+        <tbody>
+
+          @if (sizeof($inv['proyectos']) == 0)
+            <tr>
+              <td colspan="4" align="center">No tiene proyectos</td>
+            </tr>
+          @endif
+
+          @foreach ($inv['proyectos'] as $p)
+            <tr>
+              <td>{{ $p->titulo }}</td>
+              <td>{{ $p->codigo_proyecto }}</td>
+              <td>{{ $p->periodo }}</td>
+              <td>{{ $p->tipo_proyecto }}</td>
+            </tr>
+          @endforeach
+
+        </tbody>
+      </table>
+
+    @endforeach   
+
+    <h5>XI. Historial Publicaciones:</h5>
+    @foreach ($dataTitulares as $inv)
+
+      <p><strong>{{ $inv['nombre'] }}</strong></p>
+
+      <table class="table">
+        <thead>
+          <tr>
+            <th style="width: 60%;">Título</th>
+            <th>Código</th>
+            <th>Fecha</th>
+            <th>Tipo</th>
+          </tr>
+        </thead>
+        <tbody>
+
+          @if (sizeof($inv['publicaciones']) == 0)
+            <tr>
+              <td colspan="4" align="center">No tiene publicaciones</td>
+            </tr>
+          @endif
+
+          @foreach ($inv['publicaciones'] as $p)
+            <tr>
+              <td>{{ $p->titulo }}</td>
+              <td>{{ $p->codigo_registro }}</td>
+              <td>{{ $p->fecha_publicacion }}</td>
+              <td>{{ $p->tipo }}</td>
+            </tr>
+          @endforeach
+
+        </tbody>
+      </table>
+
+    @endforeach
   </div>
 </body>

@@ -16,6 +16,7 @@ use App\Http\Controllers\Admin\Estudios\Proyectos\ProCtieController;
 use App\Http\Controllers\Admin\Estudios\Proyectos\PtpdoctoController;
 use App\Http\Controllers\Admin\Estudios\Proyectos\PtpgradoController;
 use App\Http\Controllers\Admin\Estudios\Proyectos\PtpbachillerController;
+use App\Http\Controllers\Investigador\Grupo\GrupoController;
 use App\Http\Controllers\S3Controller;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
@@ -737,18 +738,19 @@ class ProyectosGrupoController extends S3Controller {
     }
   }
 
-  public function reporteCompleto(Request $request) {
-    $tipo = DB::table('Proyecto')
-      ->select(['tipo_proyecto'])
-      ->where('id', '=', $request->query('proyecto_id'))
-      ->first();
+  public function reporteCompleto(Request $request)
+  {
+      $tipo = DB::table('Proyecto')
+          ->where('id', $request->query('proyecto_id'))
+          ->value('tipo_proyecto');
 
-    switch ($tipo->tipo_proyecto) {
-      case "PCONFIGI-INV":
-        $ctrl = new PconfigiInvController();
-        return $ctrl->reporteCompleto($request);
-      default:
-    }
+      $request->merge([
+          'tipo_proyecto' => $tipo,
+          'id' => $request->query('proyecto_id')
+      ]);
+
+      $ctrl = new GrupoController();
+      return $ctrl->reporte($request);
   }
 
   public function excel(Request $request) {

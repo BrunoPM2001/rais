@@ -678,6 +678,7 @@ class CdiController extends S3Controller {
       ->where('b.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
       ->where('a.estado', '=', 1)
       ->whereIn(DB::raw("YEAR(a.fecha_publicacion)"), $lastTwoYears)
+      ->whereNotIn('a.tipo_publicacion', ['tesis', 'tesis-asesoria'])
       ->groupBy('a.id')
       ->get();
 
@@ -1003,6 +1004,7 @@ class CdiController extends S3Controller {
       ->where('b.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
       ->where('a.estado', '=', 1)
       ->whereIn(DB::raw("YEAR(a.fecha_publicacion)"), $lastTwoYears)
+      ->whereNotIn('a.tipo_publicacion', ['tesis', 'tesis-asesoria'])
       ->groupBy('a.id')
       ->get();
 

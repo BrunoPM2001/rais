@@ -478,6 +478,8 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
   //  Reportes
   Route::prefix('reportes')->group(function () {
     Route::get('estudio/{tipo}/{periodo}/{facultad}', [EstudioController::class, 'reporte']);
+    Route::get('estudio/tipos', [EstudioController::class, 'tiposProyecto']);
+    Route::get('estudio/periodos/{tipo}', [EstudioController::class, 'periodosPorTipo']);
 
     Route::get('searchCoordinador', [GrupoController::class, 'searchCoordinador']);
     Route::get('grupo', [GrupoController::class, 'reporte']);

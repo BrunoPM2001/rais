@@ -17,7 +17,8 @@ class Linea_investigacionController extends Controller {
     return ['data' => $lineas_investigacion];
   }
 
-  public function getAllOfFacultad($facultad_id) {
+  public function getAllOfFacultad(Request $request, $facultad_id) {
+    $estado = $request->query('estado');
     $query = Linea_investigacion::with('hijos')
       ->whereNull('parent_id');
 
@@ -26,6 +27,11 @@ class Linea_investigacionController extends Controller {
     } else {
       $query->where('facultad_id', $facultad_id);
     }
+
+    if (!is_null($estado)) {
+      $query->where('estado', $estado);
+    }
+    
     $lineas_investigacion = $query->get();
 
     return ['data' => $lineas_investigacion];
