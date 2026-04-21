@@ -347,6 +347,66 @@ class GruposController extends S3Controller {
     return $lineas;
   }
 
+  public function lineasInactivas(Request $request) {
+    $lineas = DB::table('Grupo_linea AS a')
+      ->join('Linea_investigacion AS c', 'c.id', '=', 'a.linea_investigacion_id')
+      ->select(
+        'a.id',
+        'c.codigo',
+        'c.nombre',
+      )
+      ->where('a.grupo_id', '=', $request->query('grupo_id'))
+      ->where('c.estado', '=', 0)
+      ->get();
+
+    return $lineas;
+  }
+
+  public function lineasDisponibles(Request $request) {
+    $lineas = DB::table('Linea_investigacion')
+      ->select('id', 'codigo', 'nombre')
+      ->where('facultad_id', '=', $request->query('facultad_id'))
+      ->where('estado', '=', 1)
+      ->get();
+
+    return $lineas;
+  }
+
+  public function agregarLineas(Request $request) {
+    $lineas = $request->input('lineas');
+
+    foreach ($lineas as $linea_id) {
+      DB::table('Grupo_linea')->insert([
+        'grupo_id' => $request->input('grupo_id'),
+        'linea_investigacion_id' => $linea_id,
+      ]);
+    }
+
+    return ['message' => 'success', 'detail' => 'Líneas agregadas'];
+  }
+
+  public function retirarLineas(Request $request) {
+      $grupo_id = $request->input('grupo_id');
+      $lineas = $request->input('lineas', []);
+
+      if (is_string($lineas)) {
+          $lineas = explode(',', $lineas);
+      }
+
+      $lineas = is_array($lineas) ? $lineas : [$lineas];
+
+      $deleted = DB::table('Grupo_linea')
+          ->where('grupo_id', $grupo_id)
+          ->whereIn('id', $lineas)
+          ->delete();
+
+      return [
+          'message' => 'success',
+          'detail' => 'Líneas retiradas correctamente',
+          'deleted' => $deleted // 👈 útil para probar en frontend
+      ];
+  }
+
   public function proyectos(Request $request) {
     $miembros = DB::table('Grupo_integrante AS b')
       ->join('Usuario_investigador AS c', 'c.id', 'b.investigador_id')

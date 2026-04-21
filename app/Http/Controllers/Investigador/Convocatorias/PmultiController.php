@@ -559,16 +559,6 @@ class PmultiController extends S3Controller {
       )
       ->having('value', 'LIKE', '%' . $request->query('query') . '%')
       ->where('a.condicion', '=', 'Titular')
-      ->whereNotExists(function ($query) {
-        $query->select(DB::raw(1))
-          ->from('Proyecto as p')
-          ->join('Proyecto_integrante as pi', 'pi.proyecto_id', '=', 'p.id')
-          ->whereColumn('pi.investigador_id', 'a.investigador_id')
-          ->where('p.estado', 1)
-          ->where('p.tipo_proyecto', 'PMULTI')
-          ->where('p.periodo', '=', 2025)
-          ->where('pi.proyecto_integrante_tipo_id', '=', 58);
-      })
       ->groupBy('b.id')
       ->limit(10)
       ->get()
@@ -620,7 +610,14 @@ class PmultiController extends S3Controller {
               WHEN c.programa LIKE 'Doct%' THEN 'Doctorado'
               ELSE 'Licenciatura o Segunda Especialidad'
           END AS tipo_programa"),
-        DB::raw("COUNT(h.id) AS cantidad_tesista")
+        DB::raw("
+          SUM(
+            CASE 
+              WHEN h.id IS NOT NULL AND i.estado = 1 THEN 1 
+              ELSE 0 
+            END
+          ) AS cantidad_tesista
+        ")
       )
       ->having('value', 'LIKE', '%' . $request->query('query') . '%')
       ->where('a.condicion', '=', 'Adherente')
@@ -634,9 +631,7 @@ class PmultiController extends S3Controller {
           ->from('Proyecto as p')
           ->join('Proyecto_integrante as pi', 'pi.proyecto_id', '=', 'p.id')
           ->whereColumn('pi.investigador_id', 'a.investigador_id')
-          ->where('p.estado', 1)
-          ->where('p.tipo_proyecto', 'PMULTI')
-          ->where('p.periodo', '=', 2025)
+          ->where('p.estado', '=', 1)
           ->where('pi.proyecto_integrante_tipo_id', '=', 59);
       })
       ->groupBy('b.id')

@@ -28,9 +28,9 @@ class ActualizarCdiNoVigente extends Command {
     DB::table('Eval_docente_investigador')
       ->where('tipo_eval', '=', 'Constancia')
       ->where(DB::raw('DATE(fecha_fin)'), '<', Carbon::now())
-      ->where('estado', '!=', 'NO VIGENTE')
+      ->where('estado', '!=', 'No vigente')
       ->update([
-        'estado' => 'NO VIGENTE'
+        'estado' => 'No vigente'
       ]);
 
     $this->newLine();

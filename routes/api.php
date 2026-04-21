@@ -161,6 +161,10 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
       Route::delete('eliminarDoc', [GruposController::class, 'eliminarDoc']);
 
       Route::get('lineas', [GruposController::class, 'lineas']);
+      Route::get('lineasInactivas', [GruposController::class, 'lineasInactivas']);
+      Route::get('lineasDisponibles', [GruposController::class, 'lineasDisponibles']);
+      Route::post('agregarLineas', [GruposController::class, 'agregarLineas']);
+      Route::post('retirarLineas', [GruposController::class, 'retirarLineas']);
       Route::get('proyectos', [GruposController::class, 'proyectos']);
       Route::get('publicaciones', [GruposController::class, 'publicaciones']);
 
