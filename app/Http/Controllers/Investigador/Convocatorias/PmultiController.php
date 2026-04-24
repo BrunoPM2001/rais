@@ -610,14 +610,15 @@ class PmultiController extends S3Controller {
               WHEN c.programa LIKE 'Doct%' THEN 'Doctorado'
               ELSE 'Licenciatura o Segunda Especialidad'
           END AS tipo_programa"),
-        DB::raw("
-          SUM(
-            CASE 
-              WHEN h.id IS NOT NULL AND i.estado = 1 THEN 1 
-              ELSE 0 
-            END
-          ) AS cantidad_tesista
-        ")
+        DB::raw("SUM(
+          CASE 
+            WHEN h.id IS NOT NULL 
+              AND i.estado = 1 
+              AND i.tipo_proyecto != 'PFEX'
+            THEN 1 
+            ELSE 0 
+          END
+        ) AS cantidad_tesista")
       )
       ->having('value', 'LIKE', '%' . $request->query('query') . '%')
       ->where('a.condicion', '=', 'Adherente')

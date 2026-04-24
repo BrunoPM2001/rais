@@ -276,6 +276,8 @@ class GruposController extends S3Controller {
       ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
       ->leftJoin('Facultad AS c', 'c.id', '=', 'b.facultad_id')
       ->leftJoin('Proyecto_integrante AS d', 'd.grupo_integrante_id', '=', 'a.id')
+      ->leftJoin('Proyecto_integrante_tipo AS e', 'e.id', '=', 'd.proyecto_integrante_tipo_id')
+      ->leftJoin('Proyecto AS f', 'f.id', '=', 'd.proyecto_id')
       ->select(
         'a.id',
         'a.investigador_id',
@@ -288,7 +290,7 @@ class GruposController extends S3Controller {
         'b.cti_vitae',
         'b.tipo',
         'c.nombre AS facultad',
-        'a.tesista',
+        DB::raw('SUM(IF(e.nombre = "Tesista" AND f.estado IN (1,8) AND f.tipo_proyecto != "PFEX", 1, 0)) AS tesista'),
         DB::raw('COUNT(d.id) AS proyectos'),
         'a.fecha_inclusion',
         'a.fecha_exclusion'

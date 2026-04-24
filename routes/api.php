@@ -36,6 +36,7 @@ use App\Http\Controllers\Admin\Reportes\EstudioController;
 use App\Http\Controllers\Admin\Reportes\GrupoController;
 use App\Http\Controllers\Admin\Reportes\PresupuestoController;
 use App\Http\Controllers\Admin\Reportes\ProyectoController;
+use App\Http\Controllers\Admin\Reportes\DeudoresController;
 use App\Http\Controllers\Evaluador\Evaluaciones\EvaluadorProyectosController;
 use App\Http\Controllers\Facultad\Listado\FacultadListadoController;
 use App\Http\Controllers\Facultad\Listado\FacultadProyectosController;
@@ -496,6 +497,8 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
 
     Route::get('listadoDeudores', [ListadoDeudoresController::class, 'listado']);
     Route::post('listadoDeudoresExcel', [ListadoDeudoresController::class, 'listadoDeudoresExcel']);
+    Route::get('facultades', [DeudoresController::class, 'getFacultades']);
+    Route::get('deudores', [DeudoresController::class, 'reporte']);
   });
 
   //  Constancias
