@@ -296,7 +296,7 @@
           correspondiente a proyectos ganadores aprobados mediante Resolución Rectoral. Su autenticidad e
           integridad
           pueden ser verificadas a través del siguiente enlace web:
-          <span style="font-size: 8px;">https://vrip.unmsm.edu.pe/convocatoria-2025/</span>
+          <span style="font-size: 8px;">https://vrip.unmsm.edu.pe/convocatoria-{{ $periodo }}/</span>
         </td>
         <td style="width: 10%; text-align: center;">
           {{-- <img src="data:image/png;base64,{{ $qr }}" alt="Código QR"
@@ -347,14 +347,14 @@
     <div class="declaracion-container">
       <p>
         Declaro bajo juramento conocer las directivas, los procedimientos y el cronograma de ejecución de los
-        Proyectos de Investigación 2025 y me comprometo a cumplirlos; en particular, declaro conocer los
+        Proyectos de Investigación {{ $periodo }} y me comprometo a cumplirlos; en particular, declaro conocer los
         siguientes puntos:
       </p>
 
       <ol>
         <li>
           El Vicerrectorado de Investigación y Posgrado (VRIP) otorga la ASIGNACIÓN FINANCIERA DE
-          INVESTIGACIÓN (AFI) 2025, de acuerdo a lo estipulado en la “Política de Financiamiento de la
+          INVESTIGACIÓN (AFI) {{ $periodo }}, de acuerdo a lo estipulado en la “Política de Financiamiento de la
           Investigación de la Universidad Nacional Mayor de San Marcos” (R.R. N.004801-2024-R/UNMSM).
         </li>
         <li>
@@ -387,7 +387,7 @@
         </li>
         <li>
           Si devuelvo dinero a la UNMSM por más del 10% del monto asignado, no podré participar en las
-          actividades de investigación para el año 2026.
+          actividades de investigación para el año {{ $periodo + 1 }}.
         </li>
       </ol>
 
@@ -400,7 +400,7 @@
       <p>
         Por tanto, en mi calidad de responsable del citado proyecto de investigación, acepto haber leído y
         cumplir con las condiciones establecidas en la presente declaración para recibir asignación financiera
-        al proyecto, así como asistir al taller de capacitación 2025. Habiendo aceptado las condiciones, doy
+        al proyecto, así como asistir al taller de capacitación {{ $periodo }}. Habiendo aceptado las condiciones, doy
         conformidad y envío la declaración debidamente firmada vía sistema RAIS.
       </p>
     </div>

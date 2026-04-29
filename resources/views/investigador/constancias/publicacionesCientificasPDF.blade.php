@@ -531,7 +531,7 @@
         <th style="font-size: 11px; text-align: center;">Año</th>
         <th style="font-size: 11px; text-align: center;">Título</th>
         <th style="font-size: 11px; text-align: center;">Lugar registro</th>
-        <th style="font-size: 11px; text-align: center;">Titular</th>
+        <th style="font-size: 11px; text-align: center;">Tipo</th>
       </tr>
     </thead>
     <tbody>
@@ -540,7 +540,7 @@
           <td style="font-size: 11px;">{{ $patente->año }}</td>
           <td style="font-size: 11px; text-align: justify;">{{ $patente->titulo }}</td>
           <td style="font-size: 11px;">{{ $patente->oficina_presentacion }}</td>
-          <td style="font-size: 11px;">{{ $patente->titular }}</td>
+          <td style="font-size: 11px;">{{ $patente->tipo }}</td>
       @endforeach
 
     </tbody>

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin\Estudios;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class GestionSUMController extends Controller {
 
@@ -79,17 +80,21 @@ class GestionSUMController extends Controller {
 
   public function syncTotal()
   {
+      Log::info("🚀 INICIO syncTotal");
       set_time_limit(0);
       ini_set('memory_limit', '512M');
 
       $chunkNumber = 0;
       $procesados = 0;
 
+      DB::disableQueryLog();
+
       DB::connection('sum')->table('ALUMNO')
           ->orderBy('codigo_alumno')
-          ->chunk(200, function ($alumnos) use (&$procesados, &$chunkNumber) { 
+          ->chunk(50, function ($alumnos) use (&$procesados, &$chunkNumber) { 
 
               $chunkNumber++;
+              Log::info("📦 Procesando chunk: " . $chunkNumber);
 
               $data = [];
 
@@ -137,9 +142,11 @@ class GestionSUMController extends Controller {
               }
 
               $codigos = collect($data)->pluck('codigo_alumno')->toArray();
-              $existentes = DB::table('repo_sum')
+              $existentes = DB::table('Repo_sum')
                 ->whereIn('codigo_alumno', $codigos)
                 ->pluck('hash', 'codigo_alumno');
+
+              Log::info("✅ Existentes encontrados: " . count($existentes));
               
               $dataFiltrado = [];
               foreach ($data as $item) {
@@ -151,7 +158,7 @@ class GestionSUMController extends Controller {
               }
 
               if (!empty($dataFiltrado)) {
-                DB::table('repo_sum')->upsert(
+                DB::table('Repo_sum')->upsert(
                     $dataFiltrado,
                     ['codigo_alumno'],
                     [
@@ -184,6 +191,8 @@ class GestionSUMController extends Controller {
               }
 
               $procesados += count($data);
+
+              Log::info("📈 Total procesados: " . $procesados);
 
               unset($data, $dataFiltrado);
           });

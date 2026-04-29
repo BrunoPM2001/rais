@@ -17,14 +17,12 @@ class DashboardController extends Controller {
         ->join('Proyecto_integrante_deuda AS b', 'b.proyecto_integrante_id', '=', 'a.id')
         ->where('a.investigador_id', $investigadorId)
         ->whereIn('b.tipo', [1,2,3])
-        ->whereNull('b.fecha_sub')
         ->count();
 
     $antiguos = DB::table('Proyecto_integrante_H AS a')
         ->join('Proyecto_integrante_deuda AS b', 'b.proyecto_integrante_h_id', '=', 'a.id')
         ->where('a.investigador_id', $investigadorId)
         ->whereIn('b.tipo', [1,2,3])
-        ->whereNull('b.fecha_sub')
         ->count();
 
     return $nuevos + $antiguos;

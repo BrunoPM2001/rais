@@ -252,7 +252,9 @@
         <tr>
           <td>{{ $item->grupo_nombre_corto }}</td>
           <td>{{ $item->grupo_nombre }}</td>
-          <td>{{ $item->condicion }}</td>
+          <td>
+            {{ strcasecmp(trim($item->cargo ?? ''), 'Coordinador') === 0 ? ($item->cargo ?? '') : ($item->condicion ?? '') }}
+          </td>
           <td>{{ $item->resolucion_rectoral }}</td>
           <td>{{ $item->resolucion_creacion_fecha }}</td>
         </tr>

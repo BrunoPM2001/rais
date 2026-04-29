@@ -29,8 +29,7 @@ class DeudaController extends Controller {
         END as deuda")
       ])
       ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
-      ->whereIn('b.tipo', [1, 2, 3])
-      ->whereNull('b.fecha_sub');
+      ->whereIn('b.tipo', [1, 2, 3]);
 
     $antiguo = DB::table('Proyecto_integrante_H AS a')
       ->join('Proyecto_integrante_deuda AS b', 'b.proyecto_integrante_h_id', '=', 'a.id')
@@ -51,8 +50,7 @@ class DeudaController extends Controller {
         END as deuda")
       ])
       ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
-      ->whereIn('b.tipo', [1, 2, 3])
-      ->whereNull('b.fecha_sub');
+      ->whereIn('b.tipo', [1, 2, 3]);
 
     $deudas = $nuevo
       ->union($antiguo)

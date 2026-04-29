@@ -37,6 +37,7 @@ class DeudoresController extends Controller {
       'c.codigo',
       DB::raw("CONCAT(c.apellido1, ' ', c.apellido2, ', ', c.nombres) AS nombres"),
       'e.nombre AS facultad_investigador',
+      'e.id AS facultad_id',
       'c.tipo',
       'g.tipo AS licencia_tipo',
       'i.nombre AS condicion',
@@ -89,6 +90,7 @@ class DeudoresController extends Controller {
       'c.codigo',
       DB::raw("CONCAT(c.apellido1, ' ', c.apellido2, ', ', c.nombres) AS nombres"),
       'e.nombre AS facultad_investigador',
+      'e.id AS facultad_id',
       'c.tipo',
       'g.tipo AS licencia_tipo',
       'b.condicion',
@@ -131,6 +133,7 @@ class DeudoresController extends Controller {
 
   return DB::query()
     ->fromSub($deudasB, 't')
+    ->orderBy('facultad_id', 'asc')
     ->orderBy('nombres', 'asc')
     ->get();
   }
@@ -139,12 +142,6 @@ class DeudoresController extends Controller {
     $periodo = $request->query('periodo');
     $facultad = $request->query('facultad');
     $data = $this->getDeudores($periodo, $facultad);
-    $url = "https://rais.vrip.unmsm.edu.pe";
-    $admin = (object) ['nombres' => $request->attributes->get('token_decoded')->nombres ?? 'Administrador'];
-    $qr = base64_encode(QrCode::format('png')
-      ->size(100)
-      ->generate($url)
-    );
     $facultadNombre = null;
     if ($facultad && $data->count() > 0) {
       $facultadNombre = $data->first()->facultad_investigador;
@@ -155,8 +152,7 @@ class DeudoresController extends Controller {
       'fecha' => now()->format('d/m/Y'),
       'periodo' => $periodo,
       'facultad' => $facultadNombre,
-      'admin' => $admin,
-      'qr' => $qr
+      'username' => $request->attributes->get('token_decoded')->username
     ]);
 
     return $pdf->stream('reporte_deudores.pdf');

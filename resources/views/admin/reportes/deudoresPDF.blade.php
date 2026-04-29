@@ -11,8 +11,9 @@
   <title>Reporte de Deudores</title>
   <style>
     @page {
-      margin-top: 200px;
+      margin-top: 190px;
       margin-bottom: 95px;
+      size: A4 landscape;
     }
 
     * {
@@ -38,7 +39,7 @@
 
     header {
       position: fixed;
-      top: -170px;
+      top: -160px;
       left: 0;
       right: 0;
     }
@@ -133,6 +134,9 @@
 </head>
 
 <body>
+  @php
+    $agrupado = collect($lista)->groupBy('facultad_investigador');
+  @endphp
   <header>
     <table class="header-table">
       <tr>
@@ -145,7 +149,7 @@
         </td>
         <td class="header-right">
           <span>© RAIS</span><br>
-          <span>Usuario: {{ $admin->nombres ?? 'Sistema' }}</span>
+          <span>{{ $username }}</span>
         </td>
       </tr>
     </table>
@@ -158,23 +162,6 @@
         </td>
       </tr>
     </table>
-
-    <table class="table-texto" style="width: 100%; font-size:12px; margin-bottom: 0px;">
-      <tr>
-        <td style="text-align: left; width: 45%;">
-          Facultad:
-          @if(!empty($facultad))
-            {{ $facultad }}
-          @else
-            General
-          @endif
-        </td>
-        <td style="text-align: right; width: 55%;">
-          Total de registros: {{ $totalRegistros }}
-        </td>
-      </tr>
-    </table>
-
     <div style="border-top: 1px solid black; margin: 0px 0;"></div>
   </header>
 
@@ -193,24 +180,30 @@
       </tr>
     </table>
   </div>
+  @foreach($agrupado as $facultadNombre => $items)
 
   <table class="table-content">
     <thead>
       <tr>
-        <th style="width: 2%;">Nro</th>
-        <th style="width: 8%;">Cód. Doc.</th>
+        <th colspan="8" style="text-align:left; font-size:12px; padding:6px;">
+          Facultad: {{ $facultadNombre ?? 'General' }}
+        </th>
+      </tr>
+      <tr>
+        <th style="width: 2%;">Nro.</th>
+        <th style="width: 5%;">Cód. Doc.</th>
         <th style="width: 27%;">Apellidos y Nombres</th>
-        <th style="width: 9%;">Tipo</th>
+        <th style="width: 9%; text-align: left;">Tipo</th>
         <th style="width: 8%;">Cód. Estudio</th>
         <th style="width: 11%;">Condición</th>
         <th style="width: 12%;">Detalle de Deuda</th>
-        <th style="width: 3%;">Año estudio</th>
+        <th style="width: 5%;">Año deuda</th>
       </tr>
     </thead>
     <tbody>
-      @forelse($lista as $index => $item)
+      @forelse($items as $index => $item)
         <tr>
-          <td>{{ $index + 1 }}</td>
+          <td>{{ $loop->iteration }}</td>
           <td style="text-align:center;">{{ $item->codigo }}</td>
           <td>{{ $item->nombres }}</td>
           <td>{{ $item->tipo_proyecto }}</td>
@@ -230,13 +223,17 @@
   </table>
 
   <div class="resumen">
-    <strong>Total de deudores: {{ $totalRegistros }}</strong>
+    <strong>Total de deudores: {{ count($items) }}</strong>
   </div>
+  @if(!$loop->last)
+    <div style="page-break-after: always;"></div>
+  @endif
+@endforeach
 
   <script type="text/php">
     if (isset($pdf)) {
-      $x = 549;
-      $y = 804;
+      $x = 782;
+      $y = 558;
       $text = "{PAGE_NUM} de {PAGE_COUNT}";
       $font = $fontMetrics->get_font("Helvetica", "Italic");
       $size = 8;

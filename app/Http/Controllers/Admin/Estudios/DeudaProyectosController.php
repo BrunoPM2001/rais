@@ -111,7 +111,8 @@ class DeudaProyectosController extends Controller {
         'a.created_at',
         'a.updated_at'
       ])
-      ->whereNotIn('a.tipo_proyecto', ['PFEX', 'FEX']);
+      ->whereNotIn('a.tipo_proyecto', ['PFEX', 'FEX'])
+      ->whereIn('a.estado', [1,8]);
 
       if ($investigadorId) {
         $deudas->whereExists(function ($query) use ($investigadorId) {
@@ -126,9 +127,10 @@ class DeudaProyectosController extends Controller {
     $deudaAntiguos = DB::table('Proyecto_H AS a')
       ->whereNotNull('a.codigo')
       ->whereRaw("TRIM(a.codigo) <> ''")
+      ->where('a.status', 1)
       ->leftJoin('Proyecto_integrante_H AS b', function ($join) {
         $join->on('b.proyecto_id', '=', 'a.id')
-          ->where('b.condicion', '=', ['Responsable', 'Asesor']);})
+          ->whereIn('b.condicion', ['Responsable', 'Asesor']);})
       ->leftJoin('Facultad AS c', 'c.id', '=', 'a.facultad_id')
       ->leftJoin('Usuario_investigador AS d', 'd.id', '=', 'b.investigador_id')
       ->leftJoinSub($estadoDeudaAntiguos, 'ed', function ($join) {
