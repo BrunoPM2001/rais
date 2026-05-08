@@ -13,7 +13,10 @@ class DeudaProyectosController extends Controller {
       $integrantes = DB::table('Proyecto_integrante AS a')
         ->join('Proyecto_integrante_tipo AS b', 'b.id', '=', 'a.proyecto_integrante_tipo_id')
         ->join('Usuario_investigador AS c', 'c.id', '=', 'a.investigador_id')
-        ->leftJoin('Licencia AS d', 'd.investigador_id', '=', 'c.id')
+        ->leftJoin('Licencia AS d', function ($join) {
+          $join->on('d.investigador_id', '=', 'c.id')
+            ->whereDate('d.fecha_fin', '>=', now());
+          })
         ->leftJoin('Licencia_tipo AS e', 'e.id', '=', 'd.licencia_tipo_id')
         ->leftJoin('Proyecto_integrante_deuda AS f', 'f.proyecto_integrante_id', '=', 'a.id')
         ->select(
@@ -36,7 +39,10 @@ class DeudaProyectosController extends Controller {
     } else {
       $integrantes = DB::table('Proyecto_integrante_H AS a')
         ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
-        ->leftJoin('Licencia AS c', 'c.investigador_id', '=', 'b.id')
+        ->leftJoin('Licencia AS c', function ($join) {
+          $join->on('c.investigador_id', '=', 'b.id')
+            ->whereDate('c.fecha_fin', '>=', now());
+          })
         ->leftJoin('Licencia_tipo AS d', 'd.id', '=', 'c.licencia_tipo_id')
         ->leftJoin('Proyecto_integrante_deuda AS e', 'e.proyecto_integrante_h_id', '=', 'a.id')
         ->select(

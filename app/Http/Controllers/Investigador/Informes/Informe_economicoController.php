@@ -850,6 +850,7 @@ class Informe_economicoController extends S3Controller {
       ])
       ->where('a.id', '=', $request->query('geco_proyecto_id'))
       ->where('c.postulacion', '=', 1)
+      ->whereColumn('c.periodo', 'b.periodo')
       ->get();
 
     return ['partidasA' => $partidasA, 'partidasB' => $partidasB];

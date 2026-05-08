@@ -206,6 +206,10 @@ class InformeUtilsController extends S3Controller {
         $util = new InformePsinfipuController();
         return $util->reporte($request);
         break;
+      case "PMULTI":
+        $util = new InformePmultiController();
+        return $util->reporte($request);
+        break;
       case "PTPBACHILLER":
         $util = new InformePtpbachillerController();
         return $util->reporte($request);

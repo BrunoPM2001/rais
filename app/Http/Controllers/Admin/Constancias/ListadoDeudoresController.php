@@ -15,7 +15,10 @@ class ListadoDeudoresController extends Controller {
       ->leftJoin('Usuario_investigador AS c', 'c.id', '=', 'b.investigador_id')
       ->leftJoin('Proyecto AS d', 'd.id', '=', 'b.proyecto_id')
       ->leftJoin('Facultad AS e', 'e.id', '=', 'c.facultad_id')
-      ->leftJoin('Licencia AS f', 'f.investigador_id', '=', 'c.id')
+      ->leftJoin('Licencia AS f', function ($join) {
+        $join->on('f.investigador_id', '=', 'c.id')
+          ->whereDate('f.fecha_fin', '>=', now());
+      })
       ->leftJoin('Licencia_tipo AS g', 'g.id', '=', 'f.licencia_tipo_id')
       ->leftJoin('Facultad AS h', 'h.id', '=', 'd.facultad_id')
       ->leftJoin('Proyecto_integrante_tipo AS i', 'i.id', '=', 'b.proyecto_integrante_tipo_id')
@@ -57,7 +60,10 @@ class ListadoDeudoresController extends Controller {
       ->leftJoin('Usuario_investigador AS c', 'c.id', '=', 'b.investigador_id')
       ->leftJoin('Proyecto_H AS d', 'd.id', '=', 'b.proyecto_id')
       ->leftJoin('Facultad AS e', 'e.id', '=', 'c.facultad_id')
-      ->leftJoin('Licencia AS f', 'f.investigador_id', '=', 'c.id')
+      ->leftJoin('Licencia AS f', function ($join) {
+        $join->on('f.investigador_id', '=', 'c.id')
+          ->whereDate('f.fecha_fin', '>=', now());
+      })
       ->leftJoin('Licencia_tipo AS g', 'g.id', '=', 'f.licencia_tipo_id')
       ->leftJoin('Facultad AS h', 'h.id', '=', 'd.facultad_id')
       ->select([

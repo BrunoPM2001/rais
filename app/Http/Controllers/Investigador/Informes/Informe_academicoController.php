@@ -62,9 +62,34 @@ class Informe_academicoController extends S3Controller {
                           )
                       THEN 'Informe académico final'
 
+                      WHEN a.tipo_proyecto = 'PMULTI'
+                        AND a.periodo != 2020
+                        AND e.informe = 'Informe académico al 40%'
+                        AND d.estado = 1
+                        AND NOT EXISTS (
+                            SELECT 1 FROM Informe_tecnico d2
+                            JOIN Informe_tipo e2 ON d2.informe_tipo_id = e2.id
+                            WHERE d2.proyecto_id = a.id
+                            AND e2.informe = 'Informe académico al 80%'
+                        )
+                    THEN 'Informe académico al 80%'
+
+                    WHEN a.tipo_proyecto = 'PMULTI'
+                        AND a.periodo != 2020
+                        AND e.informe = 'Informe académico al 80%'
+                        AND d.estado = 1
+                        AND NOT EXISTS (
+                            SELECT 1 FROM Informe_tecnico d2
+                            JOIN Informe_tipo e2 ON d2.informe_tipo_id = e2.id
+                            WHERE d2.proyecto_id = a.id
+                            AND e2.informe = 'Informe académico al 100%'
+                        )
+                    THEN 'Informe académico al 100%'
+
                       WHEN e.informe IS NOT NULL THEN e.informe
   
                       ELSE CASE 
+                          WHEN a.tipo_proyecto = 'PMULTI' AND a.periodo != 2020 THEN 'Informe académico al 40%'
                           WHEN a.tipo_proyecto LIKE 'PTP%' AND a.tipo_proyecto != 'PTPBACHILLER' THEN 'Informe académico de avance'
                           ELSE 'Informe académico'
                       END
@@ -103,6 +128,30 @@ class Informe_academicoController extends S3Controller {
                                 WHERE d2.proyecto_id = a.id
                                 AND e2.informe = 'Informe académico final'
                             )) 
+                      THEN 'Por presentar'
+
+                      WHEN (a.tipo_proyecto = 'PMULTI'
+                        AND a.periodo != 2020
+                        AND e.informe = 'Informe académico al 40%'
+                        AND d.estado = 1
+                        AND NOT EXISTS (
+                            SELECT 1 FROM Informe_tecnico d2
+                            JOIN Informe_tipo e2 ON d2.informe_tipo_id = e2.id
+                            WHERE d2.proyecto_id = a.id
+                            AND e2.informe = 'Informe académico al 80%'
+                        )) 
+                      THEN 'Por presentar'
+
+                      WHEN (a.tipo_proyecto = 'PMULTI'
+                        AND a.periodo != 2020
+                        AND e.informe = 'Informe académico al 80%'
+                        AND d.estado = 1
+                        AND NOT EXISTS (
+                            SELECT 1 FROM Informe_tecnico d2
+                            JOIN Informe_tipo e2 ON d2.informe_tipo_id = e2.id
+                            WHERE d2.proyecto_id = a.id
+                            AND e2.informe = 'Informe académico al 100%'
+                        )) 
                       THEN 'Por presentar'
   
                       ELSE 
@@ -167,6 +216,14 @@ class Informe_academicoController extends S3Controller {
                 AND
                 IF (t1.informe = 'Informe académico final',
                     IF (t11.informe = 'Segundo informe académico de avance' AND t33.estado = 1, true, false),
+                true)
+            WHEN t2.tipo_proyecto = 'PMULTI' AND t2.periodo != 2020 THEN
+                IF (t1.informe = 'Informe académico al 80%',
+                    IF (t11.informe = 'Informe académico al 40%' AND t33.estado = 1, true, false),
+                true)
+                AND
+                IF (t1.informe = 'Informe académico al 100%',
+                    IF (t11.informe = 'Informe académico al 80%' AND t33.estado = 1, true, false),
                 true)
             ELSE
                 IF (t1.informe = 'Informe académico final' AND t1.tipo <> 'ptpgrado',

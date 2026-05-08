@@ -264,212 +264,31 @@
     </table>
 
     <h5>III. Contenido del informe:</h5>
-
-    <h6>3.1 Resumen</h6>
-    <div class="desc">
-      {!! $detalles->resumen_ejecutivo !!}
-    </div>
-
-    <h6>3.2 Palabras clave</h6>
-    <div class="desc">
-      {!! $detalles->palabras_clave !!}
-    </div>
-
-    <h6>3.3 Introduccción</h6>
+    
+    <h6>3.1 Descripción de actividades realizadas</h6>
     <div class="desc">
       {!! $detalles->infinal1 !!}
     </div>
 
-    <h6>3.4 Metodologías</h6>
+    <h6>3.2 Evaluación global de ejecución académica</h6>
     <div class="desc">
       {!! $detalles->infinal2 !!}
     </div>
 
-    <h6>3.5 Resultados</h6>
+    <h6>3.3 Problemas identificados</h6>
     <div class="desc">
       {!! $detalles->infinal3 !!}
     </div>
 
-    <h6>3.6 Discusión</h6>
-    <div class="desc">
-      {!! $detalles->infinal4 !!}
-    </div>
-
-    <h6>3.7 Conclusiones</h6>
-    <div class="desc">
-      {!! $detalles->infinal5 !!}
-    </div>
-
-    <h6>3.8 Recomendaciones</h6>
-    <div class="desc">
-      {!! $detalles->infinal6 !!}
-    </div>
-
-    <h6>3.9 Referencias bibliográficas</h6>
-    <div class="desc">
-      {!! $detalles->infinal7 !!}
-    </div>
-
-    <h6>3.10 Anexos</h6>
+    <h6>3.4 Anexos</h6>
     <div class="desc">
       Anexo:
-      @if (isset($archivos['informe-PMULTI-INFORME']))
+      @if (isset($archivos['informe-PMULTI-INFORME-40']))
         Sí
       @else
         No
       @endif
     </div>
-
-    <h5>IV. Impacto:</h5>
-
-    <h6>4.1 Aplicación práctica e impacto</h6>
-    <div class="desc">
-      {!! $detalles->infinal9 !!}
-    </div>
-
-    <h6>4.2 Publicación</h6>
-    <div class="desc">
-      {!! $detalles->infinal10 !!}
-    </div>
-
-    <h6>4.3 Calendario de Actividades</h6>
-    <table class="table">
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>Actividad</th>
-          <th>Responsable</th>
-          <th>Archivo</th>
-        </tr>
-      </thead>
-
-      <tbody>
-        @foreach ($actividades as $index => $item)
-          <tr>
-            <td>{{ $index + 1 }}</td>
-            <td>{{ $item->actividad }}</td>
-            <td>{{ $item->responsable }}</td>
-            <td>
-              @if(isset($archivos['actividad' . ($index + 1)]))
-                Sí
-              @else
-                No
-              @endif
-            </td>
-          </tr>
-        @endforeach
-      </tbody>
-    </table>
-
-    <h6>4.4 Entregables</h6>
-    <table class="table">
-      <thead>
-        <tr>
-          <th>Entregable</th>
-          <th>Archivo</th>
-        </tr>
-      </thead>
-
-      <tbody>
-        <tr>
-          <td>
-            Artículo científico 1
-          </td>
-          <td>
-            @if(isset($archivos['articulo1']))
-              Sí
-            @else
-              No
-            @endif
-          </td>
-        </tr>
-        <tr>
-          <td>
-            Artículo científico 2
-          </td>
-          <td>
-            @if(isset($archivos['articulo2']))
-              Sí
-            @else
-              No
-            @endif
-          </td>
-        </tr>
-        <tr>
-          <td>
-            Artículo científico 3
-          </td>
-          <td>
-            @if(isset($archivos['articulo3']))
-              Sí
-            @else
-              No
-            @endif
-          </td>
-        </tr>
-        <tr>
-          <td>
-            Capítulo de libro 1
-          </td>
-          <td>
-            @if(isset($archivos['capituloLibro1']))
-              Sí
-            @else
-              No
-            @endif
-          </td>
-        </tr>
-        <tr>
-          <td>
-            Capítulo de libro 2
-          </td>
-          <td>
-            @if(isset($archivos['capituloLibro2']))
-              Sí
-            @else
-              No
-            @endif
-          </td>
-        </tr>
-        <tr>
-          <td>
-            Tesis sustentada de pregrado
-          </td>
-          <td>
-            @if(isset($archivos['tesis1']))
-              Sí
-            @else
-              No
-            @endif
-          </td>
-        </tr>
-        <tr>
-          <td>
-            Tesis sustentada de posgrado
-          </td>
-          <td>
-            @if(isset($archivos['tesis4']))
-              Sí
-            @else
-              No
-            @endif
-          </td>
-        </tr>
-        <tr>
-          <td>
-            Registro / Red científica
-          </td>
-          <td>
-            @if(isset($archivos['registro']))
-              Sí
-            @else
-              No
-            @endif
-          </td>
-        </tr>
-      </tbody>
-    </table>
-
   </div>
 
   <script type="text/php">

@@ -69,7 +69,11 @@ class ProyectosGrupoController extends S3Controller {
                 FROM Proyecto_presupuesto AS f_sub
                 WHERE f_sub.proyecto_id = a.id
               )
-              ELSE SUM(f.monto)
+              ELSE (
+                SELECT COALESCE(SUM(f_sub.monto), 0)
+                FROM Proyecto_presupuesto AS f_sub
+                WHERE f_sub.proyecto_id = a.id
+              )
           END AS monto
         "),
         'a.resolucion_rectoral',

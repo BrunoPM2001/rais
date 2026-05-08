@@ -54,10 +54,10 @@ class ProyectoController extends Controller {
         'g.nombre as facultad_miembro',
         'c.codigo',
         DB::raw("CASE 
-            WHEN c.tipo_investigador = 'DOCENTE PERMANENTE' THEN 'Docente permanente'
-            WHEN c.tipo_investigador = 'Estudiante Pre Grado' THEN 'Estudiante pregrado'
-            WHEN c.tipo_investigador IS NULL THEN 'Externo'
-            ELSE c.tipo_investigador
+            WHEN c.tipo = 'DOCENTE PERMANENTE' THEN 'Docente permanente'
+            WHEN c.tipo = 'Estudiante Pre Grado' THEN 'Estudiante pregrado'
+            WHEN c.tipo IS NULL THEN 'Externo'
+            ELSE c.tipo
         END as tipo_investigador"),
         'i.condicion as condicion_gi',
         'f.id as grupo_id',
