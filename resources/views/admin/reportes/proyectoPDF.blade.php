@@ -14,7 +14,7 @@
   <title>Reporte</title>
   <style>
     @page {
-      margin-top: 230px;
+      margin-top: 210px;
       /* espacio reservado para el encabezado */
       margin-bottom: 80px;
       /* para el pie de página */
@@ -46,7 +46,7 @@
 
     header {
       position: fixed;
-      top: -200px;
+      top: -170px;
       left: 0;
       right: 0;
       height: 120px;
@@ -224,6 +224,7 @@
         <td><b>{{ $tipo }} <br>Año {{ $periodo }}</b></td>
       </tr>
     </table>
+    @if($tipo !== 'Programa de Equipamiento Científico para la Investigación de la UNMSM')
     <table class="table-texto" style="width: 100%; font-size:12px; margin-bottom: 0px;">
       <tr>
         <td style="text-align: left; width: 70%;">
@@ -234,6 +235,7 @@
         </td>
       </tr>
     </table>
+    @endif
     <div style="border-top: 1px solid black; margin: 0px 0;"></div>
   </header>
 
@@ -332,11 +334,18 @@
           $numProyecto++;
         @endphp
 
+        @php
+          $currentTipo = null;
+        @endphp
         {{-- Tabla para la lista de integrantes / condiciones --}}
         <table class="table-encabezado" style="font-size: 9px; padding-left:75px;">
           <thead>
             <tr>
-              <th style="width: 22%;">Condición</th>
+              <th style="width: 22%;">
+                {{ $tipo === 'Programa de Equipamiento Científico para la Investigación de la UNMSM'
+                ? 'Coordinador de GI'
+                : 'Condición' }}
+             </th>
               <th style="width: 45%;">Apellidos y nombres</th>
               <th style="width: 24%;">Tipo</th>
               <th style="width: 30%;">Facultad</th>
@@ -348,7 +357,10 @@
       @endif
 
       {{-- Verificamos si cambió la "Condición" (p.ej. Titular, Miembro, etc.) para mostrarla como título de bloque --}}
-      @if ($currentTipo != $item->condicion)
+        @if (
+            $tipo !== 'Programa de Equipamiento Científico para la Investigación de la UNMSM'
+            && $currentTipo != $item->condicion
+        )
         <tr>
           <td style="font-style: italic;"><b>{{ $item->condicion }}</b></td>
           <td></td>

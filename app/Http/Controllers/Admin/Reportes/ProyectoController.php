@@ -38,7 +38,10 @@ class ProyectoController extends Controller {
       ->leftJoin('Grupo as f', 'a.grupo_id', '=', 'f.id')
       ->leftJoin('Facultad as g', 'c.facultad_id', '=', 'g.id')
       ->leftJoin('Proyecto_integrante_tipo as h', 'b.proyecto_integrante_tipo_id', '=', 'h.id')
-      ->leftJoin('Grupo_integrante as i', 'c.id', '=', 'i.investigador_id')
+      ->leftJoin('Grupo_integrante as i', function ($join) {
+          $join->on('c.id', '=', 'i.investigador_id')
+              ->on('a.grupo_id', '=', 'i.grupo_id');
+      })
       ->leftJoin('Proyecto_presupuesto as j', 'a.id', '=', 'j.proyecto_id')
       ->select([
         'a.id',
@@ -61,13 +64,17 @@ class ProyectoController extends Controller {
         END as tipo_investigador"),
         'i.condicion as condicion_gi',
         'f.id as grupo_id',
-        DB::raw("SUM(j.monto) as presupuesto"),
+        DB::raw("(
+          SELECT COALESCE(SUM(j_sub.monto), 0)
+          FROM Proyecto_presupuesto AS j_sub
+          WHERE j_sub.proyecto_id = a.id
+        ) AS presupuesto"),
       ])
       ->where('a.tipo_proyecto', '=', $tipo)
-      ->when(in_array($tipo, ['PRO-CTIE', 'PICV']) && empty($facultad), function ($query) {
-        }, function ($query) use ($facultad) {
-        $query->where('a.facultad_id', '=', $facultad);
-        })
+      ->when(in_array($tipo, ['PRO-CTIE', 'PICV', 'ECI']) && empty($facultad), function ($query) {
+      }, function ($query) use ($facultad) {
+          $query->where('a.facultad_id', '=', $facultad);
+      })
       ->where('a.periodo', '=', $periodo)
       ->whereIn('a.estado', [1, 8])
       ->where(function ($query) use ($tipo) {
@@ -84,20 +91,42 @@ class ProyectoController extends Controller {
               });
           }
       })
-      ->when(in_array($tipo, ['PRO-CTIE', 'PICV']), function ($query) {
-          $query->orderByRaw('
-          CAST(SUBSTRING(a.codigo_proyecto, 6, 2) AS UNSIGNED), 
-          a.codigo_proyecto,
-          FIELD(b.proyecto_integrante_tipo_id,
-              86, 88, 87,
-              92, 93
-            ),
-            c.apellido1, c.apellido2, c.nombres');
-        }, function ($query) {
+      ->when(in_array($tipo, ['PRO-CTIE', 'PICV', 'ECI']), function ($query) use ($tipo) {
+
+          if ($tipo === 'ECI') {
+
+              $query->orderBy('a.orden_merito', 'asc')
+              ->orderBy('a.id')
+              ->orderByRaw("
+                FIELD(b.proyecto_integrante_tipo_id,
+                    86, 88, 87,
+                    92, 93
+                ),
+                c.apellido1,
+                c.apellido2,
+                c.nombres
+              ");
+
+          } else {
+
+              $query->orderByRaw('
+                  CAST(SUBSTRING(a.codigo_proyecto, 6, 2) AS UNSIGNED), 
+                  a.codigo_proyecto,
+                  FIELD(b.proyecto_integrante_tipo_id,
+                      86, 88, 87,
+                      92, 93
+                  ),
+                  c.apellido1,
+                  c.apellido2,
+                  c.nombres
+              ');
+          }
+
+      }, function ($query) {
           $query->orderByRaw('f.grupo_nombre, 
             a.codigo_proyecto, 
             FIELD(b.proyecto_integrante_tipo_id,
-              1, 2, 3, 5, 6, 4, 31, 32, 33, 35,
+              1, 2, 3, 5, 6, 4, 31, 32, 33, 35, 95,
               7, 8, 9, 11, 12, 10, 42, 50, 51, 52, 55,
               13, 14, 53, 54,
               15, 16,

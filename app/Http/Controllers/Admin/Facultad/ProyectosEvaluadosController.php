@@ -107,14 +107,18 @@ class ProyectosEvaluadosController extends Controller {
 
         // ===== NIVEL 3 =====
         if ($item->nivel == 3) {
+          if ($currentNivel3 !== null) {
+            $currentNivel3->puntaje = $sumNivel2;
 
-            if ($currentNivel3 !== null) {
-                $currentNivel3->puntaje = $sumNivel2;
-            }
+            $subtotalBloque = $sumNivel2 + $sumNivel1;
+            $totalGeneral += $subtotalBloque;
 
-            $currentNivel3 = $item;
-            $sumNivel2 = 0;
-            continue;
+            $sumNivel1 = 0;
+          }
+
+          $currentNivel3 = $item;
+          $sumNivel2 = 0;
+          continue;
         }
 
         // ===== NIVEL 2 =====
@@ -157,6 +161,10 @@ class ProyectosEvaluadosController extends Controller {
 
             $item->puntaje = $totalGeneral;
         }
+    }
+
+    if ($currentNivel3 !== null) {
+      $currentNivel3->puntaje = $sumNivel2;
     }
 
     $total = $totalGeneral;

@@ -17,7 +17,22 @@ class ListadoDeudoresController extends Controller {
       ->leftJoin('Facultad AS e', 'e.id', '=', 'c.facultad_id')
       ->leftJoin('Licencia AS f', function ($join) {
         $join->on('f.investigador_id', '=', 'c.id')
-          ->whereDate('f.fecha_fin', '>=', now());
+          ->whereRaw('f.id = (
+            SELECT l2.id
+            FROM Licencia AS l2
+            WHERE l2.investigador_id = c.id
+              AND DATE(l2.fecha_fin) >= CURDATE()
+            ORDER BY
+              CASE
+                WHEN l2.licencia_tipo_id = 7 THEN 1
+                WHEN l2.licencia_tipo_id = 6 THEN 2
+                WHEN l2.licencia_tipo_id = 4 THEN 3
+                ELSE 4
+              END,
+              l2.fecha_fin DESC,
+              l2.id DESC
+            LIMIT 1
+          )');
       })
       ->leftJoin('Licencia_tipo AS g', 'g.id', '=', 'f.licencia_tipo_id')
       ->leftJoin('Facultad AS h', 'h.id', '=', 'd.facultad_id')
@@ -36,8 +51,9 @@ class ListadoDeudoresController extends Controller {
         'd.titulo',
         'h.nombre AS facultad_proyecto',
         'd.periodo',
-        'a.detalle',
         'a.categoria',
+        'a.informe as detalle',
+        'a.detalle as comentario_observacion',
       ])
       ->whereBetween('a.tipo', [1, 3])
       ->where(function ($query) {
@@ -62,7 +78,22 @@ class ListadoDeudoresController extends Controller {
       ->leftJoin('Facultad AS e', 'e.id', '=', 'c.facultad_id')
       ->leftJoin('Licencia AS f', function ($join) {
         $join->on('f.investigador_id', '=', 'c.id')
-          ->whereDate('f.fecha_fin', '>=', now());
+          ->whereRaw('f.id = (
+            SELECT l2.id
+            FROM Licencia AS l2
+            WHERE l2.investigador_id = c.id
+              AND DATE(l2.fecha_fin) >= CURDATE()
+            ORDER BY
+              CASE
+                WHEN l2.licencia_tipo_id = 7 THEN 1
+                WHEN l2.licencia_tipo_id = 6 THEN 2
+                WHEN l2.licencia_tipo_id = 4 THEN 3
+                ELSE 4
+              END,
+              l2.fecha_fin DESC,
+              l2.id DESC
+            LIMIT 1
+          )');
       })
       ->leftJoin('Licencia_tipo AS g', 'g.id', '=', 'f.licencia_tipo_id')
       ->leftJoin('Facultad AS h', 'h.id', '=', 'd.facultad_id')
@@ -80,8 +111,9 @@ class ListadoDeudoresController extends Controller {
         'd.titulo',
         'h.nombre AS facultad_proyecto',
         'd.periodo',
-        'a.detalle',
         'a.categoria',
+        'a.informe as detalle',
+        'a.detalle as comentario_observacion',
       ])
       ->whereBetween('a.tipo', [1, 3])
       ->where(function ($query) {

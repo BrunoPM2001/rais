@@ -314,6 +314,7 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
       Route::get('listadoIntegrantes', [DeudaProyectosController::class, 'listadoIntegrantes']);
       Route::get('listadoProyectosNoDeuda', [DeudaProyectosController::class, 'listadoProyectosNoDeuda']);
       Route::get('listadoDeudaAcademica', [DeudaProyectosController::class, 'listadoDeudaAcademica']);
+      Route::get('listadoSubsanacionAcademica', [DeudaProyectosController::class, 'listadoSubsanacionAcademica']);
       Route::post('asignarDeuda', [DeudaProyectosController::class, 'asignarDeuda']);
       Route::get('proyectoDeuda', [DeudaProyectosController::class, 'proyectoDeuda']);
       Route::post('subsanarDeuda', [DeudaProyectosController::class, 'subsanarDeuda']);

@@ -154,6 +154,7 @@ class ReporteController extends Controller {
         case 'PRO-CTIE':
         case 'PINTERDIS':
         case 'PCONFIGI-INV':
+        case 'PICV':
           $financiamiento_gi[] = $proyecto;
           break;
         case 'PSINFINV':

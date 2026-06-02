@@ -92,12 +92,18 @@ class EvaluadorProyectosController extends S3Controller {
       foreach ($criterios as $item) {
 
         if ($item->nivel == 3) {
-            if ($currentNivel3 !== null) {
-                $currentNivel3->puntaje = $sumNivel2;
-            }
-            $currentNivel3 = $item;
-            $sumNivel2 = 0;
-            continue;
+          if ($currentNivel3 !== null) {
+            $currentNivel3->puntaje = $sumNivel2;
+
+            $subtotalBloque = $sumNivel2 + $sumNivel1;
+            $totalGeneral += $subtotalBloque;
+
+            $sumNivel1 = 0;
+          }
+
+          $currentNivel3 = $item;
+          $sumNivel2 = 0;
+          continue;
         }
 
         if ($item->nivel == 2) {
@@ -124,16 +130,23 @@ class EvaluadorProyectosController extends S3Controller {
         }
 
         if ($item->nivel == 5) {
+          if ($currentNivel3 !== null) {
+              $currentNivel3->puntaje = $sumNivel2;
 
-            if ($currentNivel3 !== null) {
-                $currentNivel3->puntaje = $sumNivel2;
+              $subtotalBloque = $sumNivel2 + $sumNivel1;
+              $totalGeneral += $subtotalBloque;
+          }
 
-                $subtotal = $sumNivel2 + $sumNivel1;
-                $totalGeneral += $subtotal;
-            }
+          $item->puntaje = $totalGeneral;
 
-            $item->puntaje = $totalGeneral;
+          $sumNivel2 = 0;
+          $sumNivel1 = 0;
+          $currentNivel3 = null;
         }
+    }
+
+    if ($currentNivel3 !== null) {
+        $currentNivel3->puntaje = $sumNivel2;
     }
 
     $estado = DB::table('Evaluacion_proyecto')
@@ -360,16 +373,18 @@ class EvaluadorProyectosController extends S3Controller {
 
           // ===== NIVEL 3: inicia bloque de subcriterios =====
           if ($item->nivel == 3) {
+            if ($currentNivel3 !== null) {
+              $currentNivel3->puntaje = $sumNivel2;
 
-              // Si había un nivel 3 anterior sin cerrar
-              if ($currentNivel3 !== null) {
-                  // Nivel 3 solo es suma de nivel 2
-                  $currentNivel3->puntaje = $sumNivel2;
-              }
+              $subtotalBloque = $sumNivel2 + $sumNivel1;
+              $totalGeneral += $subtotalBloque;
 
-              $currentNivel3 = $item;
-              $sumNivel2 = 0;
-              continue;
+              $sumNivel1 = 0;
+            }
+
+            $currentNivel3 = $item;
+            $sumNivel2 = 0;
+            continue;
           }
 
           // ===== NIVEL 2: subcriterios =====
@@ -419,6 +434,10 @@ class EvaluadorProyectosController extends S3Controller {
               $item->puntaje = $totalGeneral;
           }
       }
+    
+    if ($currentNivel3 !== null) {
+      $currentNivel3->puntaje = $sumNivel2;
+    }
 
     $extra = DB::table('Proyecto_evaluacion AS a')
       ->join('Usuario_evaluador AS b', 'a.evaluador_id', '=', 'b.id')
@@ -477,7 +496,9 @@ class EvaluadorProyectosController extends S3Controller {
     switch ($proyecto->tipo_proyecto) {
 
       case "PMULTI":
-        $utils->puntajeTesistas($request);
+        $utils->puntajeLicenciaturaBachiller($request);
+        $utils->puntajeMaestria($request);
+        $utils->puntajeDoctorado($request);
         $utils->AddExperienciaResponsable($request);
         $utils->AddExperienciaMiembros($request);
         $utils->addgiTotal($request);

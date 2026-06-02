@@ -81,6 +81,111 @@ class CriteriosUtilsController extends Controller {
       ]);
   }
 
+  private function obtenerDatosTesistas($proyecto_id) {
+    return DB::table('Proyecto_integrante as t1')
+      ->selectRaw("SUM(CASE WHEN t1.tipo_tesis LIKE '%bachiller%' THEN 1 ELSE 0 END) as bachiller")
+      ->selectRaw("SUM(CASE WHEN t1.tipo_tesis LIKE '%licenciatura%' THEN 1 ELSE 0 END) as licenciatura")
+      ->selectRaw("SUM(CASE WHEN t1.tipo_tesis LIKE '%maestr%' THEN 1 ELSE 0 END) as maestria")
+      ->selectRaw("SUM(CASE WHEN t1.tipo_tesis LIKE '%doctor%' THEN 1 ELSE 0 END) as doctorado")
+      ->leftJoin('Proyecto_integrante_tipo as t2', 't1.proyecto_integrante_tipo_id', '=', 't2.id')
+      ->where('t1.proyecto_id', $proyecto_id)
+      ->whereNotNull('t1.tipo_tesis')
+      ->where('t2.nombre', 'Tesista')
+      ->first();
+  }
+
+  public function puntajeLicenciaturaBachiller(Request $request) {
+    $proyecto = DB::table('Proyecto')
+      ->select('tipo_proyecto', 'periodo')
+      ->where('id', $request->query('proyecto_id'))
+      ->first();
+
+    $evaluacion = DB::table('Evaluacion_opcion')
+      ->where('tipo', $proyecto->tipo_proyecto)
+      ->where('periodo', $proyecto->periodo)
+      ->where('otipo', 'tesista_lic')
+      ->first();
+
+    $tesistas = $this->obtenerDatosTesistas($request->query('proyecto_id'));
+
+    $puntaje =
+      (($tesistas->bachiller ?? 0) * 0.5) +
+      (($tesistas->licenciatura ?? 0) * 1);
+
+    if ($puntaje > $evaluacion->puntaje_max) {
+        $puntaje = $evaluacion->puntaje_max;
+    }
+
+    DB::table('Evaluacion_proyecto')
+      ->updateOrInsert([
+        'proyecto_id' => $request->query('proyecto_id'),
+        'evaluador_id' => $request->attributes->get('token_decoded')->evaluador_id,
+        'evaluacion_opcion_id' => $evaluacion->id
+      ], [
+        'puntaje' => $puntaje
+      ]);
+  }
+
+  public function puntajeMaestria(Request $request) {
+    $proyecto = DB::table('Proyecto')
+      ->select('tipo_proyecto', 'periodo')
+      ->where('id', $request->query('proyecto_id'))
+      ->first();
+
+    $evaluacion = DB::table('Evaluacion_opcion')
+      ->where('tipo', $proyecto->tipo_proyecto)
+      ->where('periodo', $proyecto->periodo)
+      ->where('otipo', 'tesista_mae')
+      ->first();
+
+    $tesistas = $this->obtenerDatosTesistas($request->query('proyecto_id'));
+
+    $puntaje = ($tesistas->maestria ?? 0) * 3;
+
+    if ($puntaje > $evaluacion->puntaje_max) {
+        $puntaje = $evaluacion->puntaje_max;
+    }
+
+    DB::table('Evaluacion_proyecto')
+      ->updateOrInsert([
+          'proyecto_id' => $request->query('proyecto_id'),
+          'evaluador_id' => $request->attributes->get('token_decoded')->evaluador_id,
+          'evaluacion_opcion_id' => $evaluacion->id
+      ], [
+          'puntaje' => $puntaje
+      ]);
+  }
+
+  public function puntajeDoctorado(Request $request) {
+    $proyecto = DB::table('Proyecto')
+      ->select('tipo_proyecto', 'periodo')
+      ->where('id', $request->query('proyecto_id'))
+      ->first();
+
+    $evaluacion = DB::table('Evaluacion_opcion')
+      ->where('tipo', $proyecto->tipo_proyecto)
+      ->where('periodo', $proyecto->periodo)
+      ->where('otipo', 'tesista_doc')
+      ->first();
+
+    $tesistas = $this->obtenerDatosTesistas($request->query('proyecto_id'));
+
+    $puntaje = ($tesistas->doctorado ?? 0) * 5;
+
+    if ($puntaje > $evaluacion->puntaje_max) {
+        $puntaje = $evaluacion->puntaje_max;
+    }
+
+    DB::table('Evaluacion_proyecto')
+      ->updateOrInsert([
+          'proyecto_id' => $request->query('proyecto_id'),
+          'evaluador_id' => $request->attributes->get('token_decoded')->evaluador_id,
+          'evaluacion_opcion_id' => $evaluacion->id
+      ], [
+          'puntaje' => $puntaje
+      ]);
+  }
+
   public function AddExperienciaResponsable(Request $request) {
     $proyecto = DB::table('Proyecto as p')
       ->select('p.tipo_proyecto', 'p.periodo')

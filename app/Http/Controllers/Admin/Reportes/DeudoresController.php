@@ -45,6 +45,7 @@ class DeudoresController extends Controller {
       'd.codigo_proyecto',
       'h.nombre AS facultad_proyecto',
       'd.periodo',
+      'a.informe',
       'a.detalle',
       'a.categoria',
     ])
@@ -98,6 +99,7 @@ class DeudoresController extends Controller {
       'd.codigo AS codigo_proyecto',
       'h.nombre AS facultad_proyecto',
       'd.periodo',
+      'a.informe',
       'a.detalle',
       'a.categoria',
     ])
