@@ -207,6 +207,11 @@
           <td style="width: 83%;" valign="top">{{ $solicitud->justificacion }}</td>
         </tr>
         <tr>
+          <td style="width: 16%;" valign="top"><strong>Observacion</strong></td>
+          <td style="width: 1%;" valign="top">:</td>
+          <td style="width: 83%;" valign="top">{{ $solicitud->observacion }}</td>
+        </tr>
+        <tr>
           <td style="width: 16%;"><strong>Estado</strong></td>
           <td style="width: 1%;">:</td>
           <td style="width: 83%;">{{ $solicitud->estado }}</td>

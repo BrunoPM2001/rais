@@ -477,6 +477,7 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
       Route::get('getSolicitudData', [GestionTransferenciasController::class, 'getSolicitudData']);
       Route::get('movimientosTransferencia', [GestionTransferenciasController::class, 'movimientosTransferencia']);
       Route::post('calificar', [GestionTransferenciasController::class, 'calificar']);
+      Route::post('eliminar', [GestionTransferenciasController::class, 'eliminar']);
       Route::get('reporte', [GestionTransferenciasController::class, 'reporte']);
     });
   });
@@ -1334,6 +1335,12 @@ Route::prefix('facultad')->middleware('checkRole:Usuario_facultad')->group(funct
     Route::prefix('grupos')->group(function () {
       Route::get('listado', [FacultadListadoController::class, 'ListadoGrupos']);
       Route::get('pdfGrupo', [FacultadListadoController::class, 'pdfGrupo']);
+    });
+
+    Route::prefix('lineasInvestigacion')->group(function () {
+      Route::get('listado', [FacultadListadoController::class, 'LineasInvestigacion']);
+      Route::post('pdfLineas', [FacultadListadoController::class, 'LineasInvestigacionPDF']);
+      Route::post('excelLineas', [FacultadListadoController::class, 'LineasInvestigacionExcel']);
     });
 
     Route::prefix('publicaciones')->group(function () {

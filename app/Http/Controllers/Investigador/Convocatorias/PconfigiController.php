@@ -1003,8 +1003,18 @@ class PconfigiController extends S3Controller {
       }
     }
 
-
     $numParticipacion = count($participacion);
+
+    $datosIntegrante = DB::table('Grupo_integrante AS a')
+      ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
+      ->select([
+        'b.codigo',
+        'b.tipo',
+        'a.condicion',
+      ])
+      ->where('a.id', '=', $request->input('grupo_integrante_id'))
+      ->where('a.investigador_id', '=', $request->input('investigador_id'))
+      ->first();
 
     if ((($tipoIntegrante == 3 && $miembroDocente < 2) 
       || (!in_array($tipoIntegrante, [3,4,6]) && $numParticipacion == 0) 
@@ -1020,6 +1030,9 @@ class PconfigiController extends S3Controller {
             'investigador_id' => $request->input('investigador_id'),
             'grupo_integrante_id' => $request->input('grupo_integrante_id'),
             'proyecto_integrante_tipo_id' => $request->input('proyecto_integrante_tipo_id'),
+            'codigo' => $datosIntegrante->codigo,
+            'tipo_investigador' => $datosIntegrante->tipo,
+            'condicion_grupo' => $datosIntegrante->condicion,
             'excluido' => 'Incluido',
             'created_at' => Carbon::now(),
             'updated_at' => Carbon::now(),
@@ -1032,6 +1045,9 @@ class PconfigiController extends S3Controller {
             'investigador_id' => $request->input('investigador_id'),
             'grupo_integrante_id' => $request->input('grupo_integrante_id'),
             'proyecto_integrante_tipo_id' => $request->input('proyecto_integrante_tipo_id'),
+            'codigo' => $datosIntegrante->codigo,
+            'tipo_investigador' => $datosIntegrante->tipo,
+            'condicion_grupo' => $datosIntegrante->condicion,
             'tipo_tesis' => $request?->input('tipo_tesis')["value"],
             'titulo_tesis' => $request->input('titulo_tesis'),
             'excluido' => 'Incluido',
@@ -1189,7 +1205,7 @@ class PconfigiController extends S3Controller {
       ->select([
         'b.nombre AS condicion',
         DB::raw("CONCAT(c.apellido1, ' ', c.apellido2, ' ', c.nombres) AS nombres"),
-        'c.tipo',
+        'a.tipo_investigador as tipo',
         'a.tipo_tesis',
         'a.titulo_tesis'
       ])

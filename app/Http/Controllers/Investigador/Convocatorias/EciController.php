@@ -201,11 +201,27 @@ class EciController extends S3Controller {
           'updated_at' => $date,
         ]);
 
+      $datosIntegrante = DB::table('Grupo_integrante AS a')
+        ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
+        ->select([
+          'b.codigo',
+          'b.tipo',
+          'a.id AS grupo_integrante_id',
+          'a.condicion',
+        ])
+        ->where('a.grupo_id', '=', $request->input('grupo_id'))
+        ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+        ->first();
+
       DB::table('Proyecto_integrante')
         ->insert([
           'proyecto_id' => $id,
           'investigador_id' => $request->attributes->get('token_decoded')->investigador_id,
+          'grupo_integrante_id' => $datosIntegrante->grupo_integrante_id ?? null,
           'proyecto_integrante_tipo_id' => 30,
+          'codigo' => $datosIntegrante->codigo ?? null,
+          'tipo_investigador' => $datosIntegrante->tipo ?? null,
+          'condicion_grupo' => $datosIntegrante->condicion ?? null,
           'condicion' => 'Responsable',
           'created_at' => $date,
           'updated_at' => $date,

@@ -111,7 +111,7 @@ class PicvController extends S3Controller {
       ->count();
 
     $proyectoActual > 0 && $errores[] = [
-      'message' => "Actualmente, cuenta con una propuesta de proyecto PICV 2026 en proceso como Asesor, por lo que no es posible registrar nuevos proyectos en esta categoría.",
+      'message' => "Actualmente, cuenta con una propuesta de proyecto PICV en proceso como Asesor, por lo que no es posible registrar nuevos proyectos en esta categoría.",
       'isHtml' => false
     ];
 

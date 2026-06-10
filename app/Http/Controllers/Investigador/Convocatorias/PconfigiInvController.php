@@ -249,8 +249,11 @@ class PconfigiInvController extends S3Controller {
         })
         ->select([
           'a.facultad_id',
+          'a.codigo',
+          'a.tipo',
           'b.grupo_id',
-          'b.id'
+          'b.id',
+          'b.condicion'
         ])
         ->where('a.id', '=', $request->attributes->get('token_decoded')->investigador_id)
         ->first();
@@ -293,6 +296,9 @@ class PconfigiInvController extends S3Controller {
           'proyecto_integrante_tipo_id' => 36,
           'grupo_id' => $datos->grupo_id,
           'grupo_integrante_id' => $datos->id,
+          'codigo' => $datos->codigo,
+          'tipo_investigador' => $datos->tipo,
+          'condicion_grupo' => $datos->condicion,
           'condicion' => 'Responsable',
           'created_at' => $date,
           'updated_at' => $date,
@@ -968,6 +974,18 @@ class PconfigiInvController extends S3Controller {
       ->count();
 
     if ($count == 0) {
+
+      $datosIntegrante = DB::table('Grupo_integrante AS a')
+        ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
+        ->select([
+          'b.codigo',
+          'b.tipo',
+          'a.condicion',
+        ])
+        ->where('a.id', '=', $request->input('grupo_integrante_id'))
+        ->where('a.investigador_id', '=', $request->input('investigador_id'))
+        ->first();
+
       DB::table('Proyecto_integrante')
         ->insert([
           'proyecto_id' => $request->input('id'),
@@ -975,6 +993,9 @@ class PconfigiInvController extends S3Controller {
           'investigador_id' => $request->input('investigador_id'),
           'grupo_integrante_id' => $request->input('grupo_integrante_id'),
           'proyecto_integrante_tipo_id' => $request->input('proyecto_integrante_tipo_id'),
+          'codigo' => $datosIntegrante->codigo,
+          'tipo_investigador' => $datosIntegrante->tipo,
+          'condicion_grupo' => $datosIntegrante->condicion,
           'tipo_tesis' => $request->input('tipo'),
           'titulo_tesis' => $request->input('titulo'),
           'created_at' => Carbon::now(),
@@ -1052,7 +1073,7 @@ class PconfigiInvController extends S3Controller {
       ->select([
         'c.nombre AS tipo_integrante',
         DB::raw("CONCAT(b.apellido1, ' ', b.apellido2, ', ', b.nombres) AS nombre"),
-        'b.tipo',
+        'a.tipo_investigador as tipo',
         'a.tipo_tesis',
         'a.titulo_tesis',
       ])

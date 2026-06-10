@@ -52,9 +52,19 @@ class DashboardController extends Controller {
       ->whereNot('condicion', 'LIKE', 'Ex%')
       ->count();
 
-    $proyectos = DB::table('Proyecto_integrante')
-      ->where('investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+    $proyectosActuales = DB::table('Proyecto_integrante AS pi')
+      ->join('Proyecto AS p', 'p.id', '=', 'pi.proyecto_id')
+      ->where('pi.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+      ->whereIn('p.estado', [1, 8])
       ->count();
+
+    $proyectosHistoricos = DB::table('Proyecto_integrante_H AS pi')
+      ->join('Proyecto_H AS p', 'p.id', '=', 'pi.proyecto_id')
+      ->where('pi.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+      ->where('p.status', 1)
+      ->count();
+
+    $proyectos = $proyectosActuales + $proyectosHistoricos;
 
     $dj = DB::table('Proyecto as px')
       ->join('Proyecto_integrante as pix', 'px.id', '=', 'pix.proyecto_id')
@@ -79,14 +89,19 @@ class DashboardController extends Controller {
       ->where('b.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
       ->count();
 
-    $puntaje = DB::table('Publicacion AS a')
+    $puntajePublicaciones = DB::table('Publicacion AS a')
       ->leftJoin('Publicacion_autor AS b', 'a.id', '=', 'b.publicacion_id')
-      ->select(
-        DB::raw('SUM(b.puntaje) AS puntaje')
-      )
-      ->where('a.estado', '>', 0)
+      ->where('a.estado', '=', 1)
       ->where('b.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
-      ->first()->puntaje;
+      ->sum('b.puntaje');
+
+    $puntajePatentes = DB::table('Patente AS a')
+      ->leftJoin('Patente_autor AS b', 'a.id', '=', 'b.patente_id')
+      ->where('a.estado', '=', 1)
+      ->where('b.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+      ->sum('b.puntaje');
+
+    $puntaje = $puntajePublicaciones + $puntajePatentes;
 
     $puntaje_pasado = DB::table('view_puntaje_7u')
       ->select(

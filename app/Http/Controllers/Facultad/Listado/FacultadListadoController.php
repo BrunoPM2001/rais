@@ -3,11 +3,8 @@
 namespace App\Http\Controllers\Facultad\Listado;
 
 use App\Exports\Admin\FromDataExport;
-use App\Exports\Facultad\DeudasExport;
-use App\Exports\Facultad\PublicacionesExport;
+use App\Models\Linea_investigacion;
 use App\Exports\Facultad\DocenteInvestigadorExport;
-use App\Exports\Facultad\ProyectosExport;
-use App\Exports\Facultad\GrupoIntegrantesExport;
 use App\Exports\Facultad\InvestigadoresExport;
 use App\Http\Controllers\Controller;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -107,13 +104,13 @@ class FacultadListadoController extends Controller {
       ->leftJoin('Publicacion_autor AS b', 'b.investigador_id', '=', 'a.id')
       ->select(
         DB::raw("
-                    CONCAT(
-                        TRIM(a.codigo), ' | ', 
-                        a.doc_numero, ' | ', 
-                        a.apellido1, ' ', a.apellido2, ', ', a.nombres, ' | ', 
-                        COALESCE(a.tipo, CONCAT(a.tipo_investigador, ' - ', a.tipo_investigador_estado))
-                    ) AS value
-                "),
+          CONCAT(
+              TRIM(a.codigo), ' | ', 
+              a.doc_numero, ' | ', 
+              a.apellido1, ' ', a.apellido2, ', ', a.nombres, ' | ', 
+              COALESCE(a.tipo, CONCAT(a.tipo_investigador, ' - ', a.tipo_investigador_estado))
+          ) AS value
+        "),
         'a.id AS investigador_id',
         'a.id',
         'a.codigo',
@@ -309,19 +306,44 @@ class FacultadListadoController extends Controller {
   }
 
   public function proyectosExcel(Request $request) {
-    $filters = $request->filters ?? [];
+    $proyectos = $request->all();
     $facultadId = $this->facultadId($request);
-    $export = new ProyectosExport($filters, $facultadId);
-    $total = $export->query()->count();
 
-    if ($total > 15000) {
-      return ['message' => 'info', 'detail' => "La cantidad de registros ($total) supera el límite permitido (15000). Añada más filtros."];
+    $data = [];
+
+    foreach ($proyectos as $proyecto) {
+      $integrantes = DB::table('Proyecto_integrante AS a')
+        ->join('Proyecto_integrante_tipo AS b', 'b.id', '=', 'a.proyecto_integrante_tipo_id')
+        ->join('Usuario_investigador AS c', 'c.id', '=', 'a.investigador_id')
+        ->leftJoin('Grupo_integrante AS gi', 'gi.id', '=', 'a.grupo_integrante_id')
+        ->leftJoin('Grupo AS g', 'g.id', '=', 'gi.grupo_id')
+        ->select(
+          'c.doc_numero',
+          'c.apellido1',
+          'c.apellido2',
+          'c.nombres',
+          'b.nombre AS condicion',
+          'g.grupo_nombre AS grupo'
+        )
+        ->where('a.proyecto_id', '=', $proyecto['id'])
+        ->where('c.facultad_id', '=', $facultadId)
+        ->get();
+
+    foreach ($integrantes as $integrante) {
+        $data[] = array_merge($proyecto, [
+          'integrante_doc_numero' => $integrante->doc_numero,
+          'integrante_apellido1' => $integrante->apellido1,
+          'integrante_apellido2' => $integrante->apellido2,
+          'integrante_nombres' => $integrante->nombres,
+          'integrante_condicion' => $integrante->condicion,
+          'integrante_grupo' => $integrante->grupo,
+        ]);
+      }
     }
 
-    return Excel::download(
-        $export,
-        'proyectos.xlsx'
-    );
+    $export = new FromDataExport($data);
+
+    return Excel::download($export, 'proyectos.xlsx');
   }
 
   public function totalDeudores($facultadId = null) {
@@ -693,6 +715,7 @@ class FacultadListadoController extends Controller {
         'a.id',
         'b.codigo',
         'b.nombre',
+        'b.estado',
       ])
       ->where('a.grupo_id', '=', $request->query('id'))
       ->get();
@@ -784,6 +807,47 @@ class FacultadListadoController extends Controller {
     ]);
 
     return $pdf->stream();
+  }
+
+  public function LineasInvestigacion(Request $request) {
+    $estado = $request->query('estado');
+    $facultadId = $this->facultadId($request);
+
+    $query = Linea_investigacion::with('hijos')
+      ->whereNull('parent_id')
+      ->where('facultad_id', '=', $facultadId);
+
+    if (!is_null($estado)) {
+      $query->where('estado', '=', $estado);
+    }
+
+    $lineas_investigacion = $query->get();
+
+    return ['data' => $lineas_investigacion];
+  }
+
+  public function LineasInvestigacionExcel(Request $request) {
+    $data = $request->all();
+
+    $export = new FromDataExport($data);
+
+    return Excel::download($export, 'lineas_investigacion.xlsx');
+  }
+
+  public function LineasInvestigacionPDF(Request $request) {
+    $items = $request->items;
+
+    $facultad = DB::table('Facultad')
+        ->where('id', $this->facultadId($request))
+        ->value('nombre');
+
+    $pdf = Pdf::loadView('admin.admin.lineasInvestigacionPDF', [
+        'items' => $items,
+        'facultad' => $facultad,
+        'username' => $request->attributes->get('token_decoded')->nombre
+    ]);
+
+    return $pdf->download('lineas_investigacion.pdf');
   }
 
   public function ListadoPublicaciones(Request $request) {

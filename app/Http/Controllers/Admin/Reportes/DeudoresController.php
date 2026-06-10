@@ -28,7 +28,10 @@ class DeudoresController extends Controller {
     ->leftJoin('Usuario_investigador AS c', 'c.id', '=', 'b.investigador_id')
     ->leftJoin('Proyecto AS d', 'd.id', '=', 'b.proyecto_id')
     ->leftJoin('Facultad AS e', 'e.id', '=', 'c.facultad_id')
-    ->leftJoin('Licencia AS f', 'f.investigador_id', '=', 'c.id')
+    ->leftJoin('Licencia AS f', function ($join) {
+        $join->on('f.investigador_id', '=', 'c.id')
+            ->whereDate('f.fecha_fin', '>=', now());
+    })
     ->leftJoin('Licencia_tipo AS g', 'g.id', '=', 'f.licencia_tipo_id')
     ->leftJoin('Facultad AS h', 'h.id', '=', 'd.facultad_id')
     ->leftJoin('Proyecto_integrante_tipo AS i', 'i.id', '=', 'b.proyecto_integrante_tipo_id')
@@ -63,19 +66,19 @@ class DeudoresController extends Controller {
       $query->where('c.facultad_id', $facultad);
     })
 
-    ->where(function ($query) {
-      $query->whereNull('g.id')
-        ->orWhere(function ($q) {
-          $q->where('g.id', '!=', 7)
-            ->where(function ($sub) {
-              $sub->whereNotIn('g.id', [6, 4])
-                ->orWhere(function ($s) {
-                  $s->whereIn('g.id', [6, 4])
-                    ->whereDate('f.fecha_fin', '<', now());
-                });
-            });
-        });
+    ->whereNotExists(function ($q) {
+        $q->select(DB::raw(1))
+          ->from('Licencia AS l')
+          ->whereColumn('l.investigador_id', 'c.id')
+          ->where(function ($sub) {
+              $sub->where('l.licencia_tipo_id', 7)
+                  ->orWhere(function ($s) {
+                      $s->whereIn('l.licencia_tipo_id', [4, 6])
+                        ->whereDate('l.fecha_fin', '>=', now());
+                  });
+          });
     })
+    ->where('c.tipo', '!=', 'Externo')
     ->groupBy('a.id');
 
   $deudasB = DB::table('Proyecto_integrante_deuda AS a')
@@ -83,7 +86,10 @@ class DeudoresController extends Controller {
     ->leftJoin('Usuario_investigador AS c', 'c.id', '=', 'b.investigador_id')
     ->leftJoin('Proyecto_H AS d', 'd.id', '=', 'b.proyecto_id')
     ->leftJoin('Facultad AS e', 'e.id', '=', 'c.facultad_id')
-    ->leftJoin('Licencia AS f', 'f.investigador_id', '=', 'c.id')
+    ->leftJoin('Licencia AS f', function ($join) {
+        $join->on('f.investigador_id', '=', 'c.id')
+            ->whereDate('f.fecha_fin', '>=', now());
+    })
     ->leftJoin('Licencia_tipo AS g', 'g.id', '=', 'f.licencia_tipo_id')
     ->leftJoin('Facultad AS h', 'h.id', '=', 'd.facultad_id')
     ->select([
@@ -117,19 +123,19 @@ class DeudoresController extends Controller {
       $query->where('c.facultad_id', $facultad);
     })
 
-    ->where(function ($query) {
-      $query->whereNull('g.id')
-        ->orWhere(function ($q) {
-          $q->where('g.id', '!=', 7)
-            ->where(function ($sub) {
-              $sub->whereNotIn('g.id', [6, 4])
-                ->orWhere(function ($s) {
-                  $s->whereIn('g.id', [6, 4])
-                    ->whereDate('f.fecha_fin', '<', now());
-                });
-            });
-        });
+    ->whereNotExists(function ($q) {
+        $q->select(DB::raw(1))
+          ->from('Licencia AS l')
+          ->whereColumn('l.investigador_id', 'c.id')
+          ->where(function ($sub) {
+              $sub->where('l.licencia_tipo_id', 7)
+                  ->orWhere(function ($s) {
+                      $s->whereIn('l.licencia_tipo_id', [4, 6])
+                        ->whereDate('l.fecha_fin', '>=', now());
+                  });
+          });
     })
+    ->where('c.tipo', '!=', 'Externo')
     ->groupBy('a.id')
     ->union($deudasA);
 

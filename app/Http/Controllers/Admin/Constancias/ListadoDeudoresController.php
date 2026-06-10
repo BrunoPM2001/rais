@@ -69,6 +69,7 @@ class ListadoDeudoresController extends Controller {
           });
         });
       })
+      ->where('c.tipo', '!=', 'Externo')
       ->groupBy('a.id');
 
     $deudasB = DB::table('Proyecto_integrante_deuda AS a')
@@ -129,6 +130,7 @@ class ListadoDeudoresController extends Controller {
           });
         });
       })
+      ->where('c.tipo', '!=', 'Externo')
       ->groupBy('a.id')
       ->union($deudasA)
       ->orderByDesc('id')

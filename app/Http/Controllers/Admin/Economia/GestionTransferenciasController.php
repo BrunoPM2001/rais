@@ -40,7 +40,16 @@ class GestionTransferenciasController extends Controller {
         'res.responsable',
         'c.tipo_proyecto',
         'c.periodo',
-        'a.estado',
+        DB::raw("
+          CASE a.estado
+            WHEN 3 THEN 'Nueva transferencia'
+            WHEN 2 THEN 'Rechazado'
+            WHEN 1 THEN 'Aprobado'
+            WHEN 4 THEN 'Temporal'
+            WHEN -1 THEN 'Eliminado'
+            ELSE 'Sin estado'
+          END AS estado
+        "),
       ])
       ->orderByDesc('latest.max_created_at')
       ->get();
@@ -151,7 +160,7 @@ class GestionTransferenciasController extends Controller {
         'estado'
       ])
       ->where('geco_proyecto_id', '=', $request->query('geco_proyecto_id'))
-      ->where('estado', '>', 0)
+      #->where('estado', '>', 0)
       ->orderByDesc('created_at')
       ->get();
 
@@ -170,9 +179,9 @@ class GestionTransferenciasController extends Controller {
         'a.operacion',
         'a.monto',
         DB::raw('CASE 
-                    WHEN a.operacion = "+" THEN a.monto_original + a.monto 
-                    ELSE a.monto_original - a.monto 
-                 END AS monto_nuevo')
+          WHEN a.operacion = "+" THEN a.monto_original + a.monto 
+          ELSE a.monto_original - a.monto 
+        END AS monto_nuevo')
       ])
       ->where('geco_operacion_id', '=', $request->query('geco_operacion_id'))
       ->get();
@@ -292,7 +301,43 @@ class GestionTransferenciasController extends Controller {
     return ['message' => 'success', 'detail' => 'Transferencia calificada con éxito con éxito'];
   }
 
+  public function eliminar(Request $request) {
+    $solicitud = DB::table('Geco_operacion')
+      ->select('id')
+      ->where('geco_proyecto_id', '=', $request->input('geco_proyecto_id'))
+      ->orderByDesc('created_at')
+      ->first();
+
+    if (!$solicitud) {
+      return ['message' => 'error', 'detail' => 'No se encontró la solicitud'];
+    }
+
+    DB::table('Geco_operacion')
+      ->where('id', '=', $solicitud->id)
+      ->update([
+        'estado' => -1,
+        'updated_at' => Carbon::now()
+      ]);
+
+    DB::table('Geco_proyecto_presupuesto')
+      ->where('geco_proyecto_id', '=', $request->input('geco_proyecto_id'))
+      ->update([
+        'monto_temporal' => null,
+        'updated_at' => Carbon::now()
+      ]);
+
+    return ['message' => 'success', 'detail' => 'Transferencia eliminada correctamente'];
+  }
+
   public function reporte(Request $request) {
+    $gecoProyectoId = $request->query('geco_proyecto_id');
+    $gecoOperacionId = $request->query('geco_operacion_id');
+
+    if ($gecoOperacionId) {
+        $gecoProyectoId = DB::table('Geco_operacion')
+            ->where('id', $gecoOperacionId)
+            ->value('geco_proyecto_id');
+    }
 
     $responsable = DB::table('Proyecto_integrante AS a')
       ->leftJoin('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
@@ -326,24 +371,30 @@ class GestionTransferenciasController extends Controller {
           END AS estado'),
         'res.responsable',
       ])
-      ->where('a.id', '=', $request->query('geco_proyecto_id'))
+      ->where('a.id', '=', $gecoProyectoId)
       ->first();
 
     $solicitud = DB::table('Geco_operacion')
       ->select([
         'id',
         'justificacion',
+        'observacion',
         DB::raw("CASE 
             WHEN estado = 1 THEN 'Completado'
             WHEN estado = 2 THEN 'Rechazado'
-            WHEN estado = '-1' THEN 'Rechazado'
+            WHEN estado = '-1' THEN 'Eliminado'
+            WHEN estado = 4 THEN 'Temporal'
             WHEN estado = 3 THEN 'Nueva operación'
             ELSE 'Desconocido'
           END AS estado"),
         'created_at'
       ])
-      ->where('geco_proyecto_id', '=', $request->query('geco_proyecto_id'))
-      ->orderByDesc('created_at')
+      ->when($gecoOperacionId, function ($query) use ($gecoOperacionId) {
+          $query->where('id', $gecoOperacionId);
+      }, function ($query) use ($gecoProyectoId) {
+          $query->where('geco_proyecto_id', $gecoProyectoId)
+                ->orderByDesc('created_at');
+      })
       ->first();
 
     if ($solicitud->estado == "Nueva operación") {
@@ -351,7 +402,7 @@ class GestionTransferenciasController extends Controller {
         ->select([
           'id'
         ])
-        ->where('geco_proyecto_id', '=', $request->query('geco_proyecto_id'))
+        ->where('geco_proyecto_id', '=', $gecoProyectoId)
         ->orderByDesc('created_at')
         ->first();
 
@@ -374,7 +425,7 @@ class GestionTransferenciasController extends Controller {
           'a.monto',
           DB::raw("0 AS monto_nuevo")
         ])
-        ->where('a.geco_proyecto_id', '=', $request->query('geco_proyecto_id'))
+        ->where('a.geco_proyecto_id', '=',$gecoProyectoId )
         ->orderBy('b.tipo')
         ->get()
         ->map(function ($item) use ($movimientos) {
@@ -401,7 +452,7 @@ class GestionTransferenciasController extends Controller {
           'a.monto',
           'a.monto AS monto_nuevo'
         ])
-        ->where('a.geco_proyecto_id', '=', $request->query('geco_proyecto_id'))
+        ->where('a.geco_proyecto_id', '=', $gecoProyectoId)
         ->orderBy('b.tipo')
         ->get();
     }

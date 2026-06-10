@@ -268,6 +268,7 @@
         <tr>
           <th style="width: 30%;">Código</th>
           <th style="width: 70%;">Línea</th>
+          <th style="width: 30%;">Estado</th>
         </tr>
       </thead>
       <tbody>
@@ -282,6 +283,7 @@
           <tr>
             <td>{{ $item->codigo }}</td>
             <td>{{ $item->nombre }}</td>
+            <td>{{ $item->estado == 1 ? 'Activo' : 'Inactivo' }}</td>
           </tr>
         @endforeach
       </tbody>

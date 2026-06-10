@@ -1519,6 +1519,7 @@ class GruposController extends S3Controller {
         'a.id',
         'b.codigo',
         'b.nombre',
+        'b.estado',
       ])
       ->where('a.grupo_id', '=', $request->query('id'))
       ->get();
