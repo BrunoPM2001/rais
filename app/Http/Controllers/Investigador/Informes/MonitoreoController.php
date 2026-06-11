@@ -8,6 +8,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Query\JoinClause;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class MonitoreoController extends S3Controller {
   public function listadoProyectos(Request $request) {
@@ -135,6 +136,24 @@ class MonitoreoController extends S3Controller {
       ->where('a.proyecto_id', '=', $request->query('id'))
       ->get();
 
+    $anexos = DB::table('Proyecto_doc')
+      ->select([
+          'categoria',
+          'comentario',
+          DB::raw("CONCAT('/minio/proyecto-doc/', archivo) AS url")
+      ])
+      ->where('proyecto_id', '=', $request->query('id'))
+      ->where('categoria', '=', 'monitoreo')
+      ->where('nombre', '=', 'Declaracion_jurada o carta')
+      ->where('estado', '=', 1)
+      ->first();
+    
+    $anexos = $anexos ? ['declaracion_jurada' => [
+        'url' => $anexos->url,
+        'fecha' => $anexos->comentario,
+        ]
+      ] : [];
+
     $observacion = DB::table('Monitoreo_proyecto_obs')
       ->select([
         'observacion'
@@ -147,6 +166,7 @@ class MonitoreoController extends S3Controller {
       'datos' => $datos,
       'metas' => $metas,
       'publicaciones' => $publicaciones,
+      'anexos' => $anexos,
       'observacion' => $observacion
     ];
   }
@@ -219,6 +239,38 @@ class MonitoreoController extends S3Controller {
       ->delete();
 
     return ['message' => 'info', 'detail' => 'Publicación eliminada correctamente'];
+  }
+
+  public function guardarAnexo(Request $request) {
+    $date = Carbon::now();
+    $proyectoId = $request->input('proyecto_id');
+
+    if (!$request->hasFile('file1')) {
+      return ['message' => 'error', 'detail' => 'Debe adjuntar un archivo PDF'];
+    }
+
+    $name = $proyectoId . "/" . $date->format('Ymd-His') . "-" . Str::random(8) . "." . $request->file('file1')->getClientOriginalExtension();
+
+    $this->uploadFile($request->file('file1'), "proyecto-doc", $name);
+
+    DB::table('Proyecto_doc')
+      ->where('proyecto_id', '=', $proyectoId)
+      ->where('categoria', '=', 'monitoreo')
+      ->where('nombre', '=', 'Declaracion_jurada o carta')
+      ->update(['estado' => 0]);
+
+    DB::table('Proyecto_doc')
+      ->insert([
+        'proyecto_id' => $proyectoId,
+        'categoria' => 'monitoreo',
+        'tipo' => 23,
+        'nombre' => 'Declaracion_jurada o carta',
+        'comentario' => $date->format('Y-m-d H:i:s'),
+        'archivo' => $name,
+        'estado' => 1
+      ]);
+
+    return ['message' => 'success', 'detail' => 'Documento guardado correctamente'];
   }
 
   public function remitir(Request $request) {

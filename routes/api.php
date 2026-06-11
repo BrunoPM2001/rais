@@ -297,6 +297,7 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
       Route::get('publicacionesDisponibles', [MonitoreoController::class, 'publicacionesDisponibles']);
       Route::post('agregarPublicacion', [MonitoreoController::class, 'agregarPublicacion']);
       Route::delete('eliminarPublicacion', [MonitoreoController::class, 'eliminarPublicacion']);
+      Route::post('guardarAnexo', [InformesMonitoreoController::class, 'guardarAnexo']);
 
       Route::get('listadoMetas', [MonitoreoController::class, 'listadoMetas']);
       Route::post('agregarPeriodo', [MonitoreoController::class, 'agregarPeriodo']);
@@ -1272,6 +1273,7 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
       Route::get('publicacionesDisponibles', [InformesMonitoreoController::class, 'publicacionesDisponibles']);
       Route::post('agregarPublicacion', [InformesMonitoreoController::class, 'agregarPublicacion']);
       Route::delete('eliminarPublicacion', [InformesMonitoreoController::class, 'eliminarPublicacion']);
+      Route::post('guardarAnexo', [InformesMonitoreoController::class, 'guardarAnexo']);
 
       Route::post('remitir', [InformesMonitoreoController::class, 'remitir']);
       Route::put('actualizar', [InformesMonitoreoController::class, 'actualizar']);
