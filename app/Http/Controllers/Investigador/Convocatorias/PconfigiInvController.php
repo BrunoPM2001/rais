@@ -103,6 +103,23 @@ class PconfigiInvController extends S3Controller {
 
     $req3 != 0 && $errores[] = "Usted tiene registradas deudas pendientes que deben ser resueltas para participar en el concurso";
 
+    $req4 = DB::table('Proyecto_integrante AS a')
+      ->join('Proyecto AS b', 'b.id', '=', 'a.proyecto_id')
+      ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+      ->where('a.condicion', '=', 'Responsable')
+      ->where('b.tipo_proyecto', '=', 'PCONFIGI')
+      ->where('b.periodo', '=', 2026)
+      ->where('b.estado', '=', 1)
+      ->count();
+
+    $req4 != 0 && $errores[] = "No puede ser Responsable si ya figura como tal en un proyecto PCONFIGI 2026";
+
+    $req5 = DB::table('Licencia')
+      ->where('investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+      ->whereDate('fecha_fin', '>=', Carbon::now())
+      ->exists();
+
+    $req5 != 0 && $errores[] = "Registra una licencia vigente";
 
     if (!empty($errores)) {
       return ['estado' => false, 'errores' => $errores];
@@ -300,6 +317,16 @@ class PconfigiInvController extends S3Controller {
           'tipo_investigador' => $datos->tipo,
           'condicion_grupo' => $datos->condicion,
           'condicion' => 'Responsable',
+          'created_at' => $date,
+          'updated_at' => $date,
+        ]);
+
+      DB::table('Proyecto_presupuesto')
+        ->insert([
+          'proyecto_id' => $id,
+          'partida_id' => 61,
+          'justificacion' => '',
+          'monto' => 9000,
           'created_at' => $date,
           'updated_at' => $date,
         ]);
@@ -508,7 +535,7 @@ class PconfigiInvController extends S3Controller {
     return ['message' => 'success', 'detail' => 'Datos guardados'];
   }
 
-  public function verificar4(Request $request) {
+  public function listarActividades(Request $request) {
     $res1 = $this->verificar($request, $request->query('id'));
     if (!$res1["estado"]) {
       return $res1;
@@ -527,7 +554,7 @@ class PconfigiInvController extends S3Controller {
     return ['estado' => true, 'actividades' => $actividades];
   }
 
-  public function listarActividades(Request $request) {
+  public function verificar4(Request $request) {
     $actividades = DB::table('Proyecto_actividad')
       ->select([
         'id',
@@ -550,10 +577,7 @@ class PconfigiInvController extends S3Controller {
       ->first();
 
     return [
-      'actividades' => [
       'actividades' => $actividades,
-      'rango' => $rango_fechas
-    ],
       'rango' => $rango_fechas
     ];
   }
@@ -622,6 +646,7 @@ class PconfigiInvController extends S3Controller {
       ])
       ->where('a.tipo_proyecto', '=', 'PCONFIGI-INV')
       ->where('a.postulacion', '=', 1)
+      ->where('a.periodo', '=', 2026)
       ->whereNotIn('b.id', $partidaIds)
       ->get();
 
@@ -791,11 +816,21 @@ class PconfigiInvController extends S3Controller {
       ->limit(10)
       ->get()
       ->map(function ($item) {
-        $item->tags = [
-          $item->facultad,
-          'Deudas: ' . $item->deudas,
-        ];
-        $item->disabled = $item->deudas == 0 ? false : true;
+        $esCorresponsable = DB::table('Proyecto_integrante AS pi')
+          ->join('Proyecto AS p', 'p.id', '=', 'pi.proyecto_id')
+          ->where('pi.investigador_id', '=', $item->investigador_id)
+          ->where('pi.proyecto_integrante_tipo_id', '=', 37)
+          ->where('p.tipo_proyecto', '=', 'PCONFIGI-INV')
+          ->where('p.periodo', '=', 2026)
+          // ->whereIn('p.estado', [1, 8])
+          ->exists();
+
+        $item->tags = [$item->facultad, 'Deudas: ' . $item->deudas,];
+
+        if ($esCorresponsable) { $item->tags[] = 'Ya es coresponsable PCONFIGI-INV 2026';}
+
+        $item->disabled = $item->deudas > 0 || $esCorresponsable;
+
         return $item;
       });
 
@@ -810,7 +845,7 @@ class PconfigiInvController extends S3Controller {
       ->where('id', '=', $request->query('id'))
       ->first();
 
-    $listado = Db::table('Grupo_integrante AS a')
+    $listado = DB::table('Grupo_integrante AS a')
       ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
       ->leftJoin('Facultad AS c', 'c.id', '=', 'b.facultad_id')
       ->leftJoin('view_deudores AS d', 'd.investigador_id', '=', 'b.id')
@@ -858,7 +893,7 @@ class PconfigiInvController extends S3Controller {
       })
       ->leftJoin('Proyecto AS i', 'i.id', '=', 'g.proyecto_id') // Se mantiene el join sin condiciones adicionales
       ->where(function ($query) {
-        $query->where('i.estado', 1)
+        $query->whereIn('i.estado', [1, 8])
           ->orWhereNull('i.id'); // Permitir registros sin proyecto
       })
       ->select(
@@ -877,7 +912,10 @@ class PconfigiInvController extends S3Controller {
       )
       ->having('value', 'LIKE', '%' . $request->query('query') . '%')
       ->where('a.condicion', '=', 'Adherente')
-      ->where('b.tipo', 'LIKE', 'Estudiante%')
+      ->where(function ($query) {
+        $query->where('b.tipo', 'LIKE', 'Estudiante%')
+          ->orWhere('b.tipo', 'LIKE', 'Egresado%');
+      })
       ->where('a.grupo_id', '=', $grupo->grupo_id)
       ->groupBy('b.id')
       ->limit(10)
@@ -951,7 +989,10 @@ class PconfigiInvController extends S3Controller {
       )
       ->having('value', 'LIKE', '%' . $request->query('query') . '%')
       ->where('a.condicion', '=', 'Adherente')
-      ->where('b.tipo', 'LIKE', 'Estudiante%')
+      ->where(function ($query) {
+        $query->where('b.tipo', 'LIKE', 'Estudiante%')
+          ->orWhere('b.tipo', 'LIKE', 'Egresado%');
+      })
       ->where('a.grupo_id', '=', $grupo->grupo_id)
       ->groupBy('b.id')
       ->limit(10)

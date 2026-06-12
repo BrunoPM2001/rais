@@ -413,7 +413,12 @@ class PconfigiController extends S3Controller {
           'proyecto_integrante_tipo_id' => 1,
           'grupo_id' => $datos->grupo_id,
           'grupo_integrante_id' => $datos->id,
+          'codigo' => $datos->codigo,
+          'tipo_investigador' => $datos->tipo,
+          'condicion_grupo' => $datos->condicion,
           'condicion' => 'Responsable',
+          'created_at' => $date,
+          'updated_at' => $date,
         ]);
 
       DB::table('Proyecto_presupuesto')
@@ -722,7 +727,6 @@ class PconfigiController extends S3Controller {
       $info["servicios_porcentaje"] = 0;
       $info["otros_porcentaje"] = 0;
     }
-
 
     return [
       'estado' => true,
