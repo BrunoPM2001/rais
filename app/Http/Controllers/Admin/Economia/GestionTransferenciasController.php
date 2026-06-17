@@ -298,7 +298,7 @@ class GestionTransferenciasController extends Controller {
         'updated_at' => Carbon::now()
       ]);
 
-    return ['message' => 'success', 'detail' => 'Transferencia calificada con éxito con éxito'];
+    return ['message' => 'success', 'detail' => 'Transferencia calificada con éxito'];
   }
 
   public function eliminar(Request $request) {
@@ -397,11 +397,27 @@ class GestionTransferenciasController extends Controller {
       })
       ->first();
 
-    if ($solicitud->estado == "Nueva operación") {
-      $operacion = DB::table('Geco_operacion')
+    if ($gecoOperacionId) {
+      $partidas = DB::table('Geco_operacion_movimiento AS a')
+        ->join('Geco_proyecto_presupuesto AS b', 'b.id', '=', 'a.geco_proyecto_presupuesto_id')
+        ->join('Partida AS c', 'c.id', '=', 'b.partida_id')
         ->select([
-          'id'
+          'c.tipo',
+          'c.codigo',
+          'c.partida',
+          'a.monto_original AS monto',
+          DB::raw('CASE 
+            WHEN a.operacion = "+" THEN a.monto_original + a.monto
+            ELSE a.monto_original - a.monto
+          END AS monto_nuevo')
         ])
+        ->where('a.geco_operacion_id', '=', $gecoOperacionId)
+        ->orderBy('c.tipo')
+        ->get();
+
+    } elseif ($solicitud->estado == "Nueva operación") {
+      $operacion = DB::table('Geco_operacion')
+        ->select(['id'])
         ->where('geco_proyecto_id', '=', $gecoProyectoId)
         ->orderByDesc('created_at')
         ->first();
@@ -425,11 +441,12 @@ class GestionTransferenciasController extends Controller {
           'a.monto',
           DB::raw("0 AS monto_nuevo")
         ])
-        ->where('a.geco_proyecto_id', '=',$gecoProyectoId )
+        ->where('a.geco_proyecto_id', '=', $gecoProyectoId)
         ->orderBy('b.tipo')
         ->get()
         ->map(function ($item) use ($movimientos) {
           $monto_nuevo = $item->monto;
+
           foreach ($movimientos as $movimiento) {
             if ($movimiento->geco_proyecto_presupuesto_id == $item->id) {
               if ($movimiento->operacion == "+") {
@@ -439,9 +456,11 @@ class GestionTransferenciasController extends Controller {
               }
             }
           }
+
           $item->monto_nuevo = $monto_nuevo;
           return $item;
         });
+
     } else {
       $partidas = DB::table('Geco_proyecto_presupuesto AS a')
         ->join('Partida AS b', 'b.id', '=', 'a.partida_id')

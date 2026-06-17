@@ -25,6 +25,10 @@ class InvestigadoresController extends Controller {
       ->select(
         'a.id',
         'a.rrhh_status',
+        DB::raw("CASE 
+          WHEN a.rrhh_status = 1 THEN 'Activo'
+          ELSE 'Inactivo'
+        END AS rrhh_status_label"),
         'puntaje.puntaje',
         'a.tipo',
         'b.nombre AS facultad',
@@ -53,10 +57,7 @@ class InvestigadoresController extends Controller {
         'tipo_investigador_estado',
         'tipo',
         'estado',
-        DB::raw("CASE (rrhh_status)
-          WHEN 1 THEN 'Activo'
-          ELSE 'Inactivo'
-        END AS rrhh_status"),
+        'rrhh_status',
         'fecha_icsi',
         'nombres',
         'apellido1',

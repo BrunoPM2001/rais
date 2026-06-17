@@ -28,11 +28,12 @@ class InformesTecnicosController extends S3Controller {
         ->select([
           'a.proyecto_id',
           DB::raw("CASE
-          WHEN (b.tipo IS NULL OR b.tipo <= 0) THEN 'NO'
-          WHEN b.tipo > 0 AND b.tipo <= 3 THEN 'SI'
-          WHEN b.tipo > 3 THEN 'SUBSANADA'
-        END AS deuda"),
-          'b.categoria'
+            WHEN (b.tipo IS NULL OR b.tipo <= 0) THEN 'NO'
+            WHEN b.tipo > 0 AND b.tipo <= 3 THEN 'SI'
+            WHEN b.tipo > 3 THEN 'SUBSANADA'
+          END AS deuda"),
+          'b.categoria',
+          'b.informe'
         ])
         ->groupBy('a.proyecto_id');
 
@@ -52,6 +53,7 @@ class InformesTecnicosController extends S3Controller {
           'a.titulo',
           'deu.deuda',
           'deu.categoria AS tipo_deuda',
+          'deu.informe AS detalle_deuda',
           DB::raw('COUNT(b.id) AS cantidad_informes'),
           'res.responsable',
           'c.nombre AS facultad',
@@ -95,7 +97,8 @@ class InformesTecnicosController extends S3Controller {
           WHEN b.tipo > 0 AND b.tipo <= 3 THEN 'SI'
           WHEN b.tipo > 3 THEN 'SUBSANADA'
         END AS deuda"),
-          'b.categoria'
+          'b.categoria',
+          'b.informe'
         ])
         ->groupBy('a.proyecto_id');
 
@@ -121,6 +124,7 @@ class InformesTecnicosController extends S3Controller {
           'b.fecha_presentacion as fecha_envio',
           'deu.deuda',
           'deu.categoria AS tipo_deuda',
+          'deu.informe AS detalle_deuda',
           DB::raw('COUNT(b.id) AS cantidad_informes'),
           DB::raw("CONCAT(e.apellido1, ' ', e.apellido2, ', ', e.nombres) AS responsable"),
           'c.nombre AS facultad',

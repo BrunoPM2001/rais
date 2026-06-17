@@ -241,6 +241,12 @@ class Informe_economicoController extends S3Controller {
         $habilitado = false;
       }
 
+      // Puede eliminar transferencia temporal
+      $puedeEliminarTransferencia = DB::table('Geco_operacion')
+        ->where('geco_proyecto_id', '=', $request->query('id'))
+        ->where('estado', '=', 4)
+        ->exists();
+
       //  Historial de transferencias
       $historial = DB::table('Geco_operacion')
         ->select([
@@ -274,6 +280,7 @@ class Informe_economicoController extends S3Controller {
         'comprobantes' => $comprobantes,
         'transferencias' => [
           'habilitado' => $habilitado,
+          'puedeEliminarTransferencia' => $puedeEliminarTransferencia,
           'solicitud' => $result,
           'historial' => $historial,
         ],
@@ -967,6 +974,41 @@ class Informe_economicoController extends S3Controller {
       ]);
 
     return ['message' => 'info', 'detail' => 'Transferencia solicitada'];
+  }
+
+  public function eliminarTransferenciaTemporal(Request $request) {
+    $operacion = DB::table('Geco_operacion')
+      ->select(['id'])
+      ->where('geco_proyecto_id', '=', $request->input('geco_proyecto_id'))
+      ->where('estado', '=', 4)
+      ->orderByDesc('created_at')
+      ->first();
+
+    if (!$operacion) {
+      return [
+        'message' => 'error',
+        'detail' => 'No se encontró una transferencia temporal para eliminar'
+      ];
+    }
+
+    DB::table('Geco_operacion')
+      ->where('id', '=', $operacion->id)
+      ->update([
+        'estado' => -1,
+        'updated_at' => Carbon::now(),
+      ]);
+
+    DB::table('Geco_proyecto_presupuesto')
+      ->where('geco_proyecto_id', '=', $request->input('geco_proyecto_id'))
+      ->update([
+        'monto_temporal' => 0,
+        'updated_at' => Carbon::now(),
+      ]);
+
+    return [
+      'message' => 'success',
+      'detail' => 'Transferencia temporal eliminada correctamente'
+    ];
   }
 
   public function reportePresupuesto(Request $request) {

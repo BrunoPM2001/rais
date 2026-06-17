@@ -19,6 +19,7 @@ class MonitoreoController extends Controller {
     $proyectos = DB::table('Proyecto AS a')
       ->join('Proyecto_integrante AS b', 'b.proyecto_id', '=', 'a.id')
       ->join('Proyecto_integrante_tipo AS c', 'c.id', '=', 'b.proyecto_integrante_tipo_id')
+      ->join('Proyecto_integrante_deuda AS d', 'd.proyecto_integrante_id', '=', 'b.id')
       ->join('Meta_tipo_proyecto AS e', function (JoinClause $join) {
         $join->on('e.tipo_proyecto', '=', 'a.tipo_proyecto')
           ->where('e.estado', '=', 1);
@@ -41,6 +42,13 @@ class MonitoreoController extends Controller {
         'a.id',
         'a.codigo_proyecto',
         'a.titulo',
+        DB::raw("CASE
+          WHEN (d.tipo IS NULL OR d.tipo <= 0) THEN 'NO'
+          WHEN d.tipo > 0 AND d.tipo <= 3 THEN 'SI'
+          WHEN d.tipo > 3 THEN 'SUBSANADA'
+        END AS deuda"),
+        'd.categoria as deuda_categoria',
+        'd.informe as deuda_detalle',
         'a.tipo_proyecto',
         'l.nombre AS facultad',
         DB::raw('CONCAT(j.apellido1, " " , j.apellido2, ", ", j.nombres) AS responsable'),
