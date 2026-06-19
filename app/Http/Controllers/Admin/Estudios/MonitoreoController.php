@@ -19,7 +19,7 @@ class MonitoreoController extends Controller {
     $proyectos = DB::table('Proyecto AS a')
       ->join('Proyecto_integrante AS b', 'b.proyecto_id', '=', 'a.id')
       ->join('Proyecto_integrante_tipo AS c', 'c.id', '=', 'b.proyecto_integrante_tipo_id')
-      ->join('Proyecto_integrante_deuda AS d', 'd.proyecto_integrante_id', '=', 'b.id')
+      ->leftJoin('Proyecto_integrante_deuda AS d', 'd.proyecto_integrante_id', '=', 'b.id')
       ->join('Meta_tipo_proyecto AS e', function (JoinClause $join) {
         $join->on('e.tipo_proyecto', '=', 'a.tipo_proyecto')
           ->where('e.estado', '=', 1);

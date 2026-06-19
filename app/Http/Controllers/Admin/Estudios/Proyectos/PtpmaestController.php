@@ -30,6 +30,7 @@ class PtpmaestController extends Controller {
         'd.programa',
         'a.comentario',
         'a.observaciones_admin',
+        'a.orden_merito',
         'a.dj_aceptada',
         DB::raw("CONCAT('/minio/declaracion-jurada/dj_PTPMAEST_', a.id, '.pdf') AS url2"),
         'e.id AS geco_proyecto_id'

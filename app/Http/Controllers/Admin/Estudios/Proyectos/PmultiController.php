@@ -43,6 +43,7 @@ class PmultiController extends S3Controller {
         'e.id AS geco_proyecto_id',
         'f.detalle AS autorizacion_grupo',
         'i.descripcion AS ods',
+        'a.orden_merito',
         'h.detalle AS area_tematica'
       )
       ->where('a.id', '=', $request->query('proyecto_id'))

@@ -78,6 +78,7 @@ class PconfigiController extends Controller {
         'a.palabras_clave',
         'b.nombre AS linea',
         'c.linea AS ocde',
+        'a.orden_merito',
         'a.localizacion',
         DB::raw("CASE (a.dj_aceptada)
           WHEN 1 THEN CONCAT('/minio/declaracion-jurada/dj_PCONFIGI_', a.id, '.pdf')

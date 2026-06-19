@@ -27,6 +27,7 @@ class PtpdoctoController extends Controller {
         'b.nombre AS facultad',
         'c.nombre AS linea',
         'g.linea AS ocde',
+        'a.orden_merito',
         'a.localizacion',
         'f.grupo_nombre',
         'd.programa',

@@ -372,7 +372,8 @@ class ProyectosGrupoController extends S3Controller {
         'a.palabras_clave',
         'b.nombre AS linea',
         'c.linea AS ocde',
-        'a.localizacion'
+        'a.localizacion',
+        'a.orden_merito'
       )
       ->where('a.id', '=', $request->query('proyecto_id'))
       ->first();
@@ -391,8 +392,8 @@ class ProyectosGrupoController extends S3Controller {
         'resolucion_decanal' => $request->input('resolucion_decanal'),
         'comentario' => $request->input('comentario'),
         'estado' => $request->input('estado')["value"],
+        'orden_merito' => $request->input('orden_merito'),
       ]);
-
 
     //  Relacionar proyecto a economía
     if ($request->input('resolucion_rectoral') != "") {

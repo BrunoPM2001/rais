@@ -31,6 +31,7 @@ class EciController extends Controller {
         DB::raw("IFNULL(a.resolucion_fecha, 'No tiene fecha') AS resolucion_fecha"),
         'a.comentario',
         'a.observaciones_admin',
+        'a.orden_merito',
         'b.nombre AS linea',
         DB::raw("COALESCE(c.responsable, 'No hay coordinador') AS responsable"),
         DB::raw("COALESCE(c.grupo_nombre, 'Grupo sin coordinador') AS grupo_nombre")

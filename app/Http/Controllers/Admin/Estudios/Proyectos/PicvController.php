@@ -47,6 +47,7 @@ class PicvController extends Controller {
         'a.comentario',
         'a.observaciones_admin',
         'f.linea AS ocde',
+        'a.orden_merito',
         'a.localizacion',
         DB::raw("CONCAT('/minio/proyecto-doc/', g.archivo) AS url1"),
         DB::raw("CONCAT('/minio/proyecto-doc/', h.archivo) AS url2"),

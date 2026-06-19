@@ -43,6 +43,7 @@ class PsinfinvController extends Controller {
         'a.comentario',
         'a.observaciones_admin',
         'f.linea AS ocde',
+        'a.orden_merito',
         'a.localizacion',
         DB::raw("CONCAT('/minio/', g.bucket, '/', g.key) AS url1"),
         DB::raw("CONCAT('/minio/', h.bucket, '/', h.key) AS url2")

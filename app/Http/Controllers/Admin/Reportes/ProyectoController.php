@@ -36,15 +36,21 @@ class ProyectoController extends Controller {
       ->leftJoin('Facultad as d', 'a.facultad_id', '=', 'd.id')
       ->leftJoin('Area as e', 'd.area_id', '=', 'e.id')
       ->leftJoin('Grupo as f', 'a.grupo_id', '=', 'f.id')
+      ->leftJoin('Grupo as gi_proy', 'b.grupo_id', '=', 'gi_proy.id')
+      ->leftJoin('Grupo_integrante as gi_int', function ($join) {
+        $join->on('c.id', '=', 'gi_int.investigador_id')
+          ->on('b.grupo_id', '=', 'gi_int.grupo_id');
+      })
       ->leftJoin('Facultad as g', 'c.facultad_id', '=', 'g.id')
       ->leftJoin('Proyecto_integrante_tipo as h', 'b.proyecto_integrante_tipo_id', '=', 'h.id')
       ->leftJoin('Grupo_integrante as i', function ($join) {
-          $join->on('c.id', '=', 'i.investigador_id')
-              ->on('a.grupo_id', '=', 'i.grupo_id');
+        $join->on('c.id', '=', 'i.investigador_id')
+          ->on('a.grupo_id', '=', 'i.grupo_id');
       })
       ->leftJoin('Proyecto_presupuesto as j', 'a.id', '=', 'j.proyecto_id')
       ->select([
         'a.id',
+        'a.orden_merito',
         'e.sigla',
         'e.nombre as area',
         'f.grupo_nombre_corto',
@@ -63,6 +69,9 @@ class ProyectoController extends Controller {
             ELSE c.tipo
         END as tipo_investigador"),
         'i.condicion as condicion_gi',
+        'gi_proy.grupo_nombre_corto as grupo_integrante_nombre_corto',
+        'gi_proy.grupo_nombre as grupo_integrante_nombre',
+        'gi_int.condicion as condicion_gi_integrante',
         'f.id as grupo_id',
         DB::raw("(
           SELECT COALESCE(SUM(j_sub.monto), 0)
@@ -71,8 +80,7 @@ class ProyectoController extends Controller {
         ) AS presupuesto"),
       ])
       ->where('a.tipo_proyecto', '=', $tipo)
-      ->when(in_array($tipo, ['PRO-CTIE', 'PICV', 'ECI']) && empty($facultad), function ($query) {
-      }, function ($query) use ($facultad) {
+      ->when(!empty($facultad), function ($query) use ($facultad) {
           $query->where('a.facultad_id', '=', $facultad);
       })
       ->where('a.periodo', '=', $periodo)
@@ -91,37 +99,35 @@ class ProyectoController extends Controller {
               });
           }
       })
-      ->when(in_array($tipo, ['PRO-CTIE', 'PICV', 'ECI']), function ($query) use ($tipo) {
-
-          if ($tipo === 'ECI') {
-
-              $query->orderBy('a.orden_merito', 'asc')
-              ->orderBy('a.id')
-              ->orderByRaw("
-                FIELD(b.proyecto_integrante_tipo_id,
-                    86, 88, 87,
-                    92, 93
-                ),
-                c.apellido1,
-                c.apellido2,
-                c.nombres
-              ");
-
-          } else {
-
-              $query->orderByRaw('
-                  CAST(SUBSTRING(a.codigo_proyecto, 6, 2) AS UNSIGNED), 
-                  a.codigo_proyecto,
-                  FIELD(b.proyecto_integrante_tipo_id,
-                      86, 88, 87,
-                      92, 93
-                  ),
-                  c.apellido1,
-                  c.apellido2,
-                  c.nombres
-              ');
-          }
-
+      ->when(empty($facultad), function ($query) {
+        $query->orderByRaw('a.orden_merito IS NULL')
+          ->orderBy('a.orden_merito', 'asc')
+          ->orderBy('a.id')
+          ->orderByRaw("
+            FIELD(b.proyecto_integrante_tipo_id,
+              1, 2, 3, 5, 6, 4, 31, 32, 33, 35, 95,
+              7, 8, 9, 11, 12, 10, 42, 50, 51, 52, 55,
+              13, 14, 53, 54,
+              15, 16,
+              17, 18,
+              19, 20,
+              21, 22, 23, 24, 26, 25, 27,
+              28, 29,
+              30, 34,
+              36, 37, 38, 40, 41, 39,
+              44, 45, 46, 47, 48, 49, 90, 91,
+              56, 57, 58, 59, 60, 61, 94, 62, 63, 64, 65, 82,
+              66, 67, 68, 69,
+              70, 71,
+              74, 75, 76, 77, 78, 79, 80, 81,
+              83, 84, 85,
+              86, 88, 87,
+              92, 93, 94
+            ),
+            c.apellido1,
+            c.apellido2,
+            c.nombres
+          ");
       }, function ($query) {
           $query->orderByRaw('f.grupo_nombre, 
             a.codigo_proyecto, 
@@ -172,7 +178,7 @@ class ProyectoController extends Controller {
         $tipo = 'Proyectos de Investigación con Financiamiento para Grupos de Investigación';
         break;
       case 'PCONFIGI-INV':
-        $tipo = 'Proyectos de Innovación para  Grupos de Investigación “INNOVA SAN MARCOS';
+        $tipo = 'Proyectos de Innovación para  Grupos de Investigación "INNOVA SAN MARCOS"';
         break;
       case 'PRO-CTIE':
         $tipo = 'Proyectos de Ciencia, Tecnología, Innovación y Emprendimiento (PRO-CTIE) para Estudiantes de la UNMSM';
@@ -185,7 +191,7 @@ class ProyectoController extends Controller {
         $tipo = 'Proyectos de Publicación Académica para Grupos de Investigación';
         break;
       case 'PMULTI':
-        $tipo = 'Proyectos multidisciplinarios';
+        $tipo = 'Programa de Proyectos de Investigación Multidisciplinarios para Grupos de Investigación';
         break;
       case 'PSINFINV':
         $tipo = 'Proyectos de Investigación Con Recursos No Monetarios para Grupos de Investigación';
@@ -204,7 +210,15 @@ class ProyectoController extends Controller {
         $tipo = 'Tipo de Proyecto Desconocido';
     }
 
-    $pdf = Pdf::loadView( $vista ?? 'admin.reportes.proyectoPDF', [
+    if (empty($facultad) && $request->query('tipo_proyecto') === 'PMULTI') {
+      $vistaReporte = 'admin.reportes.pmultiGeneralPDF';
+    } elseif (empty($facultad)) {
+      $vistaReporte = 'admin.reportes.proyectoGeneralPDF';
+    } else {
+      $vistaReporte = $vista ?? 'admin.reportes.proyectoPDF';
+    }
+
+    $pdf = Pdf::loadView($vistaReporte, [
       'lista' => $proyectos,
       'periodo' => $periodo,
       'tipo' => $tipo,

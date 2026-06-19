@@ -28,6 +28,7 @@ class PinvposController extends Controller {
         'a.estado',
         'd.nombre AS facultad',
         'a.comentario',
+        'a.orden_merito',
         'a.observaciones_admin'
       )
       ->where('a.id', '=', $request->query('proyecto_id'))

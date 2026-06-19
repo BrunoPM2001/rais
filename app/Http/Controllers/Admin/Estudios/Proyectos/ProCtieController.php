@@ -45,6 +45,7 @@ class ProCtieController extends Controller {
         'a.comentario',
         'a.observaciones_admin',
         'f.linea AS ocde',
+        'a.orden_merito',
         'a.localizacion',
         'a.resolucion_rectoral',
         'a.resolucion_fecha',

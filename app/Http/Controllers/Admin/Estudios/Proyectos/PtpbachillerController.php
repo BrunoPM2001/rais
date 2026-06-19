@@ -39,6 +39,7 @@ class PtpbachillerController extends Controller {
         'c.nombre AS linea',
         'e.descripcion AS ods',
         'f.linea AS ocde',
+        'a.orden_merito',
         'a.localizacion',
         'a.comentario',
         'a.observaciones_admin',
