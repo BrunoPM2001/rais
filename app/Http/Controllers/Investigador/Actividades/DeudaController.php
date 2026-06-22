@@ -26,7 +26,8 @@ class DeudaController extends Controller {
           WHEN b.tipo = 2 THEN 'Deuda Económica'
           WHEN b.tipo = 3 THEN 'Deuda Económica y Académica'
           WHEN b.tipo > 3 THEN 'SUBSANADA'
-        END as deuda")
+        END as deuda"),
+        'b.informe AS deuda_detalle'
       ])
       ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
       ->whereIn('b.tipo', [1, 2, 3]);
@@ -47,7 +48,8 @@ class DeudaController extends Controller {
           WHEN b.tipo = 2 THEN 'Deuda Económica'
           WHEN b.tipo = 3 THEN 'Deuda Económica y Académica'
           WHEN b.tipo > 3 THEN 'SUBSANADA'
-        END as deuda")
+        END as deuda"),
+        'b.informe AS deuda_detalle'
       ])
       ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
       ->whereIn('b.tipo', [1, 2, 3]);

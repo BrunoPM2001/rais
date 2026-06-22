@@ -319,6 +319,7 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
       Route::post('asignarDeuda', [DeudaProyectosController::class, 'asignarDeuda']);
       Route::get('proyectoDeuda', [DeudaProyectosController::class, 'proyectoDeuda']);
       Route::post('subsanarDeuda', [DeudaProyectosController::class, 'subsanarDeuda']);
+      Route::post('editarDetalleDeuda', [DeudaProyectosController::class, 'editarDetalleDeuda']);
       Route::get('getTipoDeuda', [DeudaProyectosController::class, 'getTipoDeuda']);
       Route::post('asignarMasivo', [DeudaProyectosController::class, 'asignarMasivo']);
     });

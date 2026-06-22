@@ -120,8 +120,9 @@ class DeudaProyectosController extends Controller {
           'a.condicion',
           'd.tipo AS licencia',
           'e.categoria AS tipo_deuda',
-          'e.informe AS detalle',
           'e.detalle AS comentario',
+          'e.informe AS detalle',
+          'e.fecha_deuda',
           'e.fecha_sub'
         )
         ->where('a.proyecto_id', '=', $request->query('id'))
@@ -540,16 +541,114 @@ class DeudaProyectosController extends Controller {
     return ['ok' => true];
   }
 
+  private function aplicarDeudaAProyectoAntiguo(int $proyectoId, array $form) {
+    $deudaEconomica = $form['deuda_economica']['value'] ?? "Sin deuda";
+    $deudaAcademica = $form['deuda_academica']['value'] ?? "Sin deuda";
+    $deudaFecha = $form['fecha_deuda'] ?? null;
+    $deudaDetalle = $form['detalle_deuda'] ?? null;
+    $deudaComentario = $form['comentario_deuda'] ?? null;
+
+    if ($deudaEconomica == "Sin deuda" && $deudaAcademica == "Sin deuda") {
+      return ['ok' => false, 'message' => 'warning', 'detail' => 'No ha escogido ningún tipo de deuda'];
+    }
+
+    $tipoDeuda = 0;
+    $categoriaDeuda = null;
+
+    if ($deudaAcademica != "Sin deuda" && $deudaEconomica == "Sin deuda") {
+      $tipoDeuda = 1;
+      $categoriaDeuda = 'Deuda Técnica';
+    } else if ($deudaAcademica == "Sin deuda" && $deudaEconomica != "Sin deuda") {
+      $tipoDeuda = 2;
+      $categoriaDeuda = 'Deuda Económica';
+    } else if ($deudaAcademica != "Sin deuda" && $deudaEconomica != "Sin deuda") {
+      $tipoDeuda = 3;
+      $categoriaDeuda = 'Deuda Académica y Económica';
+    }
+
+    $integrantes = DB::table('Proyecto_integrante_H AS a')
+      ->select('a.id', 'a.condicion', 'a.investigador_id')
+      ->where('a.proyecto_id', '=', $proyectoId)
+      ->where('a.tipo', '=', 'DOCENTE PERMANENTE')
+      ->get();
+
+    if ($integrantes->count() == 0) {
+      return ['ok' => false, 'message' => 'warning', 'detail' => 'No hay integrantes a los que se les pueda asignar deuda'];
+    }
+
+    foreach ($integrantes as $integrante) {
+      $condicion = strtolower(trim($integrante->condicion ?? ''));
+
+      $esResponsable = str_contains($condicion, 'responsable') || str_contains($condicion, 'asesor');
+      $esAcademico = true;
+
+      $data = null;
+
+      switch ($tipoDeuda) {
+        case 1:
+          if ($esAcademico) {
+            $data = ['tipo' => 1, 'categoria' => $categoriaDeuda];
+          }
+          break;
+
+        case 2:
+          if ($esResponsable) {
+            $data = ['tipo' => 2, 'categoria' => $categoriaDeuda];
+          }
+          break;
+
+        case 3:
+          if ($esResponsable) {
+            $data = ['tipo' => 3, 'categoria' => $categoriaDeuda];
+          } else {
+            $data = ['tipo' => 1, 'categoria' => $categoriaDeuda];
+          }
+          break;
+      }
+
+      if (!$data) {
+        continue;
+      }
+
+      $integranteDeuda = DB::table('Proyecto_integrante_deuda')
+        ->where('proyecto_integrante_h_id', $integrante->id)
+        ->first();
+
+      $data = array_merge($data, [
+        'informe' => $integranteDeuda ? ($deudaDetalle ?: $integranteDeuda->informe) : $deudaDetalle,
+        'detalle' => $integranteDeuda ? ($deudaComentario ?: $integranteDeuda->detalle) : $deudaComentario,
+        'fecha_deuda' => $deudaFecha,
+        'updated_at' => Carbon::now(),
+      ]);
+
+      if ($integranteDeuda) {
+        DB::table('Proyecto_integrante_deuda')
+          ->where('proyecto_integrante_h_id', $integrante->id)
+          ->update($data);
+      } else {
+        $data['proyecto_integrante_h_id'] = $integrante->id;
+        $data['created_at'] = Carbon::now();
+
+        DB::table('Proyecto_integrante_deuda')->insert($data);
+      }
+    }
+
+    DB::table('Proyecto_H')
+      ->where('id', '=', $proyectoId)
+      ->update(['updated_at' => Carbon::now()]);
+
+    return ['ok' => true];
+  }
+
   public function asignarDeuda(Request $request) {
     $partes = explode('_', $request->input('proyecto_id'));
     $proyectoId = end($partes);
     $tipoProyecto = $request->input('tipo_proyecto');
+    $proyectoOrigen = $request->input('proyecto_origen');
 
-    $resultado = $this->aplicarDeudaAProyecto(
-      (int) $proyectoId,
-      $tipoProyecto,
-      $request->all()
-    );
+    $resultado = $proyectoOrigen == 'Antiguo'
+      ? $this->aplicarDeudaAProyectoAntiguo((int) $proyectoId, $request->all())
+      : $this->aplicarDeudaAProyecto((int) $proyectoId, $tipoProyecto, $request->all());
 
     if (!$resultado['ok']) {
       return [
@@ -559,6 +658,40 @@ class DeudaProyectosController extends Controller {
     }
 
     return ['message' => 'success', 'detail' => 'Se asignó deuda a todos los miembros correspondientes exitosamente'];
+  }
+
+  public function editarDetalleDeuda(Request $request) {
+    $proyectoId = $request->input('proyecto_id_real') ?? $request->input('proyecto_id');
+
+    $partes = explode('_', $proyectoId);
+    $proyectoId = end($partes);
+
+    $proyectoOrigen = $request->input('proyecto_origen');
+
+    if ($proyectoOrigen == 'Antiguo') {
+      DB::table('Proyecto_integrante_H AS pint')
+        ->join('Proyecto_integrante_deuda AS pind', 'pind.proyecto_integrante_h_id', '=', 'pint.id')
+        ->where('pint.proyecto_id', '=', $proyectoId)
+        ->update([
+          'pind.informe' => $request->input('detalle_deuda'),
+          'pind.detalle' => $request->input('comentario_deuda'),
+          'pind.updated_at' => Carbon::now(),
+        ]);
+    } else {
+      DB::table('Proyecto_integrante AS pint')
+        ->join('Proyecto_integrante_deuda AS pind', 'pind.proyecto_integrante_id', '=', 'pint.id')
+        ->where('pint.proyecto_id', '=', $proyectoId)
+        ->update([
+          'pind.informe' => $request->input('detalle_deuda'),
+          'pind.detalle' => $request->input('comentario_deuda'),
+          'pind.updated_at' => Carbon::now(),
+        ]);
+    }
+
+    return [
+      'message' => 'success',
+      'detail' => 'Detalle de deuda actualizado correctamente'
+    ];
   }
 
   public function proyectoDeuda(Request $request) {
