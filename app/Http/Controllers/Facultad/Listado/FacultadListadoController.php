@@ -970,6 +970,27 @@ class FacultadListadoController extends Controller {
     $facultadId = $this->facultadId($request);
 
     $deudas = DB::table('view_deudores as t1')
+    ->join('Usuario_investigador as t2', 't1.investigador_id', '=', 't2.id')
+    ->leftJoin('Licencia AS f', function ($join) {
+      $join->on('f.investigador_id', '=', 't2.id')
+        ->whereRaw('f.id = (
+          SELECT l2.id
+          FROM Licencia AS l2
+          WHERE l2.investigador_id = t2.id
+            AND DATE(l2.fecha_fin) >= CURDATE()
+          ORDER BY
+            CASE
+              WHEN l2.licencia_tipo_id = 7 THEN 1
+              WHEN l2.licencia_tipo_id = 6 THEN 2
+              WHEN l2.licencia_tipo_id = 4 THEN 3
+              ELSE 4
+            END,
+            l2.fecha_fin DESC,
+            l2.id DESC
+          LIMIT 1
+        )');
+      })
+      ->leftJoin('Licencia_tipo AS g', 'g.id', '=', 'f.licencia_tipo_id')
       ->select(
         't2.id',
         DB::raw('CONCAT(t1.apellido1, " ", t1.apellido2, ", ", t1.nombres) as nombre_completo'),
@@ -980,10 +1001,21 @@ class FacultadListadoController extends Controller {
         't1.condicion',
         't1.detalle',
         't1.periodo'
-
       )  // Selecciona todos los campos de la tabla
-      ->join('Usuario_investigador as t2', 't1.investigador_id', '=', 't2.id')  // Usa el método 'join' en lugar de 'innerJoin'
-      ->where('t2.facultad_id', $facultadId)  // Filtra por facultad
+      ->where('t2.facultad_id', $facultadId)
+      ->where(function ($query) {
+        $query->whereNull('g.id')
+          ->orWhere(function ($q) {
+            $q->where('g.id', '!=', 7)
+              ->where(function ($sub) {
+                $sub->whereNotIn('g.id', [6, 4])
+                  ->orWhere(function ($s) {
+                    $s->whereIn('g.id', [6, 4])
+                      ->whereDate('f.fecha_fin', '<', now());
+                  });
+              });
+          });
+      })
       ->orderByDesc('t1.periodo')
       ->get();  // Ejecuta la consulta y obtiene los resultados
 
@@ -995,6 +1027,26 @@ class FacultadListadoController extends Controller {
 
     $deudas = DB::table('view_deudores as t1')
       ->join('Usuario_investigador as t2', 't1.investigador_id', '=', 't2.id')
+      ->leftJoin('Licencia AS f', function ($join) {
+        $join->on('f.investigador_id', '=', 't2.id')
+          ->whereRaw('f.id = (
+            SELECT l2.id
+            FROM Licencia AS l2
+            WHERE l2.investigador_id = t2.id
+              AND DATE(l2.fecha_fin) >= CURDATE()
+            ORDER BY
+              CASE
+                WHEN l2.licencia_tipo_id = 7 THEN 1
+                WHEN l2.licencia_tipo_id = 6 THEN 2
+                WHEN l2.licencia_tipo_id = 4 THEN 3
+                ELSE 4
+              END,
+              l2.fecha_fin DESC,
+              l2.id DESC
+            LIMIT 1
+          )');
+      })
+      ->leftJoin('Licencia_tipo AS g', 'g.id', '=', 'f.licencia_tipo_id')
       ->select(
         't2.id',
         't1.coddoc',
@@ -1006,6 +1058,19 @@ class FacultadListadoController extends Controller {
         't1.periodo'
       )
       ->where('t2.facultad_id', $facultadId)
+      ->where(function ($query) {
+        $query->whereNull('g.id')
+          ->orWhere(function ($q) {
+            $q->where('g.id', '!=', 7)
+              ->where(function ($sub) {
+                $sub->whereNotIn('g.id', [6, 4])
+                  ->orWhere(function ($s) {
+                    $s->whereIn('g.id', [6, 4])
+                      ->whereDate('f.fecha_fin', '<', now());
+                  });
+              });
+          });
+      })
       ->get();
 
     $facultad = DB::table('Facultad AS a')

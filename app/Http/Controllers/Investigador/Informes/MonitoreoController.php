@@ -234,11 +234,42 @@ class MonitoreoController extends S3Controller {
   }
 
   public function eliminarPublicacion(Request $request) {
-    DB::table('Publicacion_proyecto')
+    $registro = DB::table('Publicacion_proyecto')
+      ->select([
+        'id',
+        'proyecto_id',
+        'publicacion_id',
+      ])
       ->where('id', '=', $request->query('id'))
+      ->first();
+
+    if (!$registro) {
+      return [
+        'message' => 'warning',
+        'detail' => 'No se encontró la publicación asociada.'
+      ];
+    }
+
+    $monitoreo = DB::table('Monitoreo_proyecto')
+      ->select('id')
+      ->where('proyecto_id', '=', $registro->proyecto_id)
+      ->first();
+
+    if ($monitoreo) {
+      DB::table('Monitoreo_proyecto_publicacion')
+        ->where('monitoreo_proyecto_id', '=', $monitoreo->id)
+        ->where('publicacion_id', '=', $registro->publicacion_id)
+        ->delete();
+    }
+
+    DB::table('Publicacion_proyecto')
+      ->where('id', '=', $registro->id)
       ->delete();
 
-    return ['message' => 'info', 'detail' => 'Publicación eliminada correctamente'];
+    return [
+      'message' => 'info',
+      'detail' => 'Publicación eliminada correctamente'
+    ];
   }
 
   public function guardarAnexo(Request $request) {
@@ -275,6 +306,20 @@ class MonitoreoController extends S3Controller {
 
   public function remitir(Request $request) {
     $now = Carbon::now();
+
+    $publicacionesRegistradas = DB::table('Publicacion_proyecto AS a')
+      ->join('Publicacion AS b', 'b.id', '=', 'a.publicacion_id')
+      ->where('a.proyecto_id', '=', $request->input('proyecto_id'))
+      ->where('a.estado', '=', 1)
+      ->where('b.estado', '=', 1)
+      ->count();
+
+    if ($publicacionesRegistradas == 0) {
+      return [
+        'message' => 'warning',
+        'detail' => 'Debe asociar al menos una publicación en estado Registrado para remitir el monitoreo.'
+      ];
+    }
 
     $monitoreo = DB::table('Monitoreo_proyecto')
       ->select([

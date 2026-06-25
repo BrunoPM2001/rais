@@ -411,6 +411,7 @@ class ConvocatoriasController extends Controller {
         'a.id',
         'd.tipo',
         'd.partida',
+        'c.periodo',
       ])
       ->where('b.id', '=', $request->query('id'))
       ->get();
@@ -436,8 +437,12 @@ class ConvocatoriasController extends Controller {
         'a.id AS value',
         DB::raw("CONCAT(b.codigo, ' - ', b.partida) AS label"),
         'b.tipo',
+        'a.periodo',
       ])
       ->where('a.tipo_proyecto', '=', $request->query('tipo_proyecto'))
+      ->orderByDesc('a.periodo')
+      ->orderBy('b.tipo')
+      ->orderBy('b.codigo')
       ->get();
 
     return $partidas;

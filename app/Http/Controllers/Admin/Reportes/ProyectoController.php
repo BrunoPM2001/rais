@@ -43,10 +43,7 @@ class ProyectoController extends Controller {
       })
       ->leftJoin('Facultad as g', 'c.facultad_id', '=', 'g.id')
       ->leftJoin('Proyecto_integrante_tipo as h', 'b.proyecto_integrante_tipo_id', '=', 'h.id')
-      ->leftJoin('Grupo_integrante as i', function ($join) {
-        $join->on('c.id', '=', 'i.investigador_id')
-          ->on('a.grupo_id', '=', 'i.grupo_id');
-      })
+      ->leftJoin('Grupo_integrante as i', 'i.id', '=', 'b.grupo_integrante_id')
       ->leftJoin('Proyecto_presupuesto as j', 'a.id', '=', 'j.proyecto_id')
       ->select([
         'a.id',

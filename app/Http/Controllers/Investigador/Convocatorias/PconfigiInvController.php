@@ -373,16 +373,28 @@ class PconfigiInvController extends S3Controller {
         DB::raw("CONCAT('/minio/proyecto-doc/', archivo) AS url"),
         'comentario AS url_fecha'
       ])
-      ->where('proyecto_id', '=', $request->input('id'))
+      ->where('proyecto_id', '=', $request->query('id'))
       ->where('categoria', '=', 'documento')
       ->where('nombre', '=', 'Carta de Vinculación')
+      ->where('estado', '=', 1)
+      ->first();
+
+    $carta2 = DB::table('Proyecto_doc')
+      ->select([
+        DB::raw("CONCAT('/minio/proyecto-doc/', archivo) AS url"),
+        'comentario AS url_fecha'
+      ])
+      ->where('proyecto_id', '=', $request->query('id'))
+      ->where('categoria', '=', 'documento')
+      ->where('nombre', '=', 'Documento de Vinculación')
       ->where('estado', '=', 1)
       ->first();
 
     return [
       'estado' => true,
       'data' => $data,
-      'carta' => $carta
+      'carta' => $carta,
+      'carta2' => $carta2
     ];
   }
 
@@ -411,23 +423,58 @@ class PconfigiInvController extends S3Controller {
           'comentario' => Carbon::now(),
           'tipo' => 2,
         ]);
+    }
 
-      return ['message' => 'success', 'detail' => 'Datos guardados'];
-    } else {
-      $count = DB::table('Proyecto_doc')
+    if ($request->hasFile('file_vinculacion')) {
+      $date = Carbon::now();
+      $name = $request->input('id') . "/token-" . $date->format('Ymd-His') . "-" . Str::random(8) . "." . $request->file('file_vinculacion')->getClientOriginalExtension();
+      $this->uploadFile($request->file('file_vinculacion'), "proyecto-doc", $name);
+
+      DB::table('Proyecto_doc')
         ->where('proyecto_id', '=', $request->input('id'))
         ->where('categoria', '=', 'documento')
-        ->where('nombre', '=', 'Carta de Vinculación')
+        ->where('nombre', '=', 'Documento de Vinculación')
         ->where('estado', '=', 1)
-        ->count();
+        ->update([
+          'estado' => 0
+        ]);
 
-      if ($count == 0) {
-        return ['message' => 'error', 'detail' => 'No hay una carta de compromiso cargada'];
-      } else {
-        return ['message' => 'success', 'detail' => 'Datos guardados'];
-      }
+      DB::table('Proyecto_doc')
+        ->insert([
+          'proyecto_id' => $request->input('id'),
+          'archivo' => $name,
+          'categoria' => 'documento',
+          'nombre' => 'Documento de Vinculación',
+          'estado' => 1,
+          'comentario' => Carbon::now(),
+          'tipo' => 2,
+      ]);
     }
+
+    $countCarta = DB::table('Proyecto_doc')
+      ->where('proyecto_id', '=', $request->input('id'))
+      ->where('categoria', '=', 'documento')
+      ->where('nombre', '=', 'Carta de Vinculación')
+      ->where('estado', '=', 1)
+      ->count();
+
+    $countVinculacion = DB::table('Proyecto_doc')
+      ->where('proyecto_id', '=', $request->input('id'))
+      ->where('categoria', '=', 'documento')
+      ->where('nombre', '=', 'Documento de Vinculación')
+      ->where('estado', '=', 1)
+      ->count();
+
+  if ($countCarta == 0) {
+    return ['message' => 'error', 'detail' => 'No hay una carta de compromiso cargada'];
   }
+
+  if ($countVinculacion == 0) {
+    return ['message' => 'error', 'detail' => 'No hay un documento de vinculación cargado'];
+  }
+
+  return ['message' => 'success', 'detail' => 'Datos guardados'];
+}
 
   public function verificar3(Request $request) {
     $res1 = $this->verificar($request, $request->query('id'));
@@ -622,6 +669,17 @@ class PconfigiInvController extends S3Controller {
 
     $presupuesto = DB::table('Proyecto_presupuesto AS a')
       ->join('Partida AS b', 'b.id', '=', 'a.partida_id')
+      ->leftJoin('Partida_proyecto AS pp', function ($join) {
+        $join->on('pp.partida_id', '=', 'a.partida_id')
+          ->where('pp.tipo_proyecto', '=', 'PCONFIGI-INV')
+          ->where('pp.postulacion', '=', 1)
+          ->where('pp.periodo', '=', 2026);
+      })
+      ->leftJoin('Partida_proyecto_grupo AS ppg', 'ppg.partida_proyecto_id', '=', 'pp.id')
+      ->leftJoin('Partida_grupo AS pg', function ($join) {
+        $join->on('pg.id', '=', 'ppg.partida_grupo_id')
+          ->where('pg.tipo_proyecto', '=', 'PCONFIGI-INV');
+      })
       ->select([
         'a.id',
         'b.id AS partida_id',
@@ -629,6 +687,9 @@ class PconfigiInvController extends S3Controller {
         'b.partida',
         'b.tipo',
         'a.monto',
+        'pg.id AS grupo_id',
+        'pg.nombre AS grupo_nombre',
+        'pg.monto_max',
       ])
       ->where('a.proyecto_id', '=', $request->query('id'))
       ->orderBy('a.tipo')
@@ -639,10 +700,18 @@ class PconfigiInvController extends S3Controller {
 
     $partidas = DB::table('Partida_proyecto AS a')
       ->join('Partida AS b', 'b.id', '=', 'a.partida_id')
+      ->leftJoin('Partida_proyecto_grupo AS c', 'c.partida_proyecto_id', '=', 'a.id')
+      ->leftJoin('Partida_grupo AS d', function ($join) {
+        $join->on('d.id', '=', 'c.partida_grupo_id')
+          ->where('d.tipo_proyecto', '=', 'PCONFIGI-INV');
+      })
       ->select([
         'b.id AS value',
         DB::raw("CONCAT(b.codigo, ' - ', b.partida) AS label"),
         'b.tipo',
+        'd.id AS grupo_id',
+        'd.nombre AS grupo_nombre',
+        'd.monto_max',
       ])
       ->where('a.tipo_proyecto', '=', 'PCONFIGI-INV')
       ->where('a.postulacion', '=', 1)
@@ -698,6 +767,81 @@ class PconfigiInvController extends S3Controller {
   public function agregarPartida(Request $request) {
     $date = Carbon::now();
 
+    $proyectoId = $request->input('id');
+    $partidaId = $request->input('partida')["value"];
+    $montoNuevo = floatval($request->input('monto'));
+
+    if ($montoNuevo <= 0) {
+      return [
+        'message' => 'warning',
+        'detail' => 'El monto debe ser mayor a 0.'
+      ];
+    }
+
+    $grupo = DB::table('Partida_proyecto AS pp')
+      ->join('Partida_proyecto_grupo AS ppg', 'ppg.partida_proyecto_id', '=', 'pp.id')
+      ->join('Partida_grupo AS pg', 'pg.id', '=', 'ppg.partida_grupo_id')
+      ->select([
+        'pg.id AS grupo_id',
+        'pg.nombre AS grupo_nombre',
+        'pg.monto_max',
+      ])
+      ->where('pp.partida_id', '=', $partidaId)
+      ->where('pp.tipo_proyecto', '=', 'PCONFIGI-INV')
+      ->where('pp.postulacion', '=', 1)
+      ->where('pp.periodo', '=', 2026)
+      ->where('pg.tipo_proyecto', '=', 'PCONFIGI-INV')
+      ->first();
+
+    if (!$grupo) {
+      return [
+        'message' => 'warning',
+        'detail' => 'No se encontró grupo/límite para la partida seleccionada. Partida ID: ' . $partidaId
+      ];
+    }
+
+    $partidaEspecialId = 80; // reemplaza XX por el id real de la partida
+    $limitePartidaEspecial = 11000;
+
+    if ($partidaId == $partidaEspecialId) {
+      $totalActualPartida = DB::table('Proyecto_presupuesto AS a')
+        ->where('a.proyecto_id', '=', $proyectoId)
+        ->where('a.partida_id', '=', $partidaEspecialId)
+        ->sum('a.monto');
+
+      $nuevoTotalPartida = floatval($totalActualPartida) + $montoNuevo;
+
+      if ($nuevoTotalPartida > $limitePartidaEspecial) {
+        return [
+          'message' => 'warning',
+          'detail' => 'La partida "Servicios por terceros (RxH)" supera el límite permitido de S/. ' . number_format($limitePartidaEspecial, 2) . '. Actualmente ya tiene registrado S/. ' . number_format($totalActualPartida, 2) . '.'
+        ];
+      }
+    }
+
+    if ($grupo) {
+      $totalActualGrupo = DB::table('Proyecto_presupuesto AS a')
+        ->join('Partida_proyecto AS pp', function ($join) {
+          $join->on('pp.partida_id', '=', 'a.partida_id')
+            ->where('pp.tipo_proyecto', '=', 'PCONFIGI-INV')
+            ->where('pp.postulacion', '=', 1)
+            ->where('pp.periodo', '=', 2026);
+        })
+        ->join('Partida_proyecto_grupo AS ppg', 'ppg.partida_proyecto_id', '=', 'pp.id')
+        ->where('a.proyecto_id', '=', $proyectoId)
+        ->where('ppg.partida_grupo_id', '=', $grupo->grupo_id)
+        ->sum('a.monto');
+
+      $nuevoTotal = floatval($totalActualGrupo) + $montoNuevo;
+
+      if ($nuevoTotal > floatval($grupo->monto_max)) {
+        return [
+          'message' => 'warning',
+          'detail' => 'La partida pertenece al grupo "' . $grupo->grupo_nombre . '" y supera el límite permitido de S/. ' . number_format($grupo->monto_max, 2) . '. Actualmente ya tiene registrado S/. ' . number_format($totalActualGrupo, 2) . '.'
+        ];
+      }
+    }
+
     DB::table('Proyecto_presupuesto')
       ->insert([
         'proyecto_id' => $request->input('id'),
@@ -721,47 +865,149 @@ class PconfigiInvController extends S3Controller {
   public function actualizarPartida(Request $request) {
     $date = Carbon::now();
 
+    $presupuestoId = $request->input('id');
+    $partidaId = $request->input('partida')["value"];
+    $montoNuevo = floatval($request->input('monto'));
+
+    if ($montoNuevo <= 0) {
+      return [
+        'message' => 'warning',
+        'detail' => 'El monto debe ser mayor a 0.'
+      ];
+    }
+
+    $presupuesto = DB::table('Proyecto_presupuesto')
+      ->where('id', '=', $presupuestoId)
+      ->first();
+
+    if (!$presupuesto) {
+      return [
+        'message' => 'warning',
+        'detail' => 'No se encontró el registro de presupuesto a actualizar.'
+      ];
+    }
+
+    $proyectoId = $presupuesto->proyecto_id;
+
+    $grupo = DB::table('Partida_proyecto AS pp')
+      ->join('Partida_proyecto_grupo AS ppg', 'ppg.partida_proyecto_id', '=', 'pp.id')
+      ->join('Partida_grupo AS pg', 'pg.id', '=', 'ppg.partida_grupo_id')
+      ->select([
+        'pg.id AS grupo_id',
+        'pg.nombre AS grupo_nombre',
+        'pg.monto_max',
+      ])
+      ->where('pp.partida_id', '=', $partidaId)
+      ->where('pp.tipo_proyecto', '=', 'PCONFIGI-INV')
+      ->where('pp.postulacion', '=', 1)
+      ->where('pp.periodo', '=', 2026)
+      ->where('pg.tipo_proyecto', '=', 'PCONFIGI-INV')
+      ->first();
+
+    if (!$grupo) {
+      return [
+        'message' => 'warning',
+        'detail' => 'No se encontró grupo/límite para la partida seleccionada. Partida ID: ' . $partidaId
+      ];
+    }
+
+    $partidaEspecialId = 80;
+    $limitePartidaEspecial = 11000;
+
+    if ($partidaId == $partidaEspecialId) {
+      $totalActualPartida = DB::table('Proyecto_presupuesto AS a')
+        ->where('a.proyecto_id', '=', $proyectoId)
+        ->where('a.partida_id', '=', $partidaEspecialId)
+        ->where('a.id', '!=', $presupuestoId)
+        ->sum('a.monto');
+
+      $nuevoTotalPartida = floatval($totalActualPartida) + $montoNuevo;
+
+      if ($nuevoTotalPartida > $limitePartidaEspecial) {
+        return [
+          'message' => 'warning',
+          'detail' => 'La partida "Servicios por terceros (RxH)" supera el límite permitido de S/. ' . number_format($limitePartidaEspecial, 2) . '. Actualmente ya tiene registrado S/. ' . number_format($totalActualPartida, 2) . '.'
+        ];
+      }
+    }
+
+    $totalActualGrupo = DB::table('Proyecto_presupuesto AS a')
+      ->join('Partida_proyecto AS pp', function ($join) {
+        $join->on('pp.partida_id', '=', 'a.partida_id')
+          ->where('pp.tipo_proyecto', '=', 'PCONFIGI-INV')
+          ->where('pp.postulacion', '=', 1)
+          ->where('pp.periodo', '=', 2026);
+      })
+      ->join('Partida_proyecto_grupo AS ppg', 'ppg.partida_proyecto_id', '=', 'pp.id')
+      ->where('a.proyecto_id', '=', $proyectoId)
+      ->where('a.id', '!=', $presupuestoId)
+      ->where('ppg.partida_grupo_id', '=', $grupo->grupo_id)
+      ->sum('a.monto');
+
+    $nuevoTotal = floatval($totalActualGrupo) + $montoNuevo;
+
+    if ($nuevoTotal > floatval($grupo->monto_max)) {
+      return [
+        'message' => 'warning',
+        'detail' => 'La partida pertenece al grupo "' . $grupo->grupo_nombre . '" y supera el límite permitido de S/. ' . number_format($grupo->monto_max, 2) . '. Actualmente ya tiene registrado S/. ' . number_format($totalActualGrupo, 2) . '.'
+      ];
+    }
+
     DB::table('Proyecto_presupuesto')
-      ->where('id', '=', $request->input('id'))
+      ->where('id', '=', $presupuestoId)
       ->update([
-        'partida_id' => $request->input('partida')["value"],
-        'monto' => $request->input('monto'),
+        'partida_id' => $partidaId,
+        'monto' => $montoNuevo,
         'updated_at' => $date,
       ]);
 
-    return ['message' => 'info', 'detail' => 'Partida actualizada correctamente'];
+    return [
+      'message' => 'info',
+      'detail' => 'Partida actualizada correctamente'
+    ];
   }
 
   public function validarPresupuesto(Request $request) {
     $alerta = [];
+    $periodo = 2026;
 
     $partidas = DB::table('Proyecto_presupuesto AS a')
-      ->join('Partida_proyecto AS b', function (JoinClause $join) {
+      ->join('Partida_proyecto AS b', function (JoinClause $join) use ($periodo) {
         $join->on('b.partida_id', '=', 'a.partida_id')
-          ->where('b.tipo_proyecto', '=', 'PCONFIGI-INV');
+          ->where('b.tipo_proyecto', '=', 'PCONFIGI-INV')
+          ->where('b.postulacion', '=', 1)
+          ->where('b.periodo', '=', $periodo);
       })
       ->leftJoin('Partida_proyecto_grupo AS c', 'c.partida_proyecto_id', '=', 'b.id')
-      ->leftJoin('Partida_grupo AS d', 'd.id', '=', 'c.partida_grupo_id')
+      ->leftJoin('Partida_grupo AS d', function ($join) {
+        $join->on('d.id', '=', 'c.partida_grupo_id')
+          ->where('d.tipo_proyecto', '=', 'PCONFIGI-INV');
+      })
       ->select([
+        'd.id',
         'd.nombre',
         'd.monto_max',
         DB::raw("SUM(a.monto) AS total")
       ])
       ->where('a.proyecto_id', '=', $request->query('id'))
-      ->groupBy('d.id')
+      ->whereNotNull('d.id')
+      ->groupBy('d.id', 'd.nombre', 'd.monto_max')
       ->get();
 
     foreach ($partidas as $item) {
-      if ($item->monto_max < $item->total && $item->nombre != null) {
-        $alerta[] = $item->nombre . ": " . $item->monto_max;
+      if (floatval($item->monto_max) < floatval($item->total)) {
+        $alerta[] = $item->nombre . ": " . number_format($item->monto_max, 2);
       }
-    };
+    }
 
     if (sizeof($alerta) == 0) {
       return ['message' => 'info', 'detail' => 'Su proyecto respeta los límites de la directiva'];
-    } else {
-      return ['message' => 'warning', 'detail' => 'El presupuesto presenta excesos en la(s) siguiente(s) categoría(s). ' . implode(',', $alerta) . '; para mayor detalle revisar la directiva correspondiente.', $alerta];
     }
+
+    return [
+      'message' => 'warning',
+      'detail' => 'El presupuesto presenta excesos en la(s) siguiente(s) categoría(s). ' . implode(', ', $alerta) . '; para mayor detalle revisar la directiva correspondiente.'
+    ];
   }
 
   public function verificar6(Request $request) {

@@ -284,11 +284,45 @@ class MonitoreoController extends Controller {
   }
 
   public function eliminarPublicacion(Request $request) {
-    DB::table('Publicacion_proyecto')
+    $registro = DB::table('Monitoreo_proyecto_publicacion')
+      ->select([
+        'id',
+        'monitoreo_proyecto_id',
+        'publicacion_id',
+      ])
       ->where('id', '=', $request->query('id'))
+      ->first();
+
+    if (!$registro) {
+      return [
+        'message' => 'warning',
+        'detail' => 'No se encontró la publicación del monitoreo.'
+      ];
+    }
+
+    $monitoreo = DB::table('Monitoreo_proyecto')
+      ->select([
+        'id',
+        'proyecto_id',
+      ])
+      ->where('id', '=', $registro->monitoreo_proyecto_id)
+      ->first();
+
+    if ($monitoreo) {
+      DB::table('Publicacion_proyecto')
+        ->where('proyecto_id', '=', $monitoreo->proyecto_id)
+        ->where('publicacion_id', '=', $registro->publicacion_id)
+        ->delete();
+    }
+
+    DB::table('Monitoreo_proyecto_publicacion')
+      ->where('id', '=', $registro->id)
       ->delete();
 
-    return ['message' => 'info', 'detail' => 'Publicación eliminada correctamente'];
+    return [
+      'message' => 'info',
+      'detail' => 'Publicación eliminada correctamente'
+    ];
   }
 
   //  Metas
@@ -446,6 +480,22 @@ class MonitoreoController extends Controller {
   }
 
   public function guardar(Request $request) {
+    if ($request->input('estado') == 5) {
+      $publicacionesRegistradas = DB::table('Publicacion_proyecto AS a')
+        ->join('Publicacion AS b', 'b.id', '=', 'a.publicacion_id')
+        ->where('a.proyecto_id', '=', $request->input('proyecto_id'))
+        ->where('a.estado', '=', 1)
+        ->where('b.estado', '=', 1)
+        ->count();
+
+      if ($publicacionesRegistradas == 0) {
+        return [
+          'message' => 'warning',
+          'detail' => 'Debe asociar al menos una publicación en estado Registrado para remitir el monitoreo.'
+        ];
+      }
+    }
+
     if ($request->input('id')) {
       DB::table('Monitoreo_proyecto')
         ->where('id', '=', $request->input('id'))
