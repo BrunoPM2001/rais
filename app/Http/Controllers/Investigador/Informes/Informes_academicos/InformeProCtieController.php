@@ -134,7 +134,8 @@ class InformeProCtieController extends S3Controller {
     } else {
       $inf = DB::table('Informe_tecnico')
         ->select([
-          'audit'
+          'audit',
+          'estado'
         ])
         ->where('proyecto_id', '=', $request->input('proyecto_id'))
         ->first();
@@ -174,7 +175,7 @@ class InformeProCtieController extends S3Controller {
           'infinal7' => $request->input('infinal7'),
           'infinal9' => $request->input('infinal9'),
           'infinal10' => $request->input('infinal10'),
-          'estado' => 0,
+          'estado' => $inf->estado == 3 ? 3 : 0,
           'fecha_informe_tecnico' => $date,
           'audit' => $audit,
           'updated_at' => $date,
@@ -236,7 +237,8 @@ class InformeProCtieController extends S3Controller {
 
     $inf = DB::table('Informe_tecnico')
       ->select([
-        'audit'
+        'audit',
+        'estado'
       ])
       ->where('proyecto_id', '=', $request->input('proyecto_id'))
       ->first();
@@ -262,7 +264,7 @@ class InformeProCtieController extends S3Controller {
 
     $count = DB::table('Informe_tecnico')
       ->where('proyecto_id', '=', $request->input('proyecto_id'))
-      ->where('estado', '=', 0)
+      ->whereIn('estado', [0, 3])
       ->update([
         'estado' => 2,
         'audit' => $audit,

@@ -170,18 +170,18 @@
       {{ $informe }}<br>
       Estado: 
       @switch($detalles->estado)
+        @case(0)
+          En proceso
+        @break
         @case(1)
           Aprobado
         @break
-
         @case(2)
           Presentado
         @break
-
         @case(3)
           Observado
         @break
-
         @default
           Sin estado
       @endswitch

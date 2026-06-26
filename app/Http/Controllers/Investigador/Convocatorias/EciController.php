@@ -208,6 +208,7 @@ class EciController extends S3Controller {
           'b.tipo',
           'a.id AS grupo_integrante_id',
           'a.condicion',
+          'a.grupo_id',
         ])
         ->where('a.grupo_id', '=', $request->input('grupo_id'))
         ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
@@ -218,6 +219,7 @@ class EciController extends S3Controller {
           'proyecto_id' => $id,
           'investigador_id' => $request->attributes->get('token_decoded')->investigador_id,
           'grupo_integrante_id' => $datosIntegrante->grupo_integrante_id ?? null,
+          'grupo_id' => $datosIntegrante->grupo_id,
           'proyecto_integrante_tipo_id' => 30,
           'codigo' => $datosIntegrante->codigo ?? null,
           'tipo_investigador' => $datosIntegrante->tipo ?? null,

@@ -155,18 +155,18 @@
       {{ $informe }}<br>
       Estado:
       @switch($detalles->estado)
+        @case(0)
+          En proceso
+        @break
         @case(1)
           Aprobado
         @break
-
         @case(2)
           Presentado
         @break
-
         @case(3)
           Observado
         @break
-
         @default
           Sin estado
       @endswitch
@@ -311,14 +311,33 @@
     </div>
 
     <h6>3.10 Anexos</h6>
-    <div class="desc">
-      Informe:
-      @if (isset($archivos['informe-PCONFIGI-INV-INFORME']))
-        Sí
-      @else
-        No
-      @endif
-    </div>
+    <table class="tableData">
+      <tbody>
+        <tr>
+          <td style="width: 24%;" valign="top"><strong>Informe</strong></td>
+          <td style="width: 1%;" valign="top">:</td>
+          <td style="width: 75%;" valign="top">
+            @if (isset($archivos['informe-PCONFIGI-INV-INFORME']))
+              Sí
+            @else
+              No
+            @endif
+          </td>
+        </tr>
+
+        <tr>
+          <td style="width: 24%;" valign="top"><strong>Reporte de viabilidad</strong></td>
+          <td style="width: 1%;" valign="top">:</td>
+          <td style="width: 75%;" valign="top">
+            @if (isset($archivos['viabilidad']))
+              Sí
+            @else
+              No
+            @endif
+          </td>
+        </tr>
+      </tbody>
+    </table>
 
     <h5>IV. Impacto:</h5>
 

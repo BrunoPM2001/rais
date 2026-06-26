@@ -397,39 +397,31 @@ class GestionTransferenciasController extends Controller {
       })
       ->first();
 
-    if ($gecoOperacionId) {
-      $partidas = DB::table('Geco_operacion_movimiento AS a')
-        ->join('Geco_proyecto_presupuesto AS b', 'b.id', '=', 'a.geco_proyecto_presupuesto_id')
-        ->join('Partida AS c', 'c.id', '=', 'b.partida_id')
-        ->select([
-          'c.tipo',
-          'c.codigo',
-          'c.partida',
-          'a.monto_original AS monto',
-          DB::raw('CASE 
-            WHEN a.operacion = "+" THEN a.monto_original + a.monto
-            ELSE a.monto_original - a.monto
-          END AS monto_nuevo')
-        ])
-        ->where('a.geco_operacion_id', '=', $gecoOperacionId)
-        ->orderBy('c.tipo')
-        ->get();
+    $operacionId = null;
 
-    } elseif ($solicitud->estado == "Nueva operación") {
+    if ($gecoOperacionId) {
+      $operacionId = $gecoOperacionId;
+    } elseif ($solicitud && $solicitud->estado == "Nueva operación") {
       $operacion = DB::table('Geco_operacion')
         ->select(['id'])
         ->where('geco_proyecto_id', '=', $gecoProyectoId)
         ->orderByDesc('created_at')
         ->first();
 
+      $operacionId = $operacion?->id;
+    }
+
+    if ($operacionId) {
       $movimientos = DB::table('Geco_operacion_movimiento')
         ->select([
           'geco_proyecto_presupuesto_id',
           'operacion',
           'monto',
+          'monto_original',
         ])
-        ->where('geco_operacion_id', '=', $operacion->id)
-        ->get();
+        ->where('geco_operacion_id', '=', $operacionId)
+        ->get()
+        ->groupBy('geco_proyecto_presupuesto_id');
 
       $partidas = DB::table('Geco_proyecto_presupuesto AS a')
         ->join('Partida AS b', 'b.id', '=', 'a.partida_id')
@@ -439,25 +431,35 @@ class GestionTransferenciasController extends Controller {
           'b.codigo',
           'b.partida',
           'a.monto',
-          DB::raw("0 AS monto_nuevo")
+          DB::raw("a.monto AS monto_nuevo")
         ])
         ->where('a.geco_proyecto_id', '=', $gecoProyectoId)
         ->orderBy('b.tipo')
+        ->orderBy('b.codigo')
         ->get()
         ->map(function ($item) use ($movimientos) {
-          $monto_nuevo = $item->monto;
+          $movimientosPartida = $movimientos->get($item->id, collect());
 
-          foreach ($movimientos as $movimiento) {
-            if ($movimiento->geco_proyecto_presupuesto_id == $item->id) {
+          if ($movimientosPartida->count() > 0) {
+            $primerMovimiento = $movimientosPartida->first();
+
+            $montoOriginal = $primerMovimiento->monto_original ?? $item->monto;
+            $montoNuevo = $montoOriginal;
+
+            foreach ($movimientosPartida as $movimiento) {
               if ($movimiento->operacion == "+") {
-                $monto_nuevo = $monto_nuevo + $movimiento->monto;
+                $montoNuevo += $movimiento->monto;
               } else {
-                $monto_nuevo = $monto_nuevo - $movimiento->monto;
+                $montoNuevo -= $movimiento->monto;
               }
             }
+
+            $item->monto = $montoOriginal;
+            $item->monto_nuevo = $montoNuevo;
+          } else {
+            $item->monto_nuevo = $item->monto;
           }
 
-          $item->monto_nuevo = $monto_nuevo;
           return $item;
         });
 
@@ -465,6 +467,7 @@ class GestionTransferenciasController extends Controller {
       $partidas = DB::table('Geco_proyecto_presupuesto AS a')
         ->join('Partida AS b', 'b.id', '=', 'a.partida_id')
         ->select([
+          'a.id',
           'b.tipo',
           'b.codigo',
           'b.partida',
@@ -473,8 +476,9 @@ class GestionTransferenciasController extends Controller {
         ])
         ->where('a.geco_proyecto_id', '=', $gecoProyectoId)
         ->orderBy('b.tipo')
+        ->orderBy('b.codigo')
         ->get();
-    }
+      }
 
     $pdf = Pdf::loadView('admin.economia.transferencia', ['proyecto' => $proyecto, 'solicitud' => $solicitud, 'partidas' => $partidas]);
     return $pdf->stream();

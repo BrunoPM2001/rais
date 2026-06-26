@@ -1072,10 +1072,23 @@ class GruposController extends S3Controller {
         'c.titulo',
         'd.nombre AS condicion',
         'c.periodo',
-        'c.estado'
+        DB::raw("CASE(c.estado)
+          WHEN -1 THEN 'Eliminado'
+          WHEN 0 THEN 'No aprobado'
+          WHEN 1 THEN 'Aprobado'
+          WHEN 2 THEN 'Observado'
+          WHEN 3 THEN 'En evaluacion'
+          WHEN 5 THEN 'Enviado'
+          WHEN 6 THEN 'En proceso'
+          WHEN 7 THEN 'Anulado'
+          WHEN 8 THEN 'Sustentado'
+          WHEN 9 THEN 'En ejecución'
+          WHEN 10 THEN 'Ejecutado'
+          WHEN 11 THEN 'Concluído'
+        ELSE 'Sin estado' END AS estado"),
       ])
       ->where('a.id', '=', $request->query('grupo_integrante_id'))
-      ->where('c.estado', '=', 1)
+      ->whereiN('c.estado', [1, 8])
       ->groupBy('c.id')
       ->get();
 
