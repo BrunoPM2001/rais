@@ -294,6 +294,175 @@ class DeudaProyectosController extends Controller {
     return $estados;
   }
 
+  private function generarAuditDeuda($auditActual, Request $request, string $accion, array $datos = []) {
+    $token = $request->attributes->get('token_decoded');
+
+    $audit = json_decode($auditActual ?? "[]", true);
+
+    if (!is_array($audit)) {
+      $audit = [];
+    }
+
+    $nombres = $token->nombre ?? $token->nombres ?? '';
+    $apellidos = $token->apellidos ?? '';
+
+    $tecnico = trim($nombres . ' ' . $apellidos);
+
+    $audit[] = [
+      'fecha' => Carbon::now()->format('Y-m-d H:i:s'),
+      'tecnico' => $tecnico,
+      'accion' => $accion,
+      'proyecto_id' => $datos['proyecto_id'] ?? null,
+      'tipo_proyecto' => $datos['tipo_proyecto'] ?? $request->input('tipo_proyecto'),
+      'categoria' => $datos['categoria'] ?? null,
+      'detalle_deuda' => $datos['detalle_deuda'] ?? $request->input('detalle_deuda'),
+      'comentario_deuda' => $datos['comentario_deuda'] ?? $request->input('comentario_deuda'),
+      'fecha_deuda' => $datos['fecha_deuda'] ?? $request->input('fecha_deuda'),
+      'fecha_subsanacion' => $datos['fecha_sub'] ?? $request->input('fecha_subsanar'),
+    ];
+
+    return json_encode($audit, JSON_UNESCAPED_UNICODE);
+  }
+
+  private function retirarDeudaProyecto($proyectoId, $proyectoOrigen, $tipoProyecto, Request $request) {
+    if ($proyectoOrigen == 'Antiguo') {
+      $deudas = DB::table('Proyecto_integrante_H AS pint')
+        ->join('Proyecto_integrante_deuda AS pind', 'pind.proyecto_integrante_h_id', '=', 'pint.id')
+        ->select([
+          'pind.id',
+          'pind.audit',
+        ])
+        ->where('pint.proyecto_id', '=', $proyectoId)
+        ->get();
+
+      foreach ($deudas as $deuda) {
+        $dataUpdate = [
+          'tipo' => null,
+          'categoria' => null,
+          'fecha_deuda' => null,
+          'updated_at' => Carbon::now(),
+        ];
+
+        if ($request->filled('detalle_deuda')) {
+          $dataUpdate['informe'] = $request->input('detalle_deuda');
+        }
+
+        if ($request->filled('comentario_deuda')) {
+          $dataUpdate['detalle'] = $request->input('comentario_deuda');
+        }
+
+        $dataUpdate['audit'] = $this->generarAuditDeuda(
+          $deuda->audit ?? null,
+          $request,
+          'Retiro de deuda',
+          [
+            'proyecto_id' => $proyectoId,
+            'proyecto_origen' => 'Antiguo',
+            'tipo_proyecto' => $tipoProyecto,
+            'tipo' => null,
+            'categoria' => 'Sin deuda',
+            'detalle_deuda' => $request->input('detalle_deuda'),
+            'comentario_deuda' => $request->input('comentario_deuda'),
+            'fecha_deuda' => null,
+          ]
+        );
+
+        DB::table('Proyecto_integrante_deuda')
+          ->where('id', '=', $deuda->id)
+          ->update($dataUpdate);
+      }
+
+      DB::table('Proyecto_H')
+        ->where('id', '=', $proyectoId)
+        ->update([
+          'updated_at' => Carbon::now()
+        ]);
+
+    } else {
+      $deudas = DB::table('Proyecto_integrante AS pint')
+        ->join('Proyecto_integrante_deuda AS pind', 'pind.proyecto_integrante_id', '=', 'pint.id')
+        ->select([
+          'pind.id',
+          'pind.audit',
+        ])
+        ->where('pint.proyecto_id', '=', $proyectoId)
+        ->get();
+
+      foreach ($deudas as $deuda) {
+        $dataUpdate = [
+          'tipo' => null,
+          'categoria' => null,
+          'fecha_deuda' => null,
+          'updated_at' => Carbon::now(),
+        ];
+
+        if ($request->filled('detalle_deuda')) {
+          $dataUpdate['informe'] = $request->input('detalle_deuda');
+        }
+
+        if ($request->filled('comentario_deuda')) {
+          $dataUpdate['detalle'] = $request->input('comentario_deuda');
+        }
+
+        $dataUpdate['audit'] = $this->generarAuditDeuda(
+          $deuda->audit ?? null,
+          $request,
+          'Retiro de deuda',
+          [
+            'proyecto_id' => $proyectoId,
+            'proyecto_origen' => 'Nuevo',
+            'tipo_proyecto' => $tipoProyecto,
+            'tipo' => null,
+            'categoria' => 'Sin deuda',
+            'detalle_deuda' => $request->input('detalle_deuda'),
+            'comentario_deuda' => $request->input('comentario_deuda'),
+            'fecha_deuda' => null,
+          ]
+        );
+
+        DB::table('Proyecto_integrante_deuda')
+          ->where('id', '=', $deuda->id)
+          ->update($dataUpdate);
+      }
+
+      DB::table('Proyecto')
+        ->where('id', '=', $proyectoId)
+        ->update([
+          'deuda' => null,
+          'updated_at' => Carbon::now()
+        ]);
+    }
+  }
+
+  private function actualizarDeudaConAudit($campoId, $valorId, array $data, Request $request, array $datosAudit = []) {
+    $registroDeuda = DB::table('Proyecto_integrante_deuda')
+      ->where($campoId, '=', $valorId)
+      ->first();
+
+    if (!$registroDeuda) {
+      return 0;
+    }
+
+    $data['updated_at'] = $data['updated_at'] ?? Carbon::now();
+
+    $data['audit'] = $this->generarAuditDeuda(
+      $registroDeuda->audit ?? null,
+      $request,
+      'Subsanación de deuda',
+      array_merge([
+        'tipo' => $data['tipo'] ?? null,
+        'categoria' => $data['categoria'] ?? null,
+        'detalle_deuda' => $data['informe'] ?? null,
+        'comentario_deuda' => $data['detalle'] ?? null,
+        'fecha_sub' => $data['fecha_sub'] ?? null,
+      ], $datosAudit)
+    );
+
+    return DB::table('Proyecto_integrante_deuda')
+      ->where('id', '=', $registroDeuda->id)
+      ->update($data);
+  }
+
   private function opcionesSubsanacionAcademica($tipoProyecto, $periodo = null, $proyectoOrigen = 'Nuevo') {
     $tiposTesisNuevo = ['PTPBACHILLER', 'PTPDOCTO', 'PTPMAEST', 'PTPGRADO'];
 
@@ -427,7 +596,7 @@ class DeudaProyectosController extends Controller {
     return array_unique($roles);
   }
 
-  private function aplicarDeudaAProyecto(int $proyectoId, string $tipoProyecto, array $form) {
+  private function aplicarDeudaAProyecto(int $proyectoId, string $tipoProyecto, array $form, Request $request) {
     $deudaEconomica = $form['deuda_economica']['value'] ?? "Sin deuda";
     $deudaAcademica = $form['deuda_academica']['value'] ?? "Sin deuda";
     $deudaFecha = $form['fecha_deuda'] ?? null;
@@ -499,11 +668,33 @@ class DeudaProyectosController extends Controller {
         case 2:
           if ($esResponsable) {
             $data = ['tipo' => 2, 'categoria' => 'Deuda Económica',];
-          } else if ($integranteDeuda) {
-            DB::table('Proyecto_integrante_deuda')
-              ->where('proyecto_integrante_id', $integrante->id)
-              ->delete();
-          }
+            } else if ($integranteDeuda) {
+              $audit = $this->generarAuditDeuda(
+                $integranteDeuda->audit ?? null,
+                $request,
+                'Retiro de deuda',
+                [
+                  'proyecto_id' => $proyectoId,
+                  'proyecto_origen' => 'Nuevo',
+                  'tipo_proyecto' => $tipoProyecto,
+                  'tipo' => null,
+                  'categoria' => 'Sin deuda',
+                  'detalle_deuda' => $deudaDetalle ?: $integranteDeuda->informe,
+                  'comentario_deuda' => $deudaComentario ?: $integranteDeuda->detalle,
+                  'fecha_deuda' => null,
+                ]
+              );
+
+              DB::table('Proyecto_integrante_deuda')
+                ->where('proyecto_integrante_id', $integrante->id)
+                ->update([
+                  'tipo' => null,
+                  'categoria' => null,
+                  'fecha_deuda' => null,
+                  'audit' => $audit,
+                  'updated_at' => Carbon::now(),
+                ]);
+            }
           break;
 
         case 3:
@@ -522,9 +713,25 @@ class DeudaProyectosController extends Controller {
       $data = array_merge($data, [
         'informe' => $integranteDeuda ? ($deudaDetalle ?: $integranteDeuda->informe) : $deudaDetalle,
         'detalle' => $integranteDeuda ? ($deudaComentario ?: $integranteDeuda->detalle) : $deudaComentario,
-        'fecha_deuda' => $deudaFecha,
+        'fecha_deuda' => $integranteDeuda ? ($deudaFecha ?: $integranteDeuda->fecha_deuda) : $deudaFecha,
         'updated_at' => Carbon::now(),
       ]);
+
+      $data['audit'] = $this->generarAuditDeuda(
+        $integranteDeuda->audit ?? null,
+        $request,
+        $integranteDeuda ? 'Actualización de deuda' : 'Asignación de deuda',
+        [
+          'proyecto_id' => $proyectoId,
+          'proyecto_origen' => 'Nuevo',
+          'tipo_proyecto' => $tipoProyecto,
+          'tipo' => $data['tipo'] ?? null,
+          'categoria' => $data['categoria'] ?? null,
+          'detalle_deuda' => $data['informe'] ?? null,
+          'comentario_deuda' => $data['detalle'] ?? null,
+          'fecha_deuda' => $data['fecha_deuda'] ?? null,
+        ]
+      );
 
       if ($integranteDeuda) {
         DB::table('Proyecto_integrante_deuda')
@@ -541,7 +748,7 @@ class DeudaProyectosController extends Controller {
     return ['ok' => true];
   }
 
-  private function aplicarDeudaAProyectoAntiguo(int $proyectoId, array $form) {
+  private function aplicarDeudaAProyectoAntiguo(int $proyectoId, array $form, Request $request) {
     $deudaEconomica = $form['deuda_economica']['value'] ?? "Sin deuda";
     $deudaAcademica = $form['deuda_academica']['value'] ?? "Sin deuda";
     $deudaFecha = $form['fecha_deuda'] ?? null;
@@ -617,9 +824,25 @@ class DeudaProyectosController extends Controller {
       $data = array_merge($data, [
         'informe' => $integranteDeuda ? ($deudaDetalle ?: $integranteDeuda->informe) : $deudaDetalle,
         'detalle' => $integranteDeuda ? ($deudaComentario ?: $integranteDeuda->detalle) : $deudaComentario,
-        'fecha_deuda' => $deudaFecha,
+        'fecha_deuda' => $integranteDeuda ? ($deudaFecha ?: $integranteDeuda->fecha_deuda) : $deudaFecha,
         'updated_at' => Carbon::now(),
       ]);
+
+      $data['audit'] = $this->generarAuditDeuda(
+        $integranteDeuda->audit ?? null,
+        $request,
+        $integranteDeuda ? 'Actualización de deuda' : 'Asignación de deuda',
+        [
+          'proyecto_id' => $proyectoId,
+          'proyecto_origen' => 'Antiguo',
+          'tipo_proyecto' => $form['tipo_proyecto'] ?? null,
+          'tipo' => $data['tipo'] ?? null,
+          'categoria' => $data['categoria'] ?? null,
+          'detalle_deuda' => $data['informe'] ?? null,
+          'comentario_deuda' => $data['detalle'] ?? null,
+          'fecha_deuda' => $data['fecha_deuda'] ?? null,
+        ]
+      );
 
       if ($integranteDeuda) {
         DB::table('Proyecto_integrante_deuda')
@@ -647,8 +870,8 @@ class DeudaProyectosController extends Controller {
     $proyectoOrigen = $request->input('proyecto_origen');
 
     $resultado = $proyectoOrigen == 'Antiguo'
-      ? $this->aplicarDeudaAProyectoAntiguo((int) $proyectoId, $request->all())
-      : $this->aplicarDeudaAProyecto((int) $proyectoId, $tipoProyecto, $request->all());
+      ? $this->aplicarDeudaAProyectoAntiguo((int) $proyectoId, $request->all(), $request)
+      : $this->aplicarDeudaAProyecto((int) $proyectoId, $tipoProyecto, $request->all(), $request);
 
     if (!$resultado['ok']) {
       return [
@@ -667,30 +890,60 @@ class DeudaProyectosController extends Controller {
     $proyectoId = end($partes);
 
     $proyectoOrigen = $request->input('proyecto_origen');
+    $tipoProyecto = $request->input('tipo_proyecto');
 
-    if ($proyectoOrigen == 'Antiguo') {
-      DB::table('Proyecto_integrante_H AS pint')
-        ->join('Proyecto_integrante_deuda AS pind', 'pind.proyecto_integrante_h_id', '=', 'pint.id')
-        ->where('pint.proyecto_id', '=', $proyectoId)
-        ->update([
-          'pind.informe' => $request->input('detalle_deuda'),
-          'pind.detalle' => $request->input('comentario_deuda'),
-          'pind.updated_at' => Carbon::now(),
-        ]);
-    } else {
-      DB::table('Proyecto_integrante AS pint')
-        ->join('Proyecto_integrante_deuda AS pind', 'pind.proyecto_integrante_id', '=', 'pint.id')
-        ->where('pint.proyecto_id', '=', $proyectoId)
-        ->update([
-          'pind.informe' => $request->input('detalle_deuda'),
-          'pind.detalle' => $request->input('comentario_deuda'),
-          'pind.updated_at' => Carbon::now(),
-        ]);
+    $deudaAcademicaInput = $request->input('deuda_academica');
+    $deudaEconomicaInput = $request->input('deuda_economica');
+
+    $deudaAcademica = is_array($deudaAcademicaInput)
+      ? ($deudaAcademicaInput['value'] ?? null)
+      : $deudaAcademicaInput;
+
+    $deudaEconomica = is_array($deudaEconomicaInput)
+      ? ($deudaEconomicaInput['value'] ?? null)
+      : $deudaEconomicaInput;
+
+    $sinDeudaAcademica = empty($deudaAcademica) || $deudaAcademica == 'Sin deuda';
+    $sinDeudaEconomica = empty($deudaEconomica) || $deudaEconomica == 'Sin deuda';
+
+    /**
+     * CASO 1:
+     * Si ambas deudas vienen vacías o como "Sin deuda",
+     * se limpia la deuda del proyecto y se registra audit.
+     */
+    if ($sinDeudaAcademica && $sinDeudaEconomica) {
+      $this->retirarDeudaProyecto(
+        $proyectoId,
+        $proyectoOrigen,
+        $tipoProyecto,
+        $request
+      );
+
+      return [
+        'message' => 'success',
+        'detail' => 'La deuda fue retirada correctamente'
+      ];
+    }
+
+    /**
+     * CASO 2:
+     * Si queda al menos una deuda marcada,
+     * se vuelve a aplicar la deuda usando la lógica existente.
+     */
+    $resultado = $proyectoOrigen == 'Antiguo'
+      ? $this->aplicarDeudaAProyectoAntiguo((int) $proyectoId, $request->all(), $request)
+      : $this->aplicarDeudaAProyecto((int) $proyectoId, $tipoProyecto, $request->all(), $request);
+
+    if (!$resultado['ok']) {
+      return [
+        'message' => $resultado['message'],
+        'detail' => $resultado['detail']
+      ];
     }
 
     return [
       'message' => 'success',
-      'detail' => 'Detalle de deuda actualizado correctamente'
+      'detail' => 'La deuda fue actualizada correctamente'
     ];
   }
 
@@ -721,6 +974,14 @@ class DeudaProyectosController extends Controller {
     if (!$deuda) {
       return response()->json([
         'deuda' => null,
+        'deuda_academica' => 'Sin deuda',
+        'deuda_economica' => 'Sin deuda'
+      ]);
+    }
+
+    if (empty($deuda->tipo)) {
+      return response()->json([
+        'deuda' => $deuda,
         'deuda_academica' => 'Sin deuda',
         'deuda_economica' => 'Sin deuda'
       ]);
@@ -845,32 +1106,46 @@ class DeudaProyectosController extends Controller {
         if ($tipoDeuda == 1) {
 
           if (in_array($integrante->proyecto_integrante_tipo_id, $rolesAcademicos)) {
-            $resultado = DB::table('Proyecto_integrante_deuda')
-              ->where('proyecto_integrante_id', $integrante->proyecto_integrante_id)
-              ->update([
-                'tipo' => $subsanarAcademica,
-                'categoria' => $categoria,
-                'informe' => $deudaDetalle,
-                'detalle' => $deudaComentario,
-                'fecha_sub' => $fechaSubsanar,
-                'updated_at' => Carbon::now()
-              ]);
+              $resultado = $this->actualizarDeudaConAudit(
+                'proyecto_integrante_id',
+                $integrante->proyecto_integrante_id,
+                [
+                  'tipo' => $subsanarAcademica,
+                  'categoria' => $categoria,
+                  'informe' => $deudaDetalle,
+                  'detalle' => $deudaComentario,
+                  'fecha_sub' => $fechaSubsanar,
+                ],
+                $request,
+                [
+                  'proyecto_id' => $proyectoId,
+                  'proyecto_origen' => $proyectoOrigen,
+                  'tipo_proyecto' => $tipoProyecto,
+                ]
+              );
             $resultados[] = $resultado;
           }
           /** Subsanar Deuda Economica */
         } else if ($tipoDeuda == 2) {
 
           if (in_array($integrante->proyecto_integrante_tipo_id, $responsable)) {
-            $resultado = DB::table('Proyecto_integrante_deuda')
-              ->where('proyecto_integrante_id', $integrante->proyecto_integrante_id)
-              ->update([
-                'tipo' => $subsanarEconomica,
-                'categoria' => $categoria,
-                'informe' => $deudaDetalle,
-                'detalle' => $deudaComentario,
-                'fecha_sub' => $fechaSubsanar,
-                'updated_at' => Carbon::now()
-              ]);
+              $resultado = $this->actualizarDeudaConAudit(
+                'proyecto_integrante_id',
+                $integrante->proyecto_integrante_id,
+                [
+                  'tipo' => $subsanarEconomica,
+                  'categoria' => $categoria,
+                  'informe' => $deudaDetalle,
+                  'detalle' => $deudaComentario,
+                  'fecha_sub' => $fechaSubsanar,
+                ],
+                $request,
+                [
+                  'proyecto_id' => $proyectoId,
+                  'proyecto_origen' => $proyectoOrigen,
+                  'tipo_proyecto' => $tipoProyecto,
+                ]
+              );
             $resultados[] = $resultado;
           }
           /** Subsanar Deuda Academica y Economica */
@@ -884,31 +1159,45 @@ class DeudaProyectosController extends Controller {
                 break;
             }
 
-            $resultado = DB::table('Proyecto_integrante_deuda')
-              ->where($campoId, $integrante->$campoId)
-              ->update([
-                'tipo' => $subsanarEconomica,
-                'categoria' => $categoria,
-                'informe' => $deudaDetalle,
-                'detalle' => $deudaComentario,
-                'fecha_sub' => $fechaSubsanar,
-                'updated_at' => Carbon::now()
-              ]);
+              $resultado = $this->actualizarDeudaConAudit(
+                $campoId,
+                $integrante->$campoId,
+                [
+                  'tipo' => $subsanarEconomica,
+                  'categoria' => $categoria,
+                  'informe' => $deudaDetalle,
+                  'detalle' => $deudaComentario,
+                  'fecha_sub' => $fechaSubsanar,
+                ],
+                $request,
+                [
+                  'proyecto_id' => $proyectoId,
+                  'proyecto_origen' => $proyectoOrigen,
+                  'tipo_proyecto' => $tipoProyecto,
+                ]
+              );
             $resultados[] = $resultado;
           } else {
 
           $categoria = $this->estadoDeuda($subsanarAcademica);
 
-            $resultado = DB::table('Proyecto_integrante_deuda')
-              ->where($campoId, $integrante->$campoId)
-              ->update([
-                'tipo' => $subsanarAcademica,
-                'categoria' => $categoria,
-                'informe' => $deudaDetalle,
-                'detalle' => $deudaComentario,
-                'fecha_sub' => $fechaSubsanar,
-                'updated_at' => Carbon::now()
-              ]);
+              $resultado = $this->actualizarDeudaConAudit(
+                $campoId,
+                $integrante->$campoId,
+                [
+                  'tipo' => $subsanarAcademica,
+                  'categoria' => $categoria,
+                  'informe' => $deudaDetalle,
+                  'detalle' => $deudaComentario,
+                  'fecha_sub' => $fechaSubsanar,
+                ],
+                $request,
+                [
+                  'proyecto_id' => $proyectoId,
+                  'proyecto_origen' => $proyectoOrigen,
+                  'tipo_proyecto' => $tipoProyecto,
+                ]
+              );
             $resultados[] = $resultado;
           }
         }
@@ -917,55 +1206,103 @@ class DeudaProyectosController extends Controller {
 
       foreach ($integrantes as $integrante) {
 
-        /** Subsanar Deuda Academica */
+        /**
+         * Subsanar deuda académica
+         */
         if ($integrante->tipo == 1) {
-          DB::table('Proyecto_integrante_deuda')
-            ->where($campoId, $integrante->$campoId)
-            ->update([
+          $resultado = $this->actualizarDeudaConAudit(
+            $campoId,
+            $integrante->$campoId,
+            [
               'tipo' => $subsanarAcademica,
               'categoria' => $categoria,
               'informe' => $deudaDetalle,
               'detalle' => $deudaComentario,
               'fecha_sub' => $fechaSubsanar,
-              'updated_at' => Carbon::now()
-            ]);
-          /** Subsanar Deuda Economica */
-        } else if ($integrante->tipo == 2) {
-          DB::table('Proyecto_integrante_deuda')
-            ->where($campoId, $integrante->$campoId)
-            ->update([
+            ],
+            $request,
+            [
+              'proyecto_id' => $proyectoId,
+              'proyecto_origen' => $proyectoOrigen,
+              'tipo_proyecto' => $tipoProyecto,
+            ]
+          );
+
+          $resultados[] = $resultado;
+        }
+
+        /**
+         * Subsanar deuda económica
+         */
+        else if ($integrante->tipo == 2) {
+          $resultado = $this->actualizarDeudaConAudit(
+            $campoId,
+            $integrante->$campoId,
+            [
               'tipo' => $subsanarEconomica,
               'categoria' => $categoria,
               'informe' => $deudaDetalle,
               'detalle' => $deudaComentario,
               'fecha_sub' => $fechaSubsanar,
-              'updated_at' => Carbon::now()
-            ]);
-          /** Subsanar Deuda Academica y Economica */
-        } else if ($integrante->tipo == 3) {
+            ],
+            $request,
+            [
+              'proyecto_id' => $proyectoId,
+              'proyecto_origen' => $proyectoOrigen,
+              'tipo_proyecto' => $tipoProyecto,
+            ]
+          );
+
+          $resultados[] = $resultado;
+        }
+
+        /**
+         * Subsanar deuda académica y económica
+         */
+        else if ($integrante->tipo == 3) {
+
           if ($subsanarEconomica) {
-            DB::table('Proyecto_integrante_deuda')
-            ->where($campoId, $integrante->$campoId)
-            ->update([
-              'tipo' => $subsanarEconomica,
-              'categoria' => $this->estadoDeuda(8),
-              'informe' => $deudaDetalle,
-              'detalle' => $deudaComentario,
-              'fecha_sub' => $fechaSubsanar,
-              'updated_at' => Carbon::now()
-            ]);
+            $resultado = $this->actualizarDeudaConAudit(
+              $campoId,
+              $integrante->$campoId,
+              [
+                'tipo' => $subsanarEconomica,
+                'categoria' => $this->estadoDeuda(8),
+                'informe' => $deudaDetalle,
+                'detalle' => $deudaComentario,
+                'fecha_sub' => $fechaSubsanar,
+              ],
+              $request,
+              [
+                'proyecto_id' => $proyectoId,
+                'proyecto_origen' => $proyectoOrigen,
+                'tipo_proyecto' => $tipoProyecto,
+              ]
+            );
+
+            $resultados[] = $resultado;
           }
+
           if ($subsanarAcademica) {
-            DB::table('Proyecto_integrante_deuda')
-            ->where($campoId, $integrante->$campoId)
-            ->update([
-              'tipo' => $subsanarAcademica,
-              'categoria' => $categoria,
-              'informe' => $deudaDetalle,
-              'detalle' => $deudaComentario,
-              'fecha_sub' => $fechaSubsanar,
-              'updated_at' => Carbon::now()
-            ]);
+            $resultado = $this->actualizarDeudaConAudit(
+              $campoId,
+              $integrante->$campoId,
+              [
+                'tipo' => $subsanarAcademica,
+                'categoria' => $categoria,
+                'informe' => $deudaDetalle,
+                'detalle' => $deudaComentario,
+                'fecha_sub' => $fechaSubsanar,
+              ],
+              $request,
+              [
+                'proyecto_id' => $proyectoId,
+                'proyecto_origen' => $proyectoOrigen,
+                'tipo_proyecto' => $tipoProyecto,
+              ]
+            );
+
+            $resultados[] = $resultado;
           }
         }
       }

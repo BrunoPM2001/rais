@@ -368,10 +368,15 @@ class PicvController extends S3Controller {
   public function registrarPaso1(Request $request) {
     if ($request->input('proyecto_id') == null) {
 
-      $data = DB::table('Grupo_integrante')
+      $data = DB::table('Grupo_integrante as a')
+        ->Join('Usuario_investigador as b', 'b.id', '=', 'a.investigador_id')
         ->select([
-          'facultad_id',
-          'grupo_id'
+          'a.id AS grupo_integrante_id',
+          'a.facultad_id',
+          'a.grupo_id',
+          'a.condicion',
+          'b.codigo',
+          'b.tipo',
         ])
         ->where('investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
         ->whereNot('condicion', 'LIKE', 'Ex%')
@@ -412,9 +417,14 @@ class PicvController extends S3Controller {
       DB::table('Proyecto_integrante')
         ->insert([
           'proyecto_id' => $id,
+          'grupo_id' => $data->grupo_id,
           'investigador_id' => $request->attributes->get('token_decoded')->investigador_id,
-          'condicion' => 'Responsable',
+          'grupo_integrante_id' => $data->grupo_integrante_id,
           'proyecto_integrante_tipo_id' => 92,
+          'codigo' => $data->codigo ?? null,
+          'tipo_investigador' => $data->tipo ?? null,
+          'condicion_grupo' => $data->condicion ?? null,
+          'condicion' => 'Responsable',
           'created_at' => Carbon::now(),
           'updated_at' => Carbon::now(),
         ]);
@@ -699,7 +709,7 @@ class PicvController extends S3Controller {
             'apellido2' => $sumData->apellido_materno,
             'doc_tipo' => 'DNI',
             'doc_numero' => $sumData->dni,
-            'tipo' => 'Estudiante pregrado',
+            'tipo' => 'Estudiante',
             'sexo' => $sumData->sexo,
             'email3' => $sumData->correo_electronico,
             'created_at' => Carbon::now(),
@@ -712,7 +722,6 @@ class PicvController extends S3Controller {
         ->insertGetId([
           'proyecto_id' => $request->input('proyecto_id'),
           'investigador_id' => $id_investigador,
-          'condicion' => 'Colaborador',
           'proyecto_integrante_tipo_id' => 93,
           'created_at' => $date,
           'updated_at' => $date

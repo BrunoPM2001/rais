@@ -42,7 +42,7 @@ class PsinfinvController extends S3Controller {
         ->join('Proyecto AS b', 'b.id', '=', 'a.proyecto_id')
         ->where('a.condicion', '=', 'Responsable')
         ->where('b.tipo_proyecto', '=', 'PSINFINV')
-        ->where('b.periodo', '=', 2025)
+        ->where('b.periodo', '=', 2026)
         ->where('b.estado', '!=', 6)
         ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
         ->count();
@@ -53,7 +53,7 @@ class PsinfinvController extends S3Controller {
         ->join('Proyecto AS b', 'b.grupo_id', '=', 'a.grupo_id')
         ->join('Proyecto_integrante AS c', 'c.proyecto_id', '=', 'b.id')
         ->where('b.tipo_proyecto', '=', 'PSINFINV')
-        ->where('b.periodo', '=', 2025)
+        ->where('b.periodo', '=', 2026)
         ->where('a.condicion', '=', 'Titular')
         ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
         ->where('c.condicion', '!=', 'Responsable')
@@ -91,7 +91,7 @@ class PsinfinvController extends S3Controller {
         ])
         ->where('a.condicion', '=', 'Responsable')
         ->where('b.tipo_proyecto', '=', 'PSINFINV')
-        ->where('b.periodo', '=', 2025)
+        ->where('b.periodo', '=', 2026)
         ->where('b.estado', '=', 6)
         ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
         ->first();
@@ -220,8 +220,11 @@ class PsinfinvController extends S3Controller {
         })
         ->select([
           'a.facultad_id',
+          'a.codigo',
+          'a.tipo',
           'b.grupo_id',
-          'b.id'
+          'b.id AS grupo_integrante_id',
+          'b.condicion AS condicion_grupo',
         ])
         ->where('a.id', '=', $request->attributes->get('token_decoded')->investigador_id)
         ->first();
@@ -257,6 +260,9 @@ class PsinfinvController extends S3Controller {
           'proyecto_integrante_tipo_id' => 7,
           'grupo_id' => $datos->grupo_id,
           'grupo_integrante_id' => $datos->id,
+          'codigo' => $datos->codigo ?? null,
+          'tipo_investigador' => $datos->tipo ?? null,
+          'condicion_grupo' => $datos->condicion_grupo ?? null,
           'condicion' => 'Responsable',
           'created_at' => $date,
           'updated_at' => $date,
@@ -567,6 +573,17 @@ class PsinfinvController extends S3Controller {
 
     if ($count == 0) {
 
+      $datosIntegrante = DB::table('Grupo_integrante AS a')
+        ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
+        ->select([
+          'b.codigo',
+          'b.tipo',
+          'a.condicion AS condicion_grupo',
+        ])
+        ->where('a.id', '=', $request->input('grupo_integrante_id'))
+        ->where('a.investigador_id', '=', $request->input('investigador_id'))
+        ->first();
+
       if ($request->input('tipo_tesis') == null) {
 
         $deudas = DB::table('view_deudores AS vdeuda')
@@ -584,6 +601,9 @@ class PsinfinvController extends S3Controller {
               'investigador_id' => $request->input('investigador_id'),
               'grupo_integrante_id' => $request->input('grupo_integrante_id'),
               'proyecto_integrante_tipo_id' => $request->input('proyecto_integrante_tipo_id'),
+              'codigo' => $datosIntegrante->codigo ?? null,
+              'tipo_investigador' => $datosIntegrante->tipo ?? null,
+              'condicion_grupo' => $datosIntegrante->condicion_grupo ?? null,
               'contribucion' => $request->input('contribucion'),
               'excluido' => 'Incluido',
               'created_at' => Carbon::now(),
@@ -613,6 +633,9 @@ class PsinfinvController extends S3Controller {
             'investigador_id' => $request->input('investigador_id'),
             'grupo_integrante_id' => $request->input('grupo_integrante_id'),
             'proyecto_integrante_tipo_id' => $request->input('proyecto_integrante_tipo_id'),
+            'codigo' => $datosIntegrante->codigo ?? null,
+            'tipo_investigador' => $datosIntegrante->tipo ?? null,
+            'condicion_grupo' => $datosIntegrante->condicion_grupo ?? null,
             'contribucion' => $request->input('contribucion'),
             'tipo_tesis' => $request?->input('tipo_tesis')["value"],
             'titulo_tesis' => $request->input('titulo_tesis'),

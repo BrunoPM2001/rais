@@ -230,12 +230,44 @@ public function agregarIntegrante(Request $request) {
             'updated_at' => Carbon::now(),
           ]);
       }
+
+      $proyecto = DB::table('Proyecto')
+        ->select([
+          'grupo_id'
+        ])
+        ->where('id', '=', $request->input('proyecto_id'))
+        ->first();
+
+      $datosIntegrante = DB::table('Usuario_investigador AS b')
+        ->leftJoin('Grupo_integrante AS a', function ($join) use ($proyecto) {
+          $join->on('a.investigador_id', '=', 'b.id');
+
+          if ($proyecto && $proyecto->grupo_id) {
+            $join->where('a.grupo_id', '=', $proyecto->grupo_id);
+          }
+
+          $join->where('a.condicion', 'NOT LIKE', 'Ex%');
+        })
+        ->select([
+          'a.id AS grupo_integrante_id',
+          'a.grupo_id',
+          'a.condicion',
+          'b.codigo',
+          'b.tipo',
+        ])
+        ->where('b.id', '=', $id_investigador)
+        ->first();
       
       DB::table('Proyecto_integrante')
         ->insert([
           'proyecto_id' => $request->input('proyecto_id'),
+          'grupo_id' => $proyecto->grupo_id ?? null,
           'investigador_id' => $id_investigador,
+          'grupo_integrante_id' => $datosIntegrante->grupo_integrante_id ?? null,
           'proyecto_integrante_tipo_id' => 29,
+          'codigo' => $datosIntegrante->codigo ?? null,
+          'tipo_investigador' => $datosIntegrante->tipo ?? null,
+          'condicion_grupo' => $datosIntegrante->condicion ?? null,
           'condicion' => 'Miembro',
           'created_at' => $date,
           'updated_at' => $date,

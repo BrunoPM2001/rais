@@ -253,10 +253,15 @@ class ProCTIController extends S3Controller {
   public function registrarPaso1(Request $request) {
     if ($request->input('proyecto_id') == null) {
 
-      $data = DB::table('Grupo_integrante')
+      $data = DB::table('Grupo_integrante AS a')
+        ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
         ->select([
-          'facultad_id',
-          'grupo_id'
+          'a.id AS grupo_integrante_id',
+          'a.facultad_id',
+          'a.grupo_id',
+          'a.condicion AS condicion_grupo',
+          'b.codigo',
+          'b.tipo',
         ])
         ->where('investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
         ->whereNot('condicion', 'LIKE', 'Ex%')
@@ -300,6 +305,9 @@ class ProCTIController extends S3Controller {
           'investigador_id' => $request->attributes->get('token_decoded')->investigador_id,
           'condicion' => 'Responsable',
           'proyecto_integrante_tipo_id' => 86,
+          'codigo' => $data->codigo ?? null,
+          'tipo_investigador' => $data->tipo ?? null,
+          'condicion_grupo' => $data->condicion_grupo ?? null,
           'created_at' => Carbon::now(),
           'updated_at' => Carbon::now(),
         ]);
@@ -605,23 +613,32 @@ class ProCTIController extends S3Controller {
       ->where('id', '=', $request->input('proyecto_id'))
       ->first();
 
-    $grupoIntegrante = DB::table('Grupo_integrante')
+    $grupoIntegrante = DB::table('Grupo_integrante AS a')
+      ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
       ->select([
-        'id'
+        'a.id AS grupo_integrante_id',
+        'a.condicion AS condicion_grupo',
+        'b.codigo',
+        'b.tipo',
       ])
-      ->where('grupo_id', '=', $grupo->grupo_id)
-      ->where('investigador_id', '=', $request->input('investigador_id'))
+      ->where('a.grupo_id', '=', $grupo->grupo_id)
+      ->where('a.investigador_id', '=', $request->input('investigador_id'))
+      ->where('a.condicion', 'NOT LIKE', 'Ex%')
       ->first();
 
-    $id = DB::table('Proyecto_integrante')->insertGetId([
-      'proyecto_id' => $request->input('proyecto_id'),
-      'investigador_id' => $request->input('investigador_id'),
-      'grupo_id' => $grupo->grupo_id ?? null,
-      'grupo_integrante_id' => $grupoIntegrante->id ?? null,
-      'condicion' => 'Adherente',
-      'proyecto_integrante_tipo_id' => 88,
-      'created_at' => Carbon::now(),
-      'updated_at' => Carbon::now(),
+    $id = DB::table('Proyecto_integrante')->
+      insertGetId([
+        'proyecto_id' => $request->input('proyecto_id'),
+        'investigador_id' => $request->input('investigador_id'),
+        'grupo_id' => $grupo->grupo_id ?? null,
+        'grupo_integrante_id' => $grupoIntegrante->id ?? null,
+        'condicion' => 'Adherente',
+        'proyecto_integrante_tipo_id' => 88,
+        'codigo' => $grupoIntegrante->codigo ?? null,
+        'tipo_investigador' => $grupoIntegrante->tipo ?? null,
+        'condicion_grupo' => $grupoIntegrante->condicion_grupo ?? null,
+        'created_at' => Carbon::now(),
+        'updated_at' => Carbon::now(),
     ]);
 
     $ext = $request->file('file')->getClientOriginalExtension();
@@ -691,12 +708,42 @@ class ProCTIController extends S3Controller {
           ]);
       }
 
+      $proyecto = DB::table('Proyecto')
+        ->select([
+          'grupo_id'
+        ])
+        ->where('id', '=', $request->input('proyecto_id'))
+        ->first();
+
+      $datosIntegrante = DB::table('Usuario_investigador AS b')
+        ->leftJoin('Grupo_integrante AS a', function ($join) use ($proyecto) {
+          $join->on('a.investigador_id', '=', 'b.id');
+
+          if ($proyecto && $proyecto->grupo_id) {
+            $join->where('a.grupo_id', '=', $proyecto->grupo_id);
+          }
+
+          $join->where('a.condicion', 'NOT LIKE', 'Ex%');
+        })
+        ->select([
+          'a.id AS grupo_integrante_id',
+          'a.grupo_id',
+          'a.condicion AS condicion_grupo',
+          'b.codigo',
+          'b.tipo',
+        ])
+        ->where('b.id', '=', $id_investigador)
+        ->first();
+
       $id = DB::table('Proyecto_integrante')
         ->insertGetId([
           'proyecto_id' => $request->input('proyecto_id'),
           'investigador_id' => $id_investigador,
           'condicion' => 'Colaborador',
           'proyecto_integrante_tipo_id' => 88,
+          'codigo' => $datosIntegrante->codigo ?? null,
+          'tipo_investigador' => $datosIntegrante->tipo ?? null,
+          'condicion_grupo' => $datosIntegrante->condicion_grupo ?? null,
           'created_at' => $date,
           'updated_at' => $date
         ]);

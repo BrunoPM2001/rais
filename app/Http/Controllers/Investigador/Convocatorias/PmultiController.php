@@ -291,7 +291,10 @@ class PmultiController extends S3Controller {
         ->select([
           'a.facultad_id',
           'b.grupo_id',
-          'b.id'
+          'b.id',
+          'b.grupo_id',
+          'b.id AS grupo_integrante_id',
+          'b.condicion AS condicion_grupo',
         ])
         ->where('a.id', '=', $request->attributes->get('token_decoded')->investigador_id)
         ->first();
@@ -332,6 +335,9 @@ class PmultiController extends S3Controller {
           'proyecto_id' => $id,
           'investigador_id' => $request->attributes->get('token_decoded')->investigador_id,
           'proyecto_integrante_tipo_id' => 56,
+          'codigo' => $datos->codigo ?? null,
+          'tipo_investigador' => $datos->tipo ?? null,
+          'condicion_grupo' => $datos->condicion_grupo ?? null,
           'grupo_id' => $datos->grupo_id,
           'grupo_integrante_id' => $datos->id,
           'condicion' => 'Responsable',
@@ -738,6 +744,17 @@ class PmultiController extends S3Controller {
         }
       }
 
+      $datosIntegrante = DB::table('Grupo_integrante AS a')
+        ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
+        ->select([
+          'b.codigo',
+          'b.tipo',
+          'a.condicion',
+        ])
+        ->where('a.id', '=', $request->input('grupo_integrante_id'))
+        ->where('a.investigador_id', '=', $request->input('investigador_id'))
+        ->first();
+
       $integrante_id = DB::table('Proyecto_integrante')
         ->insertGetId([
           'proyecto_id' => $request->input('id'),
@@ -745,6 +762,9 @@ class PmultiController extends S3Controller {
           'investigador_id' => $request->input('investigador_id'),
           'grupo_integrante_id' => $request->input('grupo_integrante_id'),
           'proyecto_integrante_tipo_id' => $request->input('proyecto_integrante_tipo_id'),
+          'codigo' => $datosIntegrante->codigo ?? null,
+          'tipo_investigador' => $datosIntegrante->tipo ?? null,
+          'condicion_grupo' => $datosIntegrante->condicion ?? null,
           'tipo_tesis' => $request->input('tipo'),
           'titulo_tesis' => $request->input('titulo'),
           'created_at' => Carbon::now(),

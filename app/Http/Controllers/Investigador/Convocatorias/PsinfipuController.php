@@ -199,8 +199,11 @@ class PsinfipuController extends S3Controller {
         })
         ->select([
           'a.facultad_id',
+          'a.codigo',
+          'a.tipo',
           'b.grupo_id',
-          'b.id'
+          'b.id AS grupo_integrante_id',
+          'b.condicion AS condicion_grupo',
         ])
         ->where('a.id', '=', $request->attributes->get('token_decoded')->investigador_id)
         ->first();
@@ -236,7 +239,12 @@ class PsinfipuController extends S3Controller {
           'proyecto_integrante_tipo_id' => 13,
           'grupo_id' => $datos->grupo_id,
           'grupo_integrante_id' => $datos->id,
+          'codigo' => $datos->codigo ?? null,
+          'tipo_investigador' => $datos->tipo ?? null,
+          'condicion_grupo' => $datos->condicion_grupo ?? null,
           'condicion' => 'Responsable',
+          'created_at' => $date,
+          'updated_at' => $date,
         ]);
       return ['message' => 'success', 'detail' => 'Datos guardados', 'id' => $id];
     }
@@ -484,6 +492,17 @@ class PsinfipuController extends S3Controller {
 
     if ($count == 0) {
 
+      $datosIntegrante = DB::table('Grupo_integrante AS a')
+        ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
+        ->select([
+          'b.codigo',
+          'b.tipo',
+          'a.condicion AS condicion_grupo',
+        ])
+        ->where('a.id', '=', $request->input('grupo_integrante_id'))
+        ->where('a.investigador_id', '=', $request->input('investigador_id'))
+        ->first();
+
       $deudas = DB::table('view_deudores AS vdeuda')
         ->select(['vdeuda.ptipo', 'vdeuda.categoria', 'vdeuda.periodo'])
         ->where('vdeuda.investigador_id', '=', $request->input('investigador_id'))
@@ -500,6 +519,9 @@ class PsinfipuController extends S3Controller {
             'investigador_id' => $request->input('investigador_id'),
             'grupo_integrante_id' => $request->input('grupo_integrante_id'),
             'proyecto_integrante_tipo_id' => 14,
+            'codigo' => $datosIntegrante->codigo ?? null,
+            'tipo_investigador' => $datosIntegrante->tipo ?? null,
+            'condicion_grupo' => $datosIntegrante->condicion_grupo ?? null,
             'contribucion' => $request->input('contribucion'),
             'created_at' => Carbon::now(),
             'updated_at' => Carbon::now(),
