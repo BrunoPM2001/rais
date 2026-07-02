@@ -1187,6 +1187,9 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
     });
 
     Route::prefix('pro-ctie')->group(function () {
+      Route::get('listado', [ProCTIController::class, 'listado']);
+      Route::delete('eliminarPropuesta', [ProCTIController::class, 'eliminarPropuesta']);
+
       Route::get('verificar', [ProCTIController::class, 'verificar']);
       Route::get('verificarGrupo', [ProCTIController::class, 'verificarGrupo']);
 
@@ -1217,7 +1220,6 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
       Route::delete('eliminarActividad', [ProCTIController::class, 'eliminarActividad']);
 
       Route::get('listarPartidas', [ProCTIController::class, 'listarPartidas']);
-      Route::get('listarTiposPartidas', [ProCTIController::class, 'listarTiposPartidas']);
       Route::post('agregarPartida', [ProCTIController::class, 'agregarPartida']);
       Route::delete('eliminarPartida', [ProCTIController::class, 'eliminarPartida']);
       Route::get('validarPresupuesto', [ProCTIController::class, 'validarPresupuesto']);

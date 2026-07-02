@@ -10,6 +10,66 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class ProCTIController extends S3Controller {
+  public function listado(Request $request) {
+    $listado = DB::table('Proyecto_integrante AS a')
+      ->join('Proyecto AS b', 'b.id', '=', 'a.proyecto_id')
+      ->select([
+        'b.id',
+        'b.titulo',
+        'b.step',
+        DB::raw("CASE(b.estado)
+            WHEN -1 THEN 'Eliminado'
+            WHEN 0 THEN 'No aprobado'
+            WHEN 1 THEN 'Aprobado'
+            WHEN 3 THEN 'En evaluacion'
+            WHEN 5 THEN 'Enviado'
+            WHEN 6 THEN 'En proceso'
+            WHEN 7 THEN 'Anulado'
+            WHEN 8 THEN 'Sustentado'
+            WHEN 9 THEN 'En ejecución'
+            WHEN 10 THEN 'Ejecutado'
+            WHEN 11 THEN 'Concluído'
+          ELSE 'Sin estado' END AS estado"),
+      ])
+      ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
+      ->where('a.condicion', '=', 'Responsable')
+      ->where('b.tipo_proyecto', '=', 'PRO-CTIE')
+      ->where('b.periodo', '=', 2026)
+      ->get();
+
+    return $listado;
+  }
+
+  public function eliminarPropuesta(Request $request) {
+    $proyectoId = $request->query('id');
+
+    if ($proyectoId) {
+      DB::table('Proyecto_descripcion')
+        ->where('proyecto_id', '=', $proyectoId)
+        ->delete();
+
+      DB::table('Proyecto_doc')
+        ->where('proyecto_id', '=', $proyectoId)
+        ->delete();
+
+      DB::table('Proyecto_presupuesto')
+        ->where('proyecto_id', '=', $proyectoId)
+        ->delete();
+
+      DB::table('Proyecto_integrante')
+        ->where('proyecto_id', '=', $proyectoId)
+        ->delete();
+
+      DB::table('Proyecto')
+        ->where('id', '=', $proyectoId)
+        ->delete();
+
+      return ['message' => 'info', 'detail' => 'Propuesta eliminada correctamente'];
+    } else {
+      return ['message' => 'error', 'detail' => 'No se pudo eliminar la propuesta'];
+    }
+  }
+
   public function verificar(Request $request) {
     $errores = [];
 
@@ -40,33 +100,7 @@ class ProCTIController extends S3Controller {
 
     $req3 = DB::table('Proyecto')
       ->where('tipo_proyecto', '=', 'PRO-CTIE')
-      ->where('periodo', '=', 2025)
-      ->where('grupo_id', '=', $req3_1->grupo_id)
-      ->count();
-
-    if ($req3 >= 5) {
-      $errores[] = "Su grupo en conjunto ya ha registro 5 proyectos, no se permiten más";
-    }
-
-    $req2 = DB::table('view_deudores AS vdeuda')
-      ->where('vdeuda.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
-      ->count();
-
-    if ($req2 != 0) {
-      $errores[] = "Usted tiene registradas deudas pendientes que deben ser resueltas para participar en el concurso";
-    }
-
-    $req3_1 = DB::table('Grupo_integrante')
-      ->select([
-        'grupo_id'
-      ])
-      ->where('investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
-      ->whereNot('condicion', 'LIKE', 'Ex%')
-      ->first();
-
-    $req3 = DB::table('Proyecto')
-      ->where('tipo_proyecto', '=', 'PRO-CTIE')
-      ->where('periodo', '=', 2025)
+      ->where('periodo', '=', 2026)
       ->where('grupo_id', '=', $req3_1->grupo_id)
       ->count();
 
@@ -83,7 +117,7 @@ class ProCTIController extends S3Controller {
       ])
       ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
       ->where('b.tipo_proyecto', '=', 'PRO-CTIE')
-      ->where('b.periodo', '=', '2025')
+      ->where('b.periodo', '=', '2026')
       ->first();
 
     if ($proyecto != null) {
@@ -277,7 +311,7 @@ class ProCTIController extends S3Controller {
           'tipo_proyecto' => 'PRO-CTIE',
           'fecha_inscripcion' => Carbon::now(),
           'localizacion' => $request->input('localizacion')["value"],
-          'periodo' => 2025,
+          'periodo' => 2026,
           'convocatoria' => 1,
           'step' => 2,
           'estado' => 6,
@@ -499,7 +533,6 @@ class ProCTIController extends S3Controller {
       )
       ->whereIn('a.permanencia', ['Activo', 'Reserva de Matricula'])
       ->where('a.programa', 'LIKE', 'E.P.%')
-      ->where('a.programa', 'LIKE', 'E.P.%')
       ->having('value', 'LIKE', '%' . $request->query('query') . '%')
       ->limit(10)
       ->get();
@@ -509,33 +542,59 @@ class ProCTIController extends S3Controller {
 
   public function verificarEstudiante(Request $request) {
     $errores = [];
+    $codigo = trim($request->query('codigo'));
+    $investigador_id = $request->query('investigador_id');
+
+    if ($investigador_id == 'null' || $investigador_id == 'undefined' || $investigador_id == '') {
+      $investigador_id = null;
+    }
+
+    if (empty($investigador_id) && !empty($codigo)) {
+      $usuarioInvestigador = DB::table('Usuario_investigador')
+        ->select('id')
+        ->where('codigo', '=', $codigo)
+        ->first();
+
+      $investigador_id = $usuarioInvestigador->id ?? null;
+    }
 
     $req1 = DB::table('Proyecto_integrante AS a')
       ->join('Proyecto AS b', 'b.id', '=', 'a.proyecto_id')
-      ->join('Usuario_investigador AS c', 'c.id', '=', 'a.investigador_id')
-      ->where('c.codigo', '=', $request->query('codigo'))
+      ->leftJoin('Usuario_investigador AS c', 'c.id', '=', 'a.investigador_id')
+      ->where(function ($query) use ($codigo, $investigador_id) {
+        $query->where('c.codigo', '=', $codigo)
+          ->orWhere('a.codigo', '=', $codigo);
+        if (!empty($investigador_id)) {
+          $query->orWhere('a.investigador_id', '=', $investigador_id);
+        }
+       })
       ->where('b.tipo_proyecto', '=', 'PRO-CTIE')
-      ->where('b.periodo', '=', '2025')
-      ->where('b.periodo', '=', '2025')
+      ->where('b.periodo', '=', 2026)
       ->count();
 
     if ($req1 > 0) {
       $errores[] = 'Ya es participante en otro proyecto PRO-CTIE de este año.';
     }
 
-    $investigador_id = $request->query('investigador_id');
-    if (!empty($investigador_id)) {
-      $req2 = DB::table('Proyecto_integrante AS a')
+    $req2 = DB::table('Proyecto_integrante AS a')
         ->join('Proyecto AS b', 'b.id', '=', 'a.proyecto_id')
-        ->where('a.investigador_id', '=', $request->query('investigador_id'))
-        ->where('b.estado', [1, 8, 9, 10, 11])
-        ->where('a.proyecto_integrante_tipo_id', [5, 11, 16, 18, 20, 40, 47, 59, 67, 77])
+        ->join('Proyecto_integrante_tipo AS c', 'c.id', '=', 'a.proyecto_integrante_tipo_id')
+        ->leftJoin('Usuario_investigador AS d', 'd.id', '=', 'a.investigador_id')
+        ->where(function ($query) use ($codigo, $investigador_id) {
+          $query->where('d.codigo', '=', $codigo)
+            ->orWhere('a.codigo', '=', $codigo);
+
+          if (!empty($investigador_id)) {
+            $query->orWhere('a.investigador_id', '=', $investigador_id);
+          }
+        })
+        ->whereIn('b.estado', [1, 8])
+        ->where('c.nombre', 'LIKE', '%Tesista%')
         ->count();   
 
-      if ($req2 > 0) {
-        $errores[] = 'Ya ha participado en algún otro proyecto aprobado';
-      }
-    }
+    if ($req2 > 0) {
+      $errores[] = 'Participo o esta participando en otro proyecto aprobado';
+    } 
 
     if (!empty($errores)) {
       return ['message' => 'error', 'detail' => $errores[0]];
@@ -1009,16 +1068,13 @@ class ProCTIController extends S3Controller {
         'fecha_final'
       ])
       ->where('tipo', '=', 'PRO-CTIE')
-      ->where('periodo', '=', 2025)
+      ->where('periodo', '=', 2026)
       ->where('evento', '=', 'calendario')
       ->where('estado', '=', 1)
       ->first();
 
     return [
-      'actividades' => [
       'actividades' => $actividades,
-      'rango' => $rango_fechas
-    ],
       'rango' => $rango_fechas
     ];
   }
@@ -1050,46 +1106,125 @@ class ProCTIController extends S3Controller {
   }
 
   public function listarPartidas(Request $request) {
-    $partidas = DB::table('Proyecto_presupuesto AS a')
+    $presupuesto = DB::table('Proyecto_presupuesto AS a')
       ->join('Partida AS b', 'b.id', '=', 'a.partida_id')
       ->select([
         'a.id',
+        'b.id AS partida_id',
         'b.codigo',
         'b.tipo',
         'b.partida',
         'a.monto'
       ])
       ->where('a.proyecto_id', '=', $request->query('proyecto_id'))
+      ->orderBy('b.tipo')
+      ->orderBy('b.codigo')
       ->get();
 
-    $monto_disponible = 25000;
-    foreach ($partidas as $partida) {
-      $monto_disponible = $monto_disponible - $partida->monto;
-    }
+    $partidaIds = $presupuesto->pluck('partida_id');
 
-    return ['presupuesto' => $partidas, 'monto_disponible' => $monto_disponible];
-  }
-
-  public function listarTiposPartidas(Request $request) {
     $partidas = DB::table('Partida_proyecto AS a')
       ->join('Partida AS b', 'b.id', '=', 'a.partida_id')
       ->select([
         'b.id AS value',
-        DB::raw("CONCAT(b.codigo, ' - ', b.partida) AS label")
+        DB::raw("CONCAT(b.codigo, ' - ', b.partida) AS label"),
+        'b.tipo',
       ])
       ->where('a.tipo_proyecto', '=', 'PRO-CTIE')
-      ->where('b.tipo', '=', $request->query('tipo'))
       ->where('a.postulacion', '=', 1)
+      ->where('periodo', '=', 2026)
+      ->whereNotIn('b.id', $partidaIds)
+      ->orderBy('b.tipo')
+      ->orderBy('b.codigo')
       ->get();
 
-    return $partidas;
+    $monto_disponible = 25000;
+    foreach ($presupuesto as $partida) {
+      $monto_disponible = $monto_disponible - $partida->monto;
+    }
+
+    return ['presupuesto' => $presupuesto, 'partidas' => $partidas, 'monto_disponible' => $monto_disponible];
   }
 
   public function agregarPartida(Request $request) {
+    $date = Carbon::now();
+
+    $proyectoId = $request->input('proyecto_id');
+    $partidaId = $request->input('partida_id');
+    $montoNuevo = floatval($request->input('monto'));
+    $periodo = 2026;
+    $tipoProyecto = 'PRO-CTIE';
+
+    if ($montoNuevo <= 0) {
+      return [
+        'message' => 'warning',
+        'detail' => 'El monto debe ser mayor a 0.'
+      ];
+    }
+
+    $totalActualProyecto = DB::table('Proyecto_presupuesto')
+      ->where('proyecto_id', '=', $proyectoId)
+      ->sum('monto');
+
+    $nuevoTotalProyecto = floatval($totalActualProyecto) + $montoNuevo;
+
+    if ($nuevoTotalProyecto > 25000) {
+      return [
+        'message' => 'warning',
+        'detail' => 'El presupuesto total del proyecto no puede superar S/. 25,000.00. Actualmente ya tiene registrado S/. ' . number_format($totalActualProyecto, 2) . '.'
+      ];
+    }
+
+    $grupo = DB::table('Partida_proyecto AS pp')
+      ->join('Partida_proyecto_grupo AS ppg', 'ppg.partida_proyecto_id', '=', 'pp.id')
+      ->join('Partida_grupo AS pg', function ($join) use ($tipoProyecto) {
+        $join->on('pg.id', '=', 'ppg.partida_grupo_id')
+          ->where('pg.tipo_proyecto', '=', $tipoProyecto);
+      })
+      ->select([
+        'pg.id AS grupo_id',
+        'pg.nombre AS grupo_nombre',
+        'pg.monto_max',
+      ])
+      ->where('pp.partida_id', '=', $partidaId)
+      ->where('pp.tipo_proyecto', '=', $tipoProyecto)
+      ->where('pp.postulacion', '=', 1)
+      ->where('pp.periodo', '=', $periodo)
+      ->first();
+
+      if (!$grupo) {
+        return [
+          'message' => 'warning',
+          'detail' => 'No se encontró grupo/límite para la partida seleccionada. Partida ID: ' . $partidaId
+        ];
+      }
+
+    $totalActualGrupo = DB::table('Proyecto_presupuesto AS a')
+      ->join('Partida_proyecto AS pp', function ($join) use ($tipoProyecto, $periodo) {
+        $join->on('pp.partida_id', '=', 'a.partida_id')
+          ->where('pp.tipo_proyecto', '=', $tipoProyecto)
+          ->where('pp.postulacion', '=', 1)
+          ->where('pp.periodo', '=', $periodo);
+      })
+      ->join('Partida_proyecto_grupo AS ppg', 'ppg.partida_proyecto_id', '=', 'pp.id')
+      ->where('a.proyecto_id', '=', $proyectoId)
+      ->where('ppg.partida_grupo_id', '=', $grupo->grupo_id)
+      ->sum('a.monto');
+
+    $nuevoTotalGrupo = floatval($totalActualGrupo) + $montoNuevo;
+
+    if ($nuevoTotalGrupo > floatval($grupo->monto_max)) {
+      return [
+        'message' => 'warning',
+        'detail' => 'La partida pertenece al grupo "' . $grupo->grupo_nombre . '" y supera el límite permitido de S/. ' . number_format($grupo->monto_max, 2) . '. Actualmente ya tiene registrado S/. ' . number_format($totalActualGrupo, 2) . '.'
+      ];
+    }
+
     DB::table('Proyecto')
-      ->where('id', '=', $request->input('proyecto_id'))
+      ->where('id', '=', $proyectoId)
       ->update([
         'step' => 6,
+        'updated_at' => $date,
       ]);
 
     $cuenta = DB::table('Proyecto_presupuesto')
@@ -1097,25 +1232,25 @@ class ProCTIController extends S3Controller {
         'id',
         'monto'
       ])
-      ->where('partida_id', '=', $request->input('partida_id'))
-      ->where('proyecto_id', '=', $request->input('proyecto_id'))
-      ->get();
+      ->where('partida_id', '=', $partidaId)
+      ->where('proyecto_id', '=', $proyectoId)
+      ->first();
 
-    if (sizeof($cuenta) > 0) {
+    if ($cuenta) {
       DB::table('Proyecto_presupuesto')
-        ->where('id', '=', $cuenta[0]->id)
+        ->where('id', '=', $cuenta->id)
         ->update([
-          'monto' => $cuenta[0]->monto + $request->input('monto'),
-          'updated_at' => Carbon::now()
+          'monto' => floatval($cuenta->monto) + $montoNuevo,
+          'updated_at' => $date
         ]);
     } else {
       DB::table('Proyecto_presupuesto')
         ->insert([
-          'partida_id' => $request->input('partida_id'),
-          'proyecto_id' => $request->input('proyecto_id'),
-          'monto' => $request->input('monto'),
-          'created_at' => Carbon::now(),
-          'updated_at' => Carbon::now()
+          'partida_id' => $partidaId,
+          'proyecto_id' => $proyectoId,
+          'monto' => $montoNuevo,
+          'created_at' => $date,
+          'updated_at' => $date
         ]);
     }
 
@@ -1133,26 +1268,35 @@ class ProCTIController extends S3Controller {
 
   public function validarPresupuesto(Request $request) {
     $alerta = [];
+    $periodo = 2026;
+    $tipoProyecto = 'PRO-CTIE';
 
     $partidas = DB::table('Proyecto_presupuesto AS a')
-      ->join('Partida_proyecto AS b', function (JoinClause $join) {
+      ->join('Partida_proyecto AS b', function (JoinClause $join) use ($periodo, $tipoProyecto) {
         $join->on('b.partida_id', '=', 'a.partida_id')
-          ->where('b.tipo_proyecto', '=', 'PRO-CTIE');
+          ->where('b.tipo_proyecto', '=', $tipoProyecto)
+          ->where('b.postulacion', '=', 1)  
+          ->where('b.periodo', '=', $periodo);
       })
       ->leftJoin('Partida_proyecto_grupo AS c', 'c.partida_proyecto_id', '=', 'b.id')
-      ->leftJoin('Partida_grupo AS d', 'd.id', '=', 'c.partida_grupo_id')
+      ->leftJoin('Partida_grupo AS d', function ($join) use ($tipoProyecto) {
+          $join->on('d.id', '=', 'c.partida_grupo_id')
+            ->where('d.tipo_proyecto', '=', $tipoProyecto);
+        })
       ->select([
+        'd.id',
         'd.nombre',
         'd.monto_max',
         DB::raw("SUM(a.monto) AS total")
       ])
       ->where('a.proyecto_id', '=', $request->query('id'))
-      ->groupBy('d.id')
+      ->whereNotNull('d.id')
+      ->groupBy('d.id', 'd.nombre', 'd.monto_max')
       ->get();
 
     foreach ($partidas as $item) {
-      if ($item->monto_max < $item->total && $item->nombre != null) {
-        $alerta[] = $item->nombre . ": " . $item->monto_max;
+      if (floatval($item->monto_max) < floatval($item->total)) {
+        $alerta[] = $item->nombre . ": " . number_format($item->monto_max, 2);
       }
     };
 
