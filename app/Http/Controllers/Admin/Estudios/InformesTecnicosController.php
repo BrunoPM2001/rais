@@ -210,6 +210,7 @@ class InformesTecnicosController extends S3Controller {
     $archivos = DB::table('Proyecto_doc')
       ->select([
         'categoria',
+        'nombre',
         DB::raw("CONCAT('/minio/proyecto-doc/', archivo) AS url"),
         'comentario'
       ])
@@ -351,7 +352,8 @@ class InformesTecnicosController extends S3Controller {
           ->mapWithKeys(function ($item) {
             return [$item->categoria => [
               'url' => $item->url,
-              'fecha' => $item->comentario
+              'fecha' => $item->comentario,
+              'nombre' => $item->nombre
             ]];
           });
         break;
@@ -424,6 +426,8 @@ class InformesTecnicosController extends S3Controller {
     $proyecto_id = $proyecto->proyecto_id;
     $date1 = Carbon::now();
     $date_format =  $date1->format('Ymd-His');
+
+    $request->merge(['proyecto_id' => $proyecto_id]);
 
     if ($request->input('tipo_proyecto') == "ECI") {
       if ($request->hasFile('file1')) {
@@ -614,18 +618,25 @@ class InformesTecnicosController extends S3Controller {
       if ($request->hasFile('file1')) {
         $name = $request->input('proyecto_id') . "/" . $date_format . "-" . Str::random(8) . "." . $request->file('file1')->getClientOriginalExtension();
         $this->uploadFile($request->file('file1'), "proyecto-doc", $name);
-        $this->updateFile($proyecto_id, $date1, $name, "informe-PRO-CTIE-INFORME", "Archivos de informe");
+        $this->updateFile($proyecto_id, $date1, $name, "informe-PRO-CTIE-INFORME", "Archivos de informe", 22);
       }
       if ($request->hasFile('file2')) {
         $name = $request->input('proyecto_id') . "/" . $date_format . "-" . Str::random(8) . "." . $request->file('file2')->getClientOriginalExtension();
         $this->uploadFile($request->file('file2'), "proyecto-doc", $name);
         $this->updateFile($proyecto_id, $date1, $name, "viabilidad", "Actividades", 65);
       }
-    } else if ($request->input('tipo_proyecto') == "PRO-CTIE") {
-      if ($request->hasFile('file1')) {
-        $name = $request->input('proyecto_id') . "/" . $date_format . "-" . Str::random(8) . "." . $request->file('file1')->getClientOriginalExtension();
-        $this->uploadFile($request->file('file1'), "proyecto-doc", $name);
-        $this->updateFile($proyecto_id, $date1, $name, "informe-PRO-CTIE-INFORME", "Archivos de informe");
+      if ($request->hasFile('file3')) {
+        $name = $request->input('proyecto_id') . "/" . $date_format . "-" . Str::random(8) . "." . $request->file('file3')->getClientOriginalExtension();
+        $this->uploadFile($request->file('file3'), "proyecto-doc", $name);
+        $this->updateFile($proyecto_id, $date1, $name, "trl_vinculate_concytec", "TRL Vinculate CONCYTEC", 65);
+      }
+      if ($request->hasFile('file4')) {
+        if (empty($request->input('producto_entregable'))) {
+          return ['message' => 'warning', 'detail' => 'Debe seleccionar el tipo de producto entregable antes de cargar el archivo.'];
+        }
+        $name = $request->input('proyecto_id') . "/" . $date_format . "-" . Str::random(8) . "." . $request->file('file4')->getClientOriginalExtension();
+        $this->uploadFile($request->file('file4'), "proyecto-doc", $name);
+        $this->updateFile($proyecto_id, $date1, $name, "producto_entregable", $request->input('producto_entregable'), 65);
       }
     } else if ($request->input('tipo_proyecto') == "PSINFINV") {
       if ($request->hasFile('file1')) {
@@ -671,11 +682,10 @@ class InformesTecnicosController extends S3Controller {
     ];
   }
 
-  public function updateFile($proyecto_id, $date, $name, $categoria) {
+  public function updateFile($proyecto_id, $date, $name, $categoria, $nombre = 'Anexos proyecto ECI', $tipo = 21) {
     DB::table('Proyecto_doc')
       ->where('proyecto_id', '=', $proyecto_id)
       ->where('categoria', '=', $categoria)
-      ->where('nombre', '=', 'Anexos proyecto ECI')
       ->update([
         'estado' => 0
       ]);
@@ -684,8 +694,8 @@ class InformesTecnicosController extends S3Controller {
       ->insert([
         'proyecto_id' => $proyecto_id,
         'categoria' => $categoria,
-        'tipo' => 21,
-        'nombre' => 'Anexos proyecto ECI',
+        'tipo' => $tipo,
+        'nombre' => $nombre,
         'comentario' => $date,
         'archivo' => $name,
         'estado' => 1

@@ -72,13 +72,19 @@ class InformeProCtieController extends S3Controller {
     $archivos = DB::table('Proyecto_doc')
       ->select([
         'categoria',
+        'nombre',
+        'comentario',
         DB::raw("CONCAT('/minio/proyecto-doc/', archivo) AS url")
       ])
       ->where('proyecto_id', '=', $request->get('proyecto_id'))
       ->where('estado', '=', 1)
       ->get()
       ->mapWithKeys(function ($item) {
-        return [$item->categoria => $item->url];
+        return [$item->categoria => [
+          'url' => $item->url,
+          'fecha' => $item->comentario,
+          'nombre' => $item->nombre
+        ]];
       });
 
     return ['proyecto' => $proyecto, 'miembros' => $miembros, 'informe' => $informe, 'archivos' => $archivos];
@@ -197,6 +203,21 @@ class InformeProCtieController extends S3Controller {
       $this->updateFile($proyecto_id, $date1, $name, "viabilidad", "Actividades", 65);
     }
 
+    if ($request->hasFile('file3')) {
+      $name = $request->input('proyecto_id') . "/" . $date1->format('Ymd-His') . "-" . Str::random(8) . "." . $request->file('file3')->getClientOriginalExtension();
+      $this->uploadFile($request->file('file3'), "proyecto-doc", $name);
+      $this->updateFile($proyecto_id, $date1, $name, "trl_vinculate_concytec", "TRL Vinculate CONCYTEC", 65);
+    }
+
+    if ($request->hasFile('file4')) {
+      if (empty($request->input('producto_entregable'))) {
+        return ['message' => 'warning', 'detail' => 'Debe seleccionar el tipo de producto entregable antes de cargar el archivo.'];
+      }
+      $name = $request->input('proyecto_id') . "/" . $date1->format('Ymd-His') . "-" . Str::random(8) . "." . $request->file('file4')->getClientOriginalExtension();
+      $this->uploadFile($request->file('file4'), "proyecto-doc", $name);
+      $this->updateFile($proyecto_id, $date1, $name, "producto_entregable", $request->input('producto_entregable'), 65);
+    }
+
     return ['message' => 'success', 'detail' => 'Informe guardado correctamente'];
   }
 
@@ -225,6 +246,16 @@ class InformeProCtieController extends S3Controller {
       if (empty($informe->$campo)) {
         $faltantes[] = $nombre;
       }
+    }
+
+    $reporteViabilidad = DB::table('Proyecto_doc')
+      ->where('proyecto_id', '=', $request->input('proyecto_id'))
+      ->where('categoria', '=', 'viabilidad')
+      ->where('estado', '=', 1)
+      ->exists();
+
+    if (!$reporteViabilidad) {
+      $faltantes[] = 'Reporte de Viabilidad';
     }
 
     if (count($faltantes) > 0) {
@@ -279,11 +310,10 @@ class InformeProCtieController extends S3Controller {
     }
   }
 
-  public function updateFile($proyecto_id, $date, $name, $categoria, $nombre) {
+  public function updateFile($proyecto_id, $date, $name, $categoria, $nombre, $tipo = 21) {
     DB::table('Proyecto_doc')
       ->where('proyecto_id', '=', $proyecto_id)
       ->where('categoria', '=', $categoria)
-      ->where('nombre', '=', $nombre)
       ->update([
         'estado' => 0
       ]);
@@ -292,6 +322,7 @@ class InformeProCtieController extends S3Controller {
       ->insert([
         'proyecto_id' => $proyecto_id,
         'categoria' => $categoria,
+        'tipo' => $tipo,
         'nombre' => $nombre,
         'comentario' => $date,
         'archivo' => $name,
