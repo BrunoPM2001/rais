@@ -74,45 +74,13 @@ class PmultiController extends Controller {
         return [$item->categoria => $item->url];
       });
 
-    $actividades = DB::table('Proyecto_actividad AS a')
-      ->join('Proyecto_integrante AS b', 'b.id', '=', 'a.proyecto_integrante_id')
-      ->join('Usuario_investigador AS c', 'c.id', '=', 'b.investigador_id')
-      ->select([
-        'a.actividad',
-        'a.justificacion',
-        DB::raw("CONCAT(c.apellido1, ' ', c.apellido2, ', ', c.nombres) AS responsable"),
-        'a.fecha_inicio',
-        'a.fecha_fin',
-      ])
-      ->where('a.proyecto_id', '=', $detalles->proyecto_id)
-      ->get();
-
-    if ($request->query('tipo_informe') == "Informe académico al 40%") {
-      $pdf = Pdf::loadView('admin.estudios.informes_tecnicos.pmulti2', [
-        'proyecto' => $proyecto,
-        'miembros' => $miembros,
-        'archivos' => $archivos,
-        'detalles' => $detalles,
-        'informe' => $request->query('tipo_informe')
-      ]);
-    } else if ($request->query('tipo_informe') == "Informe académico al 80%") {
-      $pdf = Pdf::loadView('admin.estudios.informes_tecnicos.pmulti3', [
-        'proyecto' => $proyecto,
-        'miembros' => $miembros,
-        'archivos' => $archivos,
-        'detalles' => $detalles,
-        'informe' => $request->query('tipo_informe')
-      ]);
-    } else {
-      $pdf = Pdf::loadView('admin.estudios.informes_tecnicos.pmulti', [
-        'proyecto' => $proyecto,
-        'miembros' => $miembros,
-        'archivos' => $archivos,
-        'actividades' => $actividades,
-        'detalles' => $detalles,
-        'informe' => $request->query('tipo_informe')
-      ]);
-    }
+    $pdf = Pdf::loadView('admin.estudios.informes_tecnicos.pmulti', [
+      'proyecto' => $proyecto,
+      'miembros' => $miembros,
+      'archivos' => $archivos,
+      'detalles' => $detalles,
+      'informe' => $request->query('tipo_informe')
+    ]);
 
     return $pdf->stream();
   }

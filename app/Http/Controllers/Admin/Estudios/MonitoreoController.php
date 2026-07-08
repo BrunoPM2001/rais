@@ -134,78 +134,53 @@ class MonitoreoController extends Controller {
       ->groupBy('a.tipo_publicacion', 'a.cantidad')
       ->get();
 
-    $publicaciones = [];
-    if ($datos->id) {
-      $publicaciones = DB::table('Monitoreo_proyecto_publicacion AS a')
-        ->join('Publicacion AS b', 'b.id', '=', 'a.publicacion_id')
-        ->select([
-          'a.id',
-          'b.id AS publicacion_id',
-          'b.titulo',
-          'b.tipo_publicacion',
-          DB::raw("YEAR(b.fecha_publicacion) AS periodo"),
-          DB::raw("CASE(b.estado)
-            WHEN -1 THEN 'Eliminado'
-            WHEN 1 THEN 'Registrado'
-            WHEN 2 THEN 'Observado'
-            WHEN 5 THEN 'Enviado'
-            WHEN 6 THEN 'En proceso'
-            WHEN 7 THEN 'Anulado'
-            WHEN 8 THEN 'No registrado'
-            WHEN 9 THEN 'Duplicado'
-            ELSE 'Sin estado' END AS estado"),
-        ])
-        ->where('a.monitoreo_proyecto_id', '=', $datos->id)
-        ->get();
-    } else {
-      $publicaciones = DB::table('Publicacion_proyecto AS a')
-        ->join('Publicacion AS b', 'b.id', '=', 'a.publicacion_id')
-        ->select([
-          'a.id',
-          'b.id AS publicacion_id',
-          'b.titulo',
-          'b.tipo_publicacion',
-          DB::raw("YEAR(b.fecha_publicacion) AS periodo"),
-          DB::raw("CASE(b.estado)
-            WHEN -1 THEN 'Eliminado'
-            WHEN 1 THEN 'Registrado'
-            WHEN 2 THEN 'Observado'
-            WHEN 5 THEN 'Enviado'
-            WHEN 6 THEN 'En proceso'
-            WHEN 7 THEN 'Anulado'
-            WHEN 8 THEN 'No registrado'
-            WHEN 9 THEN 'Duplicado'
-            ELSE 'Sin estado' END AS estado"),
-        ])
-        ->where('a.proyecto_id', '=', $request->query('id'))
-        ->get();
-    }
-
-    $anexos = DB::table('Proyecto_doc')
+    $publicaciones = DB::table('Publicacion_proyecto AS a')
+      ->join('Publicacion AS b', 'b.id', '=', 'a.publicacion_id')
       ->select([
-          'categoria',
-          'comentario',
-          DB::raw("CONCAT('/minio/proyecto-doc/', archivo) AS url")
+        'a.id',
+        'b.id AS publicacion_id',
+        'b.titulo',
+        'b.tipo_publicacion',
+        DB::raw("YEAR(b.fecha_publicacion) AS periodo"),
+        DB::raw("CASE(b.estado)
+          WHEN -1 THEN 'Eliminado'
+          WHEN 1 THEN 'Registrado'
+          WHEN 2 THEN 'Observado'
+          WHEN 5 THEN 'Enviado'
+          WHEN 6 THEN 'En proceso'
+          WHEN 7 THEN 'Anulado'
+          WHEN 8 THEN 'No registrado'
+          WHEN 9 THEN 'Duplicado'
+          ELSE 'Sin estado' END AS estado"),
       ])
-      ->where('proyecto_id', '=', $request->query('id'))
-      ->where('categoria', '=', 'monitoreo')
-      ->where('nombre', '=', 'Declaracion_jurada o carta')
-      ->where('estado', '=', 1)
-      ->first();
-    
-    $anexos = $anexos ? ['declaracion_jurada' => [
-        'url' => $anexos->url,
-        'fecha' => $anexos->comentario,
-        ]
-      ] : [];
+      ->where('a.proyecto_id', '=', $request->query('id'))
+      ->get();
 
-    return [
-      'datos' => $datos,
-      'metas' => $metas,
-      'publicaciones' => $publicaciones,
-      'anexos' => $anexos
-    ];
-  }
+        $anexos = DB::table('Proyecto_doc')
+          ->select([
+              'categoria',
+              'comentario',
+              DB::raw("CONCAT('/minio/proyecto-doc/', archivo) AS url")
+          ])
+          ->where('proyecto_id', '=', $request->query('id'))
+          ->where('categoria', '=', 'monitoreo')
+          ->where('nombre', '=', 'Declaracion_jurada o carta')
+          ->where('estado', '=', 1)
+          ->first();
+        
+        $anexos = $anexos ? ['declaracion_jurada' => [
+            'url' => $anexos->url,
+            'fecha' => $anexos->comentario,
+            ]
+          ] : [];
+
+        return [
+          'datos' => $datos,
+          'metas' => $metas,
+          'publicaciones' => $publicaciones,
+          'anexos' => $anexos
+        ];
+      }
 
   public function publicacionesDisponibles(Request $request) {
     $proyecto = DB::table('Proyecto AS a')

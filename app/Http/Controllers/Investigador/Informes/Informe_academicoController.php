@@ -20,14 +20,14 @@ use Illuminate\Support\Facades\DB;
             ->leftJoin('Informe_tecnico as d', 'd.proyecto_id', '=', 'a.id')
             ->leftJoin('Informe_tipo as e', 'd.informe_tipo_id', '=', 'e.id')
             ->select([
-            DB::raw("CONCAT(IFNULL(d.id, ''), '_', a.id) AS id"),
-            'd.id AS informe_id',
-            'a.id AS proyecto_id',
-            'a.codigo_proyecto',
-            'a.titulo',
-            'a.tipo_proyecto',
-            'a.periodo',
-            DB::raw("
+                DB::raw("CONCAT(IFNULL(d.id, ''), '_', a.id) AS id"),
+                'd.id AS informe_id',
+                'a.id AS proyecto_id',
+                'a.codigo_proyecto',
+                'a.titulo',
+                'a.tipo_proyecto',
+                'a.periodo',
+                DB::raw("
                     CASE 
                         WHEN a.tipo_proyecto IN ('PTPMAEST', 'PTPGRADO')
                             AND e.informe = 'Informe académico de avance'
@@ -46,7 +46,7 @@ use Illuminate\Support\Facades\DB;
                             AND NOT EXISTS (
                                 SELECT 1 FROM Informe_tecnico d2
                                 JOIN Informe_tipo e2 ON d2.informe_tipo_id = e2.id
-                                WHERE d2.proyecto_id = a.id
+                                WHERE d2.proyecto_id = a.id 
                                 AND e2.informe = 'Segundo informe académico de avance'
                             )
                         THEN 'Segundo informe académico de avance'
@@ -62,34 +62,9 @@ use Illuminate\Support\Facades\DB;
                             )
                         THEN 'Informe académico final'
 
-                        WHEN a.tipo_proyecto = 'PMULTI'
-                            AND a.periodo != 2020
-                            AND e.informe = 'Informe académico al 40%'
-                            AND d.estado = 1
-                            AND NOT EXISTS (
-                                SELECT 1 FROM Informe_tecnico d2
-                                JOIN Informe_tipo e2 ON d2.informe_tipo_id = e2.id
-                                WHERE d2.proyecto_id = a.id
-                                AND e2.informe = 'Informe académico al 80%'
-                            )
-                        THEN 'Informe académico al 80%'
-
-                        WHEN a.tipo_proyecto = 'PMULTI'
-                            AND a.periodo != 2020
-                            AND e.informe = 'Informe académico al 80%'
-                            AND d.estado = 1
-                            AND NOT EXISTS (
-                                SELECT 1 FROM Informe_tecnico d2
-                                JOIN Informe_tipo e2 ON d2.informe_tipo_id = e2.id
-                                WHERE d2.proyecto_id = a.id
-                                AND e2.informe = 'Informe académico al 100%'
-                            )
-                        THEN 'Informe académico al 100%'
-
                         WHEN e.informe IS NOT NULL THEN e.informe
     
                         ELSE CASE 
-                            WHEN a.tipo_proyecto = 'PMULTI' AND a.periodo != 2020 THEN 'Informe académico al 40%'
                             WHEN a.tipo_proyecto LIKE 'PTP%' AND a.tipo_proyecto != 'PTPBACHILLER' THEN 'Informe académico de avance'
                             ELSE 'Informe académico'
                         END
@@ -128,30 +103,6 @@ use Illuminate\Support\Facades\DB;
                                     WHERE d2.proyecto_id = a.id
                                     AND e2.informe = 'Informe académico final'
                                 )) 
-                        THEN 'Por presentar'
-
-                        WHEN (a.tipo_proyecto = 'PMULTI'
-                            AND a.periodo != 2020
-                            AND e.informe = 'Informe académico al 40%'
-                            AND d.estado = 1
-                            AND NOT EXISTS (
-                                SELECT 1 FROM Informe_tecnico d2
-                                JOIN Informe_tipo e2 ON d2.informe_tipo_id = e2.id
-                                WHERE d2.proyecto_id = a.id
-                                AND e2.informe = 'Informe académico al 80%'
-                            )) 
-                        THEN 'Por presentar'
-
-                        WHEN (a.tipo_proyecto = 'PMULTI'
-                            AND a.periodo != 2020
-                            AND e.informe = 'Informe académico al 80%'
-                            AND d.estado = 1
-                            AND NOT EXISTS (
-                                SELECT 1 FROM Informe_tecnico d2
-                                JOIN Informe_tipo e2 ON d2.informe_tipo_id = e2.id
-                                WHERE d2.proyecto_id = a.id
-                                AND e2.informe = 'Informe académico al 100%'
-                            )) 
                         THEN 'Por presentar'
     
                         ELSE 
@@ -217,14 +168,6 @@ use Illuminate\Support\Facades\DB;
                     IF (t1.informe = 'Informe académico final',
                         IF (t11.informe = 'Segundo informe académico de avance' AND t33.estado = 1, true, false),
                     true)
-                WHEN t2.tipo_proyecto = 'PMULTI' AND t2.periodo != 2020 THEN
-                    IF (t1.informe = 'Informe académico al 80%',
-                        IF (t11.informe = 'Informe académico al 40%' AND t33.estado = 1, true, false),
-                    true)
-                    AND
-                    IF (t1.informe = 'Informe académico al 100%',
-                        IF (t11.informe = 'Informe académico al 80%' AND t33.estado = 1, true, false),
-                    true)
                 ELSE
                     IF (t1.informe = 'Informe académico final' AND t1.tipo <> 'ptpgrado',
                         IF (t11.informe = 'Informe académico de avance' AND t33.estado = 1, true, false),
@@ -237,4 +180,4 @@ use Illuminate\Support\Facades\DB;
 
         return $informes;
     }
-    }
+}

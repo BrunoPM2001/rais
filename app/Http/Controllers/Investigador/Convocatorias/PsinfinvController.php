@@ -259,7 +259,7 @@ class PsinfinvController extends S3Controller {
           'investigador_id' => $request->attributes->get('token_decoded')->investigador_id,
           'proyecto_integrante_tipo_id' => 7,
           'grupo_id' => $datos->grupo_id,
-          'grupo_integrante_id' => $datos->id,
+          'grupo_integrante_id' => $datos->grupo_integrante_id,
           'codigo' => $datos->codigo ?? null,
           'tipo_investigador' => $datos->tipo ?? null,
           'condicion_grupo' => $datos->condicion_grupo ?? null,

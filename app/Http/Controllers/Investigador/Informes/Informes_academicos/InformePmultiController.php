@@ -51,26 +51,24 @@ class InformePmultiController extends S3Controller {
       ->orderBy('c.apellido1')
       ->get();
 
-    $informe = DB::table('Informe_tecnico AS a')
-      ->join('Informe_tipo AS b', 'b.id', '=', 'a.informe_tipo_id')
+    $informe = DB::table('Informe_tecnico')
       ->select([
-        'a.id',
-        'a.resumen_ejecutivo',
-        'a.palabras_clave',
-        'a.infinal1',
-        'a.infinal2',
-        'a.infinal3',
-        'a.infinal4',
-        'a.infinal5',
-        'a.infinal6',
-        'a.infinal7',
-        'a.infinal9',
-        'a.infinal10',
-        'a.observaciones',
-        'a.estado'
+        'id',
+        'resumen_ejecutivo',
+        'palabras_clave',
+        'infinal1',
+        'infinal2',
+        'infinal3',
+        'infinal4',
+        'infinal5',
+        'infinal6',
+        'infinal7',
+        'infinal9',
+        'infinal10',
+        'observaciones',
+        'estado'
       ])
-      ->where('a.id', '=', $request->get('id'))
-      ->where('b.informe', '=', $request->get('informe'))
+      ->where('proyecto_id', '=', $request->get('proyecto_id'))
       ->first();
 
     $archivos = DB::table('Proyecto_doc')
@@ -104,22 +102,10 @@ class InformePmultiController extends S3Controller {
   }
 
   public function sendData(Request $request) {
-    $id = $request->input('id');
     $date = Carbon::now();
-    $proyecto_id = $request->input('proyecto_id');
-    $tipoInforme = $request->input('informe');
 
-    $map = [
-      "Informe académico al 40%" => 53,
-      "Informe académico al 80%" => 54,
-      "Informe académico al 100%" => 55,
-    ];
-
-    $informeTipoId = $map[$tipoInforme] ?? 47;
-    
     $count = DB::table('Informe_tecnico')
       ->where('proyecto_id', '=', $request->input('proyecto_id'))
-      ->where('informe_tipo_id', '=', $informeTipoId)
       ->count();
 
     if ($count == 0) {
@@ -143,9 +129,8 @@ class InformePmultiController extends S3Controller {
       DB::table('Informe_tecnico')
         ->updateOrInsert([
           'proyecto_id' => $request->input('proyecto_id'),
-          'informe_tipo_id' => $informeTipoId
         ], [
-          'informe_tipo_id' => $informeTipoId,
+          'informe_tipo_id' => 47,
           'resumen_ejecutivo' => $request->input('resumen_ejecutivo'),
           'palabras_clave' => $request->input('palabras_clave'),
           'infinal1' => $request->input('infinal1'),
@@ -170,7 +155,6 @@ class InformePmultiController extends S3Controller {
           'estado'
         ])
         ->where('proyecto_id', '=', $request->input('proyecto_id'))
-        ->where('informe_tipo_id', '=', $informeTipoId)
         ->first();
 
       $investigador = DB::table('Usuario_investigador')
@@ -195,9 +179,8 @@ class InformePmultiController extends S3Controller {
       DB::table('Informe_tecnico')
         ->updateOrInsert([
           'proyecto_id' => $request->input('proyecto_id'),
-          'informe_tipo_id' => $informeTipoId
         ], [
-          'informe_tipo_id' => $informeTipoId,
+          'informe_tipo_id' => 47,
           'resumen_ejecutivo' => $request->input('resumen_ejecutivo'),
           'palabras_clave' => $request->input('palabras_clave'),
           'infinal1' => $request->input('infinal1'),
@@ -218,31 +201,24 @@ class InformePmultiController extends S3Controller {
 
     $proyecto_id = $request->input('proyecto_id');
     $date1 = Carbon::now();
-
-    if ($tipoInforme == "Informe académico al 40%") {
-      $categoriaInforme = "informe-PMULTI-INFORME-40";
-    } else if ($tipoInforme == "Informe académico al 80%") {
-      $categoriaInforme = "informe-PMULTI-INFORME-80";
-    } else {
-      $categoriaInforme = "informe-PMULTI-INFORME";
-    }
+    $date_format =  $date1->format('Ymd-His');
 
     if ($request->hasFile('file1')) {
-      $name = $request->input('proyecto_id') . "/" . $date1->format('Ymd-His') . "-" . Str::random(8) . "." . $request->file('file1')->getClientOriginalExtension();
+      $name = $request->input('proyecto_id') . "/" . $date_format . "-" . Str::random(8) . "." . $request->file('file1')->getClientOriginalExtension();
       $this->uploadFile($request->file('file1'), "proyecto-doc", $name);
-      $this->updateFile($proyecto_id, $date1, $name, $categoriaInforme, "Archivos de informe", 22);
+      $this->updateFile($proyecto_id, $date_format, $name, "informe-PMULTI-INFORME", "Archivos de informe", 22);
     }
 
     if ($request->hasFile('file2')) {
-      $name = $request->input('proyecto_id') . "/" . $date1->format('Ymd-His') . "-" . Str::random(8) . "." . $request->file('file2')->getClientOriginalExtension();
+      $name = $request->input('proyecto_id') . "/" . $date_format . "-" . Str::random(8) . "." . $request->file('file2')->getClientOriginalExtension();
       $this->uploadFile($request->file('file2'), "proyecto-doc", $name);
-      $this->updateFile($proyecto_id, $date1, $name, "articulo1", "Artículos publicados o aceptados en revistas indizadas a SCOPUS O WoS,o un libro,o dos capítulos de libro publicados en editoriales reconocido prestigio, de acuerdo con las normas internas de la universidad.", 65);
+      $this->updateFile($proyecto_id, $date_format, $name, "articulo1", "Artículos publicados o aceptados en revistas indizadas a SCOPUS O WoS,o un libro,o dos capítulos de libro publicados en editoriales reconocido prestigio, de acuerdo con las normas internas de la universidad.", 65);
     }
 
     if ($request->hasFile('file3')) {
-      $name = $request->input('proyecto_id') . "/" . $date1->format('Ymd-His') . "-" . Str::random(8) . "." . $request->file('file3')->getClientOriginalExtension();
+      $name = $request->input('proyecto_id') . "/" . $date_format . "-" . Str::random(8) . "." . $request->file('file3')->getClientOriginalExtension();
       $this->uploadFile($request->file('file3'), "proyecto-doc", $name);
-      $this->updateFile($proyecto_id, $date1, $name, "articulo2", "Artículos publicados o aceptados en revistas indizadas a SCOPUS O WoS,o un libro,o dos capítulos de libro publicados en editoriales reconocido prestigio, de acuerdo con las normas internas de la universidad.", 65);
+      $this->updateFile($proyecto_id, $date_format, $name, "articulo2", "Artículos publicados o aceptados en revistas indizadas a SCOPUS O WoS,o un libro,o dos capítulos de libro publicados en editoriales reconocido prestigio, de acuerdo con las normas internas de la universidad.", 65);
     }
 
     if ($request->hasFile('file4')) {
@@ -281,66 +257,27 @@ class InformePmultiController extends S3Controller {
       $this->updateFile($proyecto_id, $date1, $name, "registro", "Formación de una red científica o el registro y/o inscripción al menos de una solicitud", 65);
     }
 
-    $id = DB::table('Informe_tecnico')
-    ->where('proyecto_id', '=', $request->input('proyecto_id'))
-    ->where('informe_tipo_id', '=', $informeTipoId)
-    ->value('id');
-
-    return ['message' => 'success', 'detail' => 'Informe guardado correctamente', 'id' => $id];
+    return ['message' => 'success', 'detail' => 'Informe guardado correctamente'];
   }
 
   public function presentar(Request $request) {
-
-    $tipoInforme = $request->input('informe');
-    $map = [
-      "Informe académico al 40%" => 53,
-      "Informe académico al 80%" => 54,
-      "Informe académico al 100%" => 55,
-    ];
-    $informeTipoId = $map[$tipoInforme] ?? 47;
-
-    if ($tipoInforme == "Informe académico al 40%") {
-      $categoriaInforme = "informe-PMULTI-INFORME-40";
-    } else if ($tipoInforme == "Informe académico al 80%") {
-      $categoriaInforme = "informe-PMULTI-INFORME-80";
-    } else {
-      $categoriaInforme = "informe-PMULTI-INFORME";
-    }
-
     $informe = DB::table('Informe_tecnico')
       ->where('proyecto_id', '=', $request->input('proyecto_id'))
-      ->where('informe_tipo_id', '=', $informeTipoId)
       ->first();
 
-    if ($tipoInforme == "Informe académico al 40%") {
-      $campos = [
-        'infinal1' => 'Descripción de actividades realizadas',
-        'infinal2' => 'Problemas identificados',
-        'infinal3' => 'Evaluación global de ejecución académica',
-      ];
-
-    } else if ($tipoInforme == "Informe académico al 80%") {
-      $campos = [
-        'infinal1' => 'Descripción de actividades realizadas',
-        'infinal2' => 'Problemas identificados',
-        'infinal3' => 'Evaluación global de ejecución académica',
-      ];
-
-    } else {
-      $campos = [
-        'resumen_ejecutivo' => 'Resumen ejecutivo',
-        'palabras_clave' => 'Palabras clave',
-        'infinal1' => 'Introducción',
-        'infinal2' => 'Metodologías',
-        'infinal3' => 'Resultados',
-        'infinal4' => 'Discusión',
-        'infinal5' => 'Conclusiones',
-        'infinal6' => 'Recomendaciones',
-        'infinal7' => 'Referencias bibliográficas',
-        'infinal9' => 'Aplicación práctica e impacto',
-        'infinal10' => 'Publicación'
-      ];
-    }
+    $campos = [
+      'resumen_ejecutivo' => 'Resumen ejecutivo',
+      'palabras_clave' => 'Palabras clave',
+      'infinal1' => 'Introducción',
+      'infinal2' => 'Metodologías',
+      'infinal3' => 'Resultados',
+      'infinal4' => 'Discusión',
+      'infinal5' => 'Conclusiones',
+      'infinal6' => 'Recomendaciones',
+      'infinal7' => 'Referencias bibliográficas',
+      'infinal9' => 'Aplicación práctica e impacto',
+      'infinal10' => 'Publicación'
+    ];
 
     $faltantes = [];
 
@@ -360,7 +297,7 @@ class InformePmultiController extends S3Controller {
 
     $count2 = DB::table('Proyecto_doc')
       ->where('proyecto_id', '=', $request->input('proyecto_id'))
-      ->where('categoria', '=', $categoriaInforme)
+      ->where('categoria', '=', 'informe-PMULTI-INFORME')
       ->where('nombre', '=', 'Archivos de informe')
       ->where('estado', '=', 1)
       ->count();
@@ -375,7 +312,6 @@ class InformePmultiController extends S3Controller {
         'estado'
       ])
       ->where('proyecto_id', '=', $request->input('proyecto_id'))
-      ->where('informe_tipo_id', '=', $informeTipoId)
       ->first();
 
     $investigador = DB::table('Usuario_investigador')
@@ -399,7 +335,6 @@ class InformePmultiController extends S3Controller {
 
     $count = DB::table('Informe_tecnico')
       ->where('proyecto_id', '=', $request->input('proyecto_id'))
-      ->where('informe_tipo_id', '=', $informeTipoId)
       ->whereIn('estado', [0, 3])
       ->update([
         'estado' => 2,
@@ -513,32 +448,14 @@ class InformePmultiController extends S3Controller {
       ->where('a.proyecto_id', '=', $detalles->proyecto_id)
       ->get();
 
-    if ($detalles->informe_tipo_id == 53) {
-      $pdf = Pdf::loadView('admin.estudios.informes_tecnicos.pmulti2', [
-        'proyecto' => $proyecto,
-        'miembros' => $miembros,
-        'archivos' => $archivos,
-        'detalles' => $detalles,
-        'informe' => $request->query('tipo_informe')
-      ]);
-    } else if ($detalles->informe_tipo_id == 54) {
-      $pdf = Pdf::loadView('admin.estudios.informes_tecnicos.pmulti3', [
-        'proyecto' => $proyecto,
-        'miembros' => $miembros,
-        'archivos' => $archivos,
-        'detalles' => $detalles,
-        'informe' => $request->query('tipo_informe')
-      ]);
-    } else {
-      $pdf = Pdf::loadView('admin.estudios.informes_tecnicos.pmulti', [
-        'proyecto' => $proyecto,
-        'miembros' => $miembros,
-        'archivos' => $archivos,
-        'actividades' => $actividades,
-        'detalles' => $detalles,
-        'informe' => $request->query('tipo_informe')
-      ]);
-    }
+    $pdf = Pdf::loadView('admin.estudios.informes_tecnicos.pmulti', [
+      'proyecto' => $proyecto,
+      'miembros' => $miembros,
+      'archivos' => $archivos,
+      'actividades' => $actividades,
+      'detalles' => $detalles,
+      'informe' => 'Informe académico'
+    ]);
 
     return $pdf->stream();
   }
