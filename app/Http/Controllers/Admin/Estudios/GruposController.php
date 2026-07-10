@@ -1426,7 +1426,7 @@ class GruposController extends S3Controller {
       ])
       ->where('a.condicion', '=', 'Titular')
       ->where('a.grupo_id', '=', $request->query('grupo_id'))
-      ->where('c.fecha_publicacion', '>=', '2018-01-01')
+      ->where('c.fecha_publicacion', '>=', '2019-01-01')
       ->groupBy('d.id')
       ->get()
       ->mapWithKeys(function ($item) {
@@ -1447,6 +1447,7 @@ class GruposController extends S3Controller {
         DB::raw("COUNT(DISTINCT c.id) AS cuenta"),
       ])
       ->where('a.condicion', '=', 'Titular')
+      ->where('c.estado', '=', 1)
       ->where('a.grupo_id', '=', $request->query('grupo_id'))
       ->groupBy('c.tipo')
       ->get()

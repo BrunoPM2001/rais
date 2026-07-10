@@ -221,12 +221,35 @@ class InformesTecnicosController extends S3Controller {
       ->leftJoin('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
       ->join('Proyecto_integrante_tipo AS c', 'c.id', '=', 'a.proyecto_integrante_tipo_id')
       ->select([
-        'b.codigo',
+        'a.codigo',
         DB::raw("CONCAT(b.apellido1, ' ', b.apellido2, ' ', b.nombres) AS nombres"),
         'c.nombre AS condicion',
-        'b.tipo'
+        'a.tipo_investigador AS tipo',
+        'a.proyecto_integrante_tipo_id'
       ])
       ->where('a.proyecto_id', '=', $detalles->proyecto_id)
+      ->orderByRaw("
+        FIELD(a.proyecto_integrante_tipo_id, 
+          1, 2, 3, 5, 6, 4, 31, 32, 33, 35, 95,
+          7, 8, 9, 11, 12, 10, 42, 50, 51, 52, 55,
+          13, 14, 53, 54,
+          15, 16,
+          17, 18,
+          19, 20,
+          21, 22, 23, 24, 26, 25, 27,
+          28, 29,
+          30, 34,
+          36, 37, 38, 40, 41, 39,
+          44, 45, 46, 47, 48, 49, 90, 91,
+          56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 82, 94,
+          66, 67, 68, 69,
+          70, 71,
+          74, 75, 76, 77, 78, 79, 80, 81,
+          83, 84, 85,
+          86, 88, 87,
+          92, 93
+          )")
+      ->orderBy('b.apellido1', 'asc')
       ->get();
 
     switch ($detalles->tipo_proyecto) {

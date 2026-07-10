@@ -47,12 +47,15 @@ class PsinfipuController extends Controller {
       ->leftJoin('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
       ->join('Proyecto_integrante_tipo AS c', 'c.id', '=', 'a.proyecto_integrante_tipo_id')
       ->select([
-        'b.codigo',
+        'a.codigo',
         DB::raw("CONCAT(b.apellido1, ' ', b.apellido2, ' ', b.nombres) AS nombres"),
         'c.nombre AS condicion',
-        'b.tipo'
+        'a.tipo_investigador AS tipo',
+        'a.proyecto_integrante_tipo_id'
       ])
       ->where('a.proyecto_id', '=', $detalles->proyecto_id)
+      ->orderByRaw("FIELD(a.proyecto_integrante_tipo_id, 13, 14, 53, 54)")
+      ->orderBy('b.apellido1', 'asc')
       ->get();
 
     $archivos = DB::table('Proyecto_doc')

@@ -52,14 +52,15 @@ class PmultiController extends Controller {
       ->leftJoin('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
       ->join('Proyecto_integrante_tipo AS c', 'c.id', '=', 'a.proyecto_integrante_tipo_id')
       ->select([
-        'b.codigo',
+        'a.codigo',
         DB::raw("CONCAT(b.apellido1, ' ', b.apellido2, ' ', b.nombres) AS nombres"),
         'c.nombre AS condicion',
-        'b.tipo'
+        'a.tipo_investigador AS tipo',
+        'a.proyecto_integrante_tipo_id'
       ])
       ->where('a.proyecto_id', '=', $detalles->proyecto_id)
-      ->orderBy('c.id')
-      ->orderBy('b.apellido1')
+      ->orderByRaw("FIELD(a.proyecto_integrante_tipo_id, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 82, 94)")
+      ->orderBy('b.apellido1', 'asc')
       ->get();
 
     $archivos = DB::table('Proyecto_doc')
@@ -74,11 +75,25 @@ class PmultiController extends Controller {
         return [$item->categoria => $item->url];
       });
 
+    $actividades = DB::table('Proyecto_actividad AS a')
+      ->join('Proyecto_integrante AS b', 'b.id', '=', 'a.proyecto_integrante_id')
+      ->join('Usuario_investigador AS c', 'c.id', '=', 'b.investigador_id')
+      ->select([
+        'a.actividad',
+        'a.justificacion',
+        DB::raw("CONCAT(c.apellido1, ' ', c.apellido2, ', ', c.nombres) AS responsable"),
+        'a.fecha_inicio',
+        'a.fecha_fin',
+      ])
+      ->where('a.proyecto_id', '=', $detalles->proyecto_id)
+      ->get();
+
     $pdf = Pdf::loadView('admin.estudios.informes_tecnicos.pmulti', [
       'proyecto' => $proyecto,
       'miembros' => $miembros,
       'archivos' => $archivos,
       'detalles' => $detalles,
+      'actividades' => $actividades,
       'informe' => $request->query('tipo_informe')
     ]);
 
