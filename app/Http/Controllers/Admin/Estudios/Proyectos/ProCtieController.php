@@ -152,10 +152,10 @@ class ProCtieController extends Controller {
   public function reporte(Request $request) {
 
     $proyecto = DB::table('Proyecto_integrante AS pint')
-        ->leftJoin('Proyecto_descripcion AS b', function (JoinClause $join) {
-          $join->on('pint.proyecto_id', '=', 'b.proyecto_id')
-            ->where('codigo', '=', 'tipo_investigacion');
-        })
+      ->leftJoin('Proyecto_descripcion AS b', function (JoinClause $join) {
+        $join->on('pint.proyecto_id', '=', 'b.proyecto_id')
+          ->where('b.codigo', '=', 'tipo_investigacion');
+      })
       ->join('Proyecto AS p', 'p.id', '=', 'pint.proyecto_id')
       ->join('Grupo AS g', 'g.id', '=', 'p.grupo_id')
       ->join('Facultad AS f', 'f.id', '=', 'g.facultad_id')

@@ -178,6 +178,14 @@
       <b>1.3 Tipo: </b>
       {{ $patente->tipo }}
     </p>
+    <p>
+      <b>1.4 Oficina de presentación: </b>
+      {{ $patente->oficina_presentacion }}
+    </p>
+    <p>
+      <b>1.5 Enlace: </b>
+      {{ $patente->enlace }}
+    </p>
 
     <h5>II. Manejo de titulares:</h5>
 
