@@ -182,11 +182,11 @@
   </p>
 
   @if (
-      $publicacion->estado == 2 ||
-          $publicacion->estado == -1 ||
-          $publicacion->estado == 7 ||
-          $publicacion->estado == 8 ||
-          $publicacion->estado == 9)
+      $patente->estado == 2 ||
+      $patente->estado == -1 ||
+      $patente->estado == 7 ||
+      $patente->estado == 8 ||
+      $patente->estado == 9)
     <table class="obs">
       <tbody>
         <tr>
@@ -223,11 +223,19 @@
       {{ $patente->fecha_presentacion }}
     </p>
     <p>
-      <b>1.6 Oficina de presentación: </b>
+      <b>1.6 Fecha de publicacion: </b>
+      {{ $patente->fecha_publicacion }}
+    </p>
+    <p>
+      <b>1.7 Fecha de otorgamiento: </b>
+      {{ $patente->fecha_otorgamiento }}
+    </p>
+    <p>
+      <b>1.8 Oficina de presentación: </b>
       {{ $patente->oficina_presentacion }}
     </p>
     <p>
-      <b>1.7 Certificado: </b>
+      <b>1.9 Certificado: </b>
       @php
         if ($patente->url) {
             echo 'Sí';
