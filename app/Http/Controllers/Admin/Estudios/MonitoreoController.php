@@ -64,6 +64,7 @@ class MonitoreoController extends Controller {
       )
       ->whereIn('c.nombre', ['Responsable', 'Asesor', 'Autor Corresponsal', 'Coordinador'])
       ->whereIn('a.estado', [1, 8, 9, 10, 11])
+      ->where('a.tipo_proyecto', '!=', 'PSINFIPU')
       ->groupBy('a.id')
       ->get();
 

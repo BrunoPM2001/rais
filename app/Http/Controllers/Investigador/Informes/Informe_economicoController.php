@@ -262,7 +262,7 @@ class Informe_economicoController extends S3Controller {
 
       //  Informe de cumplimiento
       $informe = [];
-      if ($porcentaje < 70) {
+      if ($porcentaje < 20) {
         $informe = ['estado' => 2];
       } else {
         $informe = $this->integrantesCumplimiento($request);

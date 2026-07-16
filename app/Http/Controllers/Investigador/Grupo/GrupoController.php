@@ -688,7 +688,8 @@ class GrupoController extends S3Controller {
           WHEN 6 THEN 'En proceso'
           WHEN 12 THEN 'Reg. observado'
           ELSE 'Estado desconocido'
-        END AS estado")
+        END AS estado"),
+        'observaciones_admin'
       ])
       ->where('id', '=', $request->query('id'))
       ->first();
@@ -834,6 +835,7 @@ class GrupoController extends S3Controller {
         'a.objetivos',
         'a.servicios',
         'a.redes',
+        'a.observaciones_admin',
       )
       ->where('a.id', '=', $request->query('id'))
       ->first();
