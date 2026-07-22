@@ -56,6 +56,17 @@ class ArticulosController extends S3Controller {
       ])
       ->where('a.publicacion_id', '=', $request->query('id'))
       ->get();
+    
+    $detalles = DB::table('Publicacion_descripcion')
+      ->select([
+        'codigo',
+        'detalle'
+      ])
+      ->where('publicacion_id', '=', $request->query('id'))
+      ->get()
+      ->mapWithKeys(function ($item) {
+        return [$item->codigo => $item->detalle];
+      });
 
     $utils =  new PublicacionesUtilsController();
     $revistas = $utils->listadoRevistasIndexadas();
@@ -63,6 +74,7 @@ class ArticulosController extends S3Controller {
 
     return [
       'data' => $publicacion,
+      'detalles' => $detalles,
       'palabras_clave' => $palabras_clave,
       'indexada' => $indexada,
       'indexada_wos' => $indexada_wos,
@@ -201,6 +213,14 @@ class ArticulosController extends S3Controller {
           ]);
         }
 
+        DB::table('Publicacion_descripcion')
+          ->updateOrInsert([
+            'publicacion_id' => $publicacion_id,
+            'codigo' => 'cuartil'
+          ], [
+            'detalle' => $request->input('cuartil')["value"],
+          ]);
+
         return ['message' => 'success', 'detail' => 'Datos de la publicación registrados', 'id' => $publicacion_id];
       } else {
         return ['message' => 'error', 'detail' => 'Está usando el título de una publicación que ya está registrada'];
@@ -262,6 +282,15 @@ class ArticulosController extends S3Controller {
           'updated_at' => $date
         ]);
       }
+
+      DB::table('Publicacion_descripcion')
+        ->updateOrInsert([
+          'publicacion_id' => $publicacion_id,
+          'codigo' => 'cuartil'
+        ], [
+          'detalle' => $request->input('cuartil')["value"],
+        ]);
+
       return ['message' => 'success', 'detail' => 'Datos de la publicación actualizados'];
     }
   }

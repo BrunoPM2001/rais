@@ -296,7 +296,7 @@ class PublicacionesController extends S3Controller {
 
     if ($posterior) {
       $categorias = $categorias
-        ->where(DB::raw("date(created_at)"), '=', '2019-10-05');
+        ->where(DB::raw("date(created_at)"), '>=', '2019-10-05');
     } else {
       $categorias = $categorias
         ->where(DB::raw("date(created_at)"), '=', '2013-10-01');

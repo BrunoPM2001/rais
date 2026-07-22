@@ -257,6 +257,13 @@
       @endif
     </div>
 
+    <h6>Calidad y viabilidad</h6>
+    <div class="desc">
+      @if (isset($detalles['calidad_viabilidad']))
+        {!! $detalles['calidad_viabilidad'] !!}
+      @endif
+    </div>
+
     <h6>Referencias bibliográficas</h6>
     <div class="desc">
       @if (isset($detalles['referencias_bibliograficas']))

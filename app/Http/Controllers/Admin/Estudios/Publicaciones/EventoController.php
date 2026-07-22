@@ -47,10 +47,22 @@ class EventoController extends S3Controller {
     $utils = new PublicacionesUtilsController();
     $paises = $utils->getPaises();
 
+    $detalles = DB::table('Publicacion_descripcion')
+      ->select([
+        'codigo',
+        'detalle'
+      ])
+      ->where('publicacion_id', '=', $request->query('id'))
+      ->get()
+      ->mapWithKeys(function ($item) {
+        return [$item->codigo => $item->detalle];
+      });
+
     return [
       'data' => $publicacion,
       'palabras_clave' => $palabras_clave,
-      'paises' => $paises
+      'paises' => $paises,
+      'detalles' => $detalles
     ];
   }
 
@@ -162,6 +174,15 @@ class EventoController extends S3Controller {
             'clave' => $palabra["label"]
           ]);
         }
+
+        DB::table('Publicacion_descripcion')
+          ->updateOrInsert([
+            'publicacion_id' => $publicacion_id,
+            'codigo' => 'tipo_evento'
+          ], [
+            'detalle' => $request->input('tipo_evento')["value"],
+          ]);
+
         return ['message' => 'success', 'detail' => 'Datos de la publicación registrados', 'id' => $publicacion_id];
       } else {
         return ['message' => 'error', 'detail' => 'Está usando el título de una publicación que ya está registrada'];
@@ -203,6 +224,15 @@ class EventoController extends S3Controller {
           'clave' => $palabra["label"]
         ]);
       }
+
+      DB::table('Publicacion_descripcion')
+        ->updateOrInsert([
+          'publicacion_id' => $publicacion_id,
+          'codigo' => 'tipo_evento'
+        ], [
+          'detalle' => $request->input('tipo_evento')["value"],
+        ]);
+  
       return ['message' => 'success', 'detail' => 'Datos de la publicación actualizados'];
     }
   }

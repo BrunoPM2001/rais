@@ -131,4 +131,26 @@ class RevistasController extends Controller {
 
     return ['message' => 'info', 'detail' => 'DB wos actualizada correctamente'];
   }
+
+  public function listadoRevistaEditores() {
+    $listado = DB::table('Publicacion_revista_editor AS a')
+      ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
+      ->select([
+        'a.id',
+        DB::raw("CONCAT(b.apellido1, ' ', b.apellido2, ', ', b.nombres) AS editor"),
+        'a.issn',
+        'a.issne',
+        'a.revista',
+        'a.casa',
+        'a.pais',
+        'a.fecha_inicio',
+        'a.fecha_fin',
+        'a.estado',
+        'a.created_at',
+        'a.updated_at',
+      ])
+      ->get();
+
+    return $listado;
+  }
 }

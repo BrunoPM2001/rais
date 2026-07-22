@@ -64,7 +64,7 @@ class MonitoreoController extends Controller {
       )
       ->whereIn('c.nombre', ['Responsable', 'Asesor', 'Autor Corresponsal', 'Coordinador'])
       ->whereIn('a.estado', [1, 8, 9, 10, 11])
-      ->where('a.tipo_proyecto', '!=', 'PSINFIPU')
+      ->wherenOTiN('a.tipo_proyecto', ['PSINFIPU', 'PTPBACHILLER', 'PTPGRADO', 'PTPDOCTO', 'PTPMAEST'])
       ->groupBy('a.id')
       ->get();
 
@@ -175,10 +175,13 @@ class MonitoreoController extends Controller {
             ]
           ] : [];
 
+        $evaluacion_metas = $this->evaluarMetas($request);
+
         return [
           'datos' => $datos,
           'metas' => $metas,
           'publicaciones' => $publicaciones,
+          'evaluacion_metas' => $evaluacion_metas,
           'anexos' => $anexos
         ];
       }
@@ -320,19 +323,7 @@ class MonitoreoController extends Controller {
         'id',
         'meta_periodo_id',
         'tipo_proyecto',
-        DB::raw("CASE
-          WHEN estado = 1 THEN 'Válido'
-          WHEN estado = 0 THEN 'Inválido'
-        END AS estado")
-      )
-      ->get();
-
-    $publicaciones = DB::table('Meta_publicacion')
-      ->select(
-        'id',
-        'meta_tipo_proyecto_id',
-        'tipo_publicacion',
-        'cantidad',
+        'condicion',
         DB::raw("CASE
           WHEN estado = 1 THEN 'Válido'
           WHEN estado = 0 THEN 'Inválido'
@@ -342,8 +333,7 @@ class MonitoreoController extends Controller {
 
     return [
       'periodos' => $periodos,
-      'tipos' => $tipos,
-      'publicaciones' => $publicaciones,
+      'tipos' => $tipos
     ];
   }
 
@@ -396,10 +386,10 @@ class MonitoreoController extends Controller {
   public function editarMeta(Request $request) {
     $now = Carbon::now();
 
-    DB::table('Meta_publicacion')
-      ->where('id', '=', $request->input('id'))
+    DB::table('Meta_tipo_proyecto')
+      ->where('id', '=', $request->input('meta_tipo_proyecto'))
       ->update([
-        'cantidad' => $request->input('cantidad'),
+        'condicion' => $request->input('condicion'),
         'updated_at' => $now,
       ]);
 
@@ -630,5 +620,269 @@ class MonitoreoController extends Controller {
     ]);
 
     return $pdf->stream();
+  }
+
+    /**
+   * Helpers para árbol en metas
+   */
+  function isWrappedByParens(string $str): bool {
+    $depth = 0;
+    $len = strlen($str);
+
+    for ($i = 0; $i < $len; $i++) {
+      if ($str[$i] === '(') $depth++;
+      if ($str[$i] === ')') $depth--;
+      if ($depth === 0 && $i < $len - 1) return false;
+    }
+
+    return $str[0] === '(' && $str[$len - 1] === ')';
+  }
+
+  function stripOuterParens(string $str): string {
+    return trim(substr($str, 1, -1));
+  }
+
+  function findRootOperator(string $str): ?array {
+    $depth = 0;
+    $len = strlen($str);
+
+    for ($i = 0; $i < $len; $i++) {
+      if ($str[$i] === '(') $depth++;
+      if ($str[$i] === ')') $depth--;
+
+      if ($depth === 0) {
+        if (substr($str, $i, 5) === ' AND ') {
+          return ['operator' => 'AND', 'index' => $i];
+        }
+        if (substr($str, $i, 4) === ' OR ') {
+          return ['operator' => 'OR', 'index' => $i];
+        }
+      }
+    }
+
+    return null;
+  }
+
+  function queryToTree(string $query): ?array {
+    $query = trim($query);
+    if ($query === '') return null;
+
+    $wrapped = $this->isWrappedByParens($query);
+    $expr = $wrapped ? $this->stripOuterParens($query) : $query;
+
+    $rootOp = $this->findRootOperator($expr);
+
+    // CONDICIÓN
+    if (!$rootOp) {
+      if (!preg_match('/^(.+?)\s*=\s*(\d+)$/', $expr, $m)) {
+        return null;
+      }
+
+      $condition = [
+        'type'   => 'condition',
+        'key'    => trim($m[1]),
+        'number' => (int) $m[2],
+      ];
+
+      // Siempre envolver en group si venía entre paréntesis
+      if ($wrapped) {
+        return [
+          'type'     => 'group',
+          'operator' => 'AND',
+          'children' => [$condition],
+        ];
+      }
+
+      return $condition;
+    }
+
+    // GRUPO
+    $operator = $rootOp['operator'];
+    $index = $rootOp['index'];
+
+    $left  = trim(substr($expr, 0, $index));
+    $right = trim(substr($expr, $index + strlen($operator) + 2));
+
+    return [
+      'type'     => 'group',
+      'operator' => $operator,
+      'children' => [
+        $this->queryToTree($left),
+        $this->queryToTree($right),
+      ],
+    ];
+  }
+
+  function extractKeys(array $node): array {
+    if ($node['type'] === 'condition') {
+      return [$node['key']];
+    }
+
+    $keys = [];
+    foreach ($node['children'] as $child) {
+      $keys = array_merge($keys, $this->extractKeys($child));
+    }
+
+    return array_unique($keys);
+  }
+
+  function evaluarMetas(Request $request) {
+    $tipoToKey = [
+      'Artículo'        => 'Artículo',
+      'Capítulo'        => 'Capítulo',
+      'Libro'           => 'Libro',
+      'Tesis propia'    => 'Tesis propia',
+      'Tesis asesoria'  => 'Tesis asesoria',
+      'Evento'          => 'Evento',
+      'Ensayo'          => 'Ensayo',
+    ];
+
+    $info1 = DB::table('Proyecto AS a')
+      ->join('Meta_periodo AS b', 'b.periodo', '=', 'a.periodo')
+      ->join('Meta_tipo_proyecto AS c', function (JoinClause $join) {
+        $join->on('c.meta_periodo_id', '=', 'b.id')
+          ->on('c.tipo_proyecto', '=', 'a.tipo_proyecto');
+      })
+      ->select([
+        'c.condicion',
+      ])
+      ->where('a.id', '=', $request->query('id'))
+      ->first();
+
+    $tree = $this->queryToTree($info1->condicion ?? "");
+
+    $columns = $this->extractKeys($tree);
+
+    $values = [];
+
+    foreach ($columns as $key) {
+      $values[$key] = 0;
+    }
+
+    $publicaciones = DB::table('Publicacion_proyecto AS a')
+      ->join('Publicacion AS b', 'b.id', '=', 'a.publicacion_id')
+      ->select([
+        DB::raw("CASE (b.tipo_publicacion)
+            WHEN 'articulo' THEN 'Artículo'
+            WHEN 'capitulo' THEN 'Capítulo'
+            WHEN 'libro' THEN 'Libro'
+            WHEN 'tesis' THEN 'Tesis propia'
+            WHEN 'tesis-asesoria' THEN 'Tesis asesoria'
+            WHEN 'evento' THEN 'Evento'
+            WHEN 'ensayo' THEN 'Ensayo'
+          ELSE tipo_publicacion END AS tipo"),
+        DB::raw("COUNT(b.id) AS cuenta"),
+      ])
+      ->where('a.proyecto_id', '=', $request->query('id'))
+      ->where('b.estado', '=', 1)
+      ->groupBy('b.tipo_publicacion')
+      ->get();
+
+    foreach ($publicaciones as $row) {
+      if (!isset($tipoToKey[$row->tipo])) {
+        continue;
+      }
+
+      $key = $tipoToKey[$row->tipo];
+
+      // solo si esa key está en el árbol
+      if (array_key_exists($key, $values)) {
+        $values[$key] = (int) $row->cuenta;
+      }
+    }
+
+    $resultado = $this->evaluateTree($tree, $values);
+
+    $comparacion = $this->buildComparisonArray($tree, $publicaciones);
+
+    return [
+      'resultado' => $resultado,
+      'comparacion' => $comparacion,
+      'condicion' => $info1->condicion,
+      'publicaciones' => $publicaciones
+    ];
+  }
+
+  private function evaluateTree(array $node, array $values): bool {
+    // CONDICIÓN
+    if ($node['type'] === 'condition') {
+      $actual = $values[$node['key']] ?? 0;
+      return $actual >= $node['number'];
+    }
+
+    // GRUPO
+    if ($node['type'] === 'group') {
+      if ($node['operator'] === 'AND') {
+        foreach ($node['children'] as $child) {
+          if (!$this->evaluateTree($child, $values)) {
+            return false;
+          }
+        }
+        return true;
+      }
+
+      if ($node['operator'] === 'OR') {
+        foreach ($node['children'] as $child) {
+          if ($this->evaluateTree($child, $values)) {
+            return true;
+          }
+        }
+        return false;
+      }
+    }
+
+    return false;
+  }
+
+  function extractRequirements(array $node): array {
+    $requirements = [];
+
+    // Si es condición válida
+    if (
+      isset($node['type']) &&
+      $node['type'] === 'condition' &&
+      isset($node['key'], $node['number'])
+    ) {
+      $requirements[$node['key']] = [
+        'value' => (int) $node['number'],
+      ];
+
+      return $requirements;
+    }
+
+    // Si tiene hijos, recorrerlos
+    if (isset($node['children']) && is_array($node['children'])) {
+      foreach ($node['children'] as $child) {
+        $childReq = $this->extractRequirements($child);
+        $requirements = array_merge($requirements, $childReq);
+      }
+    }
+
+    return $requirements;
+  }
+
+  function buildComparisonArray(array $tree, $publicaciones): array {
+    $requirements = $this->extractRequirements($tree);
+
+    $counts = [];
+
+    foreach ($publicaciones as $p) {
+      $counts[$p->tipo] = (int) $p->cuenta;
+    }
+
+    $result = [];
+
+    foreach ($requirements as $tipo => $data) {
+      $valorActual   = $counts[$tipo] ?? 0;
+      $valorEsperado = (int) $data['value'];
+
+      $result[] = [
+        $tipo,
+        $valorActual,
+        $valorEsperado
+      ];
+    }
+
+    return $result;
   }
 }

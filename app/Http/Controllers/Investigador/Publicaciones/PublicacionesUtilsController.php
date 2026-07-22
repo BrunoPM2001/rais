@@ -581,10 +581,12 @@ class PublicacionesUtilsController extends S3Controller {
               'doc_numero' => $sumData->dni,
               'sexo' => $sumData->sexo,
               'email3' => $sumData->correo_electronico,
+              'tipo_investigador' => 'Estudiante',
+              'tipo' => $tipoFinal,
+              'tipo_investigador_programa' => $sumData->programa,
+              'tipo_investigador_estado' => $sumData->permanencia,
               'created_at' => Carbon::now(),
               'updated_at' => Carbon::now(),
-              'tipo_investigador' => 'Estudiante',
-              'tipo' => $tipoFinal
             ]);
         }
 
@@ -850,7 +852,11 @@ class PublicacionesUtilsController extends S3Controller {
         'nombre AS label',
       ])
       ->where('estado', '!=', 0)
-      ->get();
+      ->get()
+      ->map(function ($item) {
+        $item->value = (string) $item->value;
+        return $item;
+      });
 
     return $revistas;
   }

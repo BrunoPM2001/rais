@@ -139,7 +139,7 @@ class PropiedadIntelectualController extends S3Controller {
         ->insert([
           'patente_id' => $id,
           'investigador_id' => $request->attributes->get('token_decoded')->investigador_id,
-          'condicion' => 'Autor',
+          'condicion' => $request->input('tipo') == "Paquete tecnológico" || $request->input('tipo') == "Software" ? 'Autor' : 'Inventor',
           'es_presentador' => 1,
           'created_at' => $date1,
           'updated_at' => $date1
@@ -201,7 +201,14 @@ class PropiedadIntelectualController extends S3Controller {
       ->where('patente_id', '=', $request->query('id'))
       ->get();
 
-    return $listado;
+    $patente = DB::table('Patente')
+      ->select([
+        'tipo'
+      ])
+      ->where('id', '=', $request->query('id'))
+      ->first();
+
+    return ['listado' => $listado, 'tipo' => $patente->tipo];
   }
 
   public function verificar4(Request $request) {
