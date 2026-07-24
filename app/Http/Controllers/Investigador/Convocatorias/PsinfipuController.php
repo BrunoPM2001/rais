@@ -35,7 +35,7 @@ class PsinfipuController extends S3Controller {
       ->where('a.investigador_id', '=', $request->attributes->get('token_decoded')->investigador_id)
       ->where('a.condicion', '=', 'Responsable')
       ->where('b.tipo_proyecto', '=', 'PSINFIPU')
-      ->where('b.periodo', '=', 2025)
+      ->where('b.periodo', '=', 2026)
       ->get();
 
     $errores = $this->verificar($request);
@@ -238,7 +238,7 @@ class PsinfipuController extends S3Controller {
           'investigador_id' => $request->attributes->get('token_decoded')->investigador_id,
           'proyecto_integrante_tipo_id' => 13,
           'grupo_id' => $datos->grupo_id,
-          'grupo_integrante_id' => $datos->id,
+          'grupo_integrante_id' => $datos->grupo_integrante_id,
           'codigo' => $datos->codigo ?? null,
           'tipo_investigador' => $datos->tipo ?? null,
           'condicion_grupo' => $datos->condicion_grupo ?? null,
