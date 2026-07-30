@@ -458,7 +458,17 @@ class EvaluadorProyectosController extends S3Controller {
       ->where('a.evaluador_id', '=', $request->attributes->get('token_decoded')->evaluador_id)
       ->first();
 
-    $pdf = Pdf::loadView('evaluador.ficha_evaluador', ['evaluacion' => $criterios, 'extra' => $extra, 'total' => $totalGeneral]);
+    $tipoProyecto = DB::table('Proyecto')
+    ->where('id', $request->query('proyecto_id'))
+    ->value('tipo_proyecto');
+
+    $view = 'evaluador.ficha_evaluador';
+
+    if ($tipoProyecto === 'PCONFIGI-INV') {
+      $view = 'evaluador.ficha_evaluador_pconfigiinv';
+    }
+
+    $pdf = Pdf::loadView($view, ['evaluacion' => $criterios, 'extra' => $extra, 'total' => $totalGeneral]);
     return $pdf->stream();
   }
 
@@ -519,8 +529,15 @@ class EvaluadorProyectosController extends S3Controller {
         $utils->DocentesRecienteIngresoRRHH($request);
         break;
 
+      case "PCONFIGI-INV":
+        $utils->docenteInvestigador($request);
+        $utils->puntaje7UltimosAños($request);
+        $utils->giCat($request);
+        $utils->DocentesRecienteIngresoRRHH($request);
+        $utils->puntajeLocalizacionProyecto($request);
+        break;
+
       case "ECI":
-        // Tu código
         $utils->experiencia_gi($request);
         $utils->presupuesto_eci($request);
         break;

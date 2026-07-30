@@ -28,6 +28,24 @@ class CriteriosUtilsController extends Controller {
     return $evaluacion ? $evaluacion->id : null;
   }
 
+  private function getEvaluacionOpcionPorOtipo($proyectoId, $otipo) {
+    $proyecto = DB::table('Proyecto')
+      ->select('tipo_proyecto', 'periodo')
+      ->where('id', $proyectoId)
+      ->first();
+
+    if (!$proyecto) {
+      return null;
+    }
+
+    return DB::table('Evaluacion_opcion')
+      ->select('id', 'puntaje_max')
+      ->where('tipo', $proyecto->tipo_proyecto)
+      ->where('periodo', $proyecto->periodo)
+      ->where('otipo', $otipo)
+      ->first();
+  }
+
   public function puntajeTesistas(Request $request) {
     $proyecto = DB::table('Proyecto as p')
       ->select('p.tipo_proyecto', 'p.periodo')
@@ -493,8 +511,10 @@ class CriteriosUtilsController extends Controller {
         $puntajeDocente += 0;
       }
     }
-    $puntajeDocente = $puntajeDocente >= 9 ? 9 : $puntajeDocente;
-    $evaluacionId = $this->getEvaluacionOpcionId($proyectoId, 14);
+    $evaluacion = $this->getEvaluacionOpcionPorOtipo( $proyectoId, 'regina' );
+    if (!$evaluacion) { return; }
+    $puntajeDocente = min( $puntajeDocente, (float) $evaluacion->puntaje_max );
+    $evaluacionId = $evaluacion->id;
 
     // Actualizar puntaje
     DB::table('Evaluacion_proyecto')
@@ -534,10 +554,17 @@ class CriteriosUtilsController extends Controller {
       ->whereIn('investigador_id', $integrantesSum)
       ->sum('puntaje'); // Suma todos los valores de la columna 'puntaje'
 
-    $puntajeIntegrantes = ($totalPuntaje * 0.1) / count($integrantes);
+    if (count($integrantes) > 0) {
+      $puntajeIntegrantes =
+        ($totalPuntaje * 0.1) / count($integrantes);
+    } else {
+      $puntajeIntegrantes = 0;
+    }
 
-    $total = $puntajeIntegrantes >= 10 ? 10 : $puntajeIntegrantes;
-    $evaluacionId = $this->getEvaluacionOpcionId($proyectoId, 15);
+    $evaluacion = $this->getEvaluacionOpcionPorOtipo( $proyectoId, 'experiencia');
+    if (!$evaluacion) { return; }
+    $total = min( $puntajeIntegrantes, (float) $evaluacion->puntaje_max);
+    $evaluacionId = $evaluacion->id;
 
     // Actualizar puntaje
     DB::table('Evaluacion_proyecto')
@@ -582,8 +609,10 @@ class CriteriosUtilsController extends Controller {
         break;
     }
 
-    $total = $puntajeCat >= 6 ? 6 : $puntajeCat;
-    $evaluacionId = $this->getEvaluacionOpcionId($proyectoId, 16);
+  $evaluacion = $this->getEvaluacionOpcionPorOtipo($proyectoId, 'catgi');
+  if (!$evaluacion) { return; }
+  $total = min( $puntajeCat,(float) $evaluacion->puntaje_max);
+  $evaluacionId = $evaluacion->id; 
 
     // Actualizar puntaje
     DB::table('Evaluacion_proyecto')
@@ -627,8 +656,10 @@ class CriteriosUtilsController extends Controller {
         $puntajeDocente += 0;
       }
     }
-    $puntajeDocente = $puntajeDocente >= 5 ? 5 : $puntajeDocente;
-    $evaluacionId = $this->getEvaluacionOpcionId($proyectoId, 17);
+    $evaluacion = $this->getEvaluacionOpcionPorOtipo($proyectoId, 'docnvos');
+    if (!$evaluacion) { return; }
+    $puntajeDocente = min( $puntajeDocente, (float) $evaluacion->puntaje_max);
+    $evaluacionId = $evaluacion->id;
 
     DB::table('Evaluacion_proyecto')
       ->updateOrInsert([
@@ -638,6 +669,63 @@ class CriteriosUtilsController extends Controller {
       ], [
         'puntaje' => $puntajeDocente
       ]);
+  }
+
+  public function puntajeLocalizacionProyecto(Request $request) {
+    $proyectoId = $request->query('proyecto_id');
+    $proyecto = DB::table('Proyecto')
+      ->select('localizacion')
+      ->where('id', $proyectoId)
+      ->first();
+
+    if (!$proyecto) { return;}
+
+    $localizacion = trim($proyecto->localizacion ?? '');
+    $puntaje = 0;
+
+    switch ($localizacion) {
+      case 'En las sedes de la UNMSM en Lima':
+        $puntaje = 0.5;
+        break;
+
+      case 'En el área de Lima Metropolitana':
+        $puntaje = 1.0;
+        break;
+
+      case 'En las Regiones de Lima provincias y El Callao':
+        $puntaje = 2.0;
+        break;
+
+      case 'En otras Regiones del país':
+        $puntaje = 3.0;
+        break;
+
+      case 'En otros lugares':
+        $puntaje = 3.0;
+        break;
+
+      default:
+        $puntaje = 0;
+        break;
+    }
+
+    $evaluacion = $this->getEvaluacionOpcionPorOtipo($proyectoId, 'localizacion' );
+    if (!$evaluacion) { return; }
+    $puntaje = min( $puntaje, (float) $evaluacion->puntaje_max );
+
+    DB::table('Evaluacion_proyecto')
+      ->updateOrInsert(
+        [
+          'proyecto_id' => $proyectoId,
+          'evaluador_id' => $request->attributes
+            ->get('token_decoded')
+            ->evaluador_id,
+          'evaluacion_opcion_id' => $evaluacion->id
+        ],
+        [
+          'puntaje' => $puntaje
+        ]
+      );
   }
 
   // Eci
