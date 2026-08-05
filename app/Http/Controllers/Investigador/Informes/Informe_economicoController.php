@@ -8,6 +8,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Query\JoinClause;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class Informe_economicoController extends S3Controller {
   public function listadoProyectos(Request $request) {
@@ -253,7 +254,9 @@ class Informe_economicoController extends S3Controller {
           'id',
           'created_at',
           'observacion',
-          'estado'
+          'estado',
+          DB::raw("CASE WHEN doc_justificacion IS NOT NULL THEN CONCAT('/minio/transferencia-justificacion/', doc_justificacion) ELSE NULL END AS url_justificacion"),
+          DB::raw("CASE WHEN doc_observacion IS NOT NULL THEN CONCAT('/minio/transferencia-justificacion/', doc_observacion) ELSE NULL END AS url_observacion")
         ])
         ->where('geco_proyecto_id', '=', $request->query('id'))
         ->where('estado', '>', 0)
@@ -820,14 +823,24 @@ class Informe_economicoController extends S3Controller {
         'a.operacion',
         'a.monto',
         DB::raw('CASE 
-                    WHEN a.operacion = "+" THEN a.monto_original + a.monto 
-                    ELSE a.monto_original - a.monto 
-                 END AS monto_nuevo')
+          WHEN a.operacion = "+" THEN a.monto_original + a.monto 
+          ELSE a.monto_original - a.monto 
+        END AS monto_nuevo')
       ])
       ->where('geco_operacion_id', '=', $request->query('geco_operacion_id'))
       ->get();
 
-    return $movimientos;
+    $operacion = DB::table('Geco_operacion')
+      ->select([
+        'justificacion',
+        'observacion',
+        DB::raw("CASE WHEN doc_justificacion IS NOT NULL THEN CONCAT('/minio/transferencia-justificacion/', doc_justificacion) ELSE NULL END AS doc_justificacion"),
+        DB::raw("CASE WHEN doc_observacion IS NOT NULL THEN CONCAT('/minio/transferencia-justificacion/', doc_observacion) ELSE NULL END AS doc_observacion")
+      ])
+      ->where('id', '=', $request->query('geco_operacion_id'))
+      ->first();
+
+    return ['movimientos' => $movimientos, 'operacion' => $operacion];
   }
 
   public function partidasTransferencias(Request $request) {
@@ -964,16 +977,45 @@ class Informe_economicoController extends S3Controller {
   }
 
   public function solicitarTransferencia(Request $request) {
-    DB::table('Geco_operacion')
-      ->where('geco_proyecto_id', '=', $request->input('geco_proyecto_id'))
-      ->where('estado', '=', 4)
-      ->update([
-        'estado' => 3,
-        'justificacion' => $request->input('justificacion'),
+    $operacion = DB::table('Geco_operacion')
+        ->select('id')
+        ->where('geco_proyecto_id', '=', $request->input('geco_proyecto_id'))
+        ->where('estado', '=', 4)
+        ->first();
+
+    if (!$operacion) {
+      return ['message' => 'error', 'detail' => 'No se encontró una transferencia temporal válida para solicitar.'];
+    }
+
+    $datosActualizar = [
+      'estado' => 3,
+      'justificacion' => $request->input('justificacion'),
+      'updated_at' => Carbon::now(),
+    ];
+
+    if ($request->hasFile('file1')) {
+      $key = $request->input('geco_proyecto_id') . "/" . Carbon::now()->format('Ymd-His') . "-" . Str::random(8) . "." . $request->file('file1')->getClientOriginalExtension();
+      $this->uploadFile($request->file('file1'), "transferencia-justificacion", $key);
+
+      DB::table('File')->insert([
+        'tabla_id' => $operacion->id,
+        'tabla'    => 'Geco_operacion',
+        'bucket'   => 'transferencia-justificacion',
+        'key'      => $key,
+        'recurso'  => 'DOCUMENTO JUSTIFICACION',
+        'estado'   => 1,
+        'created_at' => Carbon::now(),
         'updated_at' => Carbon::now(),
       ]);
 
-    return ['message' => 'info', 'detail' => 'Transferencia solicitada'];
+      $datosActualizar['doc_justificacion'] = $key;
+    }
+
+    DB::table('Geco_operacion')
+      ->where('id', '=', $operacion->id)
+      ->update($datosActualizar);
+
+    return ['message' => 'success', 'detail' => 'Transferencia solicitada correctamente'];
   }
 
   public function eliminarTransferenciaTemporal(Request $request) {

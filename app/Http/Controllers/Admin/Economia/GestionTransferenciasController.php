@@ -2,13 +2,15 @@
 
 namespace App\Http\Controllers\Admin\Economia;
 
+use App\Http\Controllers\S3Controller;
 use App\Http\Controllers\Controller;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
-class GestionTransferenciasController extends Controller {
+class GestionTransferenciasController extends S3Controller {
   public function listadoProyectos() {
     $responsable = DB::table('Proyecto_integrante AS a')
       ->leftJoin('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
@@ -189,7 +191,9 @@ class GestionTransferenciasController extends Controller {
     $operacion = DB::table('Geco_operacion')
       ->select([
         'justificacion',
-        'observacion'
+        'observacion',
+        DB::raw("CASE WHEN doc_justificacion IS NOT NULL THEN CONCAT('/minio/transferencia-justificacion/', doc_justificacion) ELSE NULL END AS doc_justificacion"),
+        DB::raw("CASE WHEN doc_observacion IS NOT NULL THEN CONCAT('/minio/transferencia-justificacion/', doc_observacion) ELSE NULL END AS doc_observacion")
       ])
       ->where('id', '=', $request->query('geco_operacion_id'))
       ->first();
@@ -217,16 +221,34 @@ class GestionTransferenciasController extends Controller {
 
     $audit = json_encode($audit, JSON_UNESCAPED_UNICODE);
 
+    $updateData = [
+      'estado' => $request->input('estado'),
+      'observacion' => $request->input('observacion'),
+      'audit' => $audit,
+      'updated_at' => Carbon::now()
+    ];
+
+    if ($request->hasFile('file1')) {
+      $key = $solicitud->id . "/" . Carbon::now()->format('Ymd-His') . "-" . Str::random(8) . "." . $request->file('file1')->getClientOriginalExtension();
+      $this->uploadFile($request->file('file1'), "transferencia-justificacion", $key);
+      DB::table('File')->insert([
+        'tabla_id'   => $solicitud->id,
+        'tabla'      => 'Geco_operacion',
+        'bucket'     => 'transferencia-justificacion',
+        'key'        => $key,
+        'recurso'    => 'DOCUMENTO OBSERVACION',
+        'estado'     => 1,
+        'created_at' => Carbon::now(),
+        'updated_at' => Carbon::now(),
+      ]);
+      $updateData['doc_observacion'] = $key;
+    }
+
     if ($request->input('estado') == 1) {
+      $updateData['fecha_aprobado'] = Carbon::now();
       DB::table('Geco_operacion')
         ->where('id', '=', $solicitud->id)
-        ->update([
-          'estado' => $request->input('estado'),
-          'observacion' => $request->input('observacion'),
-          'audit' => $audit,
-          'fecha_aprobado' => Carbon::now(),
-          'updated_at' => Carbon::now(),
-        ]);
+        ->update($updateData);
 
       //  Actualización del presupuesto
       $operacion = DB::table('Geco_operacion')
@@ -283,12 +305,7 @@ class GestionTransferenciasController extends Controller {
     } else {
       DB::table('Geco_operacion')
         ->where('id', '=', $solicitud->id)
-        ->update([
-          'estado' => $request->input('estado'),
-          'observacion' => $request->input('observacion'),
-          'audit' => $audit,
-          'updated_at' => Carbon::now()
-        ]);
+        ->update($updateData);
     }
 
     DB::table('Geco_proyecto_presupuesto')

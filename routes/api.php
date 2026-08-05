@@ -788,6 +788,8 @@ Route::prefix('investigador')->middleware('checkRole:Usuario_investigador')->gro
     Route::prefix('revistas')->group(function () {
       Route::get('listado', [PublicacionesRevistasController::class, 'listado']);
       Route::post('registrar', [PublicacionesRevistasController::class, 'registrar']);
+      Route::get('datosPaso1', [PublicacionesRevistasController::class, 'datosPaso1']);
+      Route::post('registrarPaso1', [PublicacionesRevistasController::class, 'registrarPaso1']);
     });
 
     //  Utils

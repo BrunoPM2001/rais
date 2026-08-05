@@ -632,8 +632,7 @@ class ReporteController extends S3Controller {
       ->first();
 
     $file = $this->getFile('constancias', $pdf["name"]);
-
-    Mail::to($investigador->email3)->send(new ConstanciaFirmada(
+    Mail::to($investigador->email3)->cc('ccabrerac@unmsm.edu.pe')->send(new ConstanciaFirmada(
       $investigador->nombres,
       $request->input('tipo_desc'),
       $file

@@ -275,7 +275,7 @@
 
   <table class="table-footer">
     <tr class="extra-firma">
-      <td>Dr. José Segundo Niño Montero <br><strong>Vicerrector</strong></td>
+      <td> Dr. Carlos Francisco Cabrera Carranza <br> <strong>Vicerrector</strong></td>
     </tr>
   </table>
 

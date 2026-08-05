@@ -159,24 +159,31 @@
 
     .firma {
       width: 150px;
+      margin-left: -10px;
     }
 
     .sello {
-      width: 100px;
+      width: 125px;
     }
 
     .table-sello-firma {
-      margin: auto;
-      width: 60%;
+      margin: 40px auto 0 auto;
+      width: auto;
+      border-collapse: collapse;
+    }
+
+    .table-sello-firma td {
+      padding: 0;
+      vertical-align: bottom;
       text-align: center;
-      margin-top: 50px;
     }
 
     .nombre-vice {
-      top: -28px;
+      margin-top: 15px;
       position: relative;
       text-align: center;
       font-size: 14px;
+      line-height: 1.3;
     }
   </style>
 </head>
@@ -276,19 +283,17 @@
 
     <table class="table-sello-firma">
       <tr class="extra-firma">
-        <td style="width: 100px;">
-        </td>
         <td>
-          <img class="firma" src="{{ public_path('firma-negra.jpg') }}" alt="Firma">
+          <img class="sello" src="{{ public_path('sello.png') }}" alt="Firma">
         </td>
         <td style="margin-top: 15px;">
-          <img class="sello" src="{{ public_path('sello.jpg') }}" alt="Firma">
+          <img class="firma" src="{{ public_path('firma-azul.png') }}" alt="Firma">
         </td>
       </tr>
     </table>
 
     <p class="nombre-vice">
-      Dr. José Segundo Niño Montero <br><strong>Vicerrector</strong>
+      Dr. Carlos Francisco Cabrera Carranza <br> <strong>Vicerrector</strong>
     </p>
   </div>
 

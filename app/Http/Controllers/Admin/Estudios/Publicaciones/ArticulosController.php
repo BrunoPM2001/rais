@@ -168,7 +168,7 @@ class ArticulosController extends S3Controller {
       if ($util->verificarTituloUnico($request)) {
         $publicacion_id = DB::table('Publicacion')->insertGetId([
           'doi' => $request->input('doi'),
-          'art_tipo' => $request->input('art_tipo')["value"],
+          'art_tipo' => $request->input('art_tipo.value'),
           'titulo' => $request->input('titulo'),
           'resumen' => $request->input('resumen'),
           'pagina_inicial' => $request->input('pagina_inicial'),
@@ -218,7 +218,7 @@ class ArticulosController extends S3Controller {
             'publicacion_id' => $publicacion_id,
             'codigo' => 'cuartil'
           ], [
-            'detalle' => $request->input('cuartil')["value"],
+            'detalle' => $request->input('cuartil.value'),
           ]);
 
         return ['message' => 'success', 'detail' => 'Datos de la publicación registrados', 'id' => $publicacion_id];
@@ -231,7 +231,7 @@ class ArticulosController extends S3Controller {
         ->where('id', '=', $publicacion_id)
         ->update([
           'doi' => $request->input('doi'),
-          'art_tipo' => $request->input('art_tipo')["value"],
+          'art_tipo' => $request->input('art_tipo.value'),
           'titulo' => $request->input('titulo'),
           'resumen' => $request->input('resumen'),
           'pagina_inicial' => $request->input('pagina_inicial'),
@@ -288,7 +288,7 @@ class ArticulosController extends S3Controller {
           'publicacion_id' => $publicacion_id,
           'codigo' => 'cuartil'
         ], [
-          'detalle' => $request->input('cuartil')["value"],
+          'detalle' => $request->input('cuartil.value'),
         ]);
 
       return ['message' => 'success', 'detail' => 'Datos de la publicación actualizados'];
