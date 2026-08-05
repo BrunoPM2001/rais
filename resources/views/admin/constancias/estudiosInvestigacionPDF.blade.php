@@ -344,6 +344,24 @@
           </tr>
         @endforeach
       @endif
+
+      {{-- Proyectos Sin Asignacion a la Investigación y Con Incentivo al Investigador --}}
+      @if (count($sin_asignacion_con_incentivo) > 0)
+        <tr>
+          <td colspan="5" style="text-align: left; font-weight: bold; font-size: 15px;">
+            Sin Asignación a la Investigación y Con Incentivo al Investigador
+          </td>
+        </tr>
+        @foreach ($sin_asignacion_con_incentivo as $item)
+          <tr>
+            <td><b>{{ $item->periodo }}</b></td>
+            <td>{{ $item->tipo_proyecto }}</td>
+            <td>{{ $item->codigo_proyecto }}</td>
+            <td style="font-size: 10px; text-align: justify;">{{ strtoupper($item->titulo) }}</td>
+            <td>{{ $item->condicion_proyecto }}</td>
+          </tr>
+        @endforeach
+      @endif
       {{-- Fondos Concursables --}}
       @if ($otras_actividades != 0)
         <tr>
@@ -417,25 +435,6 @@
             <td style="min-width:80px;">{{ $item->condicion_proyecto }}</td>
           </tr>
         @endforeach
-
-      @endif
-
-      {{-- Proyectos Sin Asignacion a la Investigación y Con Incentivo al Investigador --}}
-      @if (count($sin_asignacion_con_incentivo) > 0)
-        <tr>
-          <td colspan="5" style="text-align: left; font-weight: bold; font-size: 15px;">
-            Sin Asignación a la Investigación y Con Incentivo al Investigador
-          </td>
-        </tr>
-        @foreach ($sin_asignacion_con_incentivo as $item)
-          <tr>
-            <td><b>{{ $item->periodo }}</b></td>
-            <td>{{ $item->tipo_proyecto }}</td>
-            <td>{{ $item->codigo_proyecto }}</td>
-            <td style="font-size: 10px; text-align: justify;">{{ strtoupper($item->titulo) }}</td>
-            <td>{{ $item->condicion_proyecto }}</td>
-          </tr>
-        @endforeach
       @endif
     </tbody>
 
@@ -454,7 +453,7 @@
 
   <table class="table-footer">
     <tr class="extra-firma">
-      <td> Dr. Carlos Francisco Cabrera Carranza <br> <strong>Vicerrector</strong></td>
+      <td> Dr. Carlos Francisco Cabrera Carranza <br> <strong>Vicerrector (e)</strong></td>
     </tr>
   </table>
 

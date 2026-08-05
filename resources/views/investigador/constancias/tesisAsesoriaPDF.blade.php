@@ -315,7 +315,7 @@
     </table>
 
     <p class="nombre-vice">
-      Dr. Carlos Francisco Cabrera Carranza <br> <strong>Vicerrector</strong>
+      Dr. Carlos Francisco Cabrera Carranza <br> <strong>Vicerrector (e)</strong>
     </p>
   </div>
 

@@ -536,7 +536,7 @@
   </table>
   <table class="table-footer">
     <tr class="extra-firma">
-      <td> Dr. Carlos Francisco Cabrera Carranza <br> <strong>Vicerrector</strong></td>
+      <td> Dr. Carlos Francisco Cabrera Carranza <br> <strong>Vicerrector (e)</strong></td>
     </tr>
   </table>
   <div class="foot-1">

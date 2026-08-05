@@ -246,7 +246,7 @@ class ProCTIController extends S3Controller {
         'b.nombre AS label'
       ])
       ->where('a.grupo_id', '=', $data->grupo_id)
-      ->whereNull('a.concytec_codigo')
+      ->where('b.estado', '=', 1)
       ->get();
 
     $ocdeLevel1 = DB::table('Ocde')
@@ -1350,7 +1350,7 @@ class ProCTIController extends S3Controller {
       ->join('Linea_investigacion AS l', 'l.id', '=', 'p.linea_investigacion_id')
       ->join('Linea_investigacion_ods AS lo', 'lo.linea_investigacion_id', '=', 'l.id')
       ->join('Ods AS o', 'o.id', '=', 'lo.ods_id')
-      ->join('Ocde AS oc', 'oc.id', '=', 'lo.ods_id')
+      ->leftJoin('Ocde AS oc', 'oc.id', '=', 'p.ocde_id')
       ->select([
         'g.grupo_nombre',
         'f.nombre AS facultad_nombre',
@@ -1428,8 +1428,8 @@ class ProCTIController extends S3Controller {
         'pt.nombre AS tipo_integrante',
         DB::raw("CONCAT(i.apellido1, ' ', i.apellido2, ' ', i.nombres) AS integrante"),
         'f.nombre AS facultad',
-        'gi.tipo',
-        'gi.condicion'
+        'pint.tipo_investigador as tipo',
+        'pint.condicion'
       ])
       ->where('pint.proyecto_id', '=', $request->query('proyecto_id'))
       ->where(function ($query) {

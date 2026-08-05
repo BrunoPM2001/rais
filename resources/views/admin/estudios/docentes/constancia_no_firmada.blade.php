@@ -141,9 +141,9 @@
 
     <p class="extra-firma">
       <strong>
-        Dr. José Segundo Niño Montero
+        Dr. Carlos Francisco Cabrera Carranza
         <br>
-        Vicerrector
+        Vicerrector (e)
       </strong>
     </p>
 
