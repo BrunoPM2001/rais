@@ -238,7 +238,7 @@ class PsinfipuController extends S3Controller {
           'investigador_id' => $request->attributes->get('token_decoded')->investigador_id,
           'proyecto_integrante_tipo_id' => 13,
           'grupo_id' => $datos->grupo_id,
-          'grupo_integrante_id' => $datos->grupo_integrante_id,
+          'grupo_integrante_id' => $datos->grupo_integrante_id ?? null,
           'codigo' => $datos->codigo ?? null,
           'tipo_investigador' => $datos->tipo ?? null,
           'condicion_grupo' => $datos->condicion_grupo ?? null,
@@ -683,12 +683,24 @@ class PsinfipuController extends S3Controller {
         return [$item->codigo => $item->detalle];
       });
 
-    $proyecto_base = DB::table('Proyecto')
-      ->select([
-        DB::raw("CONCAT(tipo_proyecto, ' - ', titulo) AS titulo")
-      ])
-      ->where('id', '=', explode("-", $detalles["investigacion_base"])[0])
-      ->first();
+    $proyecto_base = null;
+      if (!empty($detalles['investigacion_base'])) {
+        $id_base = explode('-', $detalles['investigacion_base'])[0];
+
+        if (is_numeric($id_base)) {
+          $p_base = DB::table('Proyecto')
+            ->select(['tipo_proyecto', 'titulo'])
+            ->where('id', '=', $id_base)
+            ->first();
+
+          if ($p_base) {
+            $prefix = !empty($p_base->tipo_proyecto) ? $p_base->tipo_proyecto . ' - ' : '';
+            $proyecto_base = (object) [
+              'titulo' => $prefix . ($p_base->titulo ?? '')
+            ];
+          }
+        }
+      }
 
     $responsable = DB::table('Proyecto_integrante AS a')
       ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')

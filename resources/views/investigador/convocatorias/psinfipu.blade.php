@@ -246,7 +246,7 @@
         <tr>
           <td style="width: 24%;" valign="top"><strong>Investigación UNMSM</strong></td>
           <td style="width: 1%;" valign="top">:</td>
-          <td style="width: 75%;" valign="top">{{ $proyecto_base->titulo }}</td>
+          <td style="width: 75%;" valign="top">{{ $proyecto_base->titulo ?? 'No registra' }}</td>
         </tr>
       </tbody>
     </table>

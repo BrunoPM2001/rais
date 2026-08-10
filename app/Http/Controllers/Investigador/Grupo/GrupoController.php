@@ -1495,7 +1495,7 @@ class GrupoController extends S3Controller {
       ->where(function ($q) {
       $q->where(function ($q2) {
       $q2->where('e.tipo_proyecto', '!=', 'PMULTI')
-        ->whereIn('d.nombre', ['Responsable','Coordinador','Asesor']);
+        ->whereIn('d.nombre', ['Responsable','Coordinador','Asesor', 'Autor Corresponsal']);
         })
       ->orWhere(function ($q2) {
       $q2->where('e.tipo_proyecto', '=', 'PMULTI')

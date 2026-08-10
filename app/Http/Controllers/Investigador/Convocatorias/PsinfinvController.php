@@ -558,7 +558,7 @@ class PsinfinvController extends S3Controller {
       ->having('value', 'LIKE', '%' . $request->query('query') . '%')
       ->whereNot('a.condicion', 'LIKE', 'Ex%')
       ->where('a.grupo_id', '=', $grupo->grupo_id)
-      ->where('b.tipo', 'LIKE', 'Estudiante%')
+      //->where('b.tipo', 'LIKE', 'Estudiante%')
       ->limit(10)
       ->get();
 
