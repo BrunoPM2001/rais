@@ -741,6 +741,7 @@ class PublicacionesUtilsController extends S3Controller {
         ->update([
           'step' => 4,
           'estado' => 5,
+          'updated_at' => Carbon::now(),
           'audit' => $audit
         ]);
 

@@ -111,6 +111,14 @@ class TesisAsesoriaController extends S3Controller {
       $util = new PublicacionesUtilsController();
 
       if ($util->verificarTituloUnico($request)) {
+        $audit = [
+          [
+            'fecha' => $date->format('Y-m-d H:i:s'),
+            'nombres' => $request->attributes->get('token_decoded')->nombre,
+            'apellidos' => $request->attributes->get('token_decoded')->apellidos,
+            'accion' => 'Registro de asesoría de tesis'
+          ]
+        ];
 
         $publicacion_id = DB::table('Publicacion')->insertGetId([
           'titulo' => $request->input('titulo'),
@@ -121,11 +129,12 @@ class TesisAsesoriaController extends S3Controller {
           'pagina_total' => $request->input('pagina_total'),
           'universidad' => $request->input('universidad'),
           'lugar_publicacion' => $request->input('lugar_publicacion'),
-          'pais' => $request->input('pais')["value"],
+          'pais' => $request->input('pais.value'),
           'validado' => 0,
           'step' => 2,
           'tipo_publicacion' => 'tesis-asesoria',
           'estado' => 6,
+          'audit' => json_encode($audit, JSON_UNESCAPED_UNICODE),
           'created_at' => $date,
           'updated_at' => $date
         ]);
@@ -143,6 +152,20 @@ class TesisAsesoriaController extends S3Controller {
       }
     } else {
       $publicacion_id = $request->input('id');
+
+      $pub = DB::table('Publicacion')
+        ->select(['audit'])
+        ->where('id', '=', $publicacion_id)
+        ->first();
+
+      $audit = json_decode($pub->audit ?? "[]");
+      $audit[] = [
+        'fecha' => $date->format('Y-m-d H:i:s'),
+        'nombres' => $request->attributes->get('token_decoded')->nombre,
+        'apellidos' => $request->attributes->get('token_decoded')->apellidos,
+        'accion' => 'Actualización de datos'
+      ];
+
       DB::table('Publicacion')
         ->where('id', '=', $publicacion_id)
         ->update([
@@ -154,7 +177,8 @@ class TesisAsesoriaController extends S3Controller {
           'pagina_total' => $request->input('pagina_total'),
           'universidad' => $request->input('universidad'),
           'lugar_publicacion' => $request->input('lugar_publicacion'),
-          'pais' => $request->input('pais')["value"],
+          'pais' => $request->input('pais.value'),
+          'audit' => json_encode($audit, JSON_UNESCAPED_UNICODE),
           'updated_at' => $date
         ]);
 

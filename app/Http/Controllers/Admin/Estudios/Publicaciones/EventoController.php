@@ -140,10 +140,18 @@ class EventoController extends S3Controller {
       $util = new PublicacionesUtilsController();
 
       if ($util->verificarTituloUnico($request)) {
+        $audit = [
+          [
+            'fecha' => $date->format('Y-m-d H:i:s'),
+            'nombres' => $request->attributes->get('token_decoded')->nombre,
+            'apellidos' => $request->attributes->get('token_decoded')->apellidos,
+            'accion' => 'Registro de evento'
+          ]
+        ];
 
         $publicacion_id = DB::table('Publicacion')->insertGetId([
           'titulo' => $request->input('titulo'),
-          'tipo_presentacion' => $request->input('tipo_presentacion')["value"],
+          'tipo_presentacion' => $request->input('tipo_presentacion.value'),
           'publicacion_nombre' => $request->input('publicacion_nombre'),
           'isbn' => $request->input('isbn'),
           'editorial' => $request->input('editorial'),
@@ -158,12 +166,13 @@ class EventoController extends S3Controller {
           'fecha_inicio' => $request->input('fecha_inicio'),
           'fecha_fin' => $request->input('fecha_fin'),
           'ciudad' => $request->input('ciudad'),
-          'pais' => $request->input('pais')["value"],
+          'pais' => $request->input('pais.value'),
           'url' => $request->input('url'),
           'validado' => 0,
           'step' => 2,
           'estado' => 6,
           'tipo_publicacion' => 'evento',
+          'audit' => json_encode($audit, JSON_UNESCAPED_UNICODE),
           'created_at' => $date,
           'updated_at' => $date
         ]);
@@ -180,7 +189,7 @@ class EventoController extends S3Controller {
             'publicacion_id' => $publicacion_id,
             'codigo' => 'tipo_evento'
           ], [
-            'detalle' => $request->input('tipo_evento')["value"],
+            'detalle' => $request->input('tipo_evento.value'),
           ]);
 
         return ['message' => 'success', 'detail' => 'Datos de la publicación registrados', 'id' => $publicacion_id];
@@ -189,11 +198,25 @@ class EventoController extends S3Controller {
       }
     } else {
       $publicacion_id = $request->input('id');
+
+      $pub = DB::table('Publicacion')
+        ->select(['audit'])
+        ->where('id', '=', $publicacion_id)
+        ->first();
+
+      $audit = json_decode($pub->audit ?? "[]");
+      $audit[] = [
+        'fecha' => $date->format('Y-m-d H:i:s'),
+        'nombres' => $request->attributes->get('token_decoded')->nombre,
+        'apellidos' => $request->attributes->get('token_decoded')->apellidos,
+        'accion' => 'Actualización de datos'
+      ];
+
       DB::table('Publicacion')
         ->where('id', '=', $publicacion_id)
         ->update([
           'titulo' => $request->input('titulo'),
-          'tipo_presentacion' => $request->input('tipo_presentacion')["value"],
+          'tipo_presentacion' => $request->input('tipo_presentacion.value'),
           'publicacion_nombre' => $request->input('publicacion_nombre'),
           'isbn' => $request->input('isbn'),
           'editorial' => $request->input('editorial'),
@@ -208,10 +231,10 @@ class EventoController extends S3Controller {
           'fecha_inicio' => $request->input('fecha_inicio'),
           'fecha_fin' => $request->input('fecha_fin'),
           'ciudad' => $request->input('ciudad'),
-          'pais' => $request->input('pais')["value"],
+          'pais' => $request->input('pais.value'),
           'url' => $request->input('url'),
-          'step' => 2,
-          'updated_at' => Carbon::now()
+          'audit' => json_encode($audit, JSON_UNESCAPED_UNICODE),
+          'updated_at' => $date
         ]);
 
       DB::table('Publicacion_palabra_clave')
@@ -230,7 +253,7 @@ class EventoController extends S3Controller {
           'publicacion_id' => $publicacion_id,
           'codigo' => 'tipo_evento'
         ], [
-          'detalle' => $request->input('tipo_evento')["value"],
+          'detalle' => $request->input('tipo_evento.value'),
         ]);
   
       return ['message' => 'success', 'detail' => 'Datos de la publicación actualizados'];

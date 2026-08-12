@@ -112,13 +112,21 @@ class LibrosController extends S3Controller {
       $util = new PublicacionesUtilsController();
 
       if ($util->verificarTituloUnico($request)) {
+        $audit = [
+          [
+            'fecha' => $date->format('Y-m-d H:i:s'),
+            'nombres' => $request->attributes->get('token_decoded')->nombre,
+            'apellidos' => $request->attributes->get('token_decoded')->apellidos,
+            'accion' => 'Registro de libro'
+          ]
+        ];
 
         $publicacion_id = DB::table('Publicacion')->insertGetId([
           'isbn' => $request->input('isbn'),
           'titulo' => $request->input('titulo'),
           'editorial' => $request->input('editorial'),
           'ciudad' => $request->input('ciudad'),
-          'pais' => $request->input('pais')["value"],
+          'pais' => $request->input('pais.value'),
           'edicion' => $request->input('edicion'),
           'volumen' => $request->input('volumen'),
           'pagina_total' => $request->input('pagina_total'),
@@ -128,6 +136,7 @@ class LibrosController extends S3Controller {
           'step' => 1,
           'tipo_publicacion' => 'libro',
           'estado' => 6,
+          'audit' => json_encode($audit, JSON_UNESCAPED_UNICODE),
           'created_at' => $date,
           'updated_at' => $date
         ]);
@@ -144,6 +153,20 @@ class LibrosController extends S3Controller {
       }
     } else {
       $publicacion_id = $request->input('id');
+
+      $pub = DB::table('Publicacion')
+        ->select(['audit'])
+        ->where('id', '=', $publicacion_id)
+        ->first();
+
+      $audit = json_decode($pub->audit ?? "[]");
+      $audit[] = [
+        'fecha' => $date->format('Y-m-d H:i:s'),
+        'nombres' => $request->attributes->get('token_decoded')->nombre,
+        'apellidos' => $request->attributes->get('token_decoded')->apellidos,
+        'accion' => 'Actualización de datos'
+      ];
+      
       DB::table('Publicacion')
         ->where('id', '=', $publicacion_id)
         ->update([
@@ -151,12 +174,13 @@ class LibrosController extends S3Controller {
           'titulo' => $request->input('titulo'),
           'editorial' => $request->input('editorial'),
           'ciudad' => $request->input('ciudad'),
-          'pais' => $request->input('pais')["value"],
+          'pais' => $request->input('pais.value'),
           'edicion' => $request->input('edicion'),
           'volumen' => $request->input('volumen'),
           'pagina_total' => $request->input('pagina_total'),
           'fecha_publicacion' => $request->input('fecha_publicacion'),
           'url' => $request->input('url'),
+          'audit' => json_encode($audit, JSON_UNESCAPED_UNICODE),
           'updated_at' => $date
         ]);
 

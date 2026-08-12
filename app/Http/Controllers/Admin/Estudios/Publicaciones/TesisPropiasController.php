@@ -109,6 +109,14 @@ class TesisPropiasController extends S3Controller {
       $util = new PublicacionesUtilsController();
 
       if ($util->verificarTituloUnico($request)) {
+        $audit = [
+          [
+            'fecha' => $date->format('Y-m-d H:i:s'),
+            'nombres' => $request->attributes->get('token_decoded')->nombre,
+            'apellidos' => $request->attributes->get('token_decoded')->apellidos,
+            'accion' => 'Registro de tesis'
+          ]
+        ];
 
         $publicacion_id = DB::table('Publicacion')->insertGetId([
           'titulo' => $request->input('titulo'),
@@ -122,6 +130,7 @@ class TesisPropiasController extends S3Controller {
           'validado' => 0,
           'step' => 2,
           'tipo_publicacion' => 'tesis',
+          'audit' => json_encode($audit, JSON_UNESCAPED_UNICODE),
           'estado' => 6,
           'created_at' => $date,
           'updated_at' => $date
@@ -140,6 +149,20 @@ class TesisPropiasController extends S3Controller {
       }
     } else {
       $publicacion_id = $request->input('id');
+
+      $pub = DB::table('Publicacion')
+        ->select(['audit'])
+        ->where('id', '=', $publicacion_id)
+        ->first();
+
+      $audit = json_decode($pub->audit ?? "[]");
+      $audit[] = [
+        'fecha' => $date->format('Y-m-d H:i:s'),
+        'nombres' => $request->attributes->get('token_decoded')->nombre,
+        'apellidos' => $request->attributes->get('token_decoded')->apellidos,
+        'accion' => 'Actualización de datos'
+      ];
+
       DB::table('Publicacion')
         ->where('id', '=', $publicacion_id)
         ->update([
@@ -151,6 +174,7 @@ class TesisPropiasController extends S3Controller {
           'universidad' => $request->input('universidad'),
           'lugar_publicacion' => $request->input('lugar_publicacion'),
           'pais' => $request->input('pais')["value"],
+          'audit' => json_encode($audit, JSON_UNESCAPED_UNICODE),
           'updated_at' => $date
         ]);
 
