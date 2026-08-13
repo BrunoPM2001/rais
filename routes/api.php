@@ -568,6 +568,7 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
       Route::get('getAllFacultad/{facultad_id}', [Linea_investigacionController::class, 'getAllOfFacultad']);
       Route::get('getAll/{facultad_id}', [Linea_investigacionController::class, 'getAll']);
       Route::get('grupos/{id}', [Linea_investigacionController::class, 'gruposPorLinea']);
+      Route::get('getOds', [Linea_investigacionController::class, 'getOds']);
       Route::post('create', [Linea_investigacionController::class, 'create']);
       Route::put('update', [Linea_investigacionController::class, 'update']);
       Route::delete('delete/{id}', [Linea_investigacionController::class, 'delete']);
