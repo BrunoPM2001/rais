@@ -14,6 +14,7 @@ use App\Http\Controllers\Admin\Estudios\DeudaProyectosController;
 use App\Http\Controllers\Admin\Estudios\DocenteInvestigadorController;
 use App\Http\Controllers\Admin\Estudios\GestionSUMController;
 use App\Http\Controllers\Admin\Estudios\GruposController;
+use App\Http\Controllers\Admin\Estudios\GestionSubvencionesController;
 use App\Http\Controllers\Admin\Estudios\Informes_tecnicos\UtilInformeAdminController;
 use App\Http\Controllers\Admin\Estudios\InformesTecnicosController;
 use App\Http\Controllers\Admin\Estudios\InvestigadoresController;
@@ -84,7 +85,6 @@ use App\Http\Controllers\Investigador\Publicaciones\TesisAsesoriaController;
 use App\Http\Controllers\Investigador\Publicaciones\TesisPropiasController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\SessionController;
-use App\Http\Controllers\OAI\OaiController;
 
 /*
 |--------------------------------------------------------------------------
@@ -96,7 +96,7 @@ use App\Http\Controllers\OAI\OaiController;
 | be assigned to the "api" middleware group. Make something great!
 |
 */
-Route::get('oai', [OaiController::class, 'handle']);
+
 Route::post('login', [SessionController::class, 'login']);
 
 //  Admin
@@ -261,6 +261,30 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
       Route::get('pasos', [ProyectosFEXController::class, 'pasos']);
       Route::get('reporte', [ProyectosFEXController::class, 'reporte']);
       Route::post('excel', [ProyectosFEXController::class, 'excel']);
+    });
+
+    Route::prefix('subvenciones_apc')->group(function () {
+      Route::get('listado', [GestionSubvencionesController::class, 'listado']);
+      Route::post('registrarPaso1', [GestionSubvencionesController::class, 'registrarPaso1']);
+      Route::post('registrarPaso2', [GestionSubvencionesController::class, 'registrarPaso2']);
+      Route::post('registrarPaso3', [GestionSubvencionesController::class, 'registrarPaso3']);
+      Route::put('updateDoc', [GestionSubvencionesController::class, 'updateDoc']);
+      Route::delete('deleteDoc', [GestionSubvencionesController::class, 'deleteDoc']);
+
+      Route::get('datosPaso1', [GestionSubvencionesController::class, 'datosPaso1']);
+      Route::get('datosPaso2', [GestionSubvencionesController::class, 'datosPaso2']);
+      Route::get('datosPaso3', [GestionSubvencionesController::class, 'datosPaso3']);
+      Route::get('datosPaso4', [GestionSubvencionesController::class, 'datosPaso4']);
+
+      //  Detalles
+      Route::get('detalle', [GestionSubvencionesController::class, 'detalle']);
+      Route::put('updateDetalle', [GestionSubvencionesController::class, 'updateDetalle']);
+
+      // Paso 2
+      Route::get('proyectos_asociados', [GestionSubvencionesController::class, 'proyectos_asociados']);
+      Route::get('proyectos_registrados', [GestionSubvencionesController::class, 'proyectos_registrados']);
+      Route::post('agregarProyecto', [GestionSubvencionesController::class, 'agregarProyecto']);
+      Route::delete('eliminarProyecto', [GestionSubvencionesController::class, 'eliminarProyecto']);
     });
 
     //  Informe técnico

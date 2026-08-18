@@ -617,15 +617,12 @@ class ProCTIController extends S3Controller {
 
     $adherentes = DB::table('Grupo_integrante AS a')
       ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
-      ->join('Facultad AS c', 'c.id', '=', 'a.facultad_id')
+      ->leftJoin('Facultad AS c', 'c.id', '=', 'b.facultad_id')
       ->leftJoin('Proyecto_integrante AS d', function (JoinClause $join) use ($request) {
         $join->on('d.investigador_id', '=', 'b.id')
           ->where('d.proyecto_id', '=', $request->query('proyecto_id'));
       })
-      ->join('Repo_sum AS e', function (JoinClause $join) {
-        $join->on('e.codigo_alumno', '=', 'b.codigo')
-          ->where('e.permanencia', '=', 'Activo');
-      })
+      ->leftjoin('Repo_sum AS e', 'e.codigo_alumno', '=', 'b.codigo')
       ->select(
         'a.id',
         'a.investigador_id',

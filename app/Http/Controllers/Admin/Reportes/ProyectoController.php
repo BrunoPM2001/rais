@@ -65,7 +65,10 @@ class ProyectoController extends Controller {
             WHEN c.tipo IS NULL THEN 'Externo'
             ELSE c.tipo
         END as tipo_investigador"),
-        'i.condicion as condicion_gi',
+        DB::raw("CASE 
+            WHEN a.tipo_proyecto = 'PCONFIGI-INV' AND i.cargo = 'Coordinador' THEN i.cargo 
+            ELSE i.condicion 
+        END as condicion_gi"),
         'gi_proy.grupo_nombre_corto as grupo_integrante_nombre_corto',
         'gi_proy.grupo_nombre as grupo_integrante_nombre',
         'gi_int.condicion as condicion_gi_integrante',

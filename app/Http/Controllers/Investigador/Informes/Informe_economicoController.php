@@ -442,10 +442,19 @@ class Informe_economicoController extends S3Controller {
             'ruc',
             'fecha',
             'investigador_id',
+            'investigadores_ids',
             'razon_social'
           ])
           ->where('id', '=', $request->query('id'))
           ->first();
+
+        if ($documento && !empty($documento->investigadores_ids)) {
+            $documento->investigadores_ids = json_decode($documento->investigadores_ids, true);
+        } else {
+          if ($documento) {
+            $documento->investigadores_ids = [];
+          }
+        }
 
         $integrantes = DB::table('Proyecto_integrante AS a')
           ->join('Geco_proyecto AS b', 'b.proyecto_id', '=', 'a.proyecto_id')
@@ -567,7 +576,7 @@ class Informe_economicoController extends S3Controller {
           ],
           'monto' => $item->total
         ];
-      });;
+      });
 
     $listaPartidas = $this->listarPartidas($request);
 
@@ -576,6 +585,19 @@ class Informe_economicoController extends S3Controller {
 
   public function subirComprobante(Request $request) {
     $date = Carbon::now();
+    $tipoPasajeros = $request->input('tipo_pasajeros');
+    $investigadorId = null;
+    $investigadoresIds = null;
+
+    if ($tipoPasajeros === '1') {
+        $investigadorId = $request->input('investigador_id') ?: null;
+    } else if ($tipoPasajeros === 'varios') {
+        $investigadoresIds = $request->input('investigadores_ids') ?: null;
+    } else {
+        // En caso no venga tipo_pasajeros, se respeta investigador_id
+        $investigadorId = $request->input('investigador_id') ?: null;
+    }
+    
     if ($request->hasFile('file')) {
       if ($request->input('geco_documento_id') == "") {
 
@@ -588,7 +610,8 @@ class Informe_economicoController extends S3Controller {
         $id = DB::table('Geco_documento')
           ->insertGetId([
             'geco_proyecto_id' => $request->input('geco_proyecto_id'),
-            'investigador_id' => $request->input('investigador_id'),
+            'investigador_id' => $investigadorId,
+            'investigadores_ids' => $investigadoresIds,
             'tipo' => $request->input('tipo'),
             'numero' => $request->input('numero'),
             'numero_doc' => $request->input('numero_doc'),
@@ -635,8 +658,10 @@ class Informe_economicoController extends S3Controller {
             'numero' => $request->input('numero'),
             'numero_doc' => $request->input('numero_doc'),
             'prestador' => $request->input('prestador'),
-            'investigador_id' => $request->input('investigador_id'),
+            'investigador_id' => $investigadorId,
+            'investigadores_ids' => $investigadoresIds,
             'descripcion_compra' => $request->input('descripcion_compra'),
+            'monto_exterior' => $request->input('monto_exterior'),
             'ruc' => $request->input('ruc'),
             'concepto' => $request->input('concepto'),
             'fecha' => $request->input('fecha'),
@@ -673,8 +698,10 @@ class Informe_economicoController extends S3Controller {
             'numero' => $request->input('numero'),
             'numero_doc' => $request->input('numero_doc'),
             'prestador' => $request->input('prestador'),
-            'investigador_id' => $request->input('investigador_id'),
+            'investigador_id' => $investigadorId,
+            'investigadores_ids' => $investigadoresIds,
             'descripcion_compra' => $request->input('descripcion_compra'),
+            'monto_exterior' => $request->input('monto_exterior'),
             'ruc' => $request->input('ruc'),
             'concepto' => $request->input('concepto'),
             'fecha' => $request->input('fecha'),
