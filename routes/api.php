@@ -266,8 +266,7 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
     Route::prefix('subvenciones_apc')->group(function () {
       Route::get('listado', [GestionSubvencionesController::class, 'listado']);
       Route::post('registrarPaso1', [GestionSubvencionesController::class, 'registrarPaso1']);
-      Route::post('registrarPaso2', [GestionSubvencionesController::class, 'registrarPaso2']);
-      Route::post('registrarPaso3', [GestionSubvencionesController::class, 'registrarPaso3']);
+      Route::get('searchPublicacion', [GestionSubvencionesController::class, 'searchPublicacion']);
       Route::put('updateDoc', [GestionSubvencionesController::class, 'updateDoc']);
       Route::delete('deleteDoc', [GestionSubvencionesController::class, 'deleteDoc']);
 
@@ -285,6 +284,17 @@ Route::prefix('admin')->middleware('checkRole:Usuario_admin')->group(function ()
       Route::get('proyectos_registrados', [GestionSubvencionesController::class, 'proyectos_registrados']);
       Route::post('agregarProyecto', [GestionSubvencionesController::class, 'agregarProyecto']);
       Route::delete('eliminarProyecto', [GestionSubvencionesController::class, 'eliminarProyecto']);
+      // Paso 3
+      Route::get('listarAutores', [GestionSubvencionesController::class, 'listarAutores']);
+      Route::get('searchDocenteRegistrado', [GestionSubvencionesController::class, 'searchDocenteRegistrado']);
+      Route::get('searchEstudianteRegistrado', [GestionSubvencionesController::class, 'searchEstudianteRegistrado']);
+      Route::get('searchExternoRegistrado', [GestionSubvencionesController::class, 'searchExternoRegistrado']);
+      Route::post('agregarAutor', [GestionSubvencionesController::class, 'agregarAutor']);
+      Route::put('editarAutor', [GestionSubvencionesController::class, 'editarAutor']);
+      Route::delete('eliminarAutor', [GestionSubvencionesController::class, 'eliminarAutor']);
+      // Paso 4
+      Route::post('enviarPublicacion', [GestionSubvencionesController::class, 'enviarPublicacion']);
+      Route::get('reporte', [GestionSubvencionesController::class, 'reporte']);
     });
 
     //  Informe técnico

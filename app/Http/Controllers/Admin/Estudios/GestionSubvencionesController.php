@@ -9,6 +9,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Str;
 use Illuminate\Database\Query\JoinClause;
 use App\Http\Controllers\Admin\Estudios\Publicaciones\PublicacionesUtilsController;
+use App\Http\Controllers\Admin\Estudios\Publicaciones\ArticulosController;
 
 class GestionSubvencionesController extends S3Controller {
   public function listado() {
@@ -38,6 +39,16 @@ class GestionSubvencionesController extends S3Controller {
     return $listado;
   }
 
+  public function searchPublicacion(Request $request) {
+    return DB::table('Publicacion')
+      ->select(['id AS value', DB::raw("CONCAT(codigo_registro, ' - ', titulo) AS label")])
+      ->whereNotNull('codigo_registro')
+      ->where('codigo_registro', 'LIKE', '%' . $request->query('query') . '%')
+      ->where('tipo_publicacion', '=', 'articulo')
+      ->limit(10)
+      ->get();
+  }
+
   public function datosPaso1(Request $request) {
     $id = $request->query('id');
     $publicacionData = null;
@@ -46,6 +57,7 @@ class GestionSubvencionesController extends S3Controller {
       $pub = DB::table('Publicacion')
         ->select([
           'id',
+          'codigo_registro',
           'doi',
           'art_tipo',
           'titulo',
@@ -98,10 +110,10 @@ class GestionSubvencionesController extends S3Controller {
 
         $publicacionData = [
           'id' => $pub->id,
+          'codigo_registro' => $pub->codigo_registro,
           'doi' => $pub->doi,
           'art_tipo' => $pub->art_tipo,
           'titulo' => $pub->titulo,
-          'resumen' => $pub->resumen,
           'pagina_inicial' => $pub->pagina_inicial,
           'pagina_final' => $pub->pagina_final,
           'fecha_publicacion' => $pub->fecha_publicacion,
@@ -129,80 +141,6 @@ class GestionSubvencionesController extends S3Controller {
       'revistas'    => $revistas,
       'wos'         => $wos
     ];
-  }
-
-  public function datosPaso2(Request $request) {
-    $proyecto = DB::table('Proyecto')
-      ->select([
-        DB::raw("COALESCE(fecha_inicio, '') AS fecha_inicio"),
-        DB::raw("COALESCE(fecha_fin, '') AS fecha_fin"),
-        DB::raw("COALESCE(palabras_clave, '') AS palabras_clave"),
-      ])
-      ->where('id', '=', $request->query('id'))
-      ->first();
-
-    $extras = DB::table('Proyecto_descripcion')
-      ->select([
-        'codigo',
-        'detalle'
-      ])
-      ->where('proyecto_id', '=', $request->query('id'))
-      ->whereIn('codigo', ['resumen', 'objetivos', 'duracion_anio', 'duracion_mes', 'duracion_dia'])
-      ->get()
-      ->mapWithKeys(function ($item) {
-        return [$item->codigo => $item->detalle];
-      });
-
-    return [
-      'proyecto' => $proyecto,
-      'extras' => $extras
-    ];
-  }
-
-  public function datosPaso3(Request $request) {
-    $documentos = DB::table('Proyecto_fex_doc AS a')
-      ->select([
-        'id',
-        'doc_tipo',
-        'nombre',
-        'comentario',
-        'fecha',
-        DB::raw("CONCAT('/minio/', bucket, '/', a.key) AS url")
-      ])
-      ->where('proyecto_id', '=', $request->query('id'))
-      ->get();
-
-    return $documentos;
-  }
-
-  public function datosPaso4(Request $request) {
-    $integrantes = DB::table('Proyecto_integrante AS a')
-      ->join('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
-      ->join('Proyecto_integrante_tipo AS c', 'c.id', '=', 'a.proyecto_integrante_tipo_id')
-      ->leftJoin('Facultad AS d', 'd.id', '=', 'b.facultad_id')
-      ->select([
-        'a.id',
-        'c.nombre AS tipo',
-        'b.tipo AS usuario_tipo',
-        DB::raw("CASE
-          WHEN a.responsabilidad IN ('', 'null') OR a.responsabilidad IS NULL THEN c.nombre
-          ELSE a.responsabilidad
-        END AS tipo_integrante"),
-        DB::raw("CONCAT(b.apellido1, ' ', b.apellido2, ', ', b.nombres) AS nombre"),
-        'b.doc_numero',
-        DB::raw("CASE(a.condicion)
-          WHEN 'Responsable' THEN 'Sí'
-          ELSE 'No'
-        END AS responsable"),
-        DB::raw("CASE
-          WHEN a.proyecto_integrante_tipo_id = 90 OR b.tipo = 'Externo' THEN 'Externo'
-          ELSE d.nombre
-        END AS facultad")
-      ])
-      ->where('a.proyecto_id', '=', $request->query('id'))
-      ->get();
-
-    return $integrantes;
   }
 
   public function registrarPaso1(Request $request) {
@@ -234,7 +172,6 @@ class GestionSubvencionesController extends S3Controller {
         'doi' => $request->input('doi'),
         'art_tipo' => $art_tipo,
         'titulo' => $request->input('titulo'),
-        'resumen' => $request->input('resumen'),
         'pagina_inicial' => $request->input('pagina_inicial'),
         'pagina_final' => $request->input('pagina_final'),
         'fecha_publicacion' => $request->input('fecha_publicacion'),
@@ -321,7 +258,6 @@ class GestionSubvencionesController extends S3Controller {
         'doi' => $request->input('doi'),
         'art_tipo' => $art_tipo,
         'titulo' => $request->input('titulo'),
-        'resumen' => $request->input('resumen'),
         'pagina_inicial' => $request->input('pagina_inicial'),
         'pagina_final' => $request->input('pagina_final'),
         'fecha_publicacion' => $request->input('fecha_publicacion'),
@@ -396,58 +332,7 @@ class GestionSubvencionesController extends S3Controller {
     ];
   }
 
-  public function registrarPaso2(Request $request) {
-    $date = Carbon::now();
-    DB::table('Proyecto')
-      ->where('id', '=', $request->input('id'))
-      ->update([
-        'palabras_clave' => $request->input('palabras_clave'),
-        'fecha_inicio' => $request->input('fecha_inicio'),
-        'fecha_fin' => $request->input('fecha_fin'),
-        'updated_at' => $date
-      ]);
-
-    DB::table('Proyecto_descripcion')
-      ->updateOrInsert([
-        'proyecto_id' => $request->input('id'),
-        'codigo' => 'resumen'
-      ], [
-        'detalle' => $request->input('resumen')
-      ]);
-
-    DB::table('Proyecto_descripcion')
-      ->updateOrInsert([
-        'proyecto_id' => $request->input('id'),
-        'codigo' => 'objetivos'
-      ], [
-        'detalle' => $request->input('objetivos')
-      ]);
-
-    DB::table('Proyecto_descripcion')
-      ->updateOrInsert([
-        'proyecto_id' => $request->input('id'),
-        'codigo' => 'duracion_anio'
-      ], [
-        'detalle' => $request->input('años') ?? ""
-      ]);
-
-    DB::table('Proyecto_descripcion')
-      ->updateOrInsert([
-        'proyecto_id' => $request->input('id'),
-        'codigo' => 'duracion_mes'
-      ], [
-        'detalle' => $request->input('meses') ?? ""
-      ]);
-
-    DB::table('Proyecto_descripcion')
-      ->updateOrInsert([
-        'proyecto_id' => $request->input('id'),
-        'codigo' => 'duracion_dia'
-      ], [
-        'detalle' => $request->input('dias') ?? ""
-      ]);
-  }
-
+  // Registor de Paso 2
   public function proyectos_asociados(Request $request) {
     $publicacionId = $request->query('publicacion_id') ?? $request->query('id');
 
@@ -582,53 +467,416 @@ class GestionSubvencionesController extends S3Controller {
     return ['message' => 'info', 'detail' => 'Proyecto eliminado de la lista exitosamente'];
   }
 
-  public function registrarPaso3(Request $request) {
-    $date = Carbon::now();
-    $date_name = $date->format('Ymd-His');
-
-    if ($request->hasFile('file')) {
-
-      $nameFile = $request->input('id') . "/" . $request->input('doc_tipo') . "_" . $date_name . "." . $request->file('file')->getClientOriginalExtension();
-
-      $this->uploadFile($request->file('file'), "proyecto-fex-doc", $nameFile);
-
-      DB::table('Proyecto_fex_doc')
-        ->insert([
-          'proyecto_id' => $request->input('id'),
-          'doc_tipo' => $request->input('doc_tipo'),
-          'nombre' => $request->input('nombre'),
-          'comentario' => $request->input('comentario'),
-          'bucket' => 'proyecto-fex-doc',
-          'key' => $nameFile,
-          'fecha' => $date
-        ]);
-
-      return ['message' => 'success', 'detail' => 'Archivo cargado correctamente'];
-    } else {
-      return ['message' => 'error', 'detail' => 'Error al cargar archivo'];
+  // Registro de paso 3 (Autores)
+  public function listarAutores(Request $request) {
+    $publicacion_id = $request->query('publicacion_id');
+    if (!$publicacion_id) {
+      return response()->json(['error' => 'El parámetro publicacion_id es requerido'], 400);
     }
+
+    $pub = DB::table('Publicacion')
+      ->select(['tipo_publicacion'])
+      ->where('id', '=', $publicacion_id)
+      ->first();
+
+    if (!$pub) {
+      return response()->json(['error' => 'Publicación no encontrada'], 404);
+    }
+
+    $autores = DB::table('Publicacion_autor AS a')
+      ->leftJoin('Usuario_investigador AS b', 'b.id', '=', 'a.investigador_id')
+      ->select([
+        'a.id',
+        'a.presentado',
+        'a.categoria',
+        'a.autor',
+        DB::raw("COALESCE(b.tipo, 'Externo') AS tipo"),
+        DB::raw("COALESCE(CONCAT(b.apellido1, ' ', b.apellido2, ', ', b.nombres), 
+                CONCAT(a.apellido1, ' ', a.apellido2, ', ', a.nombres)) AS nombres"),
+        DB::raw("CASE(a.filiacion)
+          WHEN 1 THEN 'Sí'
+          WHEN 0 THEN 'No'
+        ELSE null END AS filiacion"),
+        DB::raw("CASE(a.filiacion_unica)
+          WHEN 1 THEN 'Sí'
+          WHEN 0 THEN 'No'
+        ELSE null END AS filiacion_unica"),
+      ])
+      ->where('publicacion_id', '=', $request->query('publicacion_id'))
+      ->get();
+    
+    $totalAutores = count($autores);
+
+    if ($totalAutores === 0) {
+        // Si no hay autores registrados, NO cumple los requisitos
+      $cumple = false;
+    } else {
+        // Si hay autores, verificar que ninguno tenga campos requeridos vacíos
+      $incompletos = DB::table('Publicacion_autor')
+        ->where('publicacion_id', '=', $publicacion_id)
+        ->where(function($query){
+          $query->whereNull('autor')
+                ->orWhereNull('filiacion')
+                ->orWhereNull('filiacion_unica');
+        })
+        ->count();
+      
+        $cumple = ($incompletos === 0);
+    }
+
+    return [
+      'listado' => $autores,
+      'cumple'  => $cumple
+    ];
   }
 
-  public function updateDoc(Request $request) {
-    DB::table('Proyecto_fex_doc')
-      ->where([
-        'id' => $request->input('id')
-      ])
+  public function searchDocenteRegistrado(Request $request) {
+    $investigadores = DB::table('Usuario_investigador')
+      ->select(
+        DB::raw("CONCAT(doc_numero, ' | ', codigo, ' | ', apellido1, ' ', apellido2, ' ', nombres) AS value"),
+        'id',
+        'nombres',
+        'apellido1',
+        'apellido2',
+        'tipo'
+      )
+      ->where('tipo', 'LIKE', 'DOCENTE%')
+      ->having('value', 'LIKE', '%' . $request->query('query') . '%')
+      ->limit(10)
+      ->get();
+
+    return $investigadores;
+  }
+
+  public function searchEstudianteRegistrado(Request $request) {
+    $investigadores = DB::table('Repo_sum AS a')
+      ->leftJoin('Usuario_investigador AS b', 'b.codigo', '=', 'a.codigo_alumno')
+      ->select(
+        DB::raw("CONCAT(TRIM(a.codigo_alumno), ' | ', a.dni, ' | ', a.apellido_paterno, ' ', a.apellido_materno, ', ', a.nombres, ' | ', a.programa) AS value"),
+        'a.id',
+        'b.id AS investigador_id',
+        'a.codigo_alumno',
+        'a.apellido_paterno',
+        'a.apellido_materno',
+        'a.nombres',
+        'a.programa',
+      )
+      ->having('value', 'LIKE', '%' . $request->query('query') . '%')
+      ->limit(10)
+      ->get();
+
+    return $investigadores;
+  }
+
+  public function searchExternoRegistrado(Request $request) {
+    $investigadores = DB::table('Usuario_investigador')
+      ->select(
+        DB::raw("CONCAT(doc_numero, ' | ', codigo, ' | ', apellido1, ' ', apellido2, ' ', nombres) AS value"),
+        'id',
+        'nombres',
+        'apellido1',
+        'apellido2',
+        'tipo'
+      )
+      ->where('tipo', 'LIKE', 'EXTERNO%')
+      ->having('value', 'LIKE', '%' . $request->query('query') . '%')
+      ->limit(10)
+      ->get();
+
+    return $investigadores;
+  }
+
+  public function agregarAutor(Request $request) {
+    $pub = DB::table('Publicacion')
+      ->select(['audit'])
+      ->where('id', '=', $request->input('publicacion_id'))
+      ->whereIn('estado', [2, 6])
+      ->first();
+
+    if (!$pub) {
+      return ['message' => 'error', 'detail' => 'Esta publicación ya ha sido enviada, no se pueden hacer más cambios'];
+    }
+
+    $categoria = $request->input('categoria');
+    $presentado = in_array($categoria, ['Autor de correspondencia', 'Primer autor']) ? 1 : 0;
+
+    switch ($request->input('tipo')) {
+      case "externo":
+        DB::table('Publicacion_autor')
+          ->insert([
+            'publicacion_id' => $request->input('publicacion_id'),
+            'tipo' => $request->input('tipo'),
+            'nombres' => $request->input('nombres'),
+            'apellido1' => $request->input('apellido1'),
+            'apellido2' => $request->input('apellido2'),
+            'autor' => $request->input('autor'),
+            'categoria' => $request->input('categoria'),
+            'filiacion' => $request->input('filiacion'),
+            'filiacion_unica' => $request->input('filiacion_unica'),
+            'presentado' => 0,
+            'estado' => 0,
+            'created_at' => Carbon::now(),
+            'updated_at' => Carbon::now()
+          ]);
+        break;
+
+      case "estudiante":
+        $id_investigador = $request->input('investigador_id');
+        if ($id_investigador == null) {
+          $sumData = DB::table('Repo_sum')
+            ->select([
+              'id_facultad',
+              'codigo_alumno',
+              'nombres',
+              'apellido_paterno',
+              'apellido_materno',
+              'dni',
+              'sexo',
+              'correo_electronico',
+              'programa',
+              'permanencia',
+            ])
+            ->where('id', '=', $request->input('sum_id'))
+            ->first();
+          
+          $tipoPersona = $sumData->permanencia == 'Egresado'
+              ? 'Egresado'
+              : 'Estudiante';
+
+          $nivel = str_starts_with($sumData->programa, 'E.P.')
+              ? 'pregrado'
+              : 'posgrado';
+
+          $tipoFinal = $tipoPersona . ' ' . $nivel;
+
+          $id_investigador = DB::table('Usuario_investigador')
+            ->insertGetId([
+              'facultad_id' => $sumData->id_facultad,
+              'codigo' => $sumData->codigo_alumno,
+              'nombres' => $sumData->nombres,
+              'apellido1' => $sumData->apellido_paterno,
+              'apellido2' => $sumData->apellido_materno,
+              'doc_tipo' => 'DNI',
+              'doc_numero' => $sumData->dni,
+              'sexo' => $sumData->sexo,
+              'email3' => $sumData->correo_electronico,
+              'tipo_investigador' => 'Estudiante',
+              'tipo' => $tipoFinal,
+              'tipo_investigador_programa' => $sumData->programa,
+              'tipo_investigador_estado' => $sumData->permanencia,
+              'created_at' => Carbon::now(),
+              'updated_at' => Carbon::now(),
+            ]);
+        }
+
+        $cuenta_autor = DB::table('Publicacion_autor')
+          ->where('publicacion_id', '=', $request->input('publicacion_id'))
+          ->where('investigador_id', '=', $id_investigador)
+          ->count();
+
+        if ($cuenta_autor == 0) {
+          DB::table('Publicacion_autor')->insert([
+            'publicacion_id' => $request->input('publicacion_id'),
+            'investigador_id' => $id_investigador,
+            'tipo' => "interno",
+            'autor' => $request->input('autor'),
+            'categoria' => $request->input('categoria'),
+            'filiacion' => $request->input('filiacion'),
+            'filiacion_unica' => $request->input('filiacion_unica'),
+            'presentado' => 0,
+            'estado' => 0,
+            'created_at' => Carbon::now(),
+            'updated_at' => Carbon::now()
+          ]);
+        } else {
+          return ['message' => 'warning', 'detail' => 'Este autor ya está registrado'];
+        }
+        break;
+      case "interno":
+        $cuenta_autor = DB::table('Publicacion_autor')
+          ->where('publicacion_id', '=', $request->input('publicacion_id'))
+          ->where('investigador_id', '=', $request->input('investigador_id'))
+          ->count();
+
+        if ($cuenta_autor == 0) {
+          DB::table('Publicacion_autor')->insert([
+            'publicacion_id' => $request->input('publicacion_id'),
+            'investigador_id' => $request->input('investigador_id'),
+            'tipo' => "interno",
+            'autor' => $request->input('autor'),
+            'categoria' => $request->input('categoria'),
+            'filiacion' => $request->input('filiacion'),
+            'filiacion_unica' => $request->input('filiacion_unica'),
+            'presentado' => $presentado,
+            'estado' => 0,
+            'created_at' => Carbon::now(),
+            'updated_at' => Carbon::now()
+          ]);
+        } else {
+          return ['message' => 'warning', 'detail' => 'Este autor ya está registrado'];
+        }
+        break;
+      default:
+        break;
+    }
+
+    $audit = json_decode($pub->audit ?? "[]");
+
+    $audit[] = [
+      'fecha' => Carbon::now()->format('Y-m-d H:i:s'),
+      'nombres' => $request->attributes->get('token_decoded')->nombre,
+      'apellidos' => $request->attributes->get('token_decoded')->apellidos,
+      'accion' => 'Autor añadido'
+    ];
+
+    $audit = json_encode($audit, JSON_UNESCAPED_UNICODE);
+
+    DB::table('Publicacion')
+      ->where('id', '=', $request->input('publicacion_id'))
+      ->whereIn('estado', [2, 6])
       ->update([
-        'nombre' => $request->input('nombre'),
-        'comentario' => $request->input('comentario')
+        'step' => 3,
+        'audit' => $audit
       ]);
 
-    return ['message' => 'info', 'detail' => 'Datos actualizados correctamente'];
+    return ['message' => 'success', 'detail' => 'Autor agregado exitosamente'];
   }
 
-  public function deleteDoc(Request $request) {
-    DB::table('Proyecto_fex_doc')
-      ->where([
-        'id' => $request->query('id')
-      ])
+  public function editarAutor(Request $request) {
+    $count = DB::table('Publicacion')
+      ->where('id', '=', $request->input('publicacion_id'))
+      ->whereIn('estado', [2, 6])
+      ->count();
+
+    if ($count == 0) {
+      return ['message' => 'error', 'detail' => 'Esta publicación ya ha sido enviada, no se pueden hacer más cambios'];
+    }
+
+    DB::table('Publicacion_autor')
+      ->where('id', '=', $request->input('id'))
+      ->update([
+        'autor' => $request->input('autor'),
+        'categoria' => $request->input('categoria'),
+        'filiacion' => $request->input('filiacion'),
+        'filiacion_unica' => $request->input('filiacion_unica'),
+        'updated_at' => Carbon::now()
+      ]);
+
+    return ['message' => 'info', 'detail' => 'Datos del autor editado exitosamente'];
+  }
+
+  public function eliminarAutor(Request $request) {
+    $count = DB::table('Publicacion')
+      ->where('id', '=', $request->input('publicacion_id'))
+      ->whereIn('estado', [2, 6])
+      ->count();
+
+    if ($count == 0) {
+      return ['message' => 'error', 'detail' => 'Esta publicación ya ha sido enviada, no se pueden hacer más cambios'];
+    }
+
+    DB::table('Publicacion_autor')
+      ->where('id', '=', $request->query('id'))
       ->delete();
 
-    return ['message' => 'info', 'detail' => 'Archivo eliminado correctamente'];
+    return ['message' => 'info', 'detail' => 'Autor eliminado de la lista exitosamente'];
+  }
+
+  //  Paso 4
+  public function reporte(Request $request) {
+    $publicacion_id = $request->query('publicacion_id');
+    if (!$publicacion_id) {
+      return response()->json(['error' => 'El parámetro publicacion_id es requerido'], 400);
+    }
+
+    $pubExiste = DB::table('Publicacion')
+      ->where('id', '=', $publicacion_id)
+      ->exists();
+    
+    if (!$pubExiste) {
+      return response()->json(['error' => 'Publicación no encontrada'], 404);
+    }
+    $request->query->set('id', $publicacion_id);
+    $request->merge(['id' => $publicacion_id]);
+
+    $util = new ArticulosController();
+    return $util->reporte($request);
+  }
+
+  public function enviarPublicacion(Request $request) {
+    if ($request->hasFile('file')) {
+      //  Audit del investigador:
+      $pub = DB::table('Publicacion')
+        ->select([
+          'audit',
+          DB::raw("CASE(estado)
+            WHEN -1 THEN 'Eliminado'
+            WHEN 1 THEN 'Registrado'
+            WHEN 2 THEN 'Observado'
+            WHEN 5 THEN 'Enviado'
+            WHEN 6 THEN 'En proceso'
+            WHEN 7 THEN 'Anulado'
+            WHEN 8 THEN 'No registrado'
+            WHEN 9 THEN 'Duplicado'
+          ELSE 'Sin estado' END AS estado"),
+        ])
+        ->where('id', '=', $request->input('publicacion_id'))
+        ->first();
+
+      $audit = json_decode($pub->audit ?? "[]");
+
+      $audit[] = [
+        'fecha' => Carbon::now()->format('Y-m-d H:i:s'),
+        'nombres' => $request->attributes->get('token_decoded')->nombre,
+        'apellidos' => $request->attributes->get('token_decoded')->apellidos,
+        'accion' => 'Envío de publicación (estado anterior: ' . $pub->estado . ')'
+      ];
+
+      $audit = json_encode($audit, JSON_UNESCAPED_UNICODE);
+
+      $count1 = DB::table('Publicacion')
+        ->where('id', '=', $request->input('publicacion_id'))
+        ->whereIn('estado', [2, 6])
+        ->update([
+          'step' => 4,
+          'estado' => 5,
+          'updated_at' => Carbon::now(),
+          'audit' => $audit
+        ]);
+
+      if ($count1 == 0) {
+        return ['message' => 'error', 'detail' => 'Esta publicación ya ha sido enviada, no se pueden hacer más cambios'];
+      } else {
+        $date = Carbon::now();
+        $name = "token-" . $date->format('Ymd-His') . "-" . Str::random(8);
+        $nameFile = $name . "." . $request->file('file')->getClientOriginalExtension();
+
+        $this->uploadFile($request->file('file'), "publicacion", $nameFile);
+
+        DB::table('File')
+          ->where('tabla_id', '=', $request->input('publicacion_id'))
+          ->where('tabla', 'Publicacion')
+          ->where('recurso', 'ANEXO')
+          ->update([
+            'estado' => -1,
+          ]);
+
+        DB::table('File')
+          ->insert([
+            'tabla_id' => $request->input('publicacion_id'),
+            'tabla' => 'Publicacion',
+            'bucket' => 'publicacion',
+            'key' => $nameFile,
+            'recurso' => 'ANEXO',
+            'estado' => 20,
+            'created_at' => Carbon::now(),
+            'updated_at' => Carbon::now(),
+          ]);
+
+        return ['message' => 'success', 'detail' => 'Publicación enviada correctamente'];
+      }
+    } else {
+      return ['message' => 'error', 'detail' => 'Error al cargar el archivo'];
+    }
   }
 }

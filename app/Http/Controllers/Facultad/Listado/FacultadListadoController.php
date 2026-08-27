@@ -903,7 +903,28 @@ class FacultadListadoController extends Controller {
       });
     }
 
-    return $publicaciones->get();
+    $resultados = $publicaciones->get();
+    $publicacionIds = $resultados->pluck('id');
+    $indexaciones = DB::table('Publicacion_index AS a')
+      ->join('Publicacion_db_indexada AS b', 'b.id', '=', 'a.publicacion_db_indexada_id')
+      ->select([
+          'a.publicacion_id',
+          'b.nombre AS value'
+      ])
+      ->whereIn('a.publicacion_id', $publicacionIds)
+      ->get()
+      ->groupBy('publicacion_id');
+
+    $resultados->transform(function ($pub) use ($indexaciones) {
+      $pub->index = $indexaciones->get($pub->id, collect())
+        ->map(function ($item) {
+          return ['value' => $item->value];
+        })
+        ->values();
+      return $pub;
+    });
+
+    return $resultados;
   }
 
   public function ListadoInformes(Request $request) {

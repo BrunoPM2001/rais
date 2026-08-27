@@ -464,7 +464,7 @@ class EvaluadorProyectosController extends S3Controller {
 
     $view = 'evaluador.ficha_evaluador';
 
-    if ($tipoProyecto === 'PCONFIGI-INV') {
+    if ($tipoProyecto === 'PCONFIGI-INV' || $tipoProyecto === 'PRO-CTIE') {
       $view = 'evaluador.ficha_evaluador_pconfigiinv';
     }
 

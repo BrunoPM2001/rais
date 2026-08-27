@@ -317,6 +317,7 @@ class Informe_economicoController extends S3Controller {
         ->where('c.postulacion', '=', 1)
         ->where('c.tipo_proyecto', '=', $proyecto->tipo_proyecto)
         ->where('e.geco_proyecto_id', '=', $request->query('geco_proyecto_id'))
+        ->distinct()
         ->get();
 
       $integrantes = DB::table('Proyecto_integrante AS a')
@@ -354,6 +355,7 @@ class Informe_economicoController extends S3Controller {
         ->where('c.postulacion', '=', 1)
         ->where('c.tipo_proyecto', '=', $proyecto->tipo_proyecto)
         ->where('e.geco_proyecto_id', '=', $request->query('geco_proyecto_id'))
+        ->distinct()
         ->get();
 
       return $partidas;

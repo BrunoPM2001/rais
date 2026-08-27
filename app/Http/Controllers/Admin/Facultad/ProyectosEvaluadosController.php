@@ -190,7 +190,7 @@ class ProyectosEvaluadosController extends Controller {
 
     $view = 'evaluador.ficha';
 
-    if ($extra->tipo_proyecto === 'PCONFIGI-INV') {
+    if (in_array($extra->tipo_proyecto, ['PCONFIGI-INV', 'PRO-CTIE'])) {
       $view = 'evaluador.ficha_pconfigiinv';
     }
 

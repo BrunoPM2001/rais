@@ -24,6 +24,7 @@ class PublicacionesExport implements FromQuery, WithHeadings, ShouldAutoSize, Wi
       'Tipo',
       'Categoria',
       'Titulo',
+      'Index',
       'ISBN',
       'ISSN',
       'Edicion',
@@ -56,6 +57,12 @@ class PublicacionesExport implements FromQuery, WithHeadings, ShouldAutoSize, Wi
       't5.tipo',
       't5.categoria',
       't1.titulo',
+      DB::raw("(
+          SELECT GROUP_CONCAT(b.nombre SEPARATOR ', ')
+          FROM Publicacion_index AS a
+          JOIN Publicacion_db_indexada AS b ON b.id = a.publicacion_db_indexada_id
+          WHERE a.publicacion_id = t1.id
+        ) AS indexada"),
       't1.isbn',
       't1.issn',
       't1.edicion',
@@ -82,8 +89,6 @@ class PublicacionesExport implements FromQuery, WithHeadings, ShouldAutoSize, Wi
     ->where('t3.facultad_id', $this->facultad_id)
     ->where('t1.estado', '!=', '1')
     ->orderByDesc('t1.fecha_inscripcion');
-
-    
   }
 
   public function styles(Worksheet $sheet) {
